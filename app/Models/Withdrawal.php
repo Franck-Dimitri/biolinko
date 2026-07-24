@@ -12,19 +12,16 @@ class Withdrawal extends Model
 
     protected $fillable = [
         'wallet_id',
-        'amount_requested',
-        'fee_api',
-        'fee_saas',
-        'net_transferred',
-        'phone_momo',
+        'amount',
+        'operator',
+        'phone_number',
         'status',
+        'processed_at',
     ];
 
     protected $casts = [
-        'amount_requested' => 'decimal:2',
-        'fee_api' => 'decimal:2',
-        'fee_saas' => 'decimal:2',
-        'net_transferred' => 'decimal:2',
+        'amount' => 'decimal:2',
+        'processed_at' => 'datetime',
     ];
 
     public function wallet(): BelongsTo

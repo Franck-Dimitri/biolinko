@@ -109,6 +109,20 @@ export default function AuthenticatedLayout({ header, children }) {
                         </Link>
 
                         <Link
+                            href={route('orders.index')}
+                            className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs font-semibold ${
+                                route().current('orders.*')
+                                    ? 'bg-amber-50/80 text-slate-950 border-l-[3px] border-[#FFCC00] rounded-r-xl pl-3'
+                                    : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50 rounded-xl'
+                            }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <PackageCheck className="w-4 h-4" />
+                                <span>Commandes & Wallet</span>
+                            </div>
+                        </Link>
+
+                        <Link
                             href={route('appearance.index')}
                             className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs font-semibold ${
                                 route().current('appearance.*')
@@ -121,54 +135,23 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <span>Apparence Boutique</span>
                             </div>
                         </Link>
-
-                        <Link
-                            href="#"
-                            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition-all"
-                        >
-                            <div className="flex items-center gap-3">
-                                <PackageCheck className="w-4 h-4" />
-                                <span>Commandes</span>
-                            </div>
-                            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-semibold">2</span>
-                        </Link>
-
-                        <Link
-                            href="#"
-                            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition-all"
-                        >
-                            <div className="flex items-center gap-3">
-                                <Users className="w-4 h-4" />
-                                <span>Clients</span>
-                            </div>
-                        </Link>
                     </div>
 
-                    {/* NAV GROUP 2: TOOLS */}
+                    {/* NAV GROUP 2: TOOLS & WALLET */}
                     <div className="space-y-1">
                         <div className="px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
                             Outils & Retraits
                         </div>
 
                         <Link
-                            href="#"
+                            href={route('orders.index')}
                             className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition-all"
                         >
                             <div className="flex items-center gap-3">
-                                <BarChart3 className="w-4 h-4" />
-                                <span>Statistiques</span>
-                            </div>
-                        </Link>
-
-                        <Link
-                            href="#"
-                            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition-all"
-                        >
-                            <div className="flex items-center gap-3">
-                                <Wallet className="w-4 h-4" />
+                                <Wallet className="w-4 h-4 text-amber-600" />
                                 <span>Portefeuille MoMo</span>
                             </div>
-                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-semibold">MoMo</span>
+                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-semibold">Retrait</span>
                         </Link>
                     </div>
                 </div>
@@ -203,52 +186,42 @@ export default function AuthenticatedLayout({ header, children }) {
                             </div>
                         </Dropdown.Trigger>
 
-                        <Dropdown.Content>
+                        <Dropdown.Content align="right" width="48">
                             <Dropdown.Link href={route('profile.edit')}>
-                                Mon Profil & Sécurité
+                                Mon Profil
                             </Dropdown.Link>
-                            <Dropdown.Link
-                                href={route('logout')}
-                                method="post"
-                                as="button"
-                            >
-                                Se déconnecter
+                            <Dropdown.Link href={route('logout')} method="post" as="button">
+                                Déconnexion
                             </Dropdown.Link>
                         </Dropdown.Content>
                     </Dropdown>
                 </div>
             </aside>
 
-            {/* MAIN FULL-WIDTH CONTENT AREA */}
+            {/* MAIN CONTENT AREA */}
             <div className="flex-1 flex flex-col min-w-0">
-                <header className="hidden md:flex h-16 bg-white border-b border-slate-200/80 px-8 items-center justify-between sticky top-0 z-30">
-                    <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-                        <span className="text-slate-400">BIOLINKO Vendeur</span>
-                        <span>/</span>
-                        <span className="font-semibold text-slate-950">Tableau de bord</span>
+                {/* Top Header Bar */}
+                <header className="hidden md:flex bg-white border-b border-slate-200/80 px-8 py-3.5 items-center justify-between sticky top-0 z-30">
+                    <div className="flex items-center gap-4">
+                        <div className="w-64 relative">
+                            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                            <input
+                                type="text"
+                                placeholder="Rechercher une commande, client..."
+                                className="w-full pl-9 pr-4 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-slate-400 outline-none"
+                            />
+                        </div>
                     </div>
 
-                    <div className="w-80 relative">
-                        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                        <input
-                            type="text"
-                            placeholder="Rechercher des produits, commandes..."
-                            className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-medium text-slate-900 focus:outline-none focus:border-amber-400 transition-colors"
-                        />
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <button className="p-2 rounded-xl bg-slate-50 hover:bg-amber-50/50 text-slate-600 transition-colors relative">
-                            <Bell className="w-4 h-4 text-slate-700" />
+                    <div className="flex items-center gap-4">
+                        <button className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 relative">
+                            <Bell className="w-5 h-5" />
                             <span className="w-2 h-2 rounded-full bg-amber-500 absolute top-1.5 right-1.5" />
                         </button>
-                        <Link href={route('appearance.index')} className="p-2 rounded-xl bg-slate-50 hover:bg-amber-50/50 text-slate-600 transition-colors">
-                            <Palette className="w-4 h-4 text-slate-700" />
-                        </Link>
                     </div>
                 </header>
 
-                <main className="p-4 sm:p-6 lg:p-8 flex-1 w-full">
+                <main className="flex-1 p-4 sm:p-8 max-w-full overflow-x-hidden">
                     {children}
                 </main>
             </div>

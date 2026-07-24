@@ -34,7 +34,7 @@ export default function Index({ store, products, metrics, appUrl }) {
         variants: [],
     });
 
-    // Edit Info Form (Separate)
+    // Edit Info Form
     const editForm = useForm({
         _method: 'PUT',
         title: '',
@@ -46,7 +46,7 @@ export default function Index({ store, products, metrics, appUrl }) {
         images_files: [],
     });
 
-    // Dedicated Promo Form (Separate)
+    // Dedicated Promo Form
     const promoForm = useForm({
         _method: 'PUT',
         title: '',
@@ -167,7 +167,6 @@ export default function Index({ store, products, metrics, appUrl }) {
         <AuthenticatedLayout>
             <Head title="Gestion Avancée des Produits — BIOLINKO" />
 
-            {/* FULL-WIDTH CONTAINER (REMOVED RESTRICTIVE MAX-WIDTH) */}
             <div className="w-full space-y-8 font-sans">
                 
                 {/* Header Title & Add Product Button */}
@@ -303,7 +302,7 @@ export default function Index({ store, products, metrics, appUrl }) {
                     </div>
                 </div>
 
-                {/* PRODUCT CARDS GRID BASED ON ATTACHED DESIGN IMAGE 2 */}
+                {/* PRODUCT CARDS GRID WITH STRICT DESCRIPTION LINE-CLAMP & OVERFLOW PROTECTION */}
                 {filteredProducts && filteredProducts.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredProducts.map((product) => (
@@ -311,10 +310,10 @@ export default function Index({ store, products, metrics, appUrl }) {
                                 key={product.id}
                                 whileHover={{ y: -3 }}
                                 transition={{ duration: 0.2 }}
-                                className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs hover:shadow-md transition-all p-5 flex flex-col sm:flex-row gap-5 relative group"
+                                className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs hover:shadow-md transition-all p-5 flex flex-col sm:flex-row gap-5 relative group min-w-0"
                             >
-                                {/* LEFT IMAGE CONTAINER (ROUNDED SQUARE AS IN ATTACHED DESIGN IMAGE 2) */}
-                                <div className="w-full sm:w-48 h-48 sm:h-52 shrink-0 rounded-3xl bg-slate-100 overflow-hidden relative flex items-center justify-center border border-slate-200/80">
+                                {/* LEFT IMAGE CONTAINER */}
+                                <div className="w-full sm:w-44 h-44 sm:h-48 shrink-0 rounded-3xl bg-slate-100 overflow-hidden relative flex items-center justify-center border border-slate-200/80">
                                     {product.image_url ? (
                                         <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
                                     ) : product.images && product.images.length > 0 ? (
@@ -340,16 +339,16 @@ export default function Index({ store, products, metrics, appUrl }) {
                                     )}
                                 </div>
 
-                                {/* RIGHT PRODUCT INFO & ACTION BUTTON (EXACTLY AS IMAGE 2) */}
-                                <div className="flex-1 flex flex-col justify-between space-y-3">
-                                    <div className="space-y-1.5">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="font-semibold text-slate-900 text-lg leading-snug">
+                                {/* RIGHT PRODUCT INFO & ACTION BUTTON */}
+                                <div className="flex-1 min-w-0 flex flex-col justify-between space-y-3">
+                                    <div className="space-y-1.5 min-w-0">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <h3 className="font-semibold text-slate-900 text-base leading-snug line-clamp-1 break-words truncate min-w-0">
                                                 {product.title}
                                             </h3>
                                             
                                             {/* Edit & Delete Action Icons */}
-                                            <div className="flex items-center gap-1">
+                                            <div className="flex items-center gap-1 shrink-0">
                                                 <button
                                                     onClick={() => openEditModal(product)}
                                                     className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
@@ -368,10 +367,10 @@ export default function Index({ store, products, metrics, appUrl }) {
                                         </div>
 
                                         {/* Price Row */}
-                                        <div className="flex items-baseline gap-2">
+                                        <div className="flex items-baseline gap-2 flex-wrap">
                                             {product.is_promo && product.promo_price ? (
                                                 <>
-                                                    <span className="text-xl font-bold text-slate-950">
+                                                    <span className="text-lg font-bold text-slate-950">
                                                         {Number(product.promo_price).toLocaleString()} FCFA
                                                     </span>
                                                     <span className="text-xs line-through text-slate-400 font-medium">
@@ -379,14 +378,14 @@ export default function Index({ store, products, metrics, appUrl }) {
                                                     </span>
                                                 </>
                                             ) : (
-                                                <span className="text-xl font-bold text-slate-950">
+                                                <span className="text-lg font-bold text-slate-950">
                                                     {Number(product.price_vendor).toLocaleString()} FCFA
                                                 </span>
                                             )}
-                                            <span className="text-[11px] text-slate-400 font-medium">(Prix Vendeur)</span>
+                                            <span className="text-[10px] text-slate-400 font-medium">(Prix Vendeur)</span>
                                         </div>
 
-                                        {/* Rating & Reviews Stars (SVG Icons as in Image 2) */}
+                                        {/* Rating & Reviews Stars */}
                                         <div className="flex items-center gap-1.5 pt-0.5">
                                             <div className="flex items-center gap-0.5 text-amber-400">
                                                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
@@ -398,13 +397,14 @@ export default function Index({ store, products, metrics, appUrl }) {
                                             <span className="text-[11px] font-semibold text-slate-600">5.0 (13 avis)</span>
                                         </div>
 
+                                        {/* STRICT DESCRIPTION LINE-CLAMP & OVERFLOW CONTROL */}
                                         {product.description && (
-                                            <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-medium pt-1">
+                                            <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-medium pt-0.5 break-words overflow-hidden text-ellipsis">
                                                 {product.description}
                                             </p>
                                         )}
 
-                                        {/* Badges Box: MoMo Payment & Shipping (As in Image 2) */}
+                                        {/* Badges Box: MoMo Payment & Shipping */}
                                         <div className="grid grid-cols-2 gap-2 pt-2 text-[11px]">
                                             <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-1.5 text-slate-700 font-medium">
                                                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -417,18 +417,18 @@ export default function Index({ store, products, metrics, appUrl }) {
                                         </div>
                                     </div>
 
-                                    {/* PROMOTION BUTTON (REPLACES WISHLIST BUTTON AS REQUESTED) */}
+                                    {/* PROMOTION BUTTON */}
                                     <div className="pt-2">
                                         <button
                                             onClick={() => openPromoModal(product)}
-                                            className={`w-full py-2.5 rounded-2xl font-semibold text-xs transition-all shadow-2xs flex items-center justify-center gap-2 ${
+                                            className={`w-full py-2 rounded-2xl font-semibold text-[11px] transition-all shadow-2xs flex items-center justify-center gap-1.5 ${
                                                 product.is_promo
                                                     ? 'bg-[#FFCC00] text-slate-950 hover:bg-amber-300'
                                                     : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
                                             }`}
                                         >
-                                            <Tag className="w-4 h-4" />
-                                            <span>{product.is_promo ? 'PROMOTION ACTIVE (MODIFIER)' : 'METTRE EN PROMOTION'}</span>
+                                            <Tag className="w-3.5 h-3.5" />
+                                            <span>{product.is_promo ? 'PROMO ACTIVE (MODIFIER)' : 'METTRE EN PROMOTION'}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -447,389 +447,301 @@ export default function Index({ store, products, metrics, appUrl }) {
                     </div>
                 )}
 
-            </div>
-
-            {/* CREATE PRODUCT MODAL */}
-            <AnimatePresence>
-                {isCreateModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl w-full p-6 sm:p-8 relative my-8"
-                        >
-                            <button
-                                onClick={() => setIsCreateModalOpen(false)}
-                                className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                {/* MODAL 1: CREATE PRODUCT */}
+                <AnimatePresence>
+                    {isCreateModalOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-2xl w-full p-6 sm:p-8 space-y-6 relative max-h-[90vh] overflow-y-auto"
                             >
-                                <X className="w-5 h-5" />
-                            </button>
+                                <button
+                                    onClick={() => setIsCreateModalOpen(false)}
+                                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 text-slate-500"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
 
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 rounded-2xl bg-[#FFCC00] flex items-center justify-center text-slate-950 font-semibold">
-                                    <ShoppingBag className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-semibold text-slate-900">Nouveau Produit au Catalogue</h3>
-                                    <p className="text-xs text-slate-500 font-medium">Téléversement de photos réelles obligatoire</p>
-                                </div>
-                            </div>
-
-                            <form onSubmit={handleCreateSubmit} className="space-y-4" encType="multipart/form-data">
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                        Titre du Produit <span className="text-rose-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={createForm.data.title}
-                                        required
-                                        placeholder="ex: Sac à Main en Cuir Italien"
-                                        onChange={(e) => createForm.setData('title', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:border-amber-400 outline-none"
-                                    />
+                                <div className="space-y-1">
+                                    <h3 className="text-xl font-bold text-slate-950">Créer un Nouveau Produit</h3>
+                                    <p className="text-xs text-slate-500 font-medium">Complétez la fiche produit avec des images et variantes réelles</p>
                                 </div>
 
-                                {/* CUSTOM VISIBLE SQUARE DROPZONE */}
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                                        Photos du Produit (Zone de dépôt carrée — 1 à 5 photos max, Obligatoire) <span className="text-rose-500">*</span>
-                                    </label>
+                                <form onSubmit={handleCreateSubmit} className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Titre du Produit *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            placeholder="ex: Sac en Cuir Artisanal"
+                                            value={createForm.data.title}
+                                            onChange={(e) => createForm.setData('title', e.target.value)}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                        />
+                                    </div>
 
-                                    <div className="relative">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Description Détaillée *</label>
+                                        <textarea
+                                            rows="3"
+                                            required
+                                            placeholder="Description complète de votre article..."
+                                            value={createForm.data.description}
+                                            onChange={(e) => createForm.setData('description', e.target.value)}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Prix Vendeur (FCFA) *</label>
+                                            <input
+                                                type="number"
+                                                required
+                                                min="1"
+                                                placeholder="ex: 15000"
+                                                value={createForm.data.price_vendor}
+                                                onChange={(e) => createForm.setData('price_vendor', e.target.value)}
+                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Quantité en Stock *</label>
+                                            <input
+                                                type="number"
+                                                required
+                                                min="0"
+                                                placeholder="ex: 20"
+                                                value={createForm.data.stock}
+                                                onChange={(e) => createForm.setData('stock', e.target.value)}
+                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Qte Min Commande *</label>
+                                            <input
+                                                type="number"
+                                                required
+                                                min="1"
+                                                placeholder="ex: 1"
+                                                value={createForm.data.min_order_quantity}
+                                                onChange={(e) => createForm.setData('min_order_quantity', e.target.value)}
+                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Images du Produit (Jusqu'à 5 photos, max 5MB/photo) *</label>
                                         <input
                                             type="file"
-                                            required
                                             multiple
                                             accept="image/*"
+                                            required
                                             onChange={handleCreateImageChange}
-                                            className="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer"
+                                            className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-900 hover:file:bg-amber-200"
                                         />
-                                        <div className="w-full h-40 rounded-3xl border-2 border-dashed border-amber-400/80 bg-amber-50/50 flex flex-col items-center justify-center text-center p-4 hover:bg-amber-100/60 transition-all cursor-pointer space-y-2">
-                                            <div className="w-12 h-12 rounded-2xl bg-[#FFCC00] text-slate-950 flex items-center justify-center shadow-2xs">
-                                                <UploadCloud className="w-6 h-6" />
+
+                                        {imagePreviews.length > 0 && (
+                                            <div className="flex items-center gap-3 mt-3 overflow-x-auto">
+                                                {imagePreviews.map((src, i) => (
+                                                    <img key={i} src={src} alt="Preview" className="w-16 h-16 rounded-xl object-cover border border-slate-200" />
+                                                ))}
                                             </div>
-                                            <div>
-                                                <div className="text-xs font-semibold text-slate-950">
-                                                    Cliquez ou glissez-déposez vos photos réelles ici
-                                                </div>
-                                                <div className="text-[11px] text-slate-400 font-medium mt-0.5">
-                                                    Format PNG, JPG, WEBP (1 à 5 fichiers max, obligatoire)
-                                                </div>
-                                            </div>
-                                        </div>
+                                        )}
                                     </div>
 
-                                    {imagePreviews.length > 0 && (
-                                        <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-2">
-                                            {imagePreviews.map((src, idx) => (
-                                                <div key={idx} className="w-16 h-16 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 relative">
-                                                    <img src={src} alt="Aperçu" className="w-full h-full object-cover" />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                            Prix Vendeur (FCFA) <span className="text-rose-500">*</span>
-                                        </label>
-                                        <input
-                                            type="number"
-                                            value={createForm.data.price_vendor}
-                                            required
-                                            placeholder="15000"
-                                            onChange={(e) => createForm.setData('price_vendor', e.target.value)}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:border-amber-400 outline-none"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                            Quantité Stock <span className="text-rose-500">*</span>
-                                        </label>
-                                        <input
-                                            type="number"
-                                            value={createForm.data.stock}
-                                            required
-                                            onChange={(e) => createForm.setData('stock', e.target.value)}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:border-amber-400 outline-none"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                            Qte Min Commande
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={createForm.data.min_order_quantity}
-                                            onChange={(e) => createForm.setData('min_order_quantity', e.target.value)}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:border-amber-400 outline-none"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Description Détaillée</label>
-                                    <textarea
-                                        rows={3}
-                                        value={createForm.data.description}
-                                        placeholder="Description du produit, matières, conseils d'entretien..."
-                                        onChange={(e) => createForm.setData('description', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:border-amber-400 outline-none"
-                                    />
-                                </div>
-
-                                <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsCreateModalOpen(false)}
-                                        className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs"
-                                    >
-                                        Annuler
-                                    </button>
                                     <button
                                         type="submit"
                                         disabled={createForm.processing}
-                                        className="px-6 py-2.5 rounded-xl bg-[#FFCC00] hover:bg-amber-300 active:scale-95 text-slate-950 font-semibold text-xs shadow-2xs transition-all"
+                                        className="w-full py-3 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md transition-all"
                                     >
-                                        Enregistrer le Produit
+                                        Enregistrer le Produit au Catalogue
                                     </button>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+                                </form>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
 
-            {/* SEPARATE EDIT PRODUCT MODAL */}
-            <AnimatePresence>
-                {editingProduct && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl w-full p-6 sm:p-8 relative my-8"
-                        >
-                            <button
-                                onClick={() => setEditingProduct(null)}
-                                className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                {/* MODAL 2: EDIT PRODUCT */}
+                <AnimatePresence>
+                    {editingProduct && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-xl w-full p-6 sm:p-8 space-y-6 relative"
                             >
-                                <X className="w-5 h-5" />
-                            </button>
+                                <button
+                                    onClick={() => setEditingProduct(null)}
+                                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 text-slate-500"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
 
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-900 font-semibold">
-                                    <Edit className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-semibold text-slate-900">Modifier les Informations du Produit</h3>
-                                    <p className="text-xs text-slate-500 font-medium">Informations du produit pré-remplies</p>
-                                </div>
-                            </div>
-
-                            <form onSubmit={handleEditSubmit} className="space-y-4" encType="multipart/form-data">
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                        Titre du Produit <span className="text-rose-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={editForm.data.title}
-                                        required
-                                        onChange={(e) => editForm.setData('title', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:border-amber-400 outline-none"
-                                    />
+                                <div className="space-y-1">
+                                    <h3 className="text-xl font-bold text-slate-950">Modifier le Produit</h3>
+                                    <p className="text-xs text-slate-500 font-medium">{editingProduct.title}</p>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <form onSubmit={handleEditSubmit} className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                            Prix Vendeur (FCFA) <span className="text-rose-500">*</span>
-                                        </label>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Titre du Produit *</label>
                                         <input
-                                            type="number"
-                                            value={editForm.data.price_vendor}
+                                            type="text"
                                             required
-                                            onChange={(e) => editForm.setData('price_vendor', e.target.value)}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:border-amber-400 outline-none"
+                                            value={editForm.data.title}
+                                            onChange={(e) => editForm.setData('title', e.target.value)}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                            Quantité Stock <span className="text-rose-500">*</span>
-                                        </label>
-                                        <input
-                                            type="number"
-                                            value={editForm.data.stock}
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Description *</label>
+                                        <textarea
+                                            rows="3"
                                             required
-                                            onChange={(e) => editForm.setData('stock', e.target.value)}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:border-amber-400 outline-none"
+                                            value={editForm.data.description}
+                                            onChange={(e) => editForm.setData('description', e.target.value)}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
                                         />
                                     </div>
 
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                            Qte Min Commande
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={editForm.data.min_order_quantity}
-                                            onChange={(e) => editForm.setData('min_order_quantity', e.target.value)}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:border-amber-400 outline-none"
-                                        />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Prix Vendeur (FCFA) *</label>
+                                            <input
+                                                type="number"
+                                                required
+                                                value={editForm.data.price_vendor}
+                                                onChange={(e) => editForm.setData('price_vendor', e.target.value)}
+                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Quantité Stock *</label>
+                                            <input
+                                                type="number"
+                                                required
+                                                value={editForm.data.stock}
+                                                onChange={(e) => editForm.setData('stock', e.target.value)}
+                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Description Détaillée</label>
-                                    <textarea
-                                        rows={3}
-                                        value={editForm.data.description}
-                                        onChange={(e) => editForm.setData('description', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:border-amber-400 outline-none"
-                                    />
-                                </div>
-
-                                <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setEditingProduct(null)}
-                                        className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs"
-                                    >
-                                        Annuler
-                                    </button>
                                     <button
                                         type="submit"
                                         disabled={editForm.processing}
-                                        className="px-6 py-2.5 rounded-xl bg-[#FFCC00] hover:bg-amber-300 active:scale-95 text-slate-950 font-semibold text-xs shadow-2xs transition-all"
+                                        className="w-full py-3 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md transition-all"
                                     >
-                                        Enregistrer les Modifications
+                                        Mettre à jour les Informations
                                     </button>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+                                </form>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
 
-            {/* SEPARATE DEDICATED PROMOTION MODAL */}
-            <AnimatePresence>
-                {promoProduct && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 sm:p-8 relative my-8"
-                        >
-                            <button
-                                onClick={() => setPromoProduct(null)}
-                                className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                {/* MODAL 3: PROMOTION MANAGEMENT */}
+                <AnimatePresence>
+                    {promoProduct && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-md w-full p-6 sm:p-8 space-y-6 relative"
                             >
-                                <X className="w-5 h-5" />
-                            </button>
+                                <button
+                                    onClick={() => setPromoProduct(null)}
+                                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 text-slate-500"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
 
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 rounded-2xl bg-[#FFCC00] flex items-center justify-center text-slate-950 font-semibold">
-                                    <Tag className="w-5 h-5" />
+                                <div className="space-y-1">
+                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-800 text-[11px] font-bold">
+                                        <Tag className="w-3.5 h-3.5" /> GESTION DE PROMOTION
+                                    </div>
+                                    <h3 className="text-xl font-bold text-slate-950">{promoProduct.title}</h3>
                                 </div>
-                                <div>
-                                    <h3 className="text-xl font-semibold text-slate-900">Gestion de la Promotion</h3>
-                                    <p className="text-xs text-slate-500 font-medium">{promoProduct.title}</p>
-                                </div>
-                            </div>
 
-                            <form onSubmit={handlePromoSubmit} className="space-y-4">
-                                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="checkbox"
-                                            id="dedicated_is_promo"
-                                            checked={promoForm.data.is_promo}
-                                            onChange={(e) => promoForm.setData('is_promo', e.target.checked)}
-                                            className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 cursor-pointer"
-                                        />
-                                        <label htmlFor="dedicated_is_promo" className="text-xs font-bold text-slate-900 cursor-pointer">
-                                            Activer la Promotion / Solde sur ce produit
-                                        </label>
+                                <form onSubmit={handlePromoSubmit} className="space-y-4">
+                                    <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 font-medium">
+                                        Prix Vendeur Normal : <strong>{Number(promoProduct.price_vendor).toLocaleString()} FCFA</strong>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Activer la Promotion</label>
+                                        <select
+                                            value={promoForm.data.is_promo ? '1' : '0'}
+                                            onChange={(e) => promoForm.setData('is_promo', e.target.value === '1')}
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                        >
+                                            <option value="1">Oui — Mettre en solde</option>
+                                            <option value="0">Non — Désactiver la promotion</option>
+                                        </select>
                                     </div>
 
                                     {promoForm.data.is_promo && (
-                                        <div className="space-y-3 pt-2">
-                                            <div className="text-xs text-slate-500">
-                                                Prix Normal Actuel : <span className="font-semibold text-slate-900">{Number(promoProduct.price_vendor).toLocaleString()} FCFA</span>
-                                            </div>
-
+                                        <>
                                             <div>
-                                                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                                    Nouveau Prix Promo Réduit (FCFA) <span className="text-rose-500">*</span>
-                                                </label>
+                                                <label className="block text-xs font-semibold text-slate-700 mb-1">Prix Vendeur Promotionnel (FCFA) *</label>
                                                 <input
                                                     type="number"
-                                                    required={promoForm.data.is_promo}
-                                                    value={promoForm.data.promo_price}
+                                                    required
                                                     placeholder="ex: 12000"
+                                                    value={promoForm.data.promo_price}
                                                     onChange={(e) => promoForm.setData('promo_price', e.target.value)}
-                                                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:border-amber-400 outline-none bg-white"
+                                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
                                                 />
                                             </div>
 
                                             <div className="grid grid-cols-2 gap-3">
                                                 <div>
-                                                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Date Début</label>
+                                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Date Début</label>
                                                     <input
                                                         type="date"
                                                         value={promoForm.data.promo_start_at}
                                                         onChange={(e) => promoForm.setData('promo_start_at', e.target.value)}
-                                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none bg-white"
+                                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
                                                     />
                                                 </div>
-
                                                 <div>
-                                                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Date Échéance (Fin)</label>
+                                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Date Fin</label>
                                                     <input
                                                         type="date"
                                                         value={promoForm.data.promo_end_at}
                                                         onChange={(e) => promoForm.setData('promo_end_at', e.target.value)}
-                                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none bg-white"
+                                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
                                                     />
                                                 </div>
                                             </div>
-                                        </div>
+                                        </>
                                     )}
-                                </div>
 
-                                <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setPromoProduct(null)}
-                                        className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs"
-                                    >
-                                        Annuler
-                                    </button>
                                     <button
                                         type="submit"
                                         disabled={promoForm.processing}
-                                        className="px-6 py-2.5 rounded-xl bg-[#FFCC00] hover:bg-amber-300 active:scale-95 text-slate-950 font-semibold text-xs shadow-2xs transition-all"
+                                        className="w-full py-3 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md transition-all"
                                     >
-                                        Appliquer la Promotion
+                                        Enregistrer la Promotion
                                     </button>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+                                </form>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
 
+            </div>
         </AuthenticatedLayout>
     );
 }

@@ -31,10 +31,18 @@ class Store extends Model
         'instagram_link',
         'tiktok_link',
         'facebook_link',
+        'hero_badge_text',
+        'hero_title',
+        'hero_subtitle',
+        'hero_cta_text',
+        'benefits_json',
+        'location_address',
+        'support_email',
     ];
 
     protected $casts = [
         'is_configured' => 'boolean',
+        'benefits_json' => 'array',
     ];
 
     public function user(): BelongsTo
@@ -55,5 +63,10 @@ class Store extends Model
     public function wallet(): HasOne
     {
         return $this->hasOne(Wallet::class);
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(StoreReview::class);
     }
 }

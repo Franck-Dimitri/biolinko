@@ -11,7 +11,11 @@ class StorefrontController extends Controller
 {
     public function show(string $slug): Response
     {
-        $store = Store::where('slug', $slug)->firstOrFail();
+        $store = Store::where('slug', $slug)
+            ->with(['reviews' => function ($q) {
+                $q->latest();
+            }])
+            ->firstOrFail();
 
         $products = $store->products()
             ->where('is_active', true)
