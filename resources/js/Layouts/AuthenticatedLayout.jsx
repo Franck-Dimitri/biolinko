@@ -1,176 +1,258 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
-import NavLink from '@/Components/NavLink';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { 
+    LayoutDashboard, ShoppingBag, Wallet, Settings, ExternalLink, LogOut, 
+    User as UserIcon, Menu, X, PackageCheck, Users, BarChart3, 
+    Megaphone, Truck, MessageSquare, Bell, Search, ChevronDown, ChevronRight, Store, ArrowUpRight, Palette
+} from 'lucide-react';
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
+    const store = usePage().props.store || user.store;
 
-    const [showingNavigationDropdown, setShowingNavigationDropdown] =
-        useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     return (
-        <div className="min-h-screen bg-gray-100">
-            <nav className="border-b border-gray-100 bg-white">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-16 justify-between">
-                        <div className="flex">
-                            <div className="flex shrink-0 items-center">
-                                <Link href="/">
-                                    <ApplicationLogo className="block h-9 w-auto fill-current text-gray-800" />
-                                </Link>
+        <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased flex flex-col md:flex-row">
+            
+            {/* Mobile Header Bar */}
+            <div className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-50">
+                <Link href="/dashboard" className="flex items-center gap-2">
+                    <div className="w-9 h-9 rounded-2xl bg-[#FFCC00] text-slate-950 flex items-center justify-center shadow-2xs">
+                        <ShoppingBag className="w-5 h-5 text-slate-950" />
+                    </div>
+                    <span className="text-xl font-bold tracking-tight text-slate-950 font-sans">
+                        biolinko
+                    </span>
+                </Link>
+                <button
+                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                    className="p-2 rounded-xl text-slate-700 hover:bg-slate-100"
+                >
+                    {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
+            </div>
+
+            {/* LEFT SIDEBAR NAVIGATION */}
+            <aside className={`
+                fixed md:sticky top-0 left-0 z-40 h-screen w-64 bg-white border-r border-slate-200/80 
+                flex flex-col justify-between p-4 transition-transform duration-300 overflow-y-auto shrink-0
+                ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            `}>
+                <div className="space-y-6">
+                    {/* Brand Logo */}
+                    <div className="flex items-center justify-between px-2 pt-2">
+                        <Link href="/dashboard" className="flex items-center gap-2.5">
+                            <div className="w-9 h-9 rounded-2xl bg-[#FFCC00] text-slate-950 flex items-center justify-center shadow-2xs">
+                                <ShoppingBag className="w-5 h-5 text-slate-950" />
                             </div>
+                            <span className="text-2xl font-bold tracking-tight text-slate-950 font-sans">
+                                biolinko
+                            </span>
+                        </Link>
+                    </div>
 
-                            <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink
-                                    href={route('dashboard')}
-                                    active={route().current('dashboard')}
-                                >
-                                    Dashboard
-                                </NavLink>
+                    {/* Store Switcher Box */}
+                    {store && (
+                        <div className="px-2">
+                            <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                                Ma Boutique
                             </div>
-                        </div>
-
-                        <div className="hidden sm:ms-6 sm:flex sm:items-center">
-                            <div className="relative ms-3">
-                                <Dropdown>
-                                    <Dropdown.Trigger>
-                                        <span className="inline-flex rounded-md">
-                                            <button
-                                                type="button"
-                                                className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
-                                            >
-                                                {user.name}
-
-                                                <svg
-                                                    className="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </Dropdown.Trigger>
-
-                                    <Dropdown.Content>
-                                        <Dropdown.Link
-                                            href={route('profile.edit')}
-                                        >
-                                            Profile
-                                        </Dropdown.Link>
-                                        <Dropdown.Link
-                                            href={route('logout')}
-                                            method="post"
-                                            as="button"
-                                        >
-                                            Log Out
-                                        </Dropdown.Link>
-                                    </Dropdown.Content>
-                                </Dropdown>
+                            <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between group hover:border-amber-300 transition-all cursor-pointer">
+                                <div className="flex items-center gap-2.5 truncate">
+                                    <div className="w-8 h-8 rounded-xl bg-[#FFCC00] text-slate-950 font-bold flex items-center justify-center text-xs shrink-0 overflow-hidden">
+                                        {store.logo_url ? <img src={store.logo_url} alt="Logo" className="w-full h-full object-cover" /> : <Store className="w-4 h-4 text-slate-950" />}
+                                    </div>
+                                    <div className="truncate">
+                                        <div className="text-xs font-semibold text-slate-950 truncate">{store.name}</div>
+                                        <div className="text-[10px] text-amber-700 font-mono truncate">biolinko.app/{store.slug}</div>
+                                    </div>
+                                </div>
+                                <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
                             </div>
                         </div>
+                    )}
 
-                        <div className="-me-2 flex items-center sm:hidden">
-                            <button
-                                onClick={() =>
-                                    setShowingNavigationDropdown(
-                                        (previousState) => !previousState,
-                                    )
-                                }
-                                className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none"
-                            >
-                                <svg
-                                    className="h-6 w-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        className={
-                                            !showingNavigationDropdown
-                                                ? 'inline-flex'
-                                                : 'hidden'
-                                        }
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        className={
-                                            showingNavigationDropdown
-                                                ? 'inline-flex'
-                                                : 'hidden'
-                                        }
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
+                    {/* NAV GROUP 1: GENERAL */}
+                    <div className="space-y-1">
+                        <div className="px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                            Général
                         </div>
+
+                        <Link
+                            href={route('dashboard')}
+                            className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs font-semibold ${
+                                route().current('dashboard')
+                                    ? 'bg-amber-50/80 text-slate-950 border-l-[3px] border-[#FFCC00] rounded-r-xl pl-3'
+                                    : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50 rounded-xl'
+                            }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <LayoutDashboard className="w-4 h-4" />
+                                <span>Tableau de bord</span>
+                            </div>
+                        </Link>
+
+                        <Link
+                            href={route('products.index')}
+                            className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs font-semibold ${
+                                route().current('products.*')
+                                    ? 'bg-amber-50/80 text-slate-950 border-l-[3px] border-[#FFCC00] rounded-r-xl pl-3'
+                                    : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50 rounded-xl'
+                            }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <ShoppingBag className="w-4 h-4" />
+                                <span>Catalogue Produits</span>
+                            </div>
+                        </Link>
+
+                        <Link
+                            href={route('appearance.index')}
+                            className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs font-semibold ${
+                                route().current('appearance.*')
+                                    ? 'bg-amber-50/80 text-slate-950 border-l-[3px] border-[#FFCC00] rounded-r-xl pl-3'
+                                    : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50 rounded-xl'
+                            }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <Palette className="w-4 h-4" />
+                                <span>Apparence Boutique</span>
+                            </div>
+                        </Link>
+
+                        <Link
+                            href="#"
+                            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition-all"
+                        >
+                            <div className="flex items-center gap-3">
+                                <PackageCheck className="w-4 h-4" />
+                                <span>Commandes</span>
+                            </div>
+                            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-semibold">2</span>
+                        </Link>
+
+                        <Link
+                            href="#"
+                            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition-all"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Users className="w-4 h-4" />
+                                <span>Clients</span>
+                            </div>
+                        </Link>
+                    </div>
+
+                    {/* NAV GROUP 2: TOOLS */}
+                    <div className="space-y-1">
+                        <div className="px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+                            Outils & Retraits
+                        </div>
+
+                        <Link
+                            href="#"
+                            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition-all"
+                        >
+                            <div className="flex items-center gap-3">
+                                <BarChart3 className="w-4 h-4" />
+                                <span>Statistiques</span>
+                            </div>
+                        </Link>
+
+                        <Link
+                            href="#"
+                            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition-all"
+                        >
+                            <div className="flex items-center gap-3">
+                                <Wallet className="w-4 h-4" />
+                                <span>Portefeuille MoMo</span>
+                            </div>
+                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-semibold">MoMo</span>
+                        </Link>
                     </div>
                 </div>
 
-                <div
-                    className={
-                        (showingNavigationDropdown ? 'block' : 'hidden') +
-                        ' sm:hidden'
-                    }
-                >
-                    <div className="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            href={route('dashboard')}
-                            active={route().current('dashboard')}
+                {/* BOTTOM USER PROFILE CARD */}
+                <div className="pt-4 border-t border-slate-200/80 space-y-3">
+                    {store && (
+                        <a
+                            href={`/${store.slug}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full py-2.5 px-3 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 text-xs font-semibold transition-all flex items-center justify-between shadow-2xs"
                         >
-                            Dashboard
-                        </ResponsiveNavLink>
-                    </div>
+                            <span>Voir ma vitrine client</span>
+                            <ArrowUpRight className="w-4 h-4" />
+                        </a>
+                    )}
 
-                    <div className="border-t border-gray-200 pb-1 pt-4">
-                        <div className="px-4">
-                            <div className="text-base font-medium text-gray-800">
-                                {user.name}
+                    <Dropdown>
+                        <Dropdown.Trigger>
+                            <div className="p-2 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between hover:bg-slate-100 transition-all cursor-pointer">
+                                <div className="flex items-center gap-2.5 truncate">
+                                    <div className="w-8 h-8 rounded-xl bg-[#FFCC00] text-slate-950 font-bold flex items-center justify-center text-xs shrink-0">
+                                        {user.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="truncate text-left">
+                                        <div className="text-xs font-semibold text-slate-950 truncate">{user.name}</div>
+                                        <div className="text-[10px] text-slate-400 truncate">{user.email}</div>
+                                    </div>
+                                </div>
+                                <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
                             </div>
-                            <div className="text-sm font-medium text-gray-500">
-                                {user.email}
-                            </div>
-                        </div>
+                        </Dropdown.Trigger>
 
-                        <div className="mt-3 space-y-1">
-                            <ResponsiveNavLink href={route('profile.edit')}>
-                                Profile
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                method="post"
+                        <Dropdown.Content>
+                            <Dropdown.Link href={route('profile.edit')}>
+                                Mon Profil & Sécurité
+                            </Dropdown.Link>
+                            <Dropdown.Link
                                 href={route('logout')}
+                                method="post"
                                 as="button"
                             >
-                                Log Out
-                            </ResponsiveNavLink>
-                        </div>
-                    </div>
+                                Se déconnecter
+                            </Dropdown.Link>
+                        </Dropdown.Content>
+                    </Dropdown>
                 </div>
-            </nav>
+            </aside>
 
-            {header && (
-                <header className="bg-white shadow">
-                    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                        {header}
+            {/* MAIN FULL-WIDTH CONTENT AREA */}
+            <div className="flex-1 flex flex-col min-w-0">
+                <header className="hidden md:flex h-16 bg-white border-b border-slate-200/80 px-8 items-center justify-between sticky top-0 z-30">
+                    <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                        <span className="text-slate-400">BIOLINKO Vendeur</span>
+                        <span>/</span>
+                        <span className="font-semibold text-slate-950">Tableau de bord</span>
+                    </div>
+
+                    <div className="w-80 relative">
+                        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <input
+                            type="text"
+                            placeholder="Rechercher des produits, commandes..."
+                            className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-medium text-slate-900 focus:outline-none focus:border-amber-400 transition-colors"
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <button className="p-2 rounded-xl bg-slate-50 hover:bg-amber-50/50 text-slate-600 transition-colors relative">
+                            <Bell className="w-4 h-4 text-slate-700" />
+                            <span className="w-2 h-2 rounded-full bg-amber-500 absolute top-1.5 right-1.5" />
+                        </button>
+                        <Link href={route('appearance.index')} className="p-2 rounded-xl bg-slate-50 hover:bg-amber-50/50 text-slate-600 transition-colors">
+                            <Palette className="w-4 h-4 text-slate-700" />
+                        </Link>
                     </div>
                 </header>
-            )}
 
-            <main>{children}</main>
+                <main className="p-4 sm:p-6 lg:p-8 flex-1 w-full">
+                    {children}
+                </main>
+            </div>
+
         </div>
     );
 }

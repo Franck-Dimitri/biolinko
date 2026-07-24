@@ -13,8 +13,8 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['"Plus Jakarta Sans"', ...defaultTheme.fontFamily.sans],
-                serif: ['"Playfair Display"', ...defaultTheme.fontFamily.serif],
+                sans: ['"Poppins"', ...defaultTheme.fontFamily.sans],
+                serif: ['"Poppins"', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 brand: {

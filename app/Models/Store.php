@@ -16,12 +16,25 @@ class Store extends Model
         'user_id',
         'name',
         'slug',
+        'is_configured',
+        'category',
+        'description',
+        'about_text',
         'logo_url',
         'banner_url',
         'theme_color',
         'plan_type',
         'phone_whatsapp',
-        'description',
+        'city_location',
+        'opening_hours',
+        'announcement_header',
+        'instagram_link',
+        'tiktok_link',
+        'facebook_link',
+    ];
+
+    protected $casts = [
+        'is_configured' => 'boolean',
     ];
 
     public function user(): BelongsTo

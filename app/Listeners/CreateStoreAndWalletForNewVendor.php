@@ -30,14 +30,18 @@ class CreateStoreAndWalletForNewVendor
             $counter++;
         }
 
-        // Create store
+        // Option B: Store is generated immediately and active!
         $store = Store::create([
             'user_id' => $user->id,
-            'name' => 'Boutique de ' . $user->name,
+            'name' => $user->name,
             'slug' => $slug,
-            'theme_color' => '#7C3AED',
+            'is_configured' => true,
+            'category' => 'Mode & Accessoires',
+            'theme_color' => '#FFCC00',
             'plan_type' => 'starter',
             'phone_whatsapp' => $user->phone_whatsapp,
+            'announcement_header' => '⚡ Bienvenue sur notre boutique officielle !',
+            'opening_hours' => 'Lun - Sam: 08h00 - 18h00',
         ]);
 
         // Create wallet
