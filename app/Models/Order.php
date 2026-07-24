@@ -16,6 +16,7 @@ class Order extends Model
         'uuid',
         'tracking_code',
         'store_id',
+        'customer_id',
         'customer_name',
         'customer_phone',
         'customer_email',
@@ -55,6 +56,11 @@ class Order extends Model
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     public function items(): HasMany

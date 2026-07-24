@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -68,5 +69,12 @@ class Store extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(StoreReview::class);
+    }
+
+    public function customers(): BelongsToMany
+    {
+        return $this->belongsToMany(Customer::class, 'store_customer')
+            ->withPivot(['total_orders_count', 'total_spent', 'last_order_at'])
+            ->withTimestamps();
     }
 }

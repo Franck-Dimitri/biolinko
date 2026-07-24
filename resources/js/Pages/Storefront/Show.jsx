@@ -8,7 +8,7 @@ import {
     Store, ChevronRight, HelpCircle, ArrowLeft, Percent, Calendar, PhoneCall,
     Award, Shield, FileText, CheckCircle2, Factory, Globe, BadgeCheck,
     RefreshCw, Headphones, UserCheck, Play, Flame, Eye, Trash2, Plus, Minus,
-    ShoppingCart, ArrowUpRight, Mail
+    ShoppingCart, ArrowUpRight, Mail, User
 } from 'lucide-react';
 
 // Reliable Contrast Helper Function (YIQ Formula)
@@ -39,12 +39,25 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
     const [copiedLink, setCopiedLink] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeSectionTab, setActiveSectionTab] = useState('all'); // 'all', 'products', 'promo', 'reviews', 'about', 'cart'
+    const [isAutoFilled, setIsAutoFilled] = useState(false);
 
     // Vendor Dynamic Theme Color & Legible Contrast Text
     const primaryColor = store?.theme_color || '#FFCC00';
     const primaryTextColor = getContrastColor(primaryColor);
 
-    // Local Storage Cart Persistence
+    // Fast USSD Checkout Form
+    const { data, setData, post, processing, errors, reset } = useForm({
+        store_id: store.id,
+        customer_name: '',
+        customer_phone: '',
+        customer_email: '',
+        customer_whatsapp: '',
+        delivery_address: '',
+        notes: '',
+        items: [],
+    });
+
+    // Local Storage Cart Persistence & Returning Customer Profile Auto-fill
     useEffect(() => {
         const saved = localStorage.getItem(`biolinko_cart_${store.id}`);
         if (saved) {
@@ -52,6 +65,27 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
                 setCartItems(JSON.parse(saved));
             } catch (e) {
                 console.error("Failed to parse cart JSON", e);
+            }
+        }
+
+        // Returning Customer Auto-fill from localStorage
+        const savedCustomer = localStorage.getItem('biolinko_client_profile');
+        if (savedCustomer) {
+            try {
+                const parsed = JSON.parse(savedCustomer);
+                if (parsed && parsed.customer_phone) {
+                    setData(d => ({
+                        ...d,
+                        customer_name: parsed.customer_name || '',
+                        customer_phone: parsed.customer_phone || '',
+                        customer_email: parsed.customer_email || '',
+                        customer_whatsapp: parsed.customer_whatsapp || '',
+                        delivery_address: parsed.delivery_address || '',
+                    }));
+                    setIsAutoFilled(true);
+                }
+            } catch (e) {
+                console.error("Failed to parse saved customer profile", e);
             }
         }
     }, [store.id]);
@@ -64,7 +98,45 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
     // Show Toast Notification
     const showToast = (msg) => {
         setToastMessage(msg);
-        setTimeout(() => setToastMessage(null), 3000);
+        setTimeout(() => setToastMessage(null), 3500);
+    };
+
+    // Customer Phone Lookup API Trigger (For returning customers on new devices)
+    const handlePhoneChange = (newPhone) => {
+        setData('customer_phone', newPhone);
+
+        const cleanPhone = newPhone.replace(/[^0-9]/g, '');
+        if (cleanPhone.length >= 8 && !isAutoFilled) {
+            fetch(`/checkout/lookup-customer?phone=${encodeURIComponent(cleanPhone)}`)
+                .then(res => res.json())
+                .then(resData => {
+                    if (resData && resData.found && resData.customer) {
+                        const c = resData.customer;
+                        setData(d => ({
+                            ...d,
+                            customer_name: c.name || d.customer_name,
+                            customer_email: c.email || d.customer_email,
+                            customer_whatsapp: c.whatsapp || d.customer_whatsapp,
+                            delivery_address: c.delivery_address || d.delivery_address,
+                        }));
+                        setIsAutoFilled(true);
+                        showToast(`✨ Content de vous revoir ${c.name} ! Vos coordonnées ont été pré-remplies.`);
+                    }
+                })
+                .catch(err => console.error("Customer lookup error", err));
+        }
+    };
+
+    const handleResetCustomerForm = () => {
+        setData(d => ({
+            ...d,
+            customer_name: '',
+            customer_phone: '',
+            customer_email: '',
+            customer_whatsapp: '',
+            delivery_address: '',
+        }));
+        setIsAutoFilled(false);
     };
 
     // CART MANAGEMENT FUNCTIONS
@@ -168,18 +240,6 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
             { id: 3, customer_name: 'Chantal D.', customer_city: 'Parakou', rating: 5, comment: 'Excellente expérience d\'achat. Le code de suivi m\'a permis de suivre le colis en temps réel jusqu\'à mon domicile.' }
         ];
 
-    // Fast USSD Checkout Form (with customer_email and customer_whatsapp optional fields)
-    const { data, setData, post, processing, errors, reset } = useForm({
-        store_id: store.id,
-        customer_name: '',
-        customer_phone: '',
-        customer_email: '',
-        customer_whatsapp: '',
-        delivery_address: '',
-        notes: '',
-        items: [],
-    });
-
     useEffect(() => {
         if (initialSelectedProductId && products) {
             const found = products.find(p => p.id === parseInt(initialSelectedProductId));
@@ -217,6 +277,15 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
     const handleCheckoutSubmitFromCartPage = (e) => {
         e.preventDefault();
         if (cartItems.length === 0) return;
+
+        // Save profile to localStorage for future 1-click purchases across BIOLINKO
+        localStorage.setItem('biolinko_client_profile', JSON.stringify({
+            customer_name: data.customer_name,
+            customer_phone: data.customer_phone,
+            customer_email: data.customer_email,
+            customer_whatsapp: data.customer_whatsapp,
+            delivery_address: data.delivery_address,
+        }));
 
         const checkoutPayloadItems = cartItems.map(item => ({
             product_id: item.product_id,
@@ -560,6 +629,23 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
                                                 <p className="text-xs text-slate-500 font-medium">Saisissez vos coordonnées de livraison</p>
                                             </div>
 
+                                            {/* RETURNING CUSTOMER WELCOME BACK AUTO-FILL ALERT BANNER */}
+                                            {isAutoFilled && (
+                                                <div className="p-3.5 rounded-2xl bg-amber-100/90 border border-amber-300 text-xs text-slate-900 font-semibold flex items-center justify-between shadow-2xs">
+                                                    <span className="flex items-center gap-2">
+                                                        <Sparkles className="w-4 h-4 text-amber-700 shrink-0" />
+                                                        <span>Content de vous revoir ! Coordonnées pré-remplies.</span>
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleResetCustomerForm}
+                                                        className="text-[11px] text-slate-600 hover:text-slate-950 underline font-semibold ml-2 shrink-0"
+                                                    >
+                                                        Modifier
+                                                    </button>
+                                                </div>
+                                            )}
+
                                             <form onSubmit={handleCheckoutSubmitFromCartPage} className="space-y-3.5">
                                                 <div>
                                                     <label className="block text-xs font-semibold text-slate-700 mb-1">Nom & Prénom *</label>
@@ -580,12 +666,12 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
                                                         required
                                                         placeholder="ex: 0102030405"
                                                         value={data.customer_phone}
-                                                        onChange={(e) => setData('customer_phone', e.target.value)}
+                                                        onChange={(e) => handlePhoneChange(e.target.value)}
                                                         className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-slate-400 outline-none"
                                                     />
                                                 </div>
 
-                                                {/* NEW OPTIONAL FIELDS REQUESTED BY USER */}
+                                                {/* OPTIONAL FIELDS */}
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                     <div>
                                                         <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -659,7 +745,7 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
                                                     <span>Valider & Payer par Mobile Money ({Number(cartTotalClientTc).toLocaleString()} FCFA)</span>
                                                 </motion.button>
 
-                                                {/* REASSURANCE NOTE BELOW PAYMENT BUTTON AS DIRECTED BY USER */}
+                                                {/* REASSURANCE NOTE BELOW PAYMENT BUTTON */}
                                                 <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-[11px] text-slate-700 font-medium flex items-start gap-2.5">
                                                     <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                                                     <div className="leading-relaxed">

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AppearanceController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderTrackingController;
@@ -45,12 +46,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/dashboard/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
     Route::post('/dashboard/wallet/withdraw', [OrderController::class, 'requestWithdrawal'])->name('wallet.withdraw');
 
+    // Customers Directory
+    Route::get('/dashboard/customers', [CustomerController::class, 'index'])->name('customers.index');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Public Client Fast Checkout & Order Tracking
+// Public Client Fast Checkout & Order Tracking & Customer Lookup
+Route::get('/checkout/lookup-customer', [CheckoutController::class, 'lookupCustomer'])->name('checkout.lookupCustomer');
 Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
 Route::get('/track/{tracking_code}', [OrderTrackingController::class, 'show'])->name('order.track');
 
