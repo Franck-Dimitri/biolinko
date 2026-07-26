@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { 
     LayoutDashboard, ShoppingBag, Wallet, Settings, ExternalLink, LogOut, 
     User as UserIcon, Menu, X, PackageCheck, Users, BarChart3, 
-    Megaphone, Truck, MessageSquare, Bell, Search, ChevronDown, ChevronRight, Store, ArrowUpRight, Palette
+    Megaphone, Truck, MessageSquare, Bell, Search, ChevronDown, ChevronRight, Store, ArrowUpRight, Palette, ShieldCheck
 } from 'lucide-react';
 
 export default function AuthenticatedLayout({ header, children }) {
@@ -77,13 +77,13 @@ export default function AuthenticatedLayout({ header, children }) {
                     {/* NAV GROUP 1: GENERAL */}
                     <div className="space-y-1">
                         <div className="px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                            Général
+                            Espace Vendeur
                         </div>
 
                         <Link
                             href={route('dashboard')}
                             className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs font-semibold ${
-                                route().current('dashboard')
+                                route().current('dashboard') || route().current('seller.dashboard')
                                     ? 'bg-amber-50/80 text-slate-950 border-l-[3px] border-[#FFCC00] rounded-r-xl pl-3'
                                     : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50 rounded-xl'
                             }`}
@@ -172,6 +172,19 @@ export default function AuthenticatedLayout({ header, children }) {
 
                 {/* BOTTOM USER PROFILE CARD */}
                 <div className="pt-4 border-t border-slate-200/80 space-y-3">
+                    {user?.role === 'admin' && (
+                        <Link
+                            href={route('admin.dashboard')}
+                            className="w-full py-2.5 px-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs font-semibold transition-all flex items-center justify-between shadow-2xs border border-slate-800"
+                        >
+                            <span className="flex items-center gap-2">
+                                <ShieldCheck className="w-4 h-4 text-amber-400" />
+                                <span>Console Super-Admin</span>
+                            </span>
+                            <ArrowUpRight className="w-4 h-4" />
+                        </Link>
+                    )}
+
                     {store && (
                         <a
                             href={`/${store.slug}`}
@@ -201,6 +214,11 @@ export default function AuthenticatedLayout({ header, children }) {
                         </Dropdown.Trigger>
 
                         <Dropdown.Content align="right" width="48">
+                            {user?.role === 'admin' && (
+                                <Dropdown.Link href={route('admin.dashboard')}>
+                                    Console Super Admin
+                                </Dropdown.Link>
+                            )}
                             <Dropdown.Link href={route('profile.edit')}>
                                 Mon Profil
                             </Dropdown.Link>

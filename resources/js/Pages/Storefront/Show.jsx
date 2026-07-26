@@ -293,7 +293,7 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
             quantity: item.quantity,
         }));
 
-        post(route('checkout.store'), {
+        post(route('checkout.process'), {
             data: {
                 ...data,
                 items: checkoutPayloadItems,

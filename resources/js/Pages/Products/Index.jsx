@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Plus, ShoppingBag, Edit, Trash2, Copy, Check, ExternalLink, 
     X, Sparkles, AlertCircle, ArrowRight, Package, Image as ImageIcon, 
-    Trophy, TrendingUp, Layers2, Tag, Calendar, AlertTriangle, Search, Filter, ShieldCheck, Zap, UploadCloud, Star, Heart, Truck, Shield
+    Trophy, TrendingUp, Layers2, Tag, Calendar, AlertTriangle, Search, Filter, ShieldCheck, Zap, UploadCloud, Star, Heart, Truck, Shield, Eye
 } from 'lucide-react';
 
 export default function Index({ store, products, metrics, appUrl }) {
@@ -30,6 +30,7 @@ export default function Index({ store, products, metrics, appUrl }) {
         promo_price: '',
         promo_start_at: '',
         promo_end_at: '',
+        is_active: true,
         images_files: [],
         variants: [],
     });
@@ -84,7 +85,7 @@ export default function Index({ store, products, metrics, appUrl }) {
             stock: product.stock,
             min_order_quantity: product.min_order_quantity || 1,
             is_active: Boolean(product.is_active),
-            is_promo: Boolean(product.is_promo),
+            is_promo: true,
             promo_price: product.promo_price || '',
             promo_start_at: product.promo_start_at ? product.promo_start_at.substring(0, 10) : '',
             promo_end_at: product.promo_end_at ? product.promo_end_at.substring(0, 10) : '',
@@ -105,12 +106,28 @@ export default function Index({ store, products, metrics, appUrl }) {
         createForm.setData('variants', updated);
     };
 
+    // Accumulate multi-image selection up to 5 photos max
     const handleCreateImageChange = (e) => {
-        const files = Array.from(e.target.files).slice(0, 5);
-        createForm.setData('images_files', files);
+        const newFiles = Array.from(e.target.files);
+        if (!newFiles.length) return;
 
-        const previews = files.map(file => URL.createObjectURL(file));
+        const currentFiles = createForm.data.images_files || [];
+        const combinedFiles = [...currentFiles, ...newFiles].slice(0, 5);
+        createForm.setData('images_files', combinedFiles);
+
+        const previews = combinedFiles.map(file => typeof file === 'string' ? file : URL.createObjectURL(file));
         setImagePreviews(previews);
+
+        e.target.value = '';
+    };
+
+    const handleRemoveImagePreview = (idxToRemove) => {
+        const currentFiles = createForm.data.images_files || [];
+        const updatedFiles = currentFiles.filter((_, i) => i !== idxToRemove);
+        createForm.setData('images_files', updatedFiles);
+
+        const updatedPreviews = imagePreviews.filter((_, i) => i !== idxToRemove);
+        setImagePreviews(updatedPreviews);
     };
 
     const handleCreateSubmit = (e) => {
@@ -136,7 +153,21 @@ export default function Index({ store, products, metrics, appUrl }) {
     const handlePromoSubmit = (e) => {
         e.preventDefault();
         if (!promoProduct) return;
-        promoForm.post(route('products.update', promoProduct.id), {
+        promoForm.transform((data) => ({
+            ...data,
+            is_promo: true,
+        })).post(route('products.update', promoProduct.id), {
+            onSuccess: () => setPromoProduct(null),
+        });
+    };
+
+    const handleDisablePromo = () => {
+        if (!promoProduct) return;
+        promoForm.transform((data) => ({
+            ...data,
+            is_promo: false,
+            promo_price: null,
+        })).post(route('products.update', promoProduct.id), {
             onSuccess: () => setPromoProduct(null),
         });
     };
@@ -181,7 +212,12 @@ export default function Index({ store, products, metrics, appUrl }) {
                     </div>
 
                     <button
-                        onClick={() => setIsCreateModalOpen(true)}
+                        onClick={() => {
+                            createForm.reset();
+                            setVariantsList([]);
+                            setImagePreviews([]);
+                            setIsCreateModalOpen(true);
+                        }}
                         className="px-5 py-2.5 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-semibold text-xs shadow-2xs transition-transform active:scale-95 flex items-center justify-center gap-2"
                     >
                         <Plus className="w-4 h-4" />
@@ -251,7 +287,7 @@ export default function Index({ store, products, metrics, appUrl }) {
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-xs text-slate-400 font-medium">Aucune vente enregistrée</div>
+                            <div className="text-xs text-slate-400 font-medium">Aucun produit en stock</div>
                         )}
                     </div>
                 </div>
@@ -264,137 +300,109 @@ export default function Index({ store, products, metrics, appUrl }) {
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Rechercher un produit par nom..."
+                            placeholder="Rechercher par nom de produit..."
                             className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
                         />
                     </div>
 
-                    <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                         <button
-                            type="button"
                             onClick={() => setFilterCategory('all')}
                             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                                filterCategory === 'all' ? 'bg-[#FFCC00] text-slate-950' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                filterCategory === 'all' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                         >
-                            Tous ({products?.length || 0})
+                            Tous ({products ? products.length : 0})
                         </button>
+
                         <button
-                            type="button"
                             onClick={() => setFilterCategory('promo')}
                             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 ${
-                                filterCategory === 'promo' ? 'bg-[#FFCC00] text-slate-950' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                filterCategory === 'promo' ? 'bg-[#FFCC00] text-slate-950 font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                         >
-                            <Tag className="w-3 h-3" />
-                            <span>En Promotion</span>
+                            <Tag className="w-3.5 h-3.5" />
+                            <span>En Promo</span>
                         </button>
+
                         <button
-                            type="button"
                             onClick={() => setFilterCategory('low_stock')}
                             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 ${
-                                filterCategory === 'low_stock' ? 'bg-[#FFCC00] text-slate-950' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                filterCategory === 'low_stock' ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                         >
-                            <AlertTriangle className="w-3 h-3" />
+                            <AlertTriangle className="w-3.5 h-3.5" />
                             <span>Stock Critique</span>
                         </button>
                     </div>
                 </div>
 
-                {/* PRODUCT CARDS GRID WITH STRICT DESCRIPTION LINE-CLAMP & OVERFLOW PROTECTION */}
+                {/* PRODUCTS CATALOGUE GRID */}
                 {filteredProducts && filteredProducts.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filteredProducts.map((product) => (
                             <motion.div
                                 key={product.id}
                                 whileHover={{ y: -3 }}
-                                transition={{ duration: 0.2 }}
-                                className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs hover:shadow-md transition-all p-5 flex flex-col sm:flex-row gap-5 relative group min-w-0"
+                                className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between group"
                             >
-                                {/* LEFT IMAGE CONTAINER */}
-                                <div className="w-full sm:w-44 h-44 sm:h-48 shrink-0 rounded-3xl bg-slate-100 overflow-hidden relative flex items-center justify-center border border-slate-200/80">
-                                    {product.image_url ? (
-                                        <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
-                                    ) : product.images && product.images.length > 0 ? (
-                                        <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <ShoppingBag className="w-12 h-12 text-slate-300" />
-                                    )}
+                                <div>
+                                    <div className="h-48 bg-slate-50 relative overflow-hidden flex items-center justify-center p-3 border-b border-slate-100">
+                                        {product.image_url ? (
+                                            <img src={product.image_url} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                        ) : product.images && product.images.length > 0 ? (
+                                            <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                        ) : (
+                                            <ShoppingBag className="w-12 h-12 text-slate-300" />
+                                        )}
 
-                                    {/* PROMO BADGE */}
-                                    {product.is_promo && product.promo_price && (
-                                        <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-[#FFCC00] text-slate-950 font-bold text-[11px] shadow-2xs flex items-center gap-1">
-                                            <Tag className="w-3 h-3" />
-                                            <span>PROMO</span>
+                                        {product.is_promo && (
+                                            <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-[#FFCC00] text-slate-950 font-bold text-[10px] shadow-2xs flex items-center gap-1">
+                                                <Tag className="w-3 h-3 text-slate-950" />
+                                                <span>PROMO {product.promo_price ? `${Number(product.promo_price).toLocaleString()} FCFA` : ''}</span>
+                                            </div>
+                                        )}
+
+                                        <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1">
+                                            <button
+                                                onClick={() => handleCopySmartLink(product)}
+                                                className="p-1.5 rounded-lg bg-white/90 backdrop-blur-xs text-slate-700 hover:text-slate-950 shadow-2xs text-[10px] font-semibold flex items-center gap-1 border border-slate-200"
+                                                title="Copier le lien direct vers ce produit"
+                                            >
+                                                {copiedId === product.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-slate-600" />}
+                                                <span>{copiedId === product.id ? 'Copié !' : 'Lien Produit'}</span>
+                                            </button>
                                         </div>
-                                    )}
+                                    </div>
 
-                                    {/* Photos Counter Badge */}
-                                    {product.images && product.images.length > 1 && (
-                                        <div className="absolute bottom-3 left-3 px-2 py-0.5 rounded-lg bg-slate-950/80 text-white font-medium text-[10px] flex items-center gap-1">
-                                            <ImageIcon className="w-3 h-3 text-[#FFCC00]" />
-                                            <span>{product.images.length} photos</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* RIGHT PRODUCT INFO & ACTION BUTTON */}
-                                <div className="flex-1 min-w-0 flex flex-col justify-between space-y-3">
-                                    <div className="space-y-1.5 min-w-0">
-                                        <div className="flex items-center justify-between gap-2">
-                                            <h3 className="font-semibold text-slate-900 text-base leading-snug line-clamp-1 break-words truncate min-w-0">
-                                                {product.title}
-                                            </h3>
-                                            
-                                            {/* Edit & Delete Action Icons */}
+                                    <div className="p-5 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-sm font-bold text-slate-950 truncate">{product.title}</div>
                                             <div className="flex items-center gap-1 shrink-0">
                                                 <button
                                                     onClick={() => openEditModal(product)}
-                                                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                                                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-950 transition-colors"
                                                     title="Modifier"
                                                 >
-                                                    <Edit className="w-4 h-4" />
+                                                    <Edit className="w-3.5 h-3.5" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteProduct(product)}
-                                                    className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                                                    className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500 hover:text-rose-700 transition-colors"
                                                     title="Supprimer"
                                                 >
-                                                    <Trash2 className="w-4 h-4" />
+                                                    <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
                                         </div>
 
-                                        {/* Price Row */}
-                                        <div className="flex items-baseline gap-2 flex-wrap">
-                                            {product.is_promo && product.promo_price ? (
-                                                <>
-                                                    <span className="text-lg font-bold text-slate-950">
-                                                        {Number(product.promo_price).toLocaleString()} FCFA
-                                                    </span>
-                                                    <span className="text-xs line-through text-slate-400 font-medium">
-                                                        {Number(product.price_vendor).toLocaleString()} FCFA
-                                                    </span>
-                                                </>
-                                            ) : (
-                                                <span className="text-lg font-bold text-slate-950">
-                                                    {Number(product.price_vendor).toLocaleString()} FCFA
-                                                </span>
-                                            )}
-                                            <span className="text-[10px] text-slate-400 font-medium">(Prix Vendeur)</span>
-                                        </div>
-
-                                        {/* Rating & Reviews Stars */}
-                                        <div className="flex items-center gap-1.5 pt-0.5">
-                                            <div className="flex items-center gap-0.5 text-amber-400">
-                                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                        <div className="flex items-baseline justify-between gap-1 flex-wrap">
+                                            <div className="text-base font-extrabold text-slate-950">
+                                                {Number(product.price_vendor).toLocaleString()} FCFA
                                             </div>
-                                            <span className="text-[11px] font-semibold text-slate-600">5.0 (13 avis)</span>
+                                            <div className="text-[11px] text-slate-500 font-medium">
+                                                Stock: <strong className={product.stock <= 3 ? 'text-rose-600 font-bold' : 'text-slate-900 font-semibold'}>{product.stock}</strong>
+                                            </div>
                                         </div>
 
                                         {/* STRICT DESCRIPTION LINE-CLAMP & OVERFLOW CONTROL */}
@@ -418,7 +426,7 @@ export default function Index({ store, products, metrics, appUrl }) {
                                     </div>
 
                                     {/* PROMOTION BUTTON */}
-                                    <div className="pt-2">
+                                    <div className="p-5 pt-0">
                                         <button
                                             onClick={() => openPromoModal(product)}
                                             className={`w-full py-2 rounded-2xl font-semibold text-[11px] transition-all shadow-2xs flex items-center justify-center gap-1.5 ${
@@ -442,7 +450,7 @@ export default function Index({ store, products, metrics, appUrl }) {
                         </div>
                         <h3 className="text-base font-semibold text-slate-900">Aucun produit dans le catalogue</h3>
                         <p className="text-xs max-w-sm mx-auto text-slate-500 font-medium">
-                            Ajoutez votre premier produit avec une photo obligatoire pour commencer vos ventes.
+                            Ajoutez votre premier produit avec une photo pour commencer vos ventes.
                         </p>
                     </div>
                 )}
@@ -468,6 +476,20 @@ export default function Index({ store, products, metrics, appUrl }) {
                                     <h3 className="text-xl font-bold text-slate-950">Créer un Nouveau Produit</h3>
                                     <p className="text-xs text-slate-500 font-medium">Complétez la fiche produit avec des images et variantes réelles</p>
                                 </div>
+
+                                {Object.keys(createForm.errors).length > 0 && (
+                                    <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 space-y-1">
+                                        <div className="font-bold flex items-center gap-1.5">
+                                            <AlertCircle className="w-4 h-4 text-rose-600" />
+                                            <span>Erreur lors de l'enregistrement :</span>
+                                        </div>
+                                        <ul className="list-disc list-inside pl-2 space-y-0.5 text-[11px]">
+                                            {Object.values(createForm.errors).map((err, idx) => (
+                                                <li key={idx}>{err}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
 
                                 <form onSubmit={handleCreateSubmit} className="space-y-4">
                                     <div>
@@ -535,21 +557,47 @@ export default function Index({ store, products, metrics, appUrl }) {
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Images du Produit (Jusqu'à 5 photos, max 5MB/photo) *</label>
-                                        <input
-                                            type="file"
-                                            multiple
-                                            accept="image/*"
-                                            required
-                                            onChange={handleCreateImageChange}
-                                            className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-900 hover:file:bg-amber-200"
-                                        />
+                                    {/* MULTI-IMAGE SELECTION WITH ACCUMULATION & INDIVIDUAL REMOVE */}
+                                    <div className="space-y-2">
+                                        <label className="block text-xs font-semibold text-slate-700">
+                                            Images du Produit (Jusqu'à 5 photos, cumulatives)
+                                        </label>
+                                        
+                                        <div className="flex items-center gap-3">
+                                            <label className="px-4 py-2.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-semibold cursor-pointer transition-colors inline-flex items-center gap-2 border border-amber-300/80">
+                                                <UploadCloud className="w-4 h-4 text-amber-800" />
+                                                <span>Ajouter des photos ({imagePreviews.length}/5)</span>
+                                                <input
+                                                    type="file"
+                                                    multiple
+                                                    accept="image/*"
+                                                    onChange={handleCreateImageChange}
+                                                    className="hidden"
+                                                />
+                                            </label>
+                                            
+                                            {imagePreviews.length > 0 && (
+                                                <span className="text-[11px] text-slate-500 font-medium">
+                                                    {imagePreviews.length} photo(s) sélectionnée(s)
+                                                </span>
+                                            )}
+                                        </div>
 
+                                        {/* PREVIEW GRID WITH REMOVE BUTTON */}
                                         {imagePreviews.length > 0 && (
-                                            <div className="flex items-center gap-3 mt-3 overflow-x-auto">
+                                            <div className="flex items-center gap-3 mt-3 overflow-x-auto p-2 bg-slate-50 rounded-2xl border border-slate-200">
                                                 {imagePreviews.map((src, i) => (
-                                                    <img key={i} src={src} alt="Preview" className="w-16 h-16 rounded-xl object-cover border border-slate-200" />
+                                                    <div key={i} className="relative group shrink-0 w-20 h-20">
+                                                        <img src={src} alt={`Preview ${i + 1}`} className="w-20 h-20 rounded-xl object-cover border border-slate-300" />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveImagePreview(i)}
+                                                            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-md hover:bg-rose-700 transition-colors"
+                                                            title="Supprimer cette photo"
+                                                        >
+                                                            <X className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
                                                 ))}
                                             </div>
                                         )}
@@ -576,7 +624,7 @@ export default function Index({ store, products, metrics, appUrl }) {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
-                                className="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-xl w-full p-6 sm:p-8 space-y-6 relative"
+                                className="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-xl w-full p-6 sm:p-8 space-y-6 relative max-h-[90vh] overflow-y-auto"
                             >
                                 <button
                                     onClick={() => setEditingProduct(null)}
@@ -650,7 +698,7 @@ export default function Index({ store, products, metrics, appUrl }) {
                     )}
                 </AnimatePresence>
 
-                {/* MODAL 3: PROMOTION MANAGEMENT */}
+                {/* MODAL 3: PROMO PRODUCT */}
                 <AnimatePresence>
                     {promoProduct && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
@@ -658,7 +706,7 @@ export default function Index({ store, products, metrics, appUrl }) {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
-                                className="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-md w-full p-6 sm:p-8 space-y-6 relative"
+                                className="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-xl w-full p-6 sm:p-8 space-y-6 relative"
                             >
                                 <button
                                     onClick={() => setPromoProduct(null)}
@@ -668,73 +716,69 @@ export default function Index({ store, products, metrics, appUrl }) {
                                 </button>
 
                                 <div className="space-y-1">
-                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-800 text-[11px] font-bold">
-                                        <Tag className="w-3.5 h-3.5" /> GESTION DE PROMOTION
-                                    </div>
-                                    <h3 className="text-xl font-bold text-slate-950">{promoProduct.title}</h3>
+                                    <h3 className="text-xl font-bold text-slate-950">Appliquer une Promotion</h3>
+                                    <p className="text-xs text-slate-500 font-medium">{promoProduct.title}</p>
                                 </div>
 
                                 <form onSubmit={handlePromoSubmit} className="space-y-4">
-                                    <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 font-medium">
-                                        Prix Vendeur Normal : <strong>{Number(promoProduct.price_vendor).toLocaleString()} FCFA</strong>
+                                    <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-slate-700">
+                                        Prix Normal Actuel : <strong className="text-slate-950 font-bold">{Number(promoProduct.price_vendor).toLocaleString()} FCFA</strong>
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Activer la Promotion</label>
-                                        <select
-                                            value={promoForm.data.is_promo ? '1' : '0'}
-                                            onChange={(e) => promoForm.setData('is_promo', e.target.value === '1')}
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Prix Promotionnel Reduit (FCFA) *</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            placeholder="ex: 12000"
+                                            value={promoForm.data.promo_price}
+                                            onChange={(e) => promoForm.setData('promo_price', e.target.value)}
                                             className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                        >
-                                            <option value="1">Oui — Mettre en solde</option>
-                                            <option value="0">Non — Désactiver la promotion</option>
-                                        </select>
+                                        />
                                     </div>
 
-                                    {promoForm.data.is_promo && (
-                                        <>
-                                            <div>
-                                                <label className="block text-xs font-semibold text-slate-700 mb-1">Prix Vendeur Promotionnel (FCFA) *</label>
-                                                <input
-                                                    type="number"
-                                                    required
-                                                    placeholder="ex: 12000"
-                                                    value={promoForm.data.promo_price}
-                                                    onChange={(e) => promoForm.setData('promo_price', e.target.value)}
-                                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                                />
-                                            </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Date de Début (Optionnel)</label>
+                                            <input
+                                                type="date"
+                                                value={promoForm.data.promo_start_at}
+                                                onChange={(e) => promoForm.setData('promo_start_at', e.target.value)}
+                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                            />
+                                        </div>
 
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Date Début</label>
-                                                    <input
-                                                        type="date"
-                                                        value={promoForm.data.promo_start_at}
-                                                        onChange={(e) => promoForm.setData('promo_start_at', e.target.value)}
-                                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Date Fin</label>
-                                                    <input
-                                                        type="date"
-                                                        value={promoForm.data.promo_end_at}
-                                                        onChange={(e) => promoForm.setData('promo_end_at', e.target.value)}
-                                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Date de Fin (Optionnel)</label>
+                                            <input
+                                                type="date"
+                                                value={promoForm.data.promo_end_at}
+                                                onChange={(e) => promoForm.setData('promo_end_at', e.target.value)}
+                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                            />
+                                        </div>
+                                    </div>
 
-                                    <button
-                                        type="submit"
-                                        disabled={promoForm.processing}
-                                        className="w-full py-3 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md transition-all"
-                                    >
-                                        Enregistrer la Promotion
-                                    </button>
+                                    <div className="space-y-2 pt-2">
+                                        <button
+                                            type="submit"
+                                            disabled={promoForm.processing}
+                                            className="w-full py-3 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md transition-all"
+                                        >
+                                            Activer / Enregistrer la Promotion
+                                        </button>
+
+                                        {promoProduct.is_promo && (
+                                            <button
+                                                type="button"
+                                                onClick={handleDisablePromo}
+                                                disabled={promoForm.processing}
+                                                className="w-full py-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-all border border-rose-200"
+                                            >
+                                                Désactiver la Promotion (Retirer les Soldes)
+                                            </button>
+                                        )}
+                                    </div>
                                 </form>
                             </motion.div>
                         </div>

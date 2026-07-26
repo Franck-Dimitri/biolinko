@@ -38,4 +38,14 @@ class User extends Authenticatable
     {
         return $this->hasOne(Store::class);
     }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isSeller(): bool
+    {
+        return in_array($this->role, ['seller', 'vendor'], true) || empty($this->role);
+    }
 }

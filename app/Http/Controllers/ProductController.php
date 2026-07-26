@@ -57,10 +57,11 @@ class ProductController extends Controller
             'promo_price' => ['nullable', 'numeric', 'min:0'],
             'promo_start_at' => ['nullable', 'date'],
             'promo_end_at' => ['nullable', 'date'],
-            'is_active' => ['required', 'boolean'],
-            'image_file' => ['required_without:images_files', 'nullable', 'image', 'max:5120'],
-            'images_files' => ['required_without:image_file', 'nullable', 'array', 'min:1'],
-            'images_files.*' => ['image', 'max:5120'],
+            'is_active' => ['nullable', 'boolean'],
+            'image_file' => ['nullable', 'image', 'max:5120'],
+            'images_files' => ['nullable', 'array'],
+            'images_files.*' => ['nullable', 'image', 'max:5120'],
+            'image_url_input' => ['nullable', 'string'],
             'variants' => ['nullable', 'array'],
         ]);
 
@@ -68,7 +69,7 @@ class ProductController extends Controller
 
         if ($request->hasFile('images_files')) {
             foreach ($request->file('images_files') as $file) {
-                if (count($imagePaths) < 5) {
+                if ($file && count($imagePaths) < 5) {
                     $path = $file->store('products', 'public');
                     $imagePaths[] = '/storage/' . $path;
                 }
@@ -78,7 +79,11 @@ class ProductController extends Controller
             $imagePaths[] = '/storage/' . $path;
         }
 
-        // Fallback default placeholder if no file uploaded
+        if (!empty($validated['image_url_input'])) {
+            $imagePaths[] = $validated['image_url_input'];
+        }
+
+        // Fallback default placeholder if no image provided
         if (empty($imagePaths)) {
             $imagePaths[] = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600';
         }
@@ -96,7 +101,7 @@ class ProductController extends Controller
             'promo_price' => $validated['promo_price'] ?? null,
             'promo_start_at' => $validated['promo_start_at'] ?? null,
             'promo_end_at' => $validated['promo_end_at'] ?? null,
-            'is_active' => $validated['is_active'],
+            'is_active' => $request->boolean('is_active', true),
             'image_url' => $imagePaths[0],
             'images' => $imagePaths,
         ]);
@@ -131,8 +136,9 @@ class ProductController extends Controller
             'promo_price' => ['nullable', 'numeric', 'min:0'],
             'promo_start_at' => ['nullable', 'date'],
             'promo_end_at' => ['nullable', 'date'],
-            'is_active' => ['sometimes', 'required', 'boolean'],
+            'is_active' => ['sometimes', 'nullable', 'boolean'],
             'image_file' => ['nullable', 'image', 'max:5120'],
+            'images_files' => ['nullable', 'array'],
             'images_files.*' => ['nullable', 'image', 'max:5120'],
         ]);
 
@@ -141,7 +147,7 @@ class ProductController extends Controller
         if ($request->hasFile('images_files')) {
             $uploaded = [];
             foreach ($request->file('images_files') as $file) {
-                if (count($uploaded) < 5) {
+                if ($file && count($uploaded) < 5) {
                     $path = $file->store('products', 'public');
                     $uploaded[] = '/storage/' . $path;
                 }
@@ -154,13 +160,24 @@ class ProductController extends Controller
             $imagePaths = ['/storage/' . $path];
         }
 
-        $updateData = [
-            'is_promo' => $request->has('is_promo') ? $request->boolean('is_promo') : $product->is_promo,
-            'promo_price' => array_key_exists('promo_price', $validated) ? $validated['promo_price'] : $product->promo_price,
-            'promo_start_at' => array_key_exists('promo_start_at', $validated) ? $validated['promo_start_at'] : $product->promo_start_at,
-            'promo_end_at' => array_key_exists('promo_end_at', $validated) ? $validated['promo_end_at'] : $product->promo_end_at,
-            'min_order_quantity' => $validated['min_order_quantity'] ?? $product->min_order_quantity,
-        ];
+        $updateData = [];
+
+        if ($request->has('is_promo')) {
+            $updateData['is_promo'] = $request->boolean('is_promo');
+        }
+
+        if (array_key_exists('promo_price', $validated)) {
+            $updateData['promo_price'] = $validated['promo_price'];
+        }
+        if (array_key_exists('promo_start_at', $validated)) {
+            $updateData['promo_start_at'] = $validated['promo_start_at'];
+        }
+        if (array_key_exists('promo_end_at', $validated)) {
+            $updateData['promo_end_at'] = $validated['promo_end_at'];
+        }
+        if (array_key_exists('min_order_quantity', $validated)) {
+            $updateData['min_order_quantity'] = $validated['min_order_quantity'];
+        }
 
         if (array_key_exists('title', $validated)) {
             $updateData['title'] = $validated['title'];
@@ -175,7 +192,7 @@ class ProductController extends Controller
             $updateData['stock'] = $validated['stock'];
         }
         if (array_key_exists('is_active', $validated)) {
-            $updateData['is_active'] = $validated['is_active'];
+            $updateData['is_active'] = (bool) $validated['is_active'];
         }
 
         if (!empty($imagePaths)) {
