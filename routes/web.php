@@ -5,12 +5,14 @@ use App\Http\Controllers\AppearanceController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HrSkillsPayWebhookController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderTrackingController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StorefrontController;
+use App\Http\Controllers\SubscriptionController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -64,6 +66,11 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
 
     // Customers Directory
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+
+    // Subscriptions Management
+    Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('seller.subscriptions.index');
+    Route::post('/subscriptions/subscribe', [SubscriptionController::class, 'subscribe'])->name('seller.subscriptions.subscribe');
+    Route::get('/subscriptions/status/{reference}', [SubscriptionController::class, 'checkStatus'])->name('seller.subscriptions.status');
 });
 
 // Shared User Profile Routes
@@ -76,7 +83,11 @@ Route::middleware(['auth'])->group(function () {
 // Public Client Fast Checkout & Order Tracking & Customer Lookup
 Route::get('/checkout/lookup-customer', [CheckoutController::class, 'lookupCustomer'])->name('checkout.lookupCustomer');
 Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
+Route::get('/checkout/status/{reference}', [CheckoutController::class, 'checkStatus'])->name('checkout.status');
 Route::get('/track/{tracking_code}', [OrderTrackingController::class, 'show'])->name('order.track');
+
+// HR-Skills Pay Webhook Callback Route (Exclude CSRF)
+Route::post('/api/webhooks/hrskills-pay', [HrSkillsPayWebhookController::class, 'handle'])->name('webhooks.hrskills-pay');
 
 // Load auth routes BEFORE public catch-all
 require __DIR__.'/auth.php';

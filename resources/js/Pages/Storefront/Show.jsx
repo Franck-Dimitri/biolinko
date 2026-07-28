@@ -1,5 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     ShoppingBag, ShieldCheck, CheckCircle, ArrowRight, X, 
@@ -40,6 +41,44 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
     const [searchQuery, setSearchQuery] = useState('');
     const [activeSectionTab, setActiveSectionTab] = useState('all'); // 'all', 'products', 'promo', 'reviews', 'about', 'cart'
     const [isAutoFilled, setIsAutoFilled] = useState(false);
+    const [isSubmittingCheckout, setIsSubmittingCheckout] = useState(false);
+    const [ussdModalState, setUssdModalState] = useState({
+        isOpen: false,
+        reference: null,
+        tracking_code: null,
+        amount: 0,
+        operator: 'MTN',
+        phone: '',
+        status: 'PENDING',
+        errorMsg: null,
+    });
+
+    // Real-time status polling for HR-Skills Pay USSD confirmation
+    useEffect(() => {
+        if (!ussdModalState.isOpen || !ussdModalState.reference || ussdModalState.status !== 'PENDING') {
+            return;
+        }
+
+        const interval = setInterval(async () => {
+            try {
+                const res = await axios.get(`/checkout/status/${ussdModalState.reference}`);
+                if (res.data.paid || res.data.status === 'SUCCESS') {
+                    setUssdModalState(prev => ({ ...prev, status: 'SUCCESS' }));
+                    saveCart([]);
+                    reset();
+                    setTimeout(() => {
+                        window.location.href = res.data.redirect_url || `/track/${res.data.tracking_code}`;
+                    }, 1200);
+                } else if (res.data.status === 'FAILED') {
+                    setUssdModalState(prev => ({ ...prev, status: 'FAILED', errorMsg: res.data.message || 'Paiement décliné ou annulé.' }));
+                }
+            } catch (err) {
+                console.error('Polling error:', err);
+            }
+        }, 3500);
+
+        return () => clearInterval(interval);
+    }, [ussdModalState.isOpen, ussdModalState.reference, ussdModalState.status]);
 
     // Vendor Dynamic Theme Color & Legible Contrast Text
     const primaryColor = store?.theme_color || '#FFCC00';
@@ -274,7 +313,7 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
         }, 100);
     };
 
-    const handleCheckoutSubmitFromCartPage = (e) => {
+    const handleCheckoutSubmitFromCartPage = async (e) => {
         e.preventDefault();
         if (cartItems.length === 0) return;
 
@@ -293,16 +332,35 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
             quantity: item.quantity,
         }));
 
-        post(route('checkout.process'), {
-            data: {
+        setIsSubmittingCheckout(true);
+        try {
+            const response = await axios.post(route('checkout.process'), {
                 ...data,
                 items: checkoutPayloadItems,
-            },
-            onSuccess: () => {
+            });
+
+            if (response.data.requires_ussd) {
+                setUssdModalState({
+                    isOpen: true,
+                    reference: response.data.reference,
+                    tracking_code: response.data.tracking_code,
+                    amount: response.data.amount,
+                    operator: response.data.operator,
+                    phone: response.data.phone,
+                    status: 'PENDING',
+                    errorMsg: null,
+                });
+            } else if (response.data.redirect_url) {
                 saveCart([]);
                 reset();
-            },
-        });
+                window.location.href = response.data.redirect_url;
+            }
+        } catch (err) {
+            const msg = err.response?.data?.error || err.response?.data?.message || 'Échec du paiement Mobile Money. Veuillez vérifier votre numéro (+237).';
+            alert(msg);
+        } finally {
+            setIsSubmittingCheckout(false);
+        }
     };
 
     const handleInstantBuyProduct = (product, reqQuantity, reqVariant) => {
@@ -660,15 +718,20 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Numéro Mobile Money (MTN / Moov / Orange) *</label>
-                                                    <input
-                                                        type="tel"
-                                                        required
-                                                        placeholder="ex: 0102030405"
-                                                        value={data.customer_phone}
-                                                        onChange={(e) => handlePhoneChange(e.target.value)}
-                                                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-slate-400 outline-none"
-                                                    />
+                                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Numéro Mobile Money (MTN / Orange Cameroun 🇨🇲) *</label>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 flex items-center gap-1 shrink-0">
+                                                            <span>🇨🇲 +237</span>
+                                                        </div>
+                                                        <input
+                                                            type="tel"
+                                                            required
+                                                            placeholder="ex: 699123456"
+                                                            value={data.customer_phone}
+                                                            onChange={(e) => handlePhoneChange(e.target.value)}
+                                                            className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:border-slate-400 outline-none"
+                                                        />
+                                                    </div>
                                                 </div>
 
                                                 {/* OPTIONAL FIELDS */}
@@ -1742,6 +1805,70 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
                     </div>
                 </div>
             </footer>
+
+            {/* REAL-TIME HR-SKILLS PAY USSD PAYMENT MODAL */}
+            <AnimatePresence>
+                {ussdModalState.isOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 sm:p-8 space-y-6 text-center relative overflow-hidden"
+                        >
+                            <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center mx-auto text-2xl shadow-inner font-bold">
+                                {ussdModalState.operator === 'ORANGE' ? '🍊' : '🟡'}
+                            </div>
+
+                            <div className="space-y-2">
+                                <h3 className="text-xl font-extrabold text-slate-950">Validation USSD Mobile Money 🇨🇲</h3>
+                                <p className="text-xs text-slate-500 font-medium">
+                                    Opérateur : <strong className="text-slate-900">{ussdModalState.operator} MoMo</strong> ({ussdModalState.phone})
+                                </p>
+                            </div>
+
+                            {ussdModalState.status === 'PENDING' && (
+                                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-3">
+                                    <div className="flex items-center justify-center gap-2 text-amber-900 font-bold text-sm">
+                                        <RefreshCw className="w-5 h-5 animate-spin text-amber-600" />
+                                        <span>Prompt USSD Envoyé !</span>
+                                    </div>
+                                    <p className="text-xs text-slate-700 font-medium leading-relaxed">
+                                        Veuillez composer votre code secret PIN Mobile Money sur votre téléphone portable pour valider le règlement de <strong className="text-slate-950 font-bold">{Number(ussdModalState.amount).toLocaleString()} FCFA</strong>.
+                                    </p>
+                                    <div className="text-[11px] text-slate-500 font-semibold flex items-center justify-center gap-1">
+                                        <Clock className="w-3.5 h-3.5" />
+                                        <span>Vérification automatique du paiement...</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {ussdModalState.status === 'SUCCESS' && (
+                                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-2">
+                                    <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+                                    <h4 className="text-sm font-bold text-emerald-950">Paiement Mobile Money Confirmé !</h4>
+                                    <p className="text-xs text-emerald-700">Redirection vers votre reçu de commande...</p>
+                                </div>
+                            )}
+
+                            {ussdModalState.status === 'FAILED' && (
+                                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-3">
+                                    <AlertCircle className="w-8 h-8 text-rose-600 mx-auto" />
+                                    <h4 className="text-sm font-bold text-rose-950">Paiement Échoué ou Expiré</h4>
+                                    <p className="text-xs text-rose-700">{ussdModalState.errorMsg || 'La transaction n\'a pas été validée sur votre téléphone.'}</p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setUssdModalState(prev => ({ ...prev, isOpen: false }))}
+                                        className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-md hover:bg-slate-800"
+                                    >
+                                        Réessayer la commande
+                                    </button>
+                                </div>
+                            )}
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
         </div>
     );

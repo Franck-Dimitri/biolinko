@@ -5,13 +5,22 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Wallet;
 use App\Models\Withdrawal;
+use App\Services\HrSkillsPayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class OrderController extends Controller
 {
+    protected HrSkillsPayService $hrSkillsPay;
+
+    public function __construct(HrSkillsPayService $hrSkillsPay)
+    {
+        $this->hrSkillsPay = $hrSkillsPay;
+    }
+
     public function index(Request $request): Response
     {
         $store = $request->user()->store;
@@ -102,7 +111,15 @@ class OrderController extends Controller
         $validated = $request->validate([
             'amount' => ['required', 'numeric', 'min:1000'],
             'phone_momo' => ['required', 'string', 'max:50'],
+            'operator' => ['nullable', 'string', 'in:MTN,ORANGE,mtn,orange'],
         ]);
+
+        // Strictly validate Cameroon phone number
+        try {
+            $formattedPhone = $this->hrSkillsPay->formatCameroonPhone($validated['phone_momo']);
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['phone_momo' => $e->getMessage()]);
+        }
 
         $amount = (float) $validated['amount'];
 
@@ -110,17 +127,37 @@ class OrderController extends Controller
             return back()->withErrors(['amount' => 'Solde disponible insuffisant pour ce retrait.']);
         }
 
-        Withdrawal::create([
+        $operatorChoice = $validated['operator'] ?? $this->hrSkillsPay->detectOperator($formattedPhone);
+
+        $withdrawal = Withdrawal::create([
             'wallet_id' => $wallet->id,
             'amount' => $amount,
-            'operator' => 'Mobile Money (USSD)',
-            'phone_number' => $validated['phone_momo'],
+            'operator' => $operatorChoice,
+            'phone_number' => $formattedPhone,
+            'payment_operator' => $operatorChoice,
             'status' => 'pending',
         ]);
 
         $wallet->decrement('balance_available', $amount);
-        $wallet->increment('balance_pending', $amount);
 
-        return back()->with('message', 'Demande de retrait Mobile Money de ' . number_format($amount) . ' FCFA soumise avec succès.');
+        // Initiate Cash-Out via HR-Skills Pay
+        try {
+            $payoutData = $this->hrSkillsPay->initiatePayout($withdrawal, $formattedPhone, $operatorChoice);
+
+            $withdrawal->update([
+                'hrskills_reference' => $payoutData['reference'],
+                'hrskills_transaction_id' => $payoutData['transaction_id'],
+            ]);
+
+            return back()->with('message', 'Demande de virement Mobile Money de ' . number_format($amount) . ' FCFA soumise vers ' . $formattedPhone . ' (' . $operatorChoice . ').');
+        } catch (\Exception $e) {
+            Log::error('Withdrawal HR-Skills Payout Error', ['withdrawal_id' => $withdrawal->id, 'err' => $e->getMessage()]);
+
+            // Restore vendor wallet balance on error
+            $wallet->increment('balance_available', $amount);
+            $withdrawal->update(['status' => 'rejected']);
+
+            return back()->withErrors(['phone_momo' => 'Échec de l\'envoi du virement Mobile Money : ' . $e->getMessage()]);
+        }
     }
 }

@@ -8,13 +8,22 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Store;
+use App\Services\HrSkillsPayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
+    protected HrSkillsPayService $hrSkillsPay;
+
+    public function __construct(HrSkillsPayService $hrSkillsPay)
+    {
+        $this->hrSkillsPay = $hrSkillsPay;
+    }
+
     public function lookupCustomer(Request $request): JsonResponse
     {
         $phone = trim($request->query('phone', ''));
@@ -46,7 +55,81 @@ class CheckoutController extends Controller
         ]);
     }
 
-    public function process(Request $request): RedirectResponse
+    public function checkStatus(Request $request, string $reference): JsonResponse
+    {
+        $order = Order::where('hrskills_reference', $reference)
+            ->orWhere('tracking_code', $reference)
+            ->first();
+
+        if (!$order) {
+            return response()->json(['status' => 'NOT_FOUND', 'paid' => false], 404);
+        }
+
+        if ($order->payment_status === 'paid' || $order->status === 'paid') {
+            return response()->json([
+                'status' => 'SUCCESS',
+                'paid' => true,
+                'tracking_code' => $order->tracking_code,
+                'redirect_url' => route('order.track', $order->tracking_code),
+            ]);
+        }
+
+        if ($order->payment_status === 'failed' || $order->status === 'cancelled') {
+            return response()->json([
+                'status' => 'FAILED',
+                'paid' => false,
+                'message' => 'Le paiement Mobile Money a échoué ou a été annulé.',
+            ]);
+        }
+
+        // Live Poll HR-Skills Pay API for update
+        try {
+            $liveData = $this->hrSkillsPay->checkPaymentStatus($reference);
+            $liveStatus = strtoupper($liveData['status'] ?? 'PENDING');
+
+            if ($liveStatus === 'SUCCESS') {
+                $order->update([
+                    'status' => 'paid',
+                    'payment_status' => 'paid',
+                    'paid_at' => now(),
+                ]);
+
+                // Credit vendor Wallet
+                $wallet = $order->store->wallet;
+                if ($wallet) {
+                    $wallet->increment('balance_available', (float) $order->price_vendor);
+                }
+
+                return response()->json([
+                    'status' => 'SUCCESS',
+                    'paid' => true,
+                    'tracking_code' => $order->tracking_code,
+                    'redirect_url' => route('order.track', $order->tracking_code),
+                ]);
+            }
+
+            if ($liveStatus === 'FAILED') {
+                $order->update([
+                    'status' => 'cancelled',
+                    'payment_status' => 'failed',
+                ]);
+                return response()->json([
+                    'status' => 'FAILED',
+                    'paid' => false,
+                    'message' => 'Paiement décliné par l\'opérateur Mobile Money.',
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::warning('Error polling HR-Skills Pay status', ['ref' => $reference, 'err' => $e->getMessage()]);
+        }
+
+        return response()->json([
+            'status' => 'PENDING',
+            'paid' => false,
+        ]);
+    }
+
+    public function process(Request $request)
     {
         $validated = $request->validate([
             'store_id' => ['required', 'exists:stores,id'],
@@ -56,22 +139,33 @@ class CheckoutController extends Controller
             'customer_whatsapp' => ['nullable', 'string', 'max:50'],
             'delivery_address' => ['required', 'string', 'max:500'],
             'notes' => ['nullable', 'string', 'max:500'],
+            'operator' => ['nullable', 'string', 'in:MTN,ORANGE,mtn,orange'],
             
-            // Support for Single-item checkout
+            // Single-item checkout
             'product_id' => ['nullable', 'exists:products,id'],
             'variant_id' => ['nullable', 'exists:product_variants,id'],
             'quantity' => ['nullable', 'integer', 'min:1'],
 
-            // Support for Multi-item Cart Checkout
+            // Multi-item Cart Checkout
             'items' => ['nullable', 'array'],
             'items.*.product_id' => ['required_with:items', 'exists:products,id'],
             'items.*.variant_id' => ['nullable', 'exists:product_variants,id'],
             'items.*.quantity' => ['required_with:items', 'integer', 'min:1'],
         ]);
 
+        // Strictly validate & format Cameroon phone number
+        try {
+            $formattedPhone = $this->hrSkillsPay->formatCameroonPhone($validated['customer_phone']);
+        } catch (\InvalidArgumentException $e) {
+            if ($request->wantsJson() || $request->header('X-Inertia')) {
+                return response()->json(['error' => $e->getMessage()], 422);
+            }
+            return back()->withErrors(['customer_phone' => $e->getMessage()]);
+        }
+
         $store = Store::findOrFail($validated['store_id']);
 
-        // Determine list of items to process
+        // Determine items
         $checkoutItems = [];
         if (!empty($validated['items']) && count($validated['items']) > 0) {
             $checkoutItems = $validated['items'];
@@ -137,8 +231,8 @@ class CheckoutController extends Controller
             ];
         }
 
-        // 1. SAVE OR UPDATE CUSTOMER IN PLATFORM-WIDE CUSTOMERS TABLE
-        $customer = Customer::firstOrNew(['phone' => $validated['customer_phone']]);
+        // 1. SAVE OR UPDATE CUSTOMER
+        $customer = Customer::firstOrNew(['phone' => $formattedPhone]);
         $customer->name = $validated['customer_name'];
         if (!empty($validated['customer_email'])) {
             $customer->email = $validated['customer_email'];
@@ -150,7 +244,7 @@ class CheckoutController extends Controller
         $customer->city = $validated['delivery_address'];
         $customer->save();
 
-        // 2. LINK CUSTOMER TO THIS SPECIFIC STORE IN STORE_CUSTOMER PIVOT
+        // 2. LINK CUSTOMER TO STORE
         $existingPivot = $store->customers()->where('customer_id', $customer->id)->first();
         if ($existingPivot) {
             $store->customers()->updateExistingPivot($customer->id, [
@@ -166,7 +260,6 @@ class CheckoutController extends Controller
             ]);
         }
 
-        // Unique tracking code e.g. BLK-892471
         $trackingCode = 'BLK-' . strtoupper(Str::random(6));
 
         $extraNotes = [];
@@ -179,14 +272,14 @@ class CheckoutController extends Controller
 
         $addressWithNotes = $validated['delivery_address'] . (count($extraNotes) > 0 ? " (" . implode(" | ", $extraNotes) . ")" : "");
 
-        // Create Order with customer_id
+        // Create Order with PENDING status for Mobile Money USSD
         $order = Order::create([
             'uuid' => (string) Str::uuid(),
             'tracking_code' => $trackingCode,
             'store_id' => $store->id,
             'customer_id' => $customer->id,
             'customer_name' => $validated['customer_name'],
-            'customer_phone' => $validated['customer_phone'],
+            'customer_phone' => $formattedPhone,
             'customer_email' => $validated['customer_email'] ?? null,
             'city' => $validated['delivery_address'],
             'address_details' => $addressWithNotes,
@@ -194,22 +287,52 @@ class CheckoutController extends Controller
             'saas_margin' => $saasMarginTotal,
             'api_fee' => $apiFeeTotal,
             'total_client' => $totalClient,
-            'status' => 'paid',
-            'payment_status' => 'paid',
-            'paid_at' => now(),
+            'status' => 'pending',
+            'payment_status' => 'pending',
+            'payment_phone' => $formattedPhone,
         ]);
 
-        // Create Order Items
         foreach ($preparedOrderItems as $itemData) {
             $order->items()->create($itemData);
         }
 
-        // Automatically credit vendor's wallet balance
-        $wallet = $store->wallet;
-        if ($wallet) {
-            $wallet->increment('balance_available', $priceVendorTotal);
-        }
+        // INITIATE HR-SKILLS PAY CASH-IN (MOBILE MONEY USSD PUSH)
+        try {
+            $operatorChoice = $validated['operator'] ?? null;
+            $payinData = $this->hrSkillsPay->initiatePayin($order, $formattedPhone, $operatorChoice);
 
-        return redirect()->route('order.track', $trackingCode)->with('message', 'Paiement Mobile Money validé avec succès !');
+            $order->update([
+                'hrskills_reference' => $payinData['reference'],
+                'hrskills_transaction_id' => $payinData['transaction_id'],
+                'payment_operator' => $payinData['operator'],
+            ]);
+
+            if ($request->wantsJson() || $request->header('X-Inertia')) {
+                return response()->json([
+                    'success' => true,
+                    'requires_ussd' => true,
+                    'reference' => $payinData['reference'],
+                    'tracking_code' => $trackingCode,
+                    'amount' => $payinData['amount'],
+                    'operator' => $payinData['operator'],
+                    'phone' => $formattedPhone,
+                    'redirect_url' => route('order.track', $trackingCode),
+                ]);
+            }
+
+            return redirect()->route('order.track', $trackingCode)->with('message', 'Paiement USSD initié ! Veuillez valider le code PIN sur votre téléphone.');
+
+        } catch (\Exception $e) {
+            Log::error('Checkout HR-Skills Payin Error', ['order_id' => $order->id, 'err' => $e->getMessage()]);
+
+            if ($request->wantsJson() || $request->header('X-Inertia')) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Échec d\'initiation du paiement Mobile Money: ' . $e->getMessage(),
+                ], 422);
+            }
+
+            return back()->withErrors(['customer_phone' => 'Échec du paiement MoMo : ' . $e->getMessage()]);
+        }
     }
 }

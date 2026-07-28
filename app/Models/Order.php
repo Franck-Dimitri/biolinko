@@ -27,7 +27,11 @@ class Order extends Model
         'api_fee',
         'total_client',
         'status',
+        'hrskills_reference',
+        'hrskills_transaction_id',
         'payment_status',
+        'payment_operator',
+        'payment_phone',
         'paid_at',
     ];
 

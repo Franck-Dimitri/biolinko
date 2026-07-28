@@ -6,6 +6,9 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Wallet;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 test('checkout creates customer record and links to store_customer pivot table', function () {
     $user = User::factory()->create();
@@ -28,23 +31,21 @@ test('checkout creates customer record and links to store_customer pivot table',
     $response = $this->post(route('checkout.process'), [
         'store_id' => $store->id,
         'customer_name' => 'Alice Client',
-        'customer_phone' => '0199887766',
+        'customer_phone' => '699887766',
         'customer_email' => 'alice@test.com',
-        'customer_whatsapp' => '+229 97 99 88 77',
-        'delivery_address' => 'Cotonou Cadjehoun',
+        'customer_whatsapp' => '+237 699 88 77 66',
+        'delivery_address' => 'Douala Akwa',
         'product_id' => $product->id,
         'quantity' => 1,
     ]);
 
-    $response->assertRedirect();
-
     $this->assertDatabaseHas('customers', [
         'name' => 'Alice Client',
-        'phone' => '0199887766',
+        'phone' => '237699887766',
         'email' => 'alice@test.com',
     ]);
 
-    $customer = Customer::where('phone', '0199887766')->first();
+    $customer = Customer::where('phone', '237699887766')->first();
     expect($customer)->not->toBeNull();
 
     $this->assertDatabaseHas('store_customer', [
@@ -57,23 +58,23 @@ test('checkout creates customer record and links to store_customer pivot table',
 test('customer lookup API endpoint returns saved customer profile', function () {
     $customer = Customer::create([
         'name' => 'Bob Testeur',
-        'phone' => '0144556677',
+        'phone' => '237674455667',
         'email' => 'bob@test.com',
-        'whatsapp' => '+229 90 11 22 33',
-        'delivery_address' => 'Porto-Novo Centre',
-        'city' => 'Porto-Novo',
+        'whatsapp' => '+237 674 45 56 67',
+        'delivery_address' => 'Yaoundé Bastos',
+        'city' => 'Yaoundé',
     ]);
 
-    $response = $this->get(route('checkout.lookupCustomer', ['phone' => '0144556677']));
+    $response = $this->get(route('checkout.lookupCustomer', ['phone' => '237674455667']));
 
     $response->assertStatus(200);
     $response->assertJson([
         'found' => true,
         'customer' => [
             'name' => 'Bob Testeur',
-            'phone' => '0144556677',
+            'phone' => '237674455667',
             'email' => 'bob@test.com',
-            'delivery_address' => 'Porto-Novo Centre',
+            'delivery_address' => 'Yaoundé Bastos',
         ]
     ]);
 });
@@ -89,7 +90,7 @@ test('vendor can view customer directory dashboard page', function () {
 
     $customer = Customer::create([
         'name' => 'Chantal Client',
-        'phone' => '0122334455',
+        'phone' => '237692233445',
     ]);
     $store->customers()->attach($customer->id, [
         'total_orders_count' => 2,

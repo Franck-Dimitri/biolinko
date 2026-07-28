@@ -13,6 +13,7 @@ export default function Index({ store, products, metrics, appUrl }) {
     const [editingProduct, setEditingProduct] = useState(null);
     const [promoProduct, setPromoProduct] = useState(null);
     const [copiedId, setCopiedId] = useState(null);
+    const [toastMessage, setToastMessage] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterCategory, setFilterCategory] = useState('all');
     const [variantsList, setVariantsList] = useState([]);
@@ -37,7 +38,6 @@ export default function Index({ store, products, metrics, appUrl }) {
 
     // Edit Info Form
     const editForm = useForm({
-        _method: 'PUT',
         title: '',
         description: '',
         price_vendor: '',
@@ -49,7 +49,6 @@ export default function Index({ store, products, metrics, appUrl }) {
 
     // Dedicated Promo Form
     const promoForm = useForm({
-        _method: 'PUT',
         title: '',
         price_vendor: '',
         stock: 10,
@@ -63,8 +62,8 @@ export default function Index({ store, products, metrics, appUrl }) {
 
     const openEditModal = (product) => {
         setEditingProduct(product);
+        editForm.clearErrors();
         editForm.setData({
-            _method: 'PUT',
             title: product.title || '',
             description: product.description || '',
             price_vendor: product.price_vendor || '',
@@ -77,8 +76,8 @@ export default function Index({ store, products, metrics, appUrl }) {
 
     const openPromoModal = (product) => {
         setPromoProduct(product);
+        promoForm.clearErrors();
         promoForm.setData({
-            _method: 'PUT',
             title: product.title,
             description: product.description || '',
             price_vendor: product.price_vendor,
@@ -133,11 +132,14 @@ export default function Index({ store, products, metrics, appUrl }) {
     const handleCreateSubmit = (e) => {
         e.preventDefault();
         createForm.post(route('products.store'), {
+            preserveScroll: true,
             onSuccess: () => {
                 setIsCreateModalOpen(false);
                 createForm.reset();
                 setVariantsList([]);
                 setImagePreviews([]);
+                setToastMessage('Nouveau produit ajouté au catalogue !');
+                setTimeout(() => setToastMessage(null), 3500);
             },
         });
     };
@@ -145,36 +147,60 @@ export default function Index({ store, products, metrics, appUrl }) {
     const handleEditSubmit = (e) => {
         e.preventDefault();
         if (!editingProduct) return;
-        editForm.post(route('products.update', editingProduct.id), {
-            onSuccess: () => setEditingProduct(null),
+        editForm.put(route('products.update', editingProduct.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setEditingProduct(null);
+                setToastMessage('Fiche produit mise à jour !');
+                setTimeout(() => setToastMessage(null), 3500);
+            },
         });
     };
 
     const handlePromoSubmit = (e) => {
         e.preventDefault();
         if (!promoProduct) return;
-        promoForm.transform((data) => ({
-            ...data,
-            is_promo: true,
-        })).post(route('products.update', promoProduct.id), {
-            onSuccess: () => setPromoProduct(null),
+
+        promoForm.setData('is_promo', true);
+
+        promoForm.put(route('products.update', promoProduct.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setPromoProduct(null);
+                setToastMessage('Promotion enregistrée et activée avec succès !');
+                setTimeout(() => setToastMessage(null), 3500);
+            },
         });
     };
 
     const handleDisablePromo = () => {
         if (!promoProduct) return;
-        promoForm.transform((data) => ({
-            ...data,
+
+        promoForm.setData({
+            ...promoForm.data,
             is_promo: false,
-            promo_price: null,
-        })).post(route('products.update', promoProduct.id), {
-            onSuccess: () => setPromoProduct(null),
+            promo_price: '',
+        });
+
+        promoForm.put(route('products.update', promoProduct.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setPromoProduct(null);
+                setToastMessage('Promotion désactivée sur ce produit.');
+                setTimeout(() => setToastMessage(null), 3500);
+            },
         });
     };
 
     const handleDeleteProduct = (product) => {
         if (confirm(`Êtes-vous sûr de vouloir supprimer le produit "${product.title}" ?`)) {
-            createForm.delete(route('products.destroy', product.id));
+            createForm.delete(route('products.destroy', product.id), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setToastMessage('Produit supprimé du catalogue.');
+                    setTimeout(() => setToastMessage(null), 3500);
+                },
+            });
         }
     };
 
@@ -197,6 +223,21 @@ export default function Index({ store, products, metrics, appUrl }) {
     return (
         <AuthenticatedLayout>
             <Head title="Gestion Avancée des Produits — BIOLINKO" />
+
+            {/* TOAST NOTIFICATION BANNER */}
+            <AnimatePresence>
+                {toastMessage && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="fixed top-6 right-6 z-50 px-4 py-3 rounded-2xl bg-slate-950 text-white text-xs font-semibold shadow-xl flex items-center gap-2 border border-slate-800"
+                    >
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>{toastMessage}</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <div className="w-full space-y-8 font-sans">
                 
@@ -638,6 +679,20 @@ export default function Index({ store, products, metrics, appUrl }) {
                                     <p className="text-xs text-slate-500 font-medium">{editingProduct.title}</p>
                                 </div>
 
+                                {Object.keys(editForm.errors).length > 0 && (
+                                    <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 space-y-1">
+                                        <div className="font-bold flex items-center gap-1.5">
+                                            <AlertCircle className="w-4 h-4 text-rose-600" />
+                                            <span>Erreur de modification :</span>
+                                        </div>
+                                        <ul className="list-disc list-inside pl-2 space-y-0.5 text-[11px]">
+                                            {Object.values(editForm.errors).map((err, idx) => (
+                                                <li key={idx}>{err}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
                                 <form onSubmit={handleEditSubmit} className="space-y-4">
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-700 mb-1">Titre du Produit *</label>
@@ -720,6 +775,20 @@ export default function Index({ store, products, metrics, appUrl }) {
                                     <p className="text-xs text-slate-500 font-medium">{promoProduct.title}</p>
                                 </div>
 
+                                {Object.keys(promoForm.errors).length > 0 && (
+                                    <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 space-y-1">
+                                        <div className="font-bold flex items-center gap-1.5">
+                                            <AlertCircle className="w-4 h-4 text-rose-600" />
+                                            <span>Erreur lors de la promotion :</span>
+                                        </div>
+                                        <ul className="list-disc list-inside pl-2 space-y-0.5 text-[11px]">
+                                            {Object.values(promoForm.errors).map((err, idx) => (
+                                                <li key={idx}>{err}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
                                 <form onSubmit={handlePromoSubmit} className="space-y-4">
                                     <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-slate-700">
                                         Prix Normal Actuel : <strong className="text-slate-950 font-bold">{Number(promoProduct.price_vendor).toLocaleString()} FCFA</strong>
@@ -765,7 +834,7 @@ export default function Index({ store, products, metrics, appUrl }) {
                                             disabled={promoForm.processing}
                                             className="w-full py-3 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md transition-all"
                                         >
-                                            Activer / Enregistrer la Promotion
+                                            {promoForm.processing ? 'Enregistrement en cours...' : 'Activer / Enregistrer la Promotion'}
                                         </button>
 
                                         {promoProduct.is_promo && (

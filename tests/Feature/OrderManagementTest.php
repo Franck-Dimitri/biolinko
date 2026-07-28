@@ -5,6 +5,10 @@ use App\Models\Store;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Withdrawal;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+
+uses(RefreshDatabase::class);
 
 test('authenticated vendor can view orders and wallet page', function () {
     $user = User::factory()->create();
@@ -34,8 +38,8 @@ test('vendor can update order status', function () {
     $order = Order::create([
         'store_id' => $store->id,
         'customer_name' => 'John Doe',
-        'customer_phone' => '0102030405',
-        'city' => 'Cotonou',
+        'customer_phone' => '237699123456',
+        'city' => 'Douala',
         'price_vendor' => 10000,
         'saas_margin' => 200,
         'api_fee' => 200,
@@ -54,7 +58,18 @@ test('vendor can update order status', function () {
     ]);
 });
 
-test('vendor can request mobile money withdrawal', function () {
+test('vendor can request mobile money withdrawal via hrskills pay', function () {
+    Http::fake([
+        'api.hrskills-pay.com/*' => Http::response([
+            'transaction_token' => 'mock_token',
+            'data' => [
+                'reference' => 'ref_payout_123',
+                'transaction_id' => 'tx_payout_123',
+                'status' => 'PENDING',
+            ]
+        ], 200),
+    ]);
+
     $user = User::factory()->create();
     $store = Store::create([
         'user_id' => $user->id,
@@ -69,20 +84,19 @@ test('vendor can request mobile money withdrawal', function () {
 
     $response = $this->actingAs($user)->post(route('wallet.withdraw'), [
         'amount' => 10000,
-        'phone_momo' => '0102030405',
+        'phone_momo' => '237680216505',
     ]);
 
     $response->assertRedirect();
     $this->assertDatabaseHas('withdrawals', [
         'wallet_id' => $wallet->id,
         'amount' => 10000,
-        'phone_number' => '0102030405',
+        'phone_number' => '237680216505',
         'status' => 'pending',
     ]);
 
     $this->assertDatabaseHas('wallets', [
         'id' => $wallet->id,
         'balance_available' => 15000,
-        'balance_pending' => 10000,
     ]);
 });

@@ -47,6 +47,16 @@ class ProductController extends Controller
     {
         $store = $request->user()->store;
 
+        if ($request->input('promo_price') === '') {
+            $request->merge(['promo_price' => null]);
+        }
+        if ($request->input('promo_start_at') === '') {
+            $request->merge(['promo_start_at' => null]);
+        }
+        if ($request->input('promo_end_at') === '') {
+            $request->merge(['promo_end_at' => null]);
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -124,6 +134,17 @@ class ProductController extends Controller
         $store = $request->user()->store;
         if ($product->store_id !== $store->id) {
             abort(403);
+        }
+
+        // Convert empty string inputs to null for optional fields
+        if ($request->input('promo_price') === '') {
+            $request->merge(['promo_price' => null]);
+        }
+        if ($request->input('promo_start_at') === '') {
+            $request->merge(['promo_start_at' => null]);
+        }
+        if ($request->input('promo_end_at') === '') {
+            $request->merge(['promo_end_at' => null]);
         }
 
         $validated = $request->validate([
