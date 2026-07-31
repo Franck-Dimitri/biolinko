@@ -22,6 +22,15 @@ export default function Index({ store, reviews, appUrl }) {
         { title: 'Support WhatsApp 7j/7', subtitle: 'Contact direct avec le vendeur' }
     ];
 
+    const defaultSections = [
+        { id: 'banner', name: "Bandeau d'Annonce Supérieur", enabled: true },
+        { id: 'hero', name: "Section Héro & Slogan Boutique", enabled: true },
+        { id: 'products', name: "Catalogue de Produits & Filtres", enabled: true },
+        { id: 'benefits', name: "Engagements & Garanties Vendeur", enabled: true },
+        { id: 'reviews', name: "Avis & Témoignages Clients", enabled: true },
+        { id: 'about', name: "À propos & Informations de Contact", enabled: true },
+    ];
+
     // Main Store Appearance Form
     const { data, setData, post, processing, errors } = useForm({
         name: store?.name || user?.name || '',
@@ -46,6 +55,7 @@ export default function Index({ store, reviews, appUrl }) {
         hero_subtitle: store?.hero_subtitle || 'Articles de qualité supérieure expédiés sous 24h-48h. Paiement Mobile Money direct et sécurisé.',
         hero_cta_text: store?.hero_cta_text || 'Acheter Maintenant',
         benefits_json: initialBenefits,
+        sections_json: store?.sections_json || defaultSections,
         location_address: store?.location_address || '',
         support_email: store?.support_email || '',
     });
@@ -72,6 +82,31 @@ export default function Index({ store, reviews, appUrl }) {
         const updated = [...data.benefits_json];
         updated[index][field] = value;
         setData('benefits_json', updated);
+    };
+
+    const moveSectionUp = (index) => {
+        if (index === 0) return;
+        const updated = [...(data.sections_json || defaultSections)];
+        const temp = updated[index - 1];
+        updated[index - 1] = updated[index];
+        updated[index] = temp;
+        setData('sections_json', updated);
+    };
+
+    const moveSectionDown = (index) => {
+        const list = data.sections_json || defaultSections;
+        if (index === list.length - 1) return;
+        const updated = [...list];
+        const temp = updated[index + 1];
+        updated[index + 1] = updated[index];
+        updated[index] = temp;
+        setData('sections_json', updated);
+    };
+
+    const toggleSectionEnabled = (index) => {
+        const updated = [...(data.sections_json || defaultSections)];
+        updated[index].enabled = !updated[index].enabled;
+        setData('sections_json', updated);
     };
 
     const handleSubmit = (e) => {
@@ -166,6 +201,19 @@ export default function Index({ store, reviews, appUrl }) {
 
                     <button
                         type="button"
+                        onClick={() => setActiveTab('sections')}
+                        className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 shrink-0 ${
+                            activeTab === 'sections'
+                                ? 'bg-[#FFCC00] text-slate-950 font-bold border border-amber-300 shadow-2xs'
+                                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                        }`}
+                    >
+                        <Layers className="w-4 h-4 text-slate-900" />
+                        <span>3. Organiser & Activer les Sections</span>
+                    </button>
+
+                    <button
+                        type="button"
                         onClick={() => setActiveTab('benefits')}
                         className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 shrink-0 ${
                             activeTab === 'benefits'
@@ -174,7 +222,7 @@ export default function Index({ store, reviews, appUrl }) {
                         }`}
                     >
                         <ShieldCheck className="w-4 h-4 text-slate-900" />
-                        <span>3. Barre des 4 Avantages</span>
+                        <span>4. Barre des 4 Avantages</span>
                     </button>
 
                     <button
@@ -402,7 +450,94 @@ export default function Index({ store, reviews, appUrl }) {
                             </motion.div>
                         )}
 
-                        {/* TAB 3: 4 BENEFITS / ENGAGEMENTS CARDS */}
+                        {/* TAB 3: SECTIONS ORGANIZER & REORDERING */}
+                        {activeTab === 'sections' && (
+                            <motion.div
+                                key="tab-sections"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="bg-white rounded-2xl border border-slate-200/90 p-6 space-y-6 shadow-2xs"
+                            >
+                                <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-base font-bold text-slate-950">Organisation des Sections (Ordre & Activation)</h3>
+                                        <p className="text-xs text-slate-500 font-medium">Déplacez et réorganisez l'ordre d'affichage de votre vitrine par glisser-déplacer / flèches</p>
+                                    </div>
+                                    <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300">
+                                        ⭐ Agencement Flexible
+                                    </span>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {data.sections_json && data.sections_json.map((sec, idx) => (
+                                        <div 
+                                            key={sec.id}
+                                            className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-4 ${
+                                                sec.enabled 
+                                                    ? 'bg-slate-50 border-slate-200 hover:border-amber-400' 
+                                                    : 'bg-slate-100/60 border-slate-200 opacity-60'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400">
+                                                    <Layers className="w-4 h-4 text-amber-500" />
+                                                </div>
+                                                <div>
+                                                    <div className="text-xs font-bold text-slate-950 flex items-center gap-2">
+                                                        <span>{sec.name}</span>
+                                                        {!sec.enabled && (
+                                                            <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 text-[10px] font-bold">
+                                                                Masquée
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-[11px] text-slate-500">Ordre d'affichage #{idx + 1}</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                {/* Move Up */}
+                                                <button
+                                                    type="button"
+                                                    disabled={idx === 0}
+                                                    onClick={() => moveSectionUp(idx)}
+                                                    className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-amber-100 disabled:opacity-30 text-xs font-bold transition-colors"
+                                                    title="Remonter la section"
+                                                >
+                                                    ▲ monter
+                                                </button>
+                                                {/* Move Down */}
+                                                <button
+                                                    type="button"
+                                                    disabled={idx === data.sections_json.length - 1}
+                                                    onClick={() => moveSectionDown(idx)}
+                                                    className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-amber-100 disabled:opacity-30 text-xs font-bold transition-colors"
+                                                    title="Descendre la section"
+                                                >
+                                                    ▼ descendre
+                                                </button>
+
+                                                {/* Toggle Enable/Disable */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleSectionEnabled(idx)}
+                                                    className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors border ${
+                                                        sec.enabled 
+                                                            ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100' 
+                                                            : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                                                    }`}
+                                                >
+                                                    {sec.enabled ? 'Désactiver' : 'Activer'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* TAB 4: 4 BENEFITS / ENGAGEMENTS CARDS */}
                         {activeTab === 'benefits' && (
                             <motion.div
                                 key="tab-benefits"

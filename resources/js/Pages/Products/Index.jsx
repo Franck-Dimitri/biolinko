@@ -45,6 +45,7 @@ export default function Index({ store, products, metrics, appUrl }) {
         min_order_quantity: 1,
         is_active: true,
         images_files: [],
+        variants: [],
     });
 
     // Dedicated Promo Form
@@ -71,6 +72,14 @@ export default function Index({ store, products, metrics, appUrl }) {
             min_order_quantity: product.min_order_quantity || 1,
             is_active: Boolean(product.is_active),
             images_files: [],
+            variants: product.variants ? product.variants.map(v => ({
+                id: v.id,
+                name: v.name || '',
+                size: v.size || '',
+                color: v.color || '',
+                price: v.price || '',
+                stock_quantity: v.stock_quantity ?? 10
+            })) : [],
         });
     };
 
@@ -91,18 +100,44 @@ export default function Index({ store, products, metrics, appUrl }) {
         });
     };
 
-    const handleAddVariant = () => {
-        if (!variantInput.size && !variantInput.color) return;
-        const updated = [...variantsList, { ...variantInput }];
-        setVariantsList(updated);
-        createForm.setData('variants', updated);
-        setVariantInput({ size: '', color: '', stock_quantity: 10 });
+    // Variant Helpers for Create Form
+    const addCreateVariantRow = () => {
+        const current = createForm.data.variants || [];
+        createForm.setData('variants', [
+            ...current,
+            { name: '', size: '', color: '', price: '', stock_quantity: 10 }
+        ]);
     };
 
-    const handleRemoveVariant = (idx) => {
-        const updated = variantsList.filter((_, i) => i !== idx);
-        setVariantsList(updated);
-        createForm.setData('variants', updated);
+    const removeCreateVariantRow = (index) => {
+        const current = createForm.data.variants || [];
+        createForm.setData('variants', current.filter((_, i) => i !== index));
+    };
+
+    const updateCreateVariantRow = (index, field, value) => {
+        const current = [...(createForm.data.variants || [])];
+        current[index] = { ...current[index], [field]: value };
+        createForm.setData('variants', current);
+    };
+
+    // Variant Helpers for Edit Form
+    const addEditVariantRow = () => {
+        const current = editForm.data.variants || [];
+        editForm.setData('variants', [
+            ...current,
+            { name: '', size: '', color: '', price: '', stock_quantity: 10 }
+        ]);
+    };
+
+    const removeEditVariantRow = (index) => {
+        const current = editForm.data.variants || [];
+        editForm.setData('variants', current.filter((_, i) => i !== index));
+    };
+
+    const updateEditVariantRow = (index, field, value) => {
+        const current = [...(editForm.data.variants || [])];
+        current[index] = { ...current[index], [field]: value };
+        editForm.setData('variants', current);
     };
 
     // Accumulate multi-image selection up to 5 photos max
@@ -127,6 +162,26 @@ export default function Index({ store, products, metrics, appUrl }) {
 
         const updatedPreviews = imagePreviews.filter((_, i) => i !== idxToRemove);
         setImagePreviews(updatedPreviews);
+    };
+
+    const handleQuickStockAdd = (product, amountToAdd = 10) => {
+        const newStock = Number(product.stock || 0) + amountToAdd;
+        editForm.setData({
+            title: product.title,
+            description: product.description || '',
+            price_vendor: product.price_vendor,
+            stock: newStock,
+            min_order_quantity: product.min_order_quantity || 1,
+            is_active: Boolean(product.is_active),
+        });
+
+        editForm.put(route('products.update', product.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setToastMessage(`Stock réassorti (+${amountToAdd} unités) pour "${product.title}" !`);
+                setTimeout(() => setToastMessage(null), 3500);
+            },
+        });
     };
 
     const handleCreateSubmit = (e) => {
@@ -441,10 +496,27 @@ export default function Index({ store, products, metrics, appUrl }) {
                                             <div className="text-base font-extrabold text-slate-950">
                                                 {Number(product.price_vendor).toLocaleString()} FCFA
                                             </div>
-                                            <div className="text-[11px] text-slate-500 font-medium">
-                                                Stock: <strong className={product.stock <= 3 ? 'text-rose-600 font-bold' : 'text-slate-900 font-semibold'}>{product.stock}</strong>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="text-[11px] text-slate-500 font-medium">
+                                                    Stock: <strong className={product.stock <= 3 ? 'text-rose-600 font-bold' : 'text-slate-900 font-semibold'}>{product.stock}</strong>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleQuickStockAdd(product, 10)}
+                                                    className="px-2 py-0.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 text-[10px] font-bold transition-all border border-amber-300"
+                                                    title="Réassort rapide (+10 unités)"
+                                                >
+                                                    +10 Stock
+                                                </button>
                                             </div>
                                         </div>
+
+                                        {product.variants && product.variants.length > 0 && (
+                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
+                                                <Layers2 className="w-3 h-3 text-amber-500" />
+                                                <span>{product.variants.length} variante(s)</span>
+                                            </div>
+                                        )}
 
                                         {/* STRICT DESCRIPTION LINE-CLAMP & OVERFLOW CONTROL */}
                                         {product.description && (

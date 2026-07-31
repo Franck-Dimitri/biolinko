@@ -77,6 +77,7 @@ class AppearanceController extends Controller
             'hero_subtitle' => ['nullable', 'string'],
             'hero_cta_text' => ['nullable', 'string', 'max:255'],
             'benefits_json' => ['nullable', 'array'],
+            'sections_json' => ['nullable', 'array'],
             'location_address' => ['nullable', 'string', 'max:255'],
             'support_email' => ['nullable', 'email', 'max:255'],
             'logo_file' => ['nullable', 'image', 'max:5120'],

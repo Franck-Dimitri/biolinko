@@ -13,8 +13,8 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['"Poppins"', ...defaultTheme.fontFamily.sans],
-                serif: ['"Poppins"', ...defaultTheme.fontFamily.sans],
+                sans: ['"Nunito"', ...defaultTheme.fontFamily.sans],
+                display: ['"Nunito"', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 brand: {

@@ -37,6 +37,7 @@ class Store extends Model
         'hero_subtitle',
         'hero_cta_text',
         'benefits_json',
+        'sections_json',
         'location_address',
         'support_email',
     ];
@@ -44,7 +45,20 @@ class Store extends Model
     protected $casts = [
         'is_configured' => 'boolean',
         'benefits_json' => 'array',
+        'sections_json' => 'array',
     ];
+
+    public static function getDefaultSections(): array
+    {
+        return [
+            ['id' => 'banner', 'name' => "Bandeau d'Annonce Supérieur", 'enabled' => true],
+            ['id' => 'hero', 'name' => "Section Héro & Slogan Boutique", 'enabled' => true],
+            ['id' => 'products', 'name' => "Catalogue de Produits & Filtres", 'enabled' => true],
+            ['id' => 'benefits', 'name' => "Engagements & Garanties Vendeur", 'enabled' => true],
+            ['id' => 'reviews', 'name' => "Avis & Témoignages Clients", 'enabled' => true],
+            ['id' => 'about', 'name' => "À propos & Informations de Contact", 'enabled' => true],
+        ];
+    }
 
     public function user(): BelongsTo
     {

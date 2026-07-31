@@ -1,38 +1,26 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
-    Zap, ShoppingBag, Wallet, Copy, Check, ExternalLink, 
-    Sparkles, ArrowRight, Settings, Plus, Phone, MapPin, Clock, 
-    TrendingUp, PackageCheck, X, CheckCircle2, Circle, ArrowLeft,
-    ArrowUpRight, ArrowDownRight, Calendar, Download, MoreHorizontal, Filter, Image as ImageIcon
+    Zap, ShoppingBag, Wallet, ExternalLink, Sparkles, ArrowRight, Plus, 
+    TrendingUp, PackageCheck, CheckCircle2, ArrowUpRight, Calendar, 
+    BarChart3, MessageCircle, FileText, ArrowRightCircle, ShieldCheck, Tag, Eye
 } from 'lucide-react';
 
-export default function Dashboard({ store, wallet, productsCount, ordersCount, totalRevenue, recentOrders, setupChecklist, completionPercentage, appUrl }) {
+export default function Dashboard({ store, wallet, productsCount, ordersCount, totalRevenue, recentOrders, setupChecklist, completionPercentage, analytics, appUrl }) {
     const user = usePage().props.auth.user;
     const products = usePage().props.products || [];
-    const [orderFilter, setOrderFilter] = useState('all');
 
-    const salesChartData = [
-        { day: '01 Jul', val: 40 },
-        { day: '02 Jul', val: 80 },
-        { day: '03 Jul', val: 60 },
-        { day: '04 Jul', val: 140 },
-        { day: '05 Jul', val: 20 },
-        { day: '06 Jul', val: 120 },
-        { day: '07 Jul', val: 110 },
-        { day: '08 Jul', val: 150 },
-        { day: '09 Jul', val: 30 },
-        { day: '10 Jul', val: 100 },
-        { day: '11 Jul', val: 45 },
-    ];
+    const dailySales = analytics?.dailySales || [];
+    const topProducts = analytics?.topProducts || [];
+    const maxRevenue = Math.max(...dailySales.map(d => d.revenue), 1000);
 
     return (
         <AuthenticatedLayout>
             <Head title="Tableau de bord Vendeur — BIOLINKO" />
 
-            <div className="space-y-8 font-sans">
+            <div className="space-y-8 font-sans pb-12">
                 
                 {/* 1. PROMOTIONAL BANNER */}
                 <motion.div 
@@ -65,7 +53,34 @@ export default function Dashboard({ store, wallet, productsCount, ordersCount, t
                     </div>
                 </motion.div>
 
-                {/* 2. OVERVIEW SECTION & METRICS CARDS */}
+                {/* 2. PENDING ORDERS WHATSAPP RELANCE ALERT */}
+                {analytics?.pendingFollowupsCount > 0 && (
+                    <div className="p-4 sm:p-5 rounded-3xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2.5 rounded-2xl bg-amber-500 text-slate-950 shrink-0">
+                                <MessageCircle className="w-5 h-5 fill-slate-950" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-bold text-slate-900">
+                                    {analytics.pendingFollowupsCount} commande(s) en attente de paiement USSD
+                                </h3>
+                                <p className="text-xs text-slate-600">
+                                    Relancez directement vos clients sur WhatsApp pour encaisser vos ventes plus rapidement.
+                                </p>
+                            </div>
+                        </div>
+
+                        <Link
+                            href={route('orders.index')}
+                            className="px-4 py-2 rounded-2xl bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs shrink-0 transition-all flex items-center gap-1.5 shadow-2xs"
+                        >
+                            <span>Relancer sur WhatsApp</span>
+                            <ArrowRight className="w-4 h-4" />
+                        </Link>
+                    </div>
+                )}
+
+                {/* 3. OVERVIEW SECTION & METRICS CARDS */}
                 <div>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                         <h2 className="text-xl font-semibold text-slate-900 tracking-tight">Vue d'Ensemble Financière</h2>
@@ -150,51 +165,186 @@ export default function Dashboard({ store, wallet, productsCount, ordersCount, t
                     </div>
                 </div>
 
-                {/* 3. RECENT PRODUCTS CARDS SECTION WITH STRICT LINE-CLAMP AND OVERFLOW PROTECTION */}
-                <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 space-y-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h3 className="text-xl font-semibold text-slate-900">Aperçu du Catalogue</h3>
-                            <p className="text-xs text-slate-500 font-medium">Vos derniers produits ajoutés à votre boutique.</p>
+                {/* 4. INTERACTIVE SALES ANALYTICS CHART & SMARTLINKS CONVERSION */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    {/* Daily Revenue Bar Chart */}
+                    <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                    <BarChart3 className="w-5 h-5 text-amber-500" />
+                                    <span>Évolution des Ventes Quotidiennes (14 Derniers Jours)</span>
+                                </h3>
+                                <p className="text-xs text-slate-500">Revenus générés par jour sur votre boutique</p>
+                            </div>
+                            <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">FCFA</span>
+                        </div>
+
+                        {/* Chart Visualization */}
+                        <div className="pt-4">
+                            <div className="h-48 flex items-end justify-between gap-2 border-b border-slate-100 pb-2 px-2">
+                                {dailySales.map((day, idx) => {
+                                    const heightPct = Math.max(8, Math.round((day.revenue / maxRevenue) * 100));
+                                    return (
+                                        <div key={idx} className="flex-1 flex flex-col items-center gap-2 group relative">
+                                            
+                                            {/* Tooltip on hover */}
+                                            <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] py-1 px-2 rounded-lg font-bold whitespace-nowrap shadow-lg pointer-events-none z-20">
+                                                {new Intl.NumberFormat('fr-FR').format(day.revenue)} FCFA ({day.orders} vente(s))
+                                            </div>
+
+                                            {/* Bar */}
+                                            <div className="w-full max-w-[28px] bg-slate-100 group-hover:bg-amber-100 rounded-t-xl overflow-hidden flex flex-col justify-end h-full transition-colors">
+                                                <div 
+                                                    style={{ height: `${heightPct}%` }}
+                                                    className="w-full bg-gradient-to-t from-amber-500 to-[#FFCC00] rounded-t-xl transition-all duration-500 group-hover:from-amber-600 group-hover:to-amber-400"
+                                                ></div>
+                                            </div>
+
+                                            {/* X Axis Label */}
+                                            <span className="text-[10px] text-slate-400 font-semibold truncate max-w-full">
+                                                {day.date.split(' ')[0]}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SmartLinks Conversion Card */}
+                    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 flex flex-col justify-between space-y-6">
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                    <Zap className="w-5 h-5 text-amber-500 fill-amber-400" />
+                                    <span>Taux de Conversion SmartLinks</span>
+                                </h3>
+                                <Link href={route('seller.smartlinks.index')} className="text-xs font-bold text-amber-600 hover:text-amber-700">
+                                    Voir tous ➔
+                                </Link>
+                            </div>
+
+                            <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-3 text-center">
+                                <div className="text-3xl font-black text-slate-900">
+                                    {analytics?.conversionRate || 0}%
+                                </div>
+                                <div className="text-xs text-slate-600 font-medium">
+                                    Taux d'achat direct depuis vos liens de commande
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 text-xs font-semibold text-slate-600">
+                                <div className="flex justify-between py-2 border-b border-slate-100">
+                                    <span>👀 Clics / Vues Liens :</span>
+                                    <strong className="text-slate-900">{analytics?.totalViews || 0}</strong>
+                                </div>
+                                <div className="flex justify-between py-2 border-b border-slate-100">
+                                    <span>🛍️ Achats Encaissés :</span>
+                                    <strong className="text-emerald-600 font-bold">{analytics?.totalSmartSales || 0}</strong>
+                                </div>
+                            </div>
                         </div>
 
                         <Link
-                            href={route('products.index')}
-                            className="px-4 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-semibold text-xs transition-colors flex items-center gap-1.5"
+                            href={route('seller.smartlinks.index')}
+                            className="w-full py-3 rounded-2xl bg-[#FFCC00] hover:bg-amber-400 text-slate-950 font-black text-xs transition-all flex items-center justify-center gap-2 shadow-2xs"
                         >
-                            <span>Gérer le catalogue</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
+                            <Plus className="w-4 h-4" />
+                            <span>Créer un nouveau SmartLink</span>
                         </Link>
                     </div>
+                </div>
 
-                    {products && products.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {products.slice(0, 3).map((product) => (
-                                <div key={product.id} className="bg-slate-50 rounded-2xl border border-slate-200/80 overflow-hidden flex flex-col justify-between p-4 min-w-0">
-                                    <div className="h-44 bg-white rounded-xl overflow-hidden mb-3 relative flex items-center justify-center border border-slate-200">
-                                        {product.image_url ? (
-                                            <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <ShoppingBag className="w-10 h-10 text-slate-300" />
-                                        )}
-                                    </div>
-                                    <div className="space-y-1 min-w-0">
-                                        <div className="font-semibold text-slate-900 text-sm line-clamp-1 break-words truncate">{product.title}</div>
-                                        {product.description && (
-                                            <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-medium break-words overflow-hidden text-ellipsis">
-                                                {product.description}
-                                            </p>
-                                        )}
-                                        <div className="text-xs text-amber-800 font-bold pt-1">{Number(product.price_display || product.price_vendor).toLocaleString()} FCFA</div>
-                                    </div>
-                                </div>
-                            ))}
+                {/* 5. TOP SELLING PRODUCTS & RECENT CATALOGUE */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    {/* Top 5 Products Table */}
+                    <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-base font-bold text-slate-900">Top 5 Produits les Plus Vendus</h3>
+                                <p className="text-xs text-slate-500">Articles générant le plus de volume sur votre boutique</p>
+                            </div>
+                            <Link href={route('products.index')} className="text-xs font-bold text-amber-600 hover:text-amber-700">
+                                Voir catalogue ➔
+                            </Link>
                         </div>
-                    ) : (
-                        <div className="p-6 text-center bg-slate-50 rounded-2xl border border-slate-200/60 text-slate-500 text-xs font-medium">
-                            Aucun produit encore au catalogue. Rendez-vous sur l'onglet Catalogue pour en ajouter.
+
+                        {topProducts && topProducts.length > 0 ? (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-xs font-medium text-slate-700">
+                                    <thead>
+                                        <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                            <th className="py-2.5 px-3">Produit</th>
+                                            <th className="py-2.5 px-3 text-center">Quantités Vendues</th>
+                                            <th className="py-2.5 px-3 text-right">Chiffre d'Affaires</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {topProducts.map((p, idx) => (
+                                            <tr key={idx} className="hover:bg-slate-50/60">
+                                                <td className="py-3 px-3 font-bold text-slate-900">{p.product_title}</td>
+                                                <td className="py-3 px-3 text-center font-mono font-bold text-amber-600">
+                                                    {p.total_qty} unités
+                                                </td>
+                                                <td className="py-3 px-3 text-right font-black text-slate-900">
+                                                    {new Intl.NumberFormat('fr-FR').format(p.total_revenue)} FCFA
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="p-6 text-center bg-slate-50 rounded-2xl text-xs text-slate-500">
+                                Les statistiques des meilleures ventes apparaîtront dès vos premiers encaissements.
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Recent Products Summary */}
+                    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-base font-bold text-slate-900">Aperçu Catalogue</h3>
+                            <Link href={route('products.index')} className="text-xs font-bold text-slate-600 hover:text-slate-900">
+                                Gérer
+                            </Link>
                         </div>
-                    )}
+
+                        {products && products.length > 0 ? (
+                            <div className="space-y-3">
+                                {products.slice(0, 3).map((product) => (
+                                    <div key={product.id} className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between">
+                                        <div className="flex items-center gap-3 truncate">
+                                            <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                                                {product.image_url ? (
+                                                    <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <ShoppingBag className="w-5 h-5 text-slate-300" />
+                                                )}
+                                            </div>
+                                            <div className="truncate">
+                                                <div className="text-xs font-bold text-slate-900 truncate">{product.title}</div>
+                                                <div className="text-[11px] text-amber-700 font-bold">
+                                                    {new Intl.NumberFormat('fr-FR').format(product.price_display || product.price_vendor)} FCFA
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <span className="text-[10px] font-bold text-slate-500 bg-white px-2 py-1 rounded-lg border border-slate-200 shrink-0">
+                                            Stock: {product.stock}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="p-6 text-center bg-slate-50 rounded-2xl text-xs text-slate-500">
+                                Aucun produit enregistré.
+                            </div>
+                        )}
+                    </div>
                 </div>
 
             </div>

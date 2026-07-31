@@ -184,9 +184,12 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
         const qToAdd = quantityToAdd ? Math.max(quantityToAdd, minQ) : minQ;
         const variantObj = variant || (product.variants && product.variants.length > 0 ? product.variants[0] : null);
 
-        const currentPv = (product.is_promo && product.promo_price > 0) ? parseFloat(product.promo_price) : parseFloat(product.price_vendor);
-        const pbUnit = Math.ceil(currentPv * 1.02);
+        let currentPv = (product.is_promo && product.promo_price > 0) ? parseFloat(product.promo_price) : parseFloat(product.price_vendor);
+        if (variantObj && variantObj.price && parseFloat(variantObj.price) > 0) {
+            currentPv = parseFloat(variantObj.price);
+        }
 
+        const pbUnit = Math.ceil(currentPv * 1.02);
         const variantLabel = variantObj ? trimVariantLabel(variantObj) : '';
 
         const existingIndex = cartItems.findIndex(
@@ -225,6 +228,7 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
 
     const trimVariantLabel = (v) => {
         if (!v) return '';
+        if (v.name) return v.name;
         return [v.size ? `Taille: ${v.size}` : '', v.color ? `Couleur: ${v.color}` : ''].filter(Boolean).join(' ');
     };
 
@@ -259,6 +263,12 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
     const cartTotalClientTc = Math.ceil(cartSubtotalPb / 0.98);
     const cartMomoFee = cartTotalClientTc - cartSubtotalPb;
     const totalCartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+
+    const isSectionEnabled = (sectionId) => {
+        if (!store?.sections_json || !Array.isArray(store.sections_json)) return true;
+        const sec = store.sections_json.find(s => s.id === sectionId);
+        return sec ? Boolean(sec.enabled) : true;
+    };
 
     // Benefits Fallbacks
     const benefitsList = store?.benefits_json || [

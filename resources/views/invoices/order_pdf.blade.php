@@ -12,6 +12,20 @@
             margin: 0;
             padding: 20px;
         }
+        .watermark {
+            position: fixed;
+            top: 35%;
+            left: 5%;
+            transform: rotate(-30deg);
+            font-size: 100px;
+            font-weight: 900;
+            color: rgba(255, 204, 0, 0.12);
+            z-index: -1000;
+            text-transform: uppercase;
+            letter-spacing: 12px;
+            font-family: Arial, sans-serif;
+            pointer-events: none;
+        }
         .header {
             width: 100%;
             border-bottom: 2px solid #e2e8f0;
@@ -129,6 +143,7 @@
     </style>
 </head>
 <body>
+    <div class="watermark">BIOLINKO</div>
 
     <div class="header">
         <table class="header-table">

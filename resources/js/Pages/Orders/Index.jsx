@@ -9,7 +9,7 @@ import {
     Calendar, Check, User, ExternalLink, RefreshCw, MessageSquare, DollarSign
 } from 'lucide-react';
 
-export default function Index({ store, orders, wallet, withdrawals, metrics, filters }) {
+export default function Index({ store, orders, wallet, withdrawals, metrics, filters, appUrl }) {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -26,6 +26,19 @@ export default function Index({ store, orders, wallet, withdrawals, metrics, fil
     const statusForm = useForm({
         status: '',
     });
+
+    const handleWhatsAppRelance = (order) => {
+        let cleanPhone = (order.customer_phone || '').replace(/[^0-9]/g, '');
+        if (!cleanPhone.startsWith('237')) {
+            cleanPhone = '237' + cleanPhone;
+        }
+        const siteUrl = appUrl || window.location.origin;
+        const checkoutUrl = `${siteUrl}/stores/${store.slug}/checkout?code=${order.tracking_code}`;
+        const message = `Bonjour ${order.customer_name} 👋,\n\nVotre commande *${order.tracking_code}* (${Number(order.total_client).toLocaleString()} FCFA) sur la boutique *${store.name}* est en attente de paiement Mobile Money.\n\nVous pouvez réactiver et finaliser votre commande directement ici : ${checkoutUrl}\n\nN'hésitez pas si vous avez des questions !`;
+
+        const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+    };
 
     const handleFilterChange = (status) => {
         setStatusTab(status);
@@ -311,7 +324,17 @@ export default function Index({ store, orders, wallet, withdrawals, metrics, fil
                                                 </select>
                                             </td>
 
-                                            <td className="py-4 px-6 text-right">
+                                            <td className="py-4 px-6 text-right space-x-1.5 whitespace-nowrap">
+                                                 {order.status === 'pending' && (
+                                                     <button
+                                                         onClick={() => handleWhatsAppRelance(order)}
+                                                         className="px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition-all inline-flex items-center gap-1 shadow-2xs"
+                                                         title="Envoyer un rappel de paiement au client sur WhatsApp"
+                                                     >
+                                                         <MessageSquare className="w-3.5 h-3.5" />
+                                                         <span>Relancer WhatsApp</span>
+                                                     </button>
+                                                 )}
                                                 <button
                                                     onClick={() => setSelectedOrder(order)}
                                                     className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors inline-flex items-center gap-1 font-semibold text-xs"

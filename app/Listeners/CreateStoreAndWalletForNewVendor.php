@@ -42,6 +42,7 @@ class CreateStoreAndWalletForNewVendor
             'phone_whatsapp' => $user->phone_whatsapp,
             'announcement_header' => '⚡ Bienvenue sur notre boutique officielle !',
             'opening_hours' => 'Lun - Sam: 08h00 - 18h00',
+            'sections_json' => Store::getDefaultSections(),
         ]);
 
         // Create wallet

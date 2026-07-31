@@ -28,5 +28,9 @@ Consulter mes Commandes
 
 Merci de votre confiance,<br>
 **L'Équipe BIOLINKO 🇨🇲**
+
+<div style="text-align: center; margin-top: 25px; padding: 12px; background-color: #fffbe6; border: 1px dashed #fef08a; border-radius: 12px; font-size: 11px; color: #92400e; font-weight: bold; letter-spacing: 1px;">
+    ⚡ FILIGRANE SÉCURISÉ BIOLINKO — NOTIFICATION TRANSACTION VERIFIÉE 🇨🇲
+</div>
 </x-mail::message>
 

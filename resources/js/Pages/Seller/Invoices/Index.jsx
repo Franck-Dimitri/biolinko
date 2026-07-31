@@ -68,7 +68,7 @@ export default function InvoicesIndex({ invoices, stats, filters }) {
         <AuthenticatedLayout>
             <Head title="Espace Factures - BIOLINKO" />
 
-            <div className="space-y-6 max-w-7xl mx-auto pb-12">
+            <div className="space-y-6 mx-auto pb-12">
                 
                 {/* Header Title */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-2xs">

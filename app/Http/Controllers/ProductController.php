@@ -118,10 +118,15 @@ class ProductController extends Controller
 
         if (!empty($validated['variants'])) {
             foreach ($validated['variants'] as $v) {
+                if (empty($v['name']) && empty($v['size']) && empty($v['color'])) {
+                    continue;
+                }
                 $product->variants()->create([
+                    'name' => $v['name'] ?? null,
                     'size' => $v['size'] ?? null,
                     'color' => $v['color'] ?? null,
-                    'stock_quantity' => $v['stock_quantity'] ?? 10,
+                    'price' => !empty($v['price']) ? (float) $v['price'] : null,
+                    'stock_quantity' => isset($v['stock_quantity']) ? (int) $v['stock_quantity'] : 10,
                 ]);
             }
         }
@@ -161,6 +166,7 @@ class ProductController extends Controller
             'image_file' => ['nullable', 'image', 'max:5120'],
             'images_files' => ['nullable', 'array'],
             'images_files.*' => ['nullable', 'image', 'max:5120'],
+            'variants' => ['nullable', 'array'],
         ]);
 
         $imagePaths = $product->images ?? [];
@@ -222,6 +228,42 @@ class ProductController extends Controller
         }
 
         $product->update($updateData);
+
+        // Sync Variants
+        if ($request->has('variants')) {
+            $existingIds = [];
+            $variantsData = $request->input('variants', []);
+            if (is_array($variantsData)) {
+                foreach ($variantsData as $v) {
+                    if (empty($v['name']) && empty($v['size']) && empty($v['color'])) {
+                        continue;
+                    }
+                    if (!empty($v['id'])) {
+                        $variant = $product->variants()->find($v['id']);
+                        if ($variant) {
+                            $variant->update([
+                                'name' => $v['name'] ?? null,
+                                'size' => $v['size'] ?? null,
+                                'color' => $v['color'] ?? null,
+                                'price' => !empty($v['price']) ? (float) $v['price'] : null,
+                                'stock_quantity' => isset($v['stock_quantity']) ? (int) $v['stock_quantity'] : 10,
+                            ]);
+                            $existingIds[] = $variant->id;
+                        }
+                    } else {
+                        $newVar = $product->variants()->create([
+                            'name' => $v['name'] ?? null,
+                            'size' => $v['size'] ?? null,
+                            'color' => $v['color'] ?? null,
+                            'price' => !empty($v['price']) ? (float) $v['price'] : null,
+                            'stock_quantity' => isset($v['stock_quantity']) ? (int) $v['stock_quantity'] : 10,
+                        ]);
+                        $existingIds[] = $newVar->id;
+                    }
+                }
+            }
+            $product->variants()->whereNotIn('id', $existingIds)->delete();
+        }
 
         return redirect()->back()->with('message', 'Produit mis à jour avec succès !');
     }

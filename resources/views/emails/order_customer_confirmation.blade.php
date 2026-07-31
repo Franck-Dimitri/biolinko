@@ -20,5 +20,9 @@ Suivre ma Livraison en Direct
 En cas de question sur votre livraison, vous pouvez contacter directement le vendeur sur WhatsApp au **{{ $order->store->user->phone_whatsapp ?? '' }}**.
 
 Merci d'avoir acheté sur **BIOLINKO** !
+
+<div style="text-align: center; margin-top: 25px; padding: 12px; background-color: #fffbe6; border: 1px dashed #fef08a; border-radius: 12px; font-size: 11px; color: #92400e; font-weight: bold; letter-spacing: 1px;">
+    ⚡ FILIGRANE SÉCURISÉ BIOLINKO — REÇU OFFICIEL DE PAIEMENT 🇨🇲
+</div>
 </x-mail::message>
 

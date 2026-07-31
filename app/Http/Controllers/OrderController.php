@@ -77,6 +77,7 @@ class OrderController extends Controller
             'filters' => [
                 'status' => $statusFilter,
             ],
+            'appUrl' => config('app.url', 'http://localhost:8000'),
         ]);
     }
 
