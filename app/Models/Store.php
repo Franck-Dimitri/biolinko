@@ -77,4 +77,9 @@ class Store extends Model
             ->withPivot(['total_orders_count', 'total_spent', 'last_order_at'])
             ->withTimestamps();
     }
+
+    public function smartLinks(): HasMany
+    {
+        return $this->hasMany(SmartLink::class);
+    }
 }

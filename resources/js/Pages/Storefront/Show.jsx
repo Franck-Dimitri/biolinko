@@ -797,15 +797,26 @@ export default function Show({ store, products, initialSelectedProductId, appUrl
                                                 </div>
 
                                                 <motion.button
-                                                    whileHover={{ scale: 1.02 }}
-                                                    whileTap={{ scale: 0.97 }}
+                                                    whileHover={{ scale: (isSubmittingCheckout || processing) ? 1 : 1.02 }}
+                                                    whileTap={{ scale: (isSubmittingCheckout || processing) ? 1 : 0.97 }}
                                                     type="submit"
-                                                    disabled={processing}
-                                                    className="w-full py-3.5 rounded-2xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 border"
+                                                    disabled={isSubmittingCheckout || processing}
+                                                    className={`w-full py-3.5 rounded-2xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 border ${
+                                                        (isSubmittingCheckout || processing) ? 'opacity-70 cursor-not-allowed pointer-events-none' : ''
+                                                    }`}
                                                     style={{ backgroundColor: primaryColor, color: primaryTextColor, borderColor: primaryColor }}
                                                 >
-                                                    <ShoppingBag className="w-4 h-4" style={{ color: primaryTextColor }} />
-                                                    <span>Valider & Payer par Mobile Money ({Number(cartTotalClientTc).toLocaleString()} FCFA)</span>
+                                                    {(isSubmittingCheckout || processing) ? (
+                                                        <>
+                                                            <RefreshCw className="w-4 h-4 animate-spin" style={{ color: primaryTextColor }} />
+                                                            <span>Traitement du paiement en cours, veuillez patienter...</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <ShoppingBag className="w-4 h-4" style={{ color: primaryTextColor }} />
+                                                            <span>Valider & Payer par Mobile Money ({Number(cartTotalClientTc).toLocaleString()} FCFA)</span>
+                                                        </>
+                                                    )}
                                                 </motion.button>
 
                                                 {/* REASSURANCE NOTE BELOW PAYMENT BUTTON */}

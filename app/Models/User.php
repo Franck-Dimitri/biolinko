@@ -21,12 +21,15 @@ class User extends Authenticatable
         'role',
         'plan',
         'subscription_expires_at',
+        'email_otp',
+        'email_otp_expires_at',
         'password',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'email_otp',
     ];
 
     protected function casts(): array
@@ -34,6 +37,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'subscription_expires_at' => 'datetime',
+            'email_otp_expires_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -56,6 +60,36 @@ class User extends Authenticatable
     public function isSeller(): bool
     {
         return in_array($this->role, ['seller', 'vendor'], true) || empty($this->role);
+    }
+
+    public function generateEmailOtp(): string
+    {
+        $otp = (string) random_int(100000, 999999);
+        $this->forceFill([
+            'email_otp' => $otp,
+            'email_otp_expires_at' => now()->addMinutes(15),
+        ])->save();
+
+        return $otp;
+    }
+
+    public function verifyEmailOtp(string $otp): bool
+    {
+        if (empty($this->email_otp) || $this->email_otp !== trim($otp)) {
+            return false;
+        }
+
+        if (!$this->email_otp_expires_at || $this->email_otp_expires_at->isPast()) {
+            return false;
+        }
+
+        $this->forceFill([
+            'email_verified_at' => now(),
+            'email_otp' => null,
+            'email_otp_expires_at' => null,
+        ])->save();
+
+        return true;
     }
 
     public function isSubscriptionActive(): bool
@@ -114,6 +148,26 @@ class User extends Authenticatable
             'pro', 'growth' => 5,
             'business' => 10,
             default => 2,
+        };
+    }
+
+    public function getPlanMaxStores(): int
+    {
+        return match (strtolower($this->plan ?? 'starter')) {
+            'pro' => 2,
+            'growth' => 3,
+            'business' => 5,
+            default => 1,
+        };
+    }
+
+    public function getPlanMaxTemplates(): int
+    {
+        return match (strtolower($this->plan ?? 'starter')) {
+            'pro' => 2,
+            'growth' => 5,
+            'business' => 10,
+            default => 1,
         };
     }
 }

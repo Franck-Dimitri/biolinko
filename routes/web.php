@@ -6,6 +6,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HrSkillsPayWebhookController;
+use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderTrackingController;
 use App\Http\Controllers\ProductController;
@@ -13,6 +14,9 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\ToolPluginController;
+use App\Http\Controllers\SellerInvoiceController;
+use App\Http\Controllers\SmartLinkController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -64,8 +68,26 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
     Route::post('/wallet/withdraw', [OrderController::class, 'requestWithdrawal'])->name('wallet.withdraw');
 
+    // Invoices Management
+    Route::get('/invoices', [SellerInvoiceController::class, 'index'])->name('seller.invoices.index');
+    Route::get('/invoices/{order}/download', [SellerInvoiceController::class, 'download'])->name('seller.invoices.download');
+    Route::get('/invoices/{order}/preview', [SellerInvoiceController::class, 'preview'])->name('seller.invoices.preview');
+
+    // SmartLinks Management
+    Route::get('/smartlinks', [SmartLinkController::class, 'index'])->name('seller.smartlinks.index');
+    Route::post('/smartlinks', [SmartLinkController::class, 'store'])->name('seller.smartlinks.store');
+    Route::patch('/smartlinks/{smartLink}/toggle', [SmartLinkController::class, 'toggleActive'])->name('seller.smartlinks.toggle');
+    Route::delete('/smartlinks/{smartLink}', [SmartLinkController::class, 'destroy'])->name('seller.smartlinks.destroy');
+
     // Customers Directory
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+
+    // Marketing & Pixels
+    Route::get('/marketing', [MarketingController::class, 'index'])->name('seller.marketing.index');
+    Route::post('/marketing', [MarketingController::class, 'update'])->name('seller.marketing.update');
+
+    // Outils & Plugins
+    Route::get('/tools', [ToolPluginController::class, 'index'])->name('seller.tools.index');
 
     // Subscriptions Management
     Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('seller.subscriptions.index');
@@ -85,6 +107,10 @@ Route::get('/checkout/lookup-customer', [CheckoutController::class, 'lookupCusto
 Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
 Route::get('/checkout/status/{reference}', [CheckoutController::class, 'checkStatus'])->name('checkout.status');
 Route::get('/track/{tracking_code}', [OrderTrackingController::class, 'show'])->name('order.track');
+
+// Public SmartLink Fast Checkout Pages
+Route::get('/pay/{code}', [SmartLinkController::class, 'showPublic'])->name('smartlink.show');
+Route::post('/pay/{code}/checkout', [SmartLinkController::class, 'processPublicCheckout'])->name('smartlink.checkout');
 
 // HR-Skills Pay Webhook Callback Route (Exclude CSRF)
 Route::post('/api/webhooks/hrskills-pay', [HrSkillsPayWebhookController::class, 'handle'])->name('webhooks.hrskills-pay');

@@ -13,6 +13,7 @@ class Subscription extends Model
     protected $fillable = [
         'user_id',
         'plan',
+        'billing_cycle',
         'amount',
         'hrskills_reference',
         'hrskills_transaction_id',

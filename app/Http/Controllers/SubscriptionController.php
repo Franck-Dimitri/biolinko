@@ -7,7 +7,9 @@ use App\Services\HrSkillsPayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -34,13 +36,11 @@ class SubscriptionController extends Controller
                 'badge' => 'Gratuit',
                 'color' => 'slate',
                 'max_products' => 10,
-                'max_images' => 2,
                 'whatsapp_recovery' => false,
                 'marketing_pixels' => false,
                 'priority_support' => false,
                 'features' => [
                     'Jusqu\'à 10 produits au catalogue',
-                    '2 visuels réels par produit',
                     'Vitrine e-commerce personnalisée',
                     'Factures & Checkout Mobile Money 🇨🇲',
                     'Support client standard',
@@ -49,18 +49,16 @@ class SubscriptionController extends Controller
             [
                 'id' => 'pro',
                 'name' => 'Pro',
-                'price' => 15000,
+                'price' => 7000,
                 'period' => 'FCFA / mois',
                 'badge' => 'Populaire',
                 'color' => 'amber',
                 'max_products' => 50,
-                'max_images' => 5,
                 'whatsapp_recovery' => true,
                 'marketing_pixels' => true,
                 'priority_support' => true,
                 'features' => [
                     'Jusqu\'à 50 produits au catalogue',
-                    '5 visuels réels par produit',
                     'Relance WhatsApp Paniers Abandonnés 💬',
                     'Pixels Facebook & TikTok Marketing',
                     'Support Vendeur Prioritaire 7j/7',
@@ -69,18 +67,16 @@ class SubscriptionController extends Controller
             [
                 'id' => 'growth',
                 'name' => 'Growth',
-                'price' => 35000,
+                'price' => 16000,
                 'period' => 'FCFA / mois',
                 'badge' => 'Croissance',
                 'color' => 'indigo',
                 'max_products' => 200,
-                'max_images' => 5,
                 'whatsapp_recovery' => true,
                 'marketing_pixels' => true,
                 'priority_support' => true,
                 'features' => [
                     'Jusqu\'à 200 produits au catalogue',
-                    '5 visuels réels par produit',
                     'Paniers abandonnés & Relances WhatsApp',
                     'Pixels Facebook, TikTok & Google Analytics',
                     'Factures PDF personnalisées avec QR Code',
@@ -90,23 +86,42 @@ class SubscriptionController extends Controller
             [
                 'id' => 'business',
                 'name' => 'Business',
-                'price' => 75000,
+                'price' => 30000,
                 'period' => 'FCFA / mois',
                 'badge' => 'Illimité',
                 'color' => 'emerald',
                 'max_products' => 99999,
-                'max_images' => 10,
                 'whatsapp_recovery' => true,
                 'marketing_pixels' => true,
                 'priority_support' => true,
                 'features' => [
                     'Produits ILLIMITÉS au catalogue',
-                    '10 visuels réels par produit',
                     'Paniers abandonnés WhatsApp illimités',
                     'Multi-Pixels & API de Conversion',
                     'Accompagnement par un Chef de Projet Dédié',
                     'Rapports financiers avancés & Exporter Excel',
                 ],
+            ],
+        ];
+
+        $cycles = [
+            [
+                'months' => 1,
+                'label' => 'Mensuel (1 mois)',
+                'discount_percent' => 0,
+                'badge' => null,
+            ],
+            [
+                'months' => 6,
+                'label' => 'Semestriel (6 mois)',
+                'discount_percent' => 14,
+                'badge' => '-14% de réduction',
+            ],
+            [
+                'months' => 12,
+                'label' => 'Annuel (1 an)',
+                'discount_percent' => 30,
+                'badge' => '-30% de réduction 🔥',
             ],
         ];
 
@@ -130,9 +145,9 @@ class SubscriptionController extends Controller
                 'days_remaining' => $user->getDaysRemaining(),
                 'is_active' => $user->isSubscriptionActive(),
                 'max_products' => $user->getPlanMaxProducts(),
-                'max_images' => $user->getPlanMaxImagesPerProduct(),
             ],
             'plans' => $plans,
+            'cycles' => $cycles,
             'history' => $history,
         ]);
     }
@@ -143,22 +158,24 @@ class SubscriptionController extends Controller
             'plan' => ['required', 'string', 'in:starter,pro,growth,business'],
             'phone_momo' => ['required', 'string', 'max:50'],
             'operator' => ['nullable', 'string', 'in:MTN,ORANGE,mtn,orange'],
+            'cycle' => ['nullable', 'integer', 'in:1,6,12'],
         ]);
 
         $user = $request->user();
         $targetPlan = strtolower($validated['plan']);
+        $cycleMonths = (int) ($validated['cycle'] ?? 1);
 
         $planPrices = [
             'starter' => 0,
-            'pro' => 15000,
-            'growth' => 35000,
-            'business' => 75000,
+            'pro' => 7000,
+            'growth' => 16000,
+            'business' => 30000,
         ];
 
-        $price = $planPrices[$targetPlan] ?? 0;
+        $monthlyPrice = $planPrices[$targetPlan] ?? 0;
 
         // Downgrade / Switch to Starter plan is free & instant
-        if ($price === 0) {
+        if ($monthlyPrice === 0) {
             $user->update([
                 'plan' => 'starter',
                 'subscription_expires_at' => null,
@@ -170,6 +187,15 @@ class SubscriptionController extends Controller
                 'message' => 'Votre plan a été basculé vers le Plan Starter gratuit.',
             ]);
         }
+
+        // Apply discount percentage based on billing cycle
+        $discountRate = match ($cycleMonths) {
+            6 => 0.14,  // -14%
+            12 => 0.30, // -30%
+            default => 0.0,
+        };
+
+        $totalPrice = (int) round($monthlyPrice * $cycleMonths * (1.0 - $discountRate));
 
         // Validate Cameroon MoMo phone number
         try {
@@ -184,34 +210,42 @@ class SubscriptionController extends Controller
         $subscription = Subscription::create([
             'user_id' => $user->id,
             'plan' => $targetPlan,
-            'amount' => $price,
+            'billing_cycle' => $cycleMonths,
+            'amount' => $totalPrice,
             'payment_status' => 'pending',
             'payment_phone' => $formattedPhone,
             'starts_at' => now(),
-            'ends_at' => now()->addDays(30),
+            'ends_at' => now()->addMonths($cycleMonths),
         ]);
 
         // Initiate HR-Skills Pay Mobile Money Cash-In
         try {
             $url = config('services.hrskills_pay.base_url') . '/api/v1/payin/mobile-money';
             $token = $this->hrSkillsPay->getTransactionToken();
-            $idempotencyKey = (string) \Illuminate\Support\Str::uuid();
+            $idempotencyKey = (string) Str::uuid();
+
+            $cycleLabel = match ($cycleMonths) {
+                6 => '6 mois (-14%)',
+                12 => '1 an (-30%)',
+                default => '1 mois',
+            };
 
             $payload = [
                 'operator' => $operatorChoice,
                 'country' => 'CM',
                 'phone_number' => $formattedPhone,
-                'amount' => (int) $price,
+                'amount' => (int) $totalPrice,
                 'currency' => 'XAF',
-                'description' => 'Abonnement BIOLINKO SaaS Plan ' . ucfirst($targetPlan),
+                'description' => 'Abonnement BIOLINKO Plan ' . ucfirst($targetPlan) . ' (' . $cycleLabel . ')',
                 'metadata' => [
                     'subscription_id' => $subscription->id,
                     'user_id' => $user->id,
                     'plan' => $targetPlan,
+                    'billing_cycle' => $cycleMonths,
                 ],
             ];
 
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
+            $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . config('services.hrskills_pay.public_key'),
                 'X-Transaction-Token' => $token,
                 'Idempotency-Key' => $idempotencyKey,
@@ -236,10 +270,11 @@ class SubscriptionController extends Controller
                 'success' => true,
                 'requires_ussd' => true,
                 'reference' => $data['reference'],
-                'amount' => $price,
+                'amount' => $totalPrice,
                 'operator' => $operatorChoice,
                 'phone' => $formattedPhone,
                 'plan_name' => ucfirst($targetPlan),
+                'cycle_months' => $cycleMonths,
             ]);
 
         } catch (\Exception $e) {
@@ -280,15 +315,24 @@ class SubscriptionController extends Controller
                 ]);
 
                 $user = $subscription->user;
+                $months = $subscription->billing_cycle ?? 1;
+
+                // Extend subscription expiration date from now (or current expiry if still active)
+                $currentExpiry = ($user->subscription_expires_at && $user->subscription_expires_at->isFuture())
+                    ? $user->subscription_expires_at
+                    : now();
+
+                $newExpiry = $currentExpiry->copy()->addMonths($months);
+
                 $user->update([
                     'plan' => $subscription->plan,
-                    'subscription_expires_at' => now()->addDays(30),
+                    'subscription_expires_at' => $newExpiry,
                 ]);
 
                 return response()->json([
                     'status' => 'SUCCESS',
                     'paid' => true,
-                    'message' => 'Abonnement ' . ucfirst($subscription->plan) . ' activé avec succès pour 30 jours !',
+                    'message' => 'Abonnement ' . ucfirst($subscription->plan) . ' activé avec succès pour ' . $months . ' mois !',
                 ]);
             }
 

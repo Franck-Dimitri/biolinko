@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Store;
 use App\Services\HrSkillsPayService;
+use App\Services\OrderInvoiceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,10 +19,12 @@ use Illuminate\Support\Str;
 class CheckoutController extends Controller
 {
     protected HrSkillsPayService $hrSkillsPay;
+    protected OrderInvoiceService $invoiceService;
 
-    public function __construct(HrSkillsPayService $hrSkillsPay)
+    public function __construct(HrSkillsPayService $hrSkillsPay, OrderInvoiceService $invoiceService)
     {
         $this->hrSkillsPay = $hrSkillsPay;
+        $this->invoiceService = $invoiceService;
     }
 
     public function lookupCustomer(Request $request): JsonResponse
@@ -88,16 +91,21 @@ class CheckoutController extends Controller
             $liveStatus = strtoupper($liveData['status'] ?? 'PENDING');
 
             if ($liveStatus === 'SUCCESS') {
-                $order->update([
-                    'status' => 'paid',
-                    'payment_status' => 'paid',
-                    'paid_at' => now(),
-                ]);
+                if ($order->payment_status !== 'paid') {
+                    $order->update([
+                        'status' => 'paid',
+                        'payment_status' => 'paid',
+                        'paid_at' => now(),
+                    ]);
 
-                // Credit vendor Wallet
-                $wallet = $order->store->wallet;
-                if ($wallet) {
-                    $wallet->increment('balance_available', (float) $order->price_vendor);
+                    // Credit vendor Wallet
+                    $wallet = $order->store->wallet;
+                    if ($wallet) {
+                        $wallet->increment('balance_available', (float) $order->price_vendor);
+                    }
+
+                    // Generate & Send PDF Invoice Emails to Vendor & Customer
+                    $this->invoiceService->sendOrderInvoiceEmails($order);
                 }
 
                 return response()->json([

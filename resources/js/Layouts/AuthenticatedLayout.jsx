@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { 
     LayoutDashboard, ShoppingBag, Wallet, Settings, ExternalLink, LogOut, 
     User as UserIcon, Menu, X, PackageCheck, Users, BarChart3, 
-    Megaphone, Truck, MessageSquare, Bell, Search, ChevronDown, ChevronRight, Store, ArrowUpRight, Palette, ShieldCheck, Crown, CreditCard
+    Megaphone, Truck, MessageSquare, Bell, Search, ChevronDown, ChevronRight, Store, ArrowUpRight, Palette, ShieldCheck, Crown, CreditCard, FileText, Share2, Download, Eye, Zap
 } from 'lucide-react';
 
 export default function AuthenticatedLayout({ header, children }) {
@@ -120,6 +120,36 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <PackageCheck className="w-4 h-4" />
                                 <span>Commandes & Wallet</span>
                             </div>
+                        </Link>
+
+                        <Link
+                            href={route('seller.invoices.index')}
+                            className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs font-semibold ${
+                                route().current('seller.invoices.*')
+                                    ? 'bg-amber-50/80 text-slate-950 border-l-[3px] border-[#FFCC00] rounded-r-xl pl-3'
+                                    : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50 rounded-xl'
+                            }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <FileText className="w-4 h-4 text-amber-600" />
+                                <span>Factures</span>
+                            </div>
+                            <span className="px-2 py-0.5 rounded-full bg-[#FFCC00]/20 text-slate-950 text-[10px] font-bold">PDF</span>
+                        </Link>
+
+                        <Link
+                            href={route('seller.smartlinks.index')}
+                            className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs font-semibold ${
+                                route().current('seller.smartlinks.*')
+                                    ? 'bg-amber-50/80 text-slate-950 border-l-[3px] border-[#FFCC00] rounded-r-xl pl-3'
+                                    : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50 rounded-xl'
+                            }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <Zap className="w-4 h-4 text-amber-500 fill-amber-400" />
+                                <span>SmartLinks</span>
+                            </div>
+                            <span className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black tracking-tight">Express</span>
                         </Link>
 
                         <Link

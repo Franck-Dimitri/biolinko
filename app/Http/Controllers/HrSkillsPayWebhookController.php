@@ -4,12 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Withdrawal;
+use App\Services\OrderInvoiceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class HrSkillsPayWebhookController extends Controller
 {
+    protected OrderInvoiceService $invoiceService;
+
+    public function __construct(OrderInvoiceService $invoiceService)
+    {
+        $this->invoiceService = $invoiceService;
+    }
+
     public function handle(Request $request): JsonResponse
     {
         $rawPayload = $request->getContent();
@@ -57,6 +65,9 @@ class HrSkillsPayWebhookController extends Controller
                     if ($wallet) {
                         $wallet->increment('balance_available', (float) $order->price_vendor);
                     }
+
+                    // Generate & Send PDF Invoice Emails to Vendor & Customer
+                    $this->invoiceService->sendOrderInvoiceEmails($order);
 
                     Log::info('Order Payment Succeeded via Webhook', ['order_id' => $order->id, 'reference' => $reference]);
                 }

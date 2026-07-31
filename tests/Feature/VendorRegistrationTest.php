@@ -4,7 +4,7 @@ use App\Models\User;
 use App\Models\Store;
 use App\Models\Wallet;
 
-test('new user registration automatically creates store and wallet', function () {
+test('new user registration automatically creates store and wallet and redirects to OTP verification', function () {
     $response = $this->post('/register', [
         'name' => 'Boutique Glamour',
         'email' => 'glamour@example.com',
@@ -13,7 +13,7 @@ test('new user registration automatically creates store and wallet', function ()
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect('/dashboard');
+    $response->assertRedirect(route('verification.notice'));
 
     $user = User::where('email', 'glamour@example.com')->first();
     expect($user)->not->toBeNull();
