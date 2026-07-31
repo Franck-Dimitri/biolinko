@@ -6,18 +6,19 @@ import {
     Wallet, ShieldCheck, ArrowRight, ChevronDown, ChevronUp, 
     CheckCircle2, Globe, Layers, Star, ArrowUpRight, 
     FileText, Check, Phone, Eye, Heart, MapPin, ExternalLink, Mail, Clock, RefreshCw, Sliders, Play,
-    TrendingUp, CreditCard, Users, BarChart3, HelpCircle, ArrowRightCircle, Award, CheckCircle, Tag, Store
+    TrendingUp, CreditCard, Users, BarChart3, HelpCircle, ArrowRightCircle, Award, CheckCircle, Tag, Store, Quote
 } from 'lucide-react';
 
-// Animated Counter component triggered when scrolled into view
-function AnimatedCounter({ from = 0, to, duration = 1.8, suffix = "", decimals = 0 }) {
+// Smooth Animated Counter component triggered when scrolled into view
+function AnimatedCounter({ from = 0, to, duration = 2, suffix = "", decimals = 0 }) {
     const [count, setCount] = useState(from);
     const [hasAnimated, setHasAnimated] = useState(false);
 
     return (
         <motion.span
+            initial={{ opacity: 0.8 }}
             whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: "-40px" }}
             onViewportEnter={() => {
                 if (hasAnimated) return;
                 setHasAnimated(true);
@@ -25,10 +26,13 @@ function AnimatedCounter({ from = 0, to, duration = 1.8, suffix = "", decimals =
                 const step = (timestamp) => {
                     if (!startTimestamp) startTimestamp = timestamp;
                     const progress = Math.min((timestamp - startTimestamp) / (duration * 1000), 1);
-                    const currentVal = from + progress * (to - from);
+                    const easeProgress = 1 - (1 - progress) * (1 - progress);
+                    const currentVal = from + easeProgress * (to - from);
                     setCount(currentVal);
                     if (progress < 1) {
                         window.requestAnimationFrame(step);
+                    } else {
+                        setCount(to);
                     }
                 };
                 window.requestAnimationFrame(step);
@@ -43,7 +47,7 @@ export default function Welcome({ auth }) {
     const [activeFaqCategory, setActiveFaqCategory] = useState('momo');
     const [activeFaqIndex, setActiveFaqIndex] = useState(0);
     const [activeTab, setActiveTab] = useState('dash1');
-    const [openDropdown, setOpenDropdown] = useState(null); // 'plateforme', 'tarifs', 'ressources'
+    const [openDropdown, setOpenDropdown] = useState(null);
 
     // Marquee items WITHOUT EMOJIS
     const marqueeItems = [
@@ -56,6 +60,58 @@ export default function Welcome({ auth }) {
         "SmartLinks d'Achat Express",
         "Analytics & Graphiques de Ventes",
         "Relance WhatsApp Paniers Abandonnés"
+    ];
+
+    // Vendor Testimonials Data
+    const testimonials = [
+        {
+            name: "Amina K.",
+            role: "Fondatrice Kemet Beauty",
+            city: "Yaoundé",
+            rating: 5,
+            stat: "+180 ventes / mois",
+            text: "Depuis qu'on accepte les paiements MTN et Orange Money en direct avec le Fast Checkout 30s et les relances WhatsApp, nos ventes ont bondi. Nos clientes adorent la simplicité du paiement."
+        },
+        {
+            name: "Yves N.",
+            role: "CEO Douala Streetwear",
+            city: "Douala",
+            rating: 5,
+            stat: "Chiffre d'affaires x2.5",
+            text: "La gestion des variantes (tailles, couleurs) avec les ajustements de prix et l'envoi automatique des factures PDF certifiées BIOLINKO a apporté un vrai professionnalisme à notre boutique."
+        },
+        {
+            name: "Sophie M.",
+            role: "Créatrice d'Accessoires",
+            city: "Bafoussam",
+            rating: 5,
+            stat: "100% retraits fluides",
+            text: "Le portefeuille virtuel BIOLINKO et les retraits instantanés vers mon compte Mobile Money me permettent d'avoir un contrôle parfait de ma trésorerie au quotidien."
+        },
+        {
+            name: "Marc A.",
+            role: "Gérant Kribi High-Tech",
+            city: "Kribi",
+            rating: 5,
+            stat: "+90% paniers validés",
+            text: "Avant BIOLINKO, beaucoup de clients abandonnaient leur panier. Avec la validation Push USSD directement sur le téléphone, le taux de conversion a explosé."
+        },
+        {
+            name: "Carine T.",
+            role: "Mode & Prêt-à-porter",
+            city: "Garoua",
+            rating: 5,
+            stat: "Validation MoMo 30s",
+            text: "Créer ma boutique sur BIOLINKO a pris moins de 10 minutes. La relance 1-clic sur WhatsApp me fait gagner 2 heures de travail par jour !"
+        },
+        {
+            name: "David E.",
+            role: "Cosmétiques & Beauté",
+            city: "Douala",
+            rating: 5,
+            stat: "Factures PDF Certifiées",
+            text: "Mes clients reçoivent automatiquement leur reçu de paiement certifié avec QR Code. C'est le top pour la confiance et la fidélisation !"
+        }
     ];
 
     // FAQ categories & data
@@ -309,6 +365,10 @@ export default function Welcome({ auth }) {
                                                 <Eye className="w-4 h-4 text-amber-600" />
                                                 <span>Démo Visuelle Live</span>
                                             </a>
+                                            <a href="#testimonials" className="p-2 rounded-xl hover:bg-amber-50 flex items-center gap-2 text-xs font-semibold text-slate-900">
+                                                <Quote className="w-4 h-4 text-amber-600" />
+                                                <span>Avis Vendeurs</span>
+                                            </a>
                                             <a href="#stats" className="p-2 rounded-xl hover:bg-amber-50 flex items-center gap-2 text-xs font-semibold text-slate-900">
                                                 <BarChart3 className="w-4 h-4 text-amber-600" />
                                                 <span>Statistiques Vendeurs</span>
@@ -323,6 +383,7 @@ export default function Welcome({ auth }) {
                             </div>
 
                             <a href="#stats" className="hover:text-amber-600 transition-colors">Statistiques</a>
+                            <a href="#testimonials" className="hover:text-amber-600 transition-colors">Avis Vendeurs</a>
                         </nav>
 
                         {/* Action Buttons */}
@@ -450,12 +511,10 @@ export default function Welcome({ auth }) {
                     </motion.div>
                 </section>
 
-                {/* 3. INFINITE SCROLL / MARQUEE LOOP BAND (MAX-W-7XL, FADED BLUR ENDS, ZERO EMOJIS, ZERO BLACK BG) */}
+                {/* 3. INFINITE SCROLL / MARQUEE LOOP BAND */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
                     <div className="relative rounded-2xl bg-amber-50/60 border border-amber-200/70 py-4 overflow-hidden shadow-2xs">
-                        {/* Left Faded Gradient Blur Mask */}
                         <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-amber-50 via-amber-50/80 to-transparent z-10"></div>
-                        {/* Right Faded Gradient Blur Mask */}
                         <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-amber-50 via-amber-50/80 to-transparent z-10"></div>
 
                         <div className="flex whitespace-nowrap overflow-hidden">
@@ -695,7 +754,77 @@ export default function Welcome({ auth }) {
                     </div>
                 </motion.section>
 
-                {/* 7. PRICING PLANS SECTION (EXACT SYNC WITH DASHBOARD SUBSCRIPTIONS) */}
+                {/* 7. VENDOR TESTIMONIALS SECTION ("CE QUE DISENT NOS VENDEURS") IN CONTINUOUS INFINITE LOOP */}
+                <motion.section 
+                    id="testimonials"
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-60px" }}
+                    variants={sectionVariants}
+                    className="py-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8"
+                >
+                    <div className="text-center space-y-2 max-w-xl mx-auto">
+                        <span className="px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-semibold uppercase tracking-wider border border-amber-300">
+                            Témoignages Vendeurs
+                        </span>
+                        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
+                            Ce que disent nos vendeurs
+                        </h2>
+                        <p className="text-xs sm:text-sm text-slate-600 font-normal">
+                            Découvrez l'expérience réelle des commerçants qui ont propulsé leurs ventes grâce à BIOLINKO.
+                        </p>
+                    </div>
+
+                    {/* Infinite Marquee Scroll Loop for Testimonials Cards */}
+                    <div className="relative overflow-hidden py-4 rounded-3xl">
+                        {/* Gradient Blur Masks on Left & Right */}
+                        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[#FAFAFC] via-[#FAFAFC]/80 to-transparent z-10"></div>
+                        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#FAFAFC] via-[#FAFAFC]/80 to-transparent z-10"></div>
+
+                        <div className="flex whitespace-nowrap overflow-hidden">
+                            <motion.div 
+                                animate={{ x: ['0%', '-50%'] }}
+                                transition={{ repeat: Infinity, ease: 'linear', duration: 32 }}
+                                className="flex items-center gap-6"
+                            >
+                                {[...testimonials, ...testimonials].map((t, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="w-[340px] sm:w-[380px] shrink-0 p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-4 text-left whitespace-normal flex flex-col justify-between hover:border-amber-300 transition-all"
+                                    >
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-1 text-amber-500">
+                                                    {[...Array(t.rating)].map((_, i) => (
+                                                        <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                                    ))}
+                                                </div>
+                                                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-950 text-[10px] font-bold border border-amber-200">
+                                                    {t.stat}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-slate-600 leading-relaxed italic font-normal">
+                                                "{t.text}"
+                                            </p>
+                                        </div>
+
+                                        <div className="pt-3 border-t border-slate-100 flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-full bg-[#FFCC00] text-slate-950 font-extrabold text-xs flex items-center justify-center border border-amber-300 shrink-0 shadow-2xs">
+                                                {t.name.substring(0, 2)}
+                                            </div>
+                                            <div>
+                                                <div className="text-xs font-bold text-slate-950">{t.name}</div>
+                                                <div className="text-[11px] text-slate-500 font-normal">{t.role} • {t.city}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </motion.div>
+                        </div>
+                    </div>
+                </motion.section>
+
+                {/* 8. PRICING PLANS SECTION (EXACT SYNC WITH DASHBOARD SUBSCRIPTIONS) */}
                 <motion.section 
                     id="pricing" 
                     initial="hidden"
@@ -792,7 +921,7 @@ export default function Welcome({ auth }) {
                     </div>
                 </motion.section>
 
-                {/* 8. FAQ HUB SECTION (2 COLUMNS) */}
+                {/* 9. FAQ HUB SECTION (2 COLUMNS) */}
                 <motion.section 
                     id="faq" 
                     initial="hidden"
@@ -915,7 +1044,7 @@ export default function Welcome({ auth }) {
                     </div>
                 </motion.section>
 
-                {/* 9. PRE-FOOTER CONVERSION CTA BANNER */}
+                {/* 10. PRE-FOOTER CONVERSION CTA BANNER */}
                 <motion.section 
                     initial="hidden"
                     whileInView="visible"
@@ -949,7 +1078,7 @@ export default function Welcome({ auth }) {
                     </div>
                 </motion.section>
 
-                {/* 10. STRUCTURED FOOTER */}
+                {/* 11. STRUCTURED FOOTER */}
                 <footer className="bg-white border-t border-slate-200 pt-16 pb-8 text-slate-700">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
                         
@@ -994,6 +1123,7 @@ export default function Welcome({ auth }) {
                             <div className="space-y-3 text-xs">
                                 <div className="font-bold text-slate-950 uppercase tracking-wider">Ressources</div>
                                 <ul className="space-y-2 text-slate-600 font-normal">
+                                    <li><a href="#testimonials" className="hover:text-amber-600 transition-colors">Avis Vendeurs</a></li>
                                     <li><a href="#faq" className="hover:text-amber-600 transition-colors">Support & FAQ Hub</a></li>
                                     <li><a href="#showcase" className="hover:text-amber-600 transition-colors">Captures & Démo Live</a></li>
                                     <li><a href="#stats" className="hover:text-amber-600 transition-colors">Performances Vendeurs</a></li>
