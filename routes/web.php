@@ -119,4 +119,5 @@ Route::post('/api/webhooks/hrskills-pay', [HrSkillsPayWebhookController::class, 
 require __DIR__.'/auth.php';
 
 // Public Storefront Catch-All (MUST BE ABSOLUTELY LAST)
+Route::post('/{store_slug}/reviews', [StorefrontController::class, 'submitReview'])->name('storefront.reviews.store');
 Route::get('/{store_slug}', [StorefrontController::class, 'show'])->name('storefront.show');

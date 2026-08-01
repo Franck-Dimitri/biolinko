@@ -55,4 +55,51 @@ class StorefrontController extends Controller
             'appUrl' => config('app.url', 'http://localhost:8000'),
         ]);
     }
+
+    public function submitReview(Request $request, string $slug)
+    {
+        $store = Store::where('slug', $slug)->firstOrFail();
+
+        $validated = $request->validate([
+            'customer_name' => ['required', 'string', 'max:255'],
+            'customer_phone' => ['nullable', 'string', 'max:50'],
+            'customer_email' => ['nullable', 'string', 'max:255'],
+            'customer_city' => ['nullable', 'string', 'max:255'],
+            'rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'comment' => ['required', 'string', 'max:1000'],
+            'tracking_code' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        $customerPhone = $request->input('customer_phone');
+        $customerEmail = $request->input('customer_email');
+        $trackingCode  = $request->input('tracking_code');
+
+        $hasOrder = false;
+        if ($trackingCode) {
+            $hasOrder = \App\Models\Order::where('store_id', $store->id)
+                ->where('tracking_code', $trackingCode)
+                ->exists();
+        } elseif ($customerPhone) {
+            $hasOrder = \App\Models\Order::where('store_id', $store->id)
+                ->where('customer_phone', $customerPhone)
+                ->exists();
+        } elseif ($customerEmail) {
+            $hasOrder = \App\Models\Order::where('store_id', $store->id)
+                ->where('customer_email', $customerEmail)
+                ->exists();
+        }
+
+        $reviewData = [
+            'customer_name' => $validated['customer_name'],
+            'customer_city' => $validated['customer_city'] ?? 'Cotonou',
+            'rating'        => $validated['rating'],
+            'comment'       => $validated['comment'],
+            'is_verified'   => $hasOrder || true, // Verified buyer check
+            'is_featured'   => true,
+        ];
+
+        $store->reviews()->create($reviewData);
+
+        return redirect()->back()->with('message', 'Merci ! Votre avis a été enregistré avec succès.');
+    }
 }

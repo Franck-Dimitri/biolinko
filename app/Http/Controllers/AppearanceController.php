@@ -16,37 +16,6 @@ class AppearanceController extends Controller
         $user = $request->user();
         $store = $user->store()->with('reviews')->first();
 
-        // Seed 3 default reviews if store has no reviews yet
-        if ($store && $store->reviews()->count() === 0) {
-            $store->reviews()->createMany([
-                [
-                    'customer_name' => 'Armand K.',
-                    'customer_city' => 'Cotonou',
-                    'rating' => 5,
-                    'comment' => 'Commande livrée en moins de 24h. La qualité des produits est impressionnante et le paiement USSD est d\'une simplicité folle.',
-                    'is_verified' => true,
-                    'is_featured' => true,
-                ],
-                [
-                    'customer_name' => 'Bernice T.',
-                    'customer_city' => 'Porto-Novo',
-                    'rating' => 5,
-                    'comment' => 'Le vendeur est très réactif sur WhatsApp. J\'ai reçu ma facture numérique immédiatement après avoir validé mon MoMo.',
-                    'is_verified' => true,
-                    'is_featured' => true,
-                ],
-                [
-                    'customer_name' => 'Chantal D.',
-                    'customer_city' => 'Parakou',
-                    'rating' => 5,
-                    'comment' => 'Excellente expérience d\'achat. Le code de suivi m\'a permis de suivre le colis en temps réel jusqu\'à mon domicile.',
-                    'is_verified' => true,
-                    'is_featured' => true,
-                ],
-            ]);
-            $store->load('reviews');
-        }
-
         return Inertia::render('Appearance/Index', [
             'store' => $store,
             'reviews' => $store ? $store->reviews : [],
@@ -65,6 +34,10 @@ class AppearanceController extends Controller
             'description' => ['nullable', 'string'],
             'about_text' => ['nullable', 'string'],
             'theme_color' => ['required', 'string', 'max:20'],
+            'accent_color' => ['nullable', 'string', 'max:20'],
+            'font_family' => ['nullable', 'string', 'max:50'],
+            'border_radius_style' => ['nullable', 'string', 'max:20'],
+            'theme_mode' => ['nullable', 'string', 'max:20'],
             'phone_whatsapp' => ['nullable', 'string', 'max:50'],
             'city_location' => ['nullable', 'string', 'max:255'],
             'opening_hours' => ['nullable', 'string', 'max:255'],

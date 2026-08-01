@@ -45,7 +45,23 @@ class ProductController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $store = $request->user()->store;
+        $user = $request->user();
+        $store = $user->store;
+
+        // Plan quota limits enforcement
+        $userPlan = $user->plan ?? 'starter';
+        $maxProductsMap = [
+            'starter' => 10,
+            'pro' => 50,
+            'growth' => 200,
+            'business' => 99999,
+        ];
+        $maxAllowed = $maxProductsMap[$userPlan] ?? 10;
+        if ($store->products()->count() >= $maxAllowed) {
+            return redirect()->back()->withErrors([
+                'title' => "Limite de {$maxAllowed} produits atteinte pour le plan " . strtoupper($userPlan) . ". Veuillez passer au plan supérieur.",
+            ]);
+        }
 
         if ($request->input('promo_price') === '') {
             $request->merge(['promo_price' => null]);
@@ -117,10 +133,17 @@ class ProductController extends Controller
         ]);
 
         if (!empty($validated['variants'])) {
-            foreach ($validated['variants'] as $v) {
-                if (empty($v['name']) && empty($v['size']) && empty($v['color'])) {
-                    continue;
-                }
+            $validVariants = array_filter($validated['variants'], function($v) {
+                return !empty($v['name']) || !empty($v['size']) || !empty($v['color']);
+            });
+
+            if ($userPlan === 'starter' && count($validVariants) > 1) {
+                return redirect()->back()->withErrors([
+                    'title' => "La formule STARTER est limitée à 1 seule variante par produit. Passez au plan PRO pour ajouter des variantes illimitées.",
+                ]);
+            }
+
+            foreach ($validVariants as $v) {
                 $product->variants()->create([
                     'name' => $v['name'] ?? null,
                     'size' => $v['size'] ?? null,

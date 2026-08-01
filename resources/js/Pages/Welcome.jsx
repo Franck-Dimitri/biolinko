@@ -48,6 +48,28 @@ export default function Welcome({ auth }) {
     const [activeFaqIndex, setActiveFaqIndex] = useState(0);
     const [activeTab, setActiveTab] = useState('dash1');
     const [openDropdown, setOpenDropdown] = useState(null);
+    const [selectedCycle, setSelectedCycle] = useState(1); // 1, 6, or 12 months
+
+    const calculatePlanPricing = (baseMonthlyPrice, months) => {
+        if (baseMonthlyPrice === 0) {
+            return { total: 0, monthlyEquivalent: 0, discountPercent: 0, savings: 0 };
+        }
+        let discountRate = 0;
+        if (months === 6) discountRate = 0.15; // -15%
+        if (months === 12) discountRate = 0.30; // -30%
+
+        const originalTotal = baseMonthlyPrice * months;
+        const total = Math.round(originalTotal * (1.0 - discountRate));
+        const monthlyEquivalent = Math.round(total / months);
+        const savings = originalTotal - total;
+
+        return {
+            total,
+            monthlyEquivalent,
+            discountPercent: Math.round(discountRate * 100),
+            savings
+        };
+    };
 
     // Marquee items WITHOUT EMOJIS
     const marqueeItems = [
@@ -141,6 +163,18 @@ export default function Welcome({ auth }) {
             {
                 q: "Puis-je suivre mes statistiques de vente ?",
                 a: "Oui, un tableau de bord analytique complet vous donne le chiffre d'affaires, les ventes sur 14 jours et le top 5 des produits vendus."
+            },
+            {
+                q: "Comment la personnalisation du Studio Visuel fonctionne-t-elle ?",
+                a: "Dans votre studio, vous pouvez ordonner, afficher ou masquer vos blocs (Bannière Héro, Catalogue Produits, Avis Clients, Engagements Vendeur) par simple clic."
+            },
+            {
+                q: "Comment s'effectue la relance des paniers abandonnés sur WhatsApp ?",
+                a: "Depuis votre espace commandes, un bouton de relance génère un message WhatsApp pré-rempli incluant le lien direct vers le paiement Push MoMo du client."
+            },
+            {
+                q: "Les factures PDF sont-elles certifiées avec QR Code ?",
+                a: "Oui, chaque commande génère automatiquement un reçu PDF officiel avec un QR Code de vérification et le filigrane certifié BIOLINKO."
             }
         ],
         payouts: [
@@ -150,7 +184,7 @@ export default function Welcome({ auth }) {
             },
             {
                 q: "Quel est le délai de virement vers mon compte MoMo ?",
-                a: "Les demandes de retrait sont validées sous 1h à 24h maximum."
+                a: "Les demandes de retrait sont validées sous 1h à 24h maximum selon votre niveau de plan."
             }
         ],
         whatsapp: [
@@ -229,7 +263,7 @@ export default function Welcome({ auth }) {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4 }}
-                    className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/70 shadow-xs"
+                    className="relative z-50 bg-white border-b border-slate-200/70 shadow-xs"
                 >
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
                         
@@ -777,7 +811,6 @@ export default function Welcome({ auth }) {
 
                     {/* Infinite Marquee Scroll Loop for Testimonials Cards */}
                     <div className="relative overflow-hidden py-4 rounded-3xl">
-                        {/* Gradient Blur Masks on Left & Right */}
                         <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[#FAFAFC] via-[#FAFAFC]/80 to-transparent z-10"></div>
                         <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#FAFAFC] via-[#FAFAFC]/80 to-transparent z-10"></div>
 
@@ -824,22 +857,62 @@ export default function Welcome({ auth }) {
                     </div>
                 </motion.section>
 
-                {/* 8. PRICING PLANS SECTION (EXACT SYNC WITH DASHBOARD SUBSCRIPTIONS) */}
+                {/* 8. PRICING PLANS SECTION WITH BILLING CYCLES SELECTOR (-15% 6 Mois, -30% 1 An) */}
                 <motion.section 
                     id="pricing" 
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true, margin: "-60px" }}
                     variants={sectionVariants}
-                    className="py-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-12"
+                    className="py-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-10"
                 >
-                    <div className="text-center space-y-2 max-w-xl mx-auto">
+                    <div className="text-center space-y-4 max-w-xl mx-auto">
                         <span className="px-3.5 py-1 rounded-full bg-slate-100 text-slate-800 text-xs font-semibold uppercase tracking-wider">
                             Formules & Tarifs Officiels
                         </span>
                         <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
                             Des offres claires et sans surprise
                         </h2>
+                        <p className="text-xs text-slate-600">Choisissez la durée d'engagement qui convient à votre activité et bénéficiez de réductions exclusives.</p>
+
+                        {/* Billing Duration Cycle Selector */}
+                        <div className="flex items-center justify-center gap-1.5 max-w-md mx-auto p-1.5 rounded-full bg-slate-100 border border-slate-200 shadow-2xs">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedCycle(1)}
+                                className={`flex-1 py-2 px-3 rounded-full text-xs font-bold transition-all ${
+                                    selectedCycle === 1 
+                                        ? 'bg-slate-900 text-white shadow-2xs' 
+                                        : 'text-slate-700 hover:text-slate-950'
+                                }`}
+                            >
+                                Mensuel (1 mois)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedCycle(6)}
+                                className={`flex-1 py-2 px-3 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                                    selectedCycle === 6 
+                                        ? 'bg-amber-500 text-slate-950 shadow-2xs' 
+                                        : 'text-slate-700 hover:text-amber-800'
+                                }`}
+                            >
+                                <span>6 Mois</span>
+                                <span className="px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-extrabold border border-amber-300">-15%</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedCycle(12)}
+                                className={`flex-1 py-2 px-3 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                                    selectedCycle === 12 
+                                        ? 'bg-[#FFCC00] text-slate-950 shadow-2xs border border-amber-300' 
+                                        : 'text-slate-700 hover:text-amber-800'
+                                }`}
+                            >
+                                <span>1 An</span>
+                                <span className="px-1.5 py-0.5 rounded-full bg-amber-300 text-slate-950 text-[10px] font-extrabold border border-amber-400">-30%</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -852,8 +925,10 @@ export default function Welcome({ auth }) {
                                 <p className="text-xs text-slate-500 font-normal">Pour tester la plateforme et publier vos premiers articles.</p>
                                 <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
                                     <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Jusqu'à 10 produits max</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Vitrine personnalisée</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Checkout Mobile Money 🇨🇲</li>
+                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Vitrine sous-domaine BIOLINKO</li>
+                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Fast Checkout MoMo (MTN & Orange)</li>
+                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> 1 variante par produit (Taille/Couleur)</li>
+                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Support client standard</li>
                                 </ul>
                             </div>
                             <Link href={route('register')} className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-semibold text-xs text-center transition-colors">
@@ -862,66 +937,114 @@ export default function Welcome({ auth }) {
                         </div>
 
                         {/* Pro Plan */}
-                        <div className="p-7 rounded-3xl bg-white border-2 border-amber-300 shadow-lg space-y-6 flex flex-col justify-between relative">
-                            <div className="absolute -top-3.5 right-4 px-3 py-1 rounded-full bg-[#FFCC00] text-slate-950 font-bold text-[10px] uppercase tracking-wider shadow-2xs flex items-center gap-1 border border-amber-300">
-                                <Sparkles className="w-3 h-3 text-slate-950" />
-                                <span>Populaire</span>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="text-xs font-bold text-amber-700 uppercase tracking-wider">Pro</div>
-                                <div className="text-2xl font-extrabold text-slate-950">7 000 FCFA <span className="text-xs font-normal text-slate-500">/mois</span></div>
-                                <p className="text-xs text-slate-500 font-normal">Pour les vendeurs qui veulent automatiser leurs ventes.</p>
-                                <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Jusqu'à 50 produits max</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Relance WhatsApp Paniers</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Pixels Facebook & TikTok</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Support Prioritaire 7j/7</li>
-                                </ul>
-                            </div>
-                            <Link href={route('register')} className="w-full py-3 rounded-full bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs text-center transition-all shadow-md border border-amber-300">
-                                Choisir le Plan Pro
-                            </Link>
-                        </div>
+                        {(() => {
+                            const pricing = calculatePlanPricing(7000, selectedCycle);
+                            return (
+                                <div className="p-7 rounded-3xl bg-white border-2 border-amber-300 shadow-lg space-y-6 flex flex-col justify-between relative">
+                                    <div className="absolute -top-3.5 right-4 px-3 py-1 rounded-full bg-[#FFCC00] text-slate-950 font-bold text-[10px] uppercase tracking-wider shadow-2xs flex items-center gap-1 border border-amber-300">
+                                        <Sparkles className="w-3 h-3 text-slate-950" />
+                                        <span>Populaire</span>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="text-xs font-bold text-amber-700 uppercase tracking-wider">Pro</div>
+                                        <div>
+                                            <div className="text-2xl font-extrabold text-slate-950">
+                                                {pricing.monthlyEquivalent.toLocaleString()} FCFA <span className="text-xs font-normal text-slate-500">/mois</span>
+                                            </div>
+                                            {selectedCycle > 1 && (
+                                                <div className="text-[11px] text-amber-700 font-semibold mt-1">
+                                                    {pricing.total.toLocaleString()} FCFA pour {selectedCycle} mois (Économisez {pricing.savings.toLocaleString()} FCFA)
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-slate-500 font-normal">Pour les vendeurs qui veulent automatiser et personnaliser leur boutique.</p>
+                                        <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Jusqu'à 50 produits max</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Variantes illimitées & surprix</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Relance WhatsApp 1-Clic paniers</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Factures PDF avec QR Code & Filigrane</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Studio Visuel (Ordre des sections)</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Support Prioritaire WhatsApp 7j/7</li>
+                                        </ul>
+                                    </div>
+                                    <Link href={route('register')} className="w-full py-3 rounded-full bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs text-center transition-all shadow-md border border-amber-300">
+                                        Choisir le Plan Pro
+                                    </Link>
+                                </div>
+                            );
+                        })()}
 
                         {/* Growth Plan */}
-                        <div className="p-7 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
-                            <div className="space-y-4">
-                                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Growth</div>
-                                <div className="text-2xl font-extrabold text-slate-950">16 000 FCFA <span className="text-xs font-normal text-slate-400">/mois</span></div>
-                                <p className="text-xs text-slate-500 font-normal">Pour les boutiques en forte croissance d'activité.</p>
-                                <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Jusqu'à 200 produits max</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Relances WhatsApp illimitées</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Factures PDF avec QR Code</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Support VIP Dédié 24h/24</li>
-                                </ul>
-                            </div>
-                            <Link href={route('register')} className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-semibold text-xs text-center transition-colors">
-                                Activer le Plan Growth
-                            </Link>
-                        </div>
+                        {(() => {
+                            const pricing = calculatePlanPricing(16000, selectedCycle);
+                            return (
+                                <div className="p-7 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
+                                    <div className="space-y-4">
+                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Growth</div>
+                                        <div>
+                                            <div className="text-2xl font-extrabold text-slate-950">
+                                                {pricing.monthlyEquivalent.toLocaleString()} FCFA <span className="text-xs font-normal text-slate-400">/mois</span>
+                                            </div>
+                                            {selectedCycle > 1 && (
+                                                <div className="text-[11px] text-amber-700 font-semibold mt-1">
+                                                    {pricing.total.toLocaleString()} FCFA pour {selectedCycle} mois (Économisez {pricing.savings.toLocaleString()} FCFA)
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-slate-500 font-normal">Pour les boutiques en forte croissance d'activité.</p>
+                                        <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Jusqu'à 200 produits max</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Toutes les fonctionnalités Pro incluses</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Relances WhatsApp illimitées</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Retraits MoMo prioritaires (&lt; 4h)</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Analytics avancés (Ventes 14j & Top 5)</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Support VIP Dédié 24h/24</li>
+                                        </ul>
+                                    </div>
+                                    <Link href={route('register')} className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-semibold text-xs text-center transition-colors">
+                                        Activer le Plan Growth
+                                    </Link>
+                                </div>
+                            );
+                        })()}
 
                         {/* Business Plan */}
-                        <div className="p-7 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
-                            <div className="space-y-4">
-                                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Business</div>
-                                <div className="text-2xl font-extrabold text-slate-950">30 000 FCFA <span className="text-xs font-normal text-slate-400">/mois</span></div>
-                                <p className="text-xs text-slate-500 font-normal">Pour les marques et équipes grands comptes.</p>
-                                <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Catalogue Produits Illimité</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Retraits MoMo en Temps Réel</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Account Manager Dédié</li>
-                                </ul>
-                            </div>
-                            <Link href={route('register')} className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-semibold text-xs text-center transition-colors">
-                                Activer le Plan Business
-                            </Link>
-                        </div>
+                        {(() => {
+                            const pricing = calculatePlanPricing(30000, selectedCycle);
+                            return (
+                                <div className="p-7 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
+                                    <div className="space-y-4">
+                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Business</div>
+                                        <div>
+                                            <div className="text-2xl font-extrabold text-slate-950">
+                                                {pricing.monthlyEquivalent.toLocaleString()} FCFA <span className="text-xs font-normal text-slate-400">/mois</span>
+                                            </div>
+                                            {selectedCycle > 1 && (
+                                                <div className="text-[11px] text-amber-700 font-semibold mt-1">
+                                                    {pricing.total.toLocaleString()} FCFA pour {selectedCycle} mois (Économisez {pricing.savings.toLocaleString()} FCFA)
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-slate-500 font-normal">Pour les marques et équipes grands comptes.</p>
+                                        <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Catalogue Produits ILLIMITÉ</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Toutes les fonctionnalités Growth incluses</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Retraits MoMo en Temps Réel</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Exportation comptable (CSV/Excel)</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Account Manager Dédié</li>
+                                        </ul>
+                                    </div>
+                                    <Link href={route('register')} className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-semibold text-xs text-center transition-colors">
+                                        Activer le Plan Business
+                                    </Link>
+                                </div>
+                            );
+                        })()}
 
                     </div>
                 </motion.section>
 
-                {/* 9. FAQ HUB SECTION (2 COLUMNS) */}
+                {/* 9. FAQ HUB SECTION (2 COLUMNS) WITH ENRICHED VENDOR FEATURES & + ET BIEN D'AUTRES */}
                 <motion.section 
                     id="faq" 
                     initial="hidden"
@@ -1039,6 +1162,18 @@ export default function Welcome({ auth }) {
                                     </motion.div>
                                 );
                             })}
+
+                            {/* Additional Badge for Features Category */}
+                            {activeFaqCategory === 'features' && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="p-4 rounded-2xl bg-amber-100/70 border border-amber-300 text-amber-950 text-xs font-bold text-center flex items-center justify-center gap-2 mt-4"
+                                >
+                                    <Sparkles className="w-4 h-4 text-amber-700 shrink-0" />
+                                    <span>+ et bien d'autres fonctionnalités conçues pour développer vos ventes !</span>
+                                </motion.div>
+                            )}
                         </div>
 
                     </div>
