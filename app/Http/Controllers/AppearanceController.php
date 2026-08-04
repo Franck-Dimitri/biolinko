@@ -67,6 +67,24 @@ class AppearanceController extends Controller
             $validated['banner_url'] = '/storage/' . $path;
         }
 
+        if (isset($validated['sections_json'])) {
+            if (is_string($validated['sections_json'])) {
+                $validated['sections_json'] = json_decode($validated['sections_json'], true);
+            }
+            if (is_array($validated['sections_json'])) {
+                $validated['sections_json'] = array_values(array_map(function ($sec) {
+                    if (is_array($sec) && isset($sec['enabled'])) {
+                        $sec['enabled'] = filter_var($sec['enabled'], FILTER_VALIDATE_BOOLEAN);
+                    }
+                    return $sec;
+                }, $validated['sections_json']));
+            }
+        }
+
+        if (isset($validated['benefits_json']) && is_string($validated['benefits_json'])) {
+            $validated['benefits_json'] = json_decode($validated['benefits_json'], true);
+        }
+
         $store->update($validated);
 
         return redirect()->back()->with('message', 'Paramètres d\'apparence mis à jour avec succès !');

@@ -69,8 +69,14 @@ class SmartLinkController extends Controller
             }),
         ];
 
+        $topSmartLinks = SmartLink::where('store_id', $store->id)
+            ->orderByDesc('sales_count')
+            ->take(5)
+            ->get();
+
         return Inertia::render('Seller/SmartLinks/Index', [
             'smartLinks' => $smartLinks,
+            'topSmartLinks' => $topSmartLinks,
             'products' => $products,
             'stats' => $stats,
         ]);
@@ -93,8 +99,8 @@ class SmartLinkController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
-            'discount_type' => 'required|in:fixed,percent',
-            'discount_value' => 'required|numeric|min:0',
+            'discount_type' => 'nullable|in:fixed,percent',
+            'discount_value' => 'nullable|numeric|min:0',
             'max_uses' => 'nullable|integer|min:1',
             'expires_at' => 'nullable|date|after:now',
         ]);
@@ -128,12 +134,15 @@ class SmartLinkController extends Controller
             return back()->with('error', 'Veuillez sélectionner au moins un produit valide.');
         }
 
-        // Calculate Discount and Total Amount
-        $discountValue = (float) $validated['discount_value'];
-        if ($validated['discount_type'] === 'percent') {
+        // Calculate Discount and Total Amount (Discount is optional)
+        $discountType = $validated['discount_type'] ?? 'fixed';
+        $discountValue = (float) ($validated['discount_value'] ?? 0);
+        if ($discountType === 'percent' && $discountValue > 0) {
             $discountAmount = $subtotal * (min(100, $discountValue) / 100);
-        } else {
+        } elseif ($discountValue > 0) {
             $discountAmount = min($subtotal, $discountValue);
+        } else {
+            $discountAmount = 0.00;
         }
 
         $totalAmount = max(0, $subtotal - $discountAmount);
@@ -145,7 +154,7 @@ class SmartLinkController extends Controller
             'store_id' => $store->id,
             'title' => $validated['title'],
             'code' => $code,
-            'discount_type' => $validated['discount_type'],
+            'discount_type' => $discountType,
             'discount_value' => $discountValue,
             'subtotal_amount' => $subtotal,
             'total_amount' => $totalAmount,
@@ -211,6 +220,14 @@ class SmartLinkController extends Controller
             'store' => $smartLink->store,
             'isValid' => $isValid,
         ]);
+    }
+
+    /**
+     * Public Fast Checkout Page for a SmartLink via Store Slug.
+     */
+    public function showPublicByStore(string $store_slug, string $code): Response
+    {
+        return $this->showPublic($code);
     }
 
     /**

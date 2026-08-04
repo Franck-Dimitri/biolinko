@@ -1,25 +1,52 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
     FileText, Search, Download, Eye, Share2, Check, Copy, ExternalLink, 
     X, Printer, CreditCard, Calendar, User, Phone, Mail, ShoppingBag, 
-    ArrowUpRight, ShieldCheck, Filter
+    ArrowUpRight, ShieldCheck, Filter, Plus, Send, MessageSquare, AlertCircle,
+    CheckCircle2, Clock, Store, Tag, Sparkles, QrCode
 } from 'lucide-react';
 
-export default function InvoicesIndex({ invoices, stats, filters }) {
+function getContrastColor(hexColor) {
+    if (!hexColor || typeof hexColor !== 'string' || !hexColor.startsWith('#')) return '#0F172A';
+    const hex = hexColor.replace('#', '');
+    if (hex.length < 6) return '#0F172A';
+    const r = parseInt(hex.substring(0, 2), 16) || 0;
+    const g = parseInt(hex.substring(2, 4), 16) || 0;
+    const b = parseInt(hex.substring(4, 6), 16) || 0;
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    return yiq >= 165 ? '#0F172A' : '#FFFFFF';
+}
+
+export default function InvoicesIndex({ store, invoices, stats, filters, appUrl }) {
     const [searchTerm, setSearchTerm] = useState(filters?.search || '');
     const [selectedStatus, setSelectedStatus] = useState(filters?.status || 'all');
     
-    // Preview Modal state
+    // Preview & Share Modals
     const [previewOrder, setPreviewOrder] = useState(null);
-    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-    const [activePreviewTab, setActivePreviewTab] = useState('pdf'); // 'pdf' or 'details'
-
-    // Share Modal state
     const [shareOrder, setShareOrder] = useState(null);
-    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [copiedLink, setCopiedLink] = useState(false);
+
+    const { flash } = usePage().props;
+
+    const primaryColor = store?.theme_color || '#FFCC00';
+    const primaryTextColor = getContrastColor(primaryColor);
+    const isGrowthOrPro = store?.user?.plan === 'growth' || store?.user?.plan === 'pro' || store?.user?.plan === 'business';
+
+    // Manual Invoice Form
+    const manualForm = useForm({
+        customer_name: '',
+        customer_phone: '',
+        customer_email: '',
+        customer_whatsapp: '',
+        delivery_address: '',
+        amount: '',
+        description: '',
+        notes: '',
+    });
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -39,145 +66,209 @@ export default function InvoicesIndex({ invoices, stats, filters }) {
         );
     };
 
-    const openPreview = (order) => {
-        setPreviewOrder(order);
-        setIsPreviewModalOpen(true);
+    const handleCreateManualInvoice = (e) => {
+        e.preventDefault();
+        manualForm.post(route('seller.invoices.storeManual'), {
+            onSuccess: () => {
+                setIsCreateModalOpen(false);
+                manualForm.reset();
+            },
+        });
     };
 
-    const openShare = (order) => {
-        setShareOrder(order);
-        setIsShareModalOpen(true);
-        setCopiedLink(false);
+    const handleSendEmailReminder = (order) => {
+        router.post(route('seller.invoices.sendReminder', order.id), {}, { preserveScroll: true });
+    };
+
+    const getWhatsAppRelanceUrl = (order) => {
+        const trackUrl = `${appUrl || window.location.origin}/track/${order.tracking_code}`;
+        let cleanPhone = (order.customer_phone || '').replace(/[^0-9]/g, '');
+        if (!cleanPhone.startsWith('237') && !cleanPhone.startsWith('229')) {
+            cleanPhone = '237' + cleanPhone;
+        }
+        const text = `Bonjour ${order.customer_name},\n\nVoici votre facture de règlement ${order.tracking_code} (${Number(order.total_client || order.price_vendor).toLocaleString()} FCFA) de la boutique ${store?.name || 'Boutique'}.\n\nVous pouvez consulter et régler votre facture en toute sécurité ici : ${trackUrl}\n\nMerci de votre confiance.`;
+        return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
     };
 
     const copyShareLink = (trackingCode) => {
-        const link = route('order.track', trackingCode);
+        const link = `${appUrl || window.location.origin}/track/${trackingCode}`;
         navigator.clipboard.writeText(link);
         setCopiedLink(true);
         setTimeout(() => setCopiedLink(false), 2500);
     };
 
-    const getWhatsAppShareUrl = (order) => {
-        const trackUrl = route('order.track', order.tracking_code);
-        const text = `Bonjour ${order.customer_name},\nVoici le reçu et le lien de suivi officiel de votre commande #${order.tracking_code} (${order.total_client} FCFA) chez ${order.store?.name || 'BIOLINKO'} :\n${trackUrl}\n\nMerci de votre confiance ! 🇨🇲`;
-        const phone = order.customer_phone ? order.customer_phone.replace(/[^0-9]/g, '') : '';
-        return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    const getInvoiceStamp = (status) => {
+        if (status === 'delivered') {
+            return (
+                <div className="border-4 border-purple-600 text-purple-700 font-black text-xs px-3 py-1 rounded-xl uppercase tracking-widest rotate-[-5deg] inline-block shadow-2xs bg-purple-50">
+                    PAYÉE ET LIVRÉE
+                </div>
+            );
+        }
+        if (status === 'paid' || status === 'in_delivery') {
+            return (
+                <div className="border-4 border-emerald-600 text-emerald-700 font-black text-xs px-3 py-1 rounded-xl uppercase tracking-widest rotate-[-5deg] inline-block shadow-2xs bg-emerald-50">
+                    REÇU / FACTURE PAYÉE
+                </div>
+            );
+        }
+        if (status === 'cancelled' || status === 'failed') {
+            return (
+                <div className="border-4 border-rose-600 text-rose-700 font-black text-xs px-3 py-1 rounded-xl uppercase tracking-widest rotate-[-5deg] inline-block shadow-2xs bg-rose-50">
+                    FACTURE ANNULÉE
+                </div>
+            );
+        }
+        return (
+            <div className="border-4 border-amber-600 text-amber-800 font-black text-xs px-3 py-1 rounded-xl uppercase tracking-widest rotate-[-5deg] inline-block shadow-2xs bg-amber-50">
+                EN ATTENTE DE RÈGLEMENT
+            </div>
+        );
     };
 
     return (
         <AuthenticatedLayout>
-            <Head title="Espace Factures - BIOLINKO" />
+            <Head title="Espace Factures — BIOLINKO" />
 
-            <div className="space-y-6 mx-auto pb-12">
+            <div className="space-y-6 mx-auto pb-12 font-sans">
                 
-                {/* Header Title */}
+                {/* Toast Success Notification */}
+                <AnimatePresence>
+                    {flash?.message && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -15 }}
+                            className="p-4 rounded-2xl bg-slate-950 text-white font-medium text-xs shadow-md flex items-center gap-3 border border-slate-800"
+                        >
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span>{flash.message}</span>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Header Title & Create Manual Invoice Button */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-2xs">
                     <div>
                         <div className="flex items-center gap-2.5 mb-1">
-                            <div className="p-2 rounded-xl bg-amber-100 text-amber-900">
-                                <FileText className="w-5 h-5 text-amber-600" />
+                            <div className="w-9 h-9 rounded-2xl flex items-center justify-center font-bold shadow-2xs" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                                <FileText className="w-5 h-5" />
                             </div>
-                            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Espace Factures</h1>
+                            <h1 className="text-2xl font-extrabold text-slate-950 tracking-tight">Espace Factures</h1>
                         </div>
                         <p className="text-xs text-slate-500 font-medium">
-                            Consultez, prévisualisez, téléchargez et partagez les factures officielles PDF de vos ventes.
+                            Générez des factures manuelle, suivez les encaissements et effectuez des relances email & WhatsApp directes.
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
-                            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                            Modèle Officiel Biolinko
-                        </span>
-                    </div>
+                    <button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="px-5 py-3 rounded-2xl font-extrabold text-xs shadow-md transition-transform active:scale-95 flex items-center justify-center gap-2 border"
+                        style={{ backgroundColor: primaryColor, color: primaryTextColor, borderColor: primaryColor }}
+                    >
+                        <Plus className="w-4 h-4" />
+                        <span>Créer une Facture Manuelle</span>
+                    </button>
                 </div>
 
-                {/* Stats Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-                        <div>
-                            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Factures</div>
-                            <div className="text-2xl font-black text-slate-900">{stats?.total_invoices || 0}</div>
-                            <div className="text-[11px] text-slate-400 mt-1">Commandes générées</div>
-                        </div>
-                        <div className="p-3.5 rounded-2xl bg-amber-50 text-amber-600">
-                            <FileText className="w-6 h-6" />
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-                        <div>
-                            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Montant Total Encaissé</div>
-                            <div className="text-2xl font-black text-slate-900">
-                                {new Intl.NumberFormat('fr-FR').format(stats?.total_amount || 0)} <span className="text-xs font-bold text-amber-600">FCFA</span>
-                            </div>
-                            <div className="text-[11px] text-slate-400 mt-1">Factures acquittées</div>
-                        </div>
-                        <div className="p-3.5 rounded-2xl bg-emerald-50 text-emerald-600">
-                            <CreditCard className="w-6 h-6" />
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-                        <div>
-                            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Factures Payées</div>
-                            <div className="text-2xl font-black text-slate-900">{stats?.paid_count || 0}</div>
-                            <div className="text-[11px] text-emerald-600 font-semibold mt-1">100% Vérifiées Mobile Money</div>
-                        </div>
-                        <div className="p-3.5 rounded-2xl bg-blue-50 text-blue-600">
-                            <ShieldCheck className="w-6 h-6" />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Filters & Search Toolbar */}
-                <div className="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-4">
+                {/* 4 STATS SUMMARY CARDS INCLUDING UNPAID INVOICES */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     
-                    {/* Status Tabs */}
+                    {/* CARD 1: FACTURES NON PAYEES (EN ATTENTE) */}
+                    <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs space-y-2">
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                            <span>Factures Non Payées</span>
+                            <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
+                                <Clock className="w-4 h-4 text-amber-600" />
+                            </div>
+                        </div>
+                        <div className="text-2xl font-extrabold text-slate-950">
+                            {stats?.pending_count || 0} <span className="text-xs text-slate-400 font-medium">en attente</span>
+                        </div>
+                        <div className="text-xs font-bold text-amber-700">
+                            Volume : {Number(stats?.pending_amount || 0).toLocaleString()} FCFA
+                        </div>
+                    </div>
+
+                    {/* CARD 2: FACTURES PAYEES (ACQUITTEES) */}
+                    <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs space-y-2">
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                            <span>Factures Payées</span>
+                            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-900 flex items-center justify-center font-bold">
+                                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                            </div>
+                        </div>
+                        <div className="text-2xl font-extrabold text-slate-950">
+                            {stats?.paid_count || 0}
+                        </div>
+                        <div className="text-xs font-bold text-emerald-600">
+                            100% Acquittées Mobile Money
+                        </div>
+                    </div>
+
+                    {/* CARD 3: MONTANT TOTAL ENCAISSE */}
+                    <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs space-y-2">
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                            <span>Total Encaissé</span>
+                            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-900 flex items-center justify-center font-bold">
+                                <CreditCard className="w-4 h-4 text-blue-600" />
+                            </div>
+                        </div>
+                        <div className="text-2xl font-extrabold text-slate-950">
+                            {Number(stats?.total_amount || 0).toLocaleString()} FCFA
+                        </div>
+                        <div className="text-xs font-medium text-slate-500">
+                            Montant net des ventes réglées
+                        </div>
+                    </div>
+
+                    {/* CARD 4: TOTAL FACTURES GENERES */}
+                    <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs space-y-2">
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                            <span>Total Factures</span>
+                            <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-900 flex items-center justify-center font-bold">
+                                <FileText className="w-4 h-4 text-purple-600" />
+                            </div>
+                        </div>
+                        <div className="text-2xl font-extrabold text-slate-950">
+                            {stats?.total_invoices || 0}
+                        </div>
+                        <div className="text-xs font-medium text-slate-500">
+                            Directes & Manuelles cumulées
+                        </div>
+                    </div>
+
+                </div>
+
+                {/* FILTERS & SEARCH TOOLBAR */}
+                <div className="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
                         <button
                             onClick={() => handleFilterStatus('all')}
-                            className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all shrink-0 ${
-                                selectedStatus === 'all'
-                                    ? 'bg-slate-900 text-white shadow-2xs'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                                selectedStatus === 'all' ? 'bg-slate-950 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                         >
                             Toutes ({stats?.total_invoices || 0})
                         </button>
                         <button
                             onClick={() => handleFilterStatus('paid')}
-                            className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all shrink-0 ${
-                                selectedStatus === 'paid'
-                                    ? 'bg-emerald-600 text-white shadow-2xs'
-                                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                                selectedStatus === 'paid' ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
                             }`}
                         >
                             Payées ({stats?.paid_count || 0})
                         </button>
                         <button
                             onClick={() => handleFilterStatus('pending')}
-                            className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all shrink-0 ${
-                                selectedStatus === 'pending'
-                                    ? 'bg-amber-500 text-slate-950 shadow-2xs'
-                                    : 'bg-amber-50 text-amber-800 hover:bg-amber-100'
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                                selectedStatus === 'pending' ? 'bg-amber-500 text-slate-950 shadow-2xs' : 'bg-amber-50 text-amber-900 hover:bg-amber-100'
                             }`}
                         >
-                            En attente
-                        </button>
-                        <button
-                            onClick={() => handleFilterStatus('cancelled')}
-                            className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all shrink-0 ${
-                                selectedStatus === 'cancelled'
-                                    ? 'bg-rose-600 text-white shadow-2xs'
-                                    : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-                            }`}
-                        >
-                            Annulées
+                            En Attente Non Payées ({stats?.pending_count || 0})
                         </button>
                     </div>
 
-                    {/* Search Bar */}
                     <form onSubmit={handleSearch} className="w-full md:w-80 flex items-center gap-2">
                         <div className="relative w-full">
                             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -185,20 +276,20 @@ export default function InvoicesIndex({ invoices, stats, filters }) {
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Code N°, client, téléphone..."
-                                className="w-full pl-10 pr-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none transition-all"
+                                placeholder="Code BLK-FAC-..., client, phone..."
+                                className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none transition-all"
                             />
                         </div>
                         <button
                             type="submit"
-                            className="px-4 py-2 rounded-2xl bg-[#FFCC00] hover:bg-amber-400 text-slate-950 font-bold text-xs shrink-0 transition-all shadow-2xs"
+                            className="px-4 py-2 rounded-xl bg-slate-950 hover:bg-slate-900 text-white font-bold text-xs shrink-0 transition-all shadow-2xs"
                         >
                             Filtrer
                         </button>
                     </form>
                 </div>
 
-                {/* Invoices List Table */}
+                {/* INVOICES TABLE LIST */}
                 <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden">
                     {invoices?.data && invoices.data.length > 0 ? (
                         <div className="overflow-x-auto">
@@ -207,105 +298,84 @@ export default function InvoicesIndex({ invoices, stats, filters }) {
                                     <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                                         <th className="py-3.5 px-6">N° Facture</th>
                                         <th className="py-3.5 px-4">Date</th>
-                                        <th className="py-3.5 px-4">Client</th>
-                                        <th className="py-3.5 px-4">Articles</th>
+                                        <th className="py-3.5 px-4">Client & Contact</th>
+                                        <th className="py-3.5 px-4">Article / Prestation</th>
                                         <th className="py-3.5 px-4">Montant Total</th>
                                         <th className="py-3.5 px-4 text-center">Statut</th>
-                                        <th className="py-3.5 px-6 text-right">Actions</th>
+                                        <th className="py-3.5 px-6 text-right">Actions & Relances</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
                                     {invoices.data.map((order) => (
                                         <tr key={order.id} className="hover:bg-slate-50/70 transition-colors">
                                             
-                                            {/* N° Facture */}
-                                            <td className="py-4 px-6 font-mono font-bold text-slate-900 whitespace-nowrap">
+                                            <td className="py-4 px-6 font-mono font-bold text-slate-950 whitespace-nowrap">
                                                 <div className="flex items-center gap-2">
                                                     <FileText className="w-4 h-4 text-amber-500 shrink-0" />
-                                                    <span>#{order.tracking_code}</span>
+                                                    <span>{order.tracking_code}</span>
                                                 </div>
                                             </td>
 
-                                            {/* Date */}
                                             <td className="py-4 px-4 whitespace-nowrap text-slate-500">
-                                                {new Date(order.created_at).toLocaleDateString('fr-FR', {
-                                                    day: '2-digit',
-                                                    month: 'short',
-                                                    year: 'numeric'
-                                                })}
+                                                {new Date(order.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
                                             </td>
 
-                                            {/* Client */}
                                             <td className="py-4 px-4 whitespace-nowrap">
-                                                <div className="font-semibold text-slate-900">{order.customer_name}</div>
-                                                <div className="text-[11px] text-slate-400 font-mono">{order.customer_phone}</div>
+                                                <div className="font-bold text-slate-950">{order.customer_name}</div>
+                                                <div className="text-[11px] text-slate-500 font-mono">{order.customer_phone}</div>
                                             </td>
 
-                                            {/* Articles Count */}
-                                            <td className="py-4 px-4 whitespace-nowrap text-slate-600">
-                                                <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-[11px] font-bold">
-                                                    {order.items?.length || 1} article(s)
-                                                </span>
+                                            <td className="py-4 px-4 whitespace-nowrap text-slate-700 max-w-xs truncate">
+                                                {order.items?.[0]?.product_title || 'Commande boutique'}
                                             </td>
 
-                                            {/* Montant Total */}
-                                            <td className="py-4 px-4 whitespace-nowrap font-black text-slate-900">
-                                                {new Intl.NumberFormat('fr-FR').format(order.total_client)} <span className="text-[10px] font-bold text-slate-400">FCFA</span>
+                                            <td className="py-4 px-4 whitespace-nowrap font-extrabold text-slate-950">
+                                                {Number(order.total_client || order.price_vendor).toLocaleString()} FCFA
                                             </td>
 
-                                            {/* Statut Badge */}
                                             <td className="py-4 px-4 whitespace-nowrap text-center">
-                                                {order.status === 'paid' ? (
-                                                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[11px]">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                {order.status === 'paid' || order.status === 'in_delivery' || order.status === 'delivered' ? (
+                                                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-950 font-bold text-[11px] border border-emerald-300">
                                                         Payée
                                                     </span>
-                                                ) : order.status === 'pending' ? (
-                                                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 text-amber-800 font-bold text-[11px]">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                                        En attente
-                                                    </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-rose-50 text-rose-700 font-bold text-[11px]">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                                        Annulée
+                                                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 text-amber-950 font-bold text-[11px] border border-amber-300">
+                                                        Non Payée
                                                     </span>
                                                 )}
                                             </td>
 
-                                            {/* Actions Buttons */}
                                             <td className="py-4 px-6 whitespace-nowrap text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    
-                                                    {/* Aperçu Button */}
                                                     <button
-                                                        onClick={() => openPreview(order)}
-                                                        className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all flex items-center gap-1.5"
-                                                        title="Prévisualiser la facture"
+                                                        onClick={() => setPreviewOrder(order)}
+                                                        className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs transition-all flex items-center gap-1.5"
+                                                        title="Afficher la facture"
                                                     >
-                                                        <Eye className="w-4 h-4 text-slate-700" />
-                                                        <span className="hidden lg:inline">Aperçu</span>
+                                                        <Eye className="w-3.5 h-3.5 text-slate-700" />
+                                                        <span>Afficher</span>
                                                     </button>
 
-                                                    {/* Télécharger Button */}
                                                     <a
-                                                        href={route('seller.invoices.download', order.id)}
-                                                        className="p-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-xs transition-all flex items-center gap-1.5"
-                                                        title="Télécharger la facture PDF"
+                                                        href={getWhatsAppRelanceUrl(order)}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs transition-all flex items-center gap-1.5 shadow-2xs"
+                                                        title="Relancer sur WhatsApp"
                                                     >
-                                                        <Download className="w-4 h-4 text-amber-700" />
-                                                        <span className="hidden lg:inline">Télécharger</span>
+                                                        <MessageSquare className="w-3.5 h-3.5" />
+                                                        <span>WhatsApp</span>
                                                     </a>
 
-                                                    {/* Partager Button */}
-                                                    <button
-                                                        onClick={() => openShare(order)}
-                                                        className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all flex items-center gap-1.5 shadow-2xs"
-                                                        title="Partager la facture"
-                                                    >
-                                                        <Share2 className="w-4 h-4 text-amber-400" />
-                                                        <span className="hidden lg:inline">Partager</span>
-                                                    </button>
+                                                    {order.customer_email && (
+                                                        <button
+                                                            onClick={() => handleSendEmailReminder(order)}
+                                                            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all"
+                                                            title="Envoyer par email"
+                                                        >
+                                                            <Mail className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -315,150 +385,293 @@ export default function InvoicesIndex({ invoices, stats, filters }) {
                         </div>
                     ) : (
                         <div className="p-12 text-center space-y-3">
-                            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
-                                <FileText className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-base font-bold text-slate-900">Aucune facture trouvée</h3>
-                            <p className="text-xs text-slate-500 max-w-md mx-auto">
-                                Les factures officielles s'afficheront ici automatiquement dès que vos clients effectueront des achats sur votre boutique.
-                            </p>
+                            <FileText className="w-8 h-8 text-slate-300 mx-auto" />
+                            <h3 className="text-sm font-bold text-slate-900">Aucune facture disponible.</h3>
                         </div>
                     )}
                 </div>
+
             </div>
 
-            {/* PREVIEW MODAL */}
-            {isPreviewModalOpen && previewOrder && (
-                <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-                    <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        
-                        {/* Modal Header */}
-                        <div className="px-6 py-4 border-b border-slate-200/80 flex items-center justify-between bg-slate-50">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-xl bg-[#FFCC00] text-slate-950">
-                                    <FileText className="w-5 h-5" />
+            {/* MODAL: CREATE MANUAL INVOICE */}
+            <AnimatePresence>
+                {isCreateModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl w-full p-6 sm:p-8 space-y-5 max-h-[90vh] overflow-y-auto"
+                        >
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-9 h-9 rounded-2xl flex items-center justify-center font-bold shadow-2xs" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                                        <Plus className="w-5 h-5" />
+                                    </div>
+                                    <h3 className="text-lg font-extrabold text-slate-950">Créer une Facture Manuelle</h3>
                                 </div>
-                                <div>
-                                    <h3 className="text-base font-bold text-slate-900">Aperçu Facture #{previewOrder.tracking_code}</h3>
-                                    <p className="text-xs text-slate-500">Client : {previewOrder.customer_name}</p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                                <a
-                                    href={route('seller.invoices.download', previewOrder.id)}
-                                    className="px-4 py-2 rounded-xl bg-[#FFCC00] hover:bg-amber-400 text-slate-950 font-bold text-xs transition-all flex items-center gap-2 shadow-2xs"
-                                >
-                                    <Download className="w-4 h-4" />
-                                    <span>Télécharger PDF</span>
-                                </a>
-
                                 <button
-                                    onClick={() => setIsPreviewModalOpen(false)}
-                                    className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-all"
+                                    onClick={() => setIsCreateModalOpen(false)}
+                                    className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700"
                                 >
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
-                        </div>
 
-                        {/* Modal Body - PDF Iframe Viewer / Live Preview */}
-                        <div className="flex-1 bg-slate-100 p-4 overflow-y-auto">
-                            <iframe
-                                src={route('seller.invoices.preview', previewOrder.id)}
-                                className="w-full h-[65vh] rounded-2xl border border-slate-300 shadow-sm bg-white"
-                                title={`Facture #${previewOrder.tracking_code}`}
-                            />
-                        </div>
+                            <form onSubmit={handleCreateManualInvoice} className="space-y-4">
+                                
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-900 mb-1">Nom du Client *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={manualForm.data.customer_name}
+                                            onChange={(e) => manualForm.setData('customer_name', e.target.value)}
+                                            placeholder="ex: Marie Diallo"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                        />
+                                    </div>
 
-                        {/* Modal Footer */}
-                        <div className="px-6 py-4 border-t border-slate-200/80 bg-white flex items-center justify-between">
-                            <div className="text-xs text-slate-500">
-                                Total Facturé : <strong className="text-slate-900 font-black">{new Intl.NumberFormat('fr-FR').format(previewOrder.total_client)} FCFA</strong>
-                            </div>
-                            <button
-                                onClick={() => setIsPreviewModalOpen(false)}
-                                className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
-                            >
-                                Fermer
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* SHARE MODAL */}
-            {isShareModalOpen && shareOrder && (
-                <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-                    <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 space-y-6">
-                        
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2.5 rounded-2xl bg-amber-100 text-amber-900">
-                                    <Share2 className="w-5 h-5 text-amber-600" />
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-900 mb-1">Numéro Téléphone / MoMo *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={manualForm.data.customer_phone}
+                                            onChange={(e) => manualForm.setData('customer_phone', e.target.value)}
+                                            placeholder="ex: 699000000"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                        />
+                                    </div>
                                 </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-900 mb-1">Email Client (Envoi auto facture)</label>
+                                        <input
+                                            type="email"
+                                            value={manualForm.data.customer_email}
+                                            onChange={(e) => manualForm.setData('customer_email', e.target.value)}
+                                            placeholder="client@gmail.com"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-900 mb-1">WhatsApp Client (Relances)</label>
+                                        <input
+                                            type="text"
+                                            value={manualForm.data.customer_whatsapp}
+                                            onChange={(e) => manualForm.setData('customer_whatsapp', e.target.value)}
+                                            placeholder="ex: 699000000"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                        />
+                                    </div>
+                                </div>
+
                                 <div>
-                                    <h3 className="text-base font-bold text-slate-900">Partager la Facture</h3>
-                                    <p className="text-xs text-slate-500">Commande #{shareOrder.tracking_code}</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setIsShareModalOpen(false)}
-                                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        {/* Share Options */}
-                        <div className="space-y-3">
-                            
-                            {/* WhatsApp Direct Share Button */}
-                            <a
-                                href={getWhatsAppShareUrl(shareOrder)}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="w-full py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all flex items-center justify-center gap-3 shadow-2xs"
-                            >
-                                <span className="text-base">💬</span>
-                                <span>Envoyer au client sur WhatsApp</span>
-                                <ArrowUpRight className="w-4 h-4" />
-                            </a>
-
-                            {/* Copy Link Input */}
-                            <div className="space-y-1.5 pt-2">
-                                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                    Lien de la Facture & Suivi Client
-                                </label>
-                                <div className="flex items-center gap-2">
+                                    <label className="block text-xs font-bold text-slate-900 mb-1">Description / Intitulé de la Prestation *</label>
                                     <input
                                         type="text"
-                                        readOnly
-                                        value={route('order.track', shareOrder.tracking_code)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono text-slate-600 outline-none"
+                                        required
+                                        value={manualForm.data.description}
+                                        onChange={(e) => manualForm.setData('description', e.target.value)}
+                                        placeholder="ex: Vente 2x Robes de Soie + Frais de livraison"
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
                                     />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-900 mb-1">Montant Total à Payer (FCFA) *</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        min="100"
+                                        value={manualForm.data.amount}
+                                        onChange={(e) => manualForm.setData('amount', e.target.value)}
+                                        placeholder="ex: 25000"
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-extrabold focus:border-amber-400 outline-none"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-900 mb-1">Notes / Indications de livraison</label>
+                                    <textarea
+                                        rows="2"
+                                        value={manualForm.data.notes}
+                                        onChange={(e) => manualForm.setData('notes', e.target.value)}
+                                        placeholder="Lieu de livraison, consignes..."
+                                        className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium outline-none"
+                                    ></textarea>
+                                </div>
+
+                                <div className="pt-3 flex items-center justify-end gap-3">
                                     <button
-                                        onClick={() => copyShareLink(shareOrder.tracking_code)}
-                                        className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shrink-0 transition-all flex items-center gap-1.5 shadow-2xs"
+                                        type="button"
+                                        onClick={() => setIsCreateModalOpen(false)}
+                                        className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
                                     >
-                                        {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-amber-400" />}
-                                        <span>{copiedLink ? 'Copié !' : 'Copier'}</span>
+                                        Annuler
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={manualForm.processing}
+                                        className="px-6 py-2.5 rounded-xl font-extrabold text-xs shadow-md border"
+                                        style={{ backgroundColor: primaryColor, color: primaryTextColor, borderColor: primaryColor }}
+                                    >
+                                        {manualForm.processing ? 'Génération...' : 'Créer & Envoyer Facture'}
+                                    </button>
+                                </div>
+
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* MODAL: IN-APP HIGH-END INVOICE PREVIEW WITH THEME COLOR & QR CODE */}
+            <AnimatePresence>
+                {previewOrder && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-3xl w-full p-6 sm:p-10 space-y-8 max-h-[92vh] overflow-y-auto relative font-sans"
+                        >
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center font-extrabold shadow-2xs" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                                        <FileText className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-extrabold text-slate-950">Facture Officielle {previewOrder.tracking_code}</h3>
+                                        <p className="text-xs text-slate-500 font-medium">Boutique : {store?.name}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <a
+                                        href={route('seller.invoices.preview', previewOrder.id)}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs flex items-center gap-1.5"
+                                    >
+                                        <Printer className="w-4 h-4" />
+                                        <span>PDF</span>
+                                    </a>
+                                    <button
+                                        onClick={() => setPreviewOrder(null)}
+                                        className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700"
+                                    >
+                                        <X className="w-5 h-5" />
                                     </button>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="pt-2">
-                            <button
-                                onClick={() => setIsShareModalOpen(false)}
-                                className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all"
+                            {/* INVOICE HEADER BANNER */}
+                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 pb-6 border-b border-slate-100">
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-3">
+                                        <div 
+                                            className="w-12 h-12 rounded-2xl flex items-center justify-center font-extrabold text-slate-950 overflow-hidden shadow-2xs"
+                                            style={{ backgroundColor: primaryColor }}
+                                        >
+                                            {store.logo_url ? <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" /> : <Store className="w-6 h-6" />}
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-extrabold text-slate-950">{store.name}</h2>
+                                            <p className="text-xs text-slate-500 font-mono">biolinko.app/{store.slug}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="text-left sm:text-right space-y-2">
+                                    {getInvoiceStamp(previewOrder.status)}
+                                    <div className="text-xs text-slate-500 font-mono pt-1">
+                                        Facture Réf : <strong className="text-slate-950">{previewOrder.tracking_code}</strong>
+                                    </div>
+                                    <div className="text-xs text-slate-400 font-medium">
+                                        Date : {new Date(previewOrder.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* CLIENT DETAILS */}
+                            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/90 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                                <div>
+                                    <div className="font-extrabold text-slate-400 uppercase text-[10px] tracking-wider mb-1">Destinataire :</div>
+                                    <div className="font-bold text-slate-950 text-sm">{previewOrder.customer_name}</div>
+                                    <div className="text-slate-600 font-mono">{previewOrder.customer_phone}</div>
+                                    {previewOrder.customer_email && <div className="text-slate-500">{previewOrder.customer_email}</div>}
+                                </div>
+
+                                <div>
+                                    <div className="font-extrabold text-slate-400 uppercase text-[10px] tracking-wider mb-1">Émetteur / Boutique :</div>
+                                    <div className="font-bold text-slate-950">{store.name}</div>
+                                    <div className="text-slate-600 font-medium">WhatsApp : {store.phone_whatsapp || 'Non renseigné'}</div>
+                                </div>
+                            </div>
+
+                            {/* ITEMS TABLE */}
+                            <div className="space-y-2">
+                                <table className="w-full text-left text-xs border-collapse">
+                                    <thead>
+                                        <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase text-[10px]" style={{ borderTop: `3px solid ${primaryColor}` }}>
+                                            <th className="py-2.5 px-3">Article / Prestation</th>
+                                            <th className="py-2.5 px-3 text-center">Qte</th>
+                                            <th className="py-2.5 px-3 text-right">Prix Unitaire</th>
+                                            <th className="py-2.5 px-3 text-right">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 font-medium text-slate-900">
+                                        {(previewOrder.items || []).map((item, idx) => (
+                                            <tr key={idx}>
+                                                <td className="py-3 px-3">
+                                                    <div className="font-bold text-slate-950">{item.product_title || item.title}</div>
+                                                    {item.variant_label && <div className="text-[10px] text-amber-800 font-semibold">{item.variant_label}</div>}
+                                                </td>
+                                                <td className="py-3 px-3 text-center font-bold">{item.quantity}</td>
+                                                <td className="py-3 px-3 text-right font-mono">{Number(item.unit_price_vendor || item.price || 0).toLocaleString()} F</td>
+                                                <td className="py-3 px-3 text-right font-extrabold">{Number((item.unit_price_vendor || item.price || 0) * item.quantity).toLocaleString()} FCFA</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* TOTALS BANNER MATCHING STORE THEME COLOR */}
+                            <div 
+                                className="p-5 rounded-2xl border space-y-2 text-xs font-medium flex items-center justify-between shadow-2xs"
+                                style={{ backgroundColor: primaryColor, color: primaryTextColor, borderColor: primaryColor }}
                             >
-                                Fermer
-                            </button>
-                        </div>
+                                <div>
+                                    <div className="text-[11px] opacity-80 uppercase tracking-wider font-bold">Total Général à Payer :</div>
+                                    <div className="text-2xl font-black">{Number(previewOrder.total_client || previewOrder.price_vendor).toLocaleString()} FCFA</div>
+                                </div>
+                                
+                                <div className="text-right">
+                                    <QrCode className="w-10 h-10 opacity-90 mx-auto" />
+                                    <span className="text-[10px] opacity-80">Validation BIOLINKO Pay</span>
+                                </div>
+                            </div>
+
+                            {/* FOOTER WHITELABELING CHECK */}
+                            <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium pt-4 border-t border-slate-100">
+                                <div>Merci de votre confiance en la boutique <strong>{store.name}</strong> !</div>
+                                {!isGrowthOrPro && (
+                                    <div className="flex items-center gap-1 text-slate-600 font-semibold">
+                                        <span>Propulsé par</span>
+                                        <span className="font-extrabold text-amber-500">BIOLINKO</span>
+                                    </div>
+                                )}
+                            </div>
+
+                        </motion.div>
                     </div>
-                </div>
-            )}
+                )}
+            </AnimatePresence>
+
         </AuthenticatedLayout>
     );
 }

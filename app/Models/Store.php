@@ -18,6 +18,7 @@ class Store extends Model
         'name',
         'slug',
         'is_configured',
+        'is_published',
         'category',
         'description',
         'about_text',
@@ -48,6 +49,7 @@ class Store extends Model
 
     protected $casts = [
         'is_configured' => 'boolean',
+        'is_published' => 'boolean',
         'benefits_json' => 'array',
         'sections_json' => 'array',
     ];
@@ -55,12 +57,13 @@ class Store extends Model
     public static function getDefaultSections(): array
     {
         return [
-            ['id' => 'banner', 'name' => "Bandeau d'Annonce Supérieur", 'enabled' => true],
-            ['id' => 'hero', 'name' => "Section Héro & Slogan Boutique", 'enabled' => true],
-            ['id' => 'products', 'name' => "Catalogue de Produits & Filtres", 'enabled' => true],
-            ['id' => 'benefits', 'name' => "Engagements & Garanties Vendeur", 'enabled' => true],
-            ['id' => 'reviews', 'name' => "Avis & Témoignages Clients", 'enabled' => true],
-            ['id' => 'about', 'name' => "À propos & Informations de Contact", 'enabled' => true],
+            ['id' => 'banner', 'name' => "Bandeau d'Annonce Supérieur", 'enabled' => true, 'locked' => true],
+            ['id' => 'hero', 'name' => "Section Héro & Slogan Boutique", 'enabled' => true, 'locked' => true],
+            ['id' => 'smartlinks', 'name' => "Offres SmartLinks Express", 'enabled' => true, 'locked' => false],
+            ['id' => 'products', 'name' => "Catalogue de Produits", 'enabled' => true, 'locked' => true],
+            ['id' => 'benefits', 'name' => "Engagements & Garanties Vendeur", 'enabled' => true, 'locked' => false],
+            ['id' => 'reviews', 'name' => "Avis & Témoignages Clients", 'enabled' => true, 'locked' => false],
+            ['id' => 'about', 'name' => "À propos & Contact Vendeur", 'enabled' => true, 'locked' => false],
         ];
     }
 

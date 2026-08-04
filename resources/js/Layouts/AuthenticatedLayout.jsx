@@ -118,7 +118,21 @@ export default function AuthenticatedLayout({ header, children }) {
                         >
                             <div className="flex items-center gap-3">
                                 <PackageCheck className="w-4 h-4" />
-                                <span>Commandes & Wallet</span>
+                                <span>Commandes</span>
+                            </div>
+                        </Link>
+
+                        <Link
+                            href={route('seller.wallet.index')}
+                            className={`flex items-center justify-between px-3.5 py-2.5 transition-all text-xs font-semibold ${
+                                route().current('seller.wallet.*')
+                                    ? 'bg-amber-50/80 text-slate-950 border-l-[3px] border-[#FFCC00] rounded-r-xl pl-3'
+                                    : 'text-slate-600 hover:text-slate-950 hover:bg-slate-50 rounded-xl'
+                            }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <Wallet className="w-4 h-4 text-emerald-600" />
+                                <span>Portefeuille MoMo</span>
                             </div>
                         </Link>
 

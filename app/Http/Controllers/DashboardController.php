@@ -75,12 +75,13 @@ class DashboardController extends Controller
         // Pending Orders Followups Count
         $pendingFollowupsCount = $store->orders()->where('status', 'pending')->count();
 
-        // Completion score
+        // Onboarding Completion Score (5 key activation steps)
         $checklist = [
             'store_created' => true,
-            'whatsapp_added' => !empty($store->phone_whatsapp),
-            'logo_added' => !empty($store->logo_url),
+            'appearance_configured' => !empty($store->logo_url) || !empty($store->banner_url) || $store->is_configured,
             'first_product' => $productsCount > 0,
+            'whatsapp_added' => !empty($store->phone_whatsapp),
+            'is_published' => (bool) $store->is_published,
         ];
 
         $completedCount = count(array_filter($checklist));

@@ -268,7 +268,7 @@ class CheckoutController extends Controller
             ]);
         }
 
-        $trackingCode = 'BLK-' . strtoupper(Str::random(6));
+        $trackingCode = 'BLK-CMD-' . strtoupper(Str::random(10));
 
         $extraNotes = [];
         if (!empty($validated['customer_whatsapp'])) {

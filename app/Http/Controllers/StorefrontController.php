@@ -13,7 +13,7 @@ class StorefrontController extends Controller
     {
         $store = Store::where('slug', $slug)
             ->with(['reviews' => function ($q) {
-                $q->latest();
+                $q->where('is_featured', true)->latest();
             }])
             ->firstOrFail();
 
@@ -49,9 +49,19 @@ class StorefrontController extends Controller
                 return $product;
             });
 
-        return Inertia::render('Storefront/Show', [
+        $activeSmartLinks = \App\Models\SmartLink::where('store_id', $store->id)
+            ->where('is_active', true)
+            ->latest()
+            ->get();
+
+        if (empty($store->sections_json)) {
+            $store->sections_json = Store::getDefaultSections();
+        }
+
+        return Inertia::render('Storefront/Boutique', [
             'store' => $store,
             'products' => $products,
+            'activeSmartLinks' => $activeSmartLinks,
             'appUrl' => config('app.url', 'http://localhost:8000'),
         ]);
     }
@@ -101,5 +111,67 @@ class StorefrontController extends Controller
         $store->reviews()->create($reviewData);
 
         return redirect()->back()->with('message', 'Merci ! Votre avis a été enregistré avec succès.');
+    }
+
+    public function showProduct(string $slug, string $product_slug): Response
+    {
+        $store = Store::where('slug', $slug)
+            ->with([
+                'reviews' => function ($q) {
+                    $q->latest();
+                },
+                'products' => function ($q) {
+                    $q->where('is_active', true)->latest();
+                }
+            ])
+            ->firstOrFail();
+
+        $store->products->transform(function ($p) {
+            $pv = (float) $p->price_vendor;
+            if ($p->is_promo && $p->promo_price > 0) {
+                $promoPv = (float) $p->promo_price;
+                $pb = ceil($promoPv * 1.02);
+                $p->price_display = $pb;
+            } else {
+                $pb = ceil($pv * 1.02);
+                $p->price_display = $pb;
+            }
+            return $p;
+        });
+
+        $product = $store->products()
+            ->where('slug', $product_slug)
+            ->where('is_active', true)
+            ->with('variants')
+            ->firstOrFail();
+
+        $pv = (float) $product->price_vendor;
+        if ($product->is_promo && $product->promo_price > 0) {
+            $promoPv = (float) $product->promo_price;
+            $pb = ceil($promoPv * 1.02);
+            $originalPb = ceil($pv * 1.02);
+            $savings = $originalPb - $pb;
+
+            $product->price_display = $pb;
+            $product->original_price_display = $originalPb;
+            $product->savings_display = $savings;
+            $product->discount_percentage = $originalPb > 0 ? round(($savings / $originalPb) * 100) : 0;
+        } else {
+            $pb = ceil($pv * 1.02);
+            $product->price_display = $pb;
+            $product->original_price_display = null;
+            $product->savings_display = 0;
+            $product->discount_percentage = 0;
+        }
+
+        $tc = ceil($pb / 0.98);
+        $product->price_client_total = $tc;
+        $product->api_fee_unit = $tc - $pb;
+
+        return Inertia::render('Storefront/[slug]', [
+            'store' => $store,
+            'product' => $product,
+            'appUrl' => config('app.url', 'http://localhost:8000'),
+        ]);
     }
 }

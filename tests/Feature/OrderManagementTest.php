@@ -78,25 +78,26 @@ test('vendor can request mobile money withdrawal via hrskills pay', function () 
     ]);
     $wallet = Wallet::create([
         'store_id' => $store->id,
-        'balance_available' => 25000,
+        'balance_available' => 100000,
         'balance_pending' => 0,
     ]);
 
     $response = $this->actingAs($user)->post(route('wallet.withdraw'), [
-        'amount' => 10000,
-        'phone_momo' => '237680216505',
+        'amount' => 50100,
+        'phone' => '237680216505',
+        'payment_operator' => 'MTN',
     ]);
 
     $response->assertRedirect();
     $this->assertDatabaseHas('withdrawals', [
         'wallet_id' => $wallet->id,
-        'amount' => 10000,
+        'amount' => 50100,
         'phone_number' => '237680216505',
-        'status' => 'pending',
+        'status' => 'PENDING',
     ]);
 
     $this->assertDatabaseHas('wallets', [
         'id' => $wallet->id,
-        'balance_available' => 15000,
+        'balance_available' => 49900,
     ]);
 });

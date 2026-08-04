@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Models\Wallet;
 
 test('authenticated vendor can activate and deactivate product promotion', function () {
-    $vendor = User::factory()->create(['role' => 'seller']);
+    $vendor = User::factory()->create(['role' => 'seller', 'plan' => 'pro']);
     $store = Store::create([
         'user_id' => $vendor->id,
         'name' => 'Boutique Promo Test',

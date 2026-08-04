@@ -19,6 +19,7 @@ export default function Index({ store, reviews, appUrl }) {
     const [logoPreview, setLogoPreview] = useState(store?.logo_url || null);
     const [bannerPreview, setBannerPreview] = useState(store?.banner_url || null);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [mobileActiveTab, setMobileActiveTab] = useState('edit'); // 'blocks' | 'edit' | 'preview'
 
     // Manual Review Form State
     const [showAddReviewForm, setShowAddReviewForm] = useState(false);
@@ -145,6 +146,7 @@ export default function Index({ store, reviews, appUrl }) {
         }
         setSelectedBlockId(block.id);
         setRightTab('config');
+        setMobileActiveTab('edit');
     };
 
     const removeBlockFromSections = (id) => {
@@ -249,24 +251,24 @@ export default function Index({ store, reviews, appUrl }) {
             <div className="-m-4 sm:-m-6 lg:-m-8 bg-[#F8FAFC] text-slate-900 min-h-screen flex flex-col font-sans">
                 
                 {/* 1. TOP CONTROL BAR (CLEAN BIOLINKO LIGHT HEADER) */}
-                <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between shrink-0 z-30 shadow-2xs">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-amber-400 text-slate-950 font-bold flex items-center justify-center shadow-xs">
-                            <Store className="w-5 h-5 text-slate-950" />
+                <header className="min-h-16 h-auto py-2 sm:py-0 bg-white border-b border-slate-200/80 px-3 sm:px-6 flex flex-wrap md:flex-nowrap items-center justify-between shrink-0 z-30 shadow-2xs gap-2">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-400 text-slate-950 font-bold flex items-center justify-center shadow-xs shrink-0">
+                            <Store className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950" />
                         </div>
                         <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">Éditeur de vitrine</h1>
-                                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-slate-950 font-mono text-[11px] font-bold border border-amber-300">
+                            <div className="flex items-center gap-1.5">
+                                <h1 className="text-xs sm:text-base font-bold text-slate-900 tracking-tight">Éditeur de vitrine</h1>
+                                <span className="px-2 py-0.5 rounded-full bg-amber-100 text-slate-950 font-mono text-[10px] sm:text-[11px] font-bold border border-amber-300">
                                     {data.slug || 'ma-boutique'}
                                 </span>
                             </div>
-                            <p className="text-[11px] text-slate-500 font-medium">Studio de personnalisation visuelle en direct</p>
+                            <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium hidden sm:block">Studio de personnalisation visuelle en direct</p>
                         </div>
                     </div>
 
-                    {/* Center: Device Switcher */}
-                    <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+                    {/* Center: Device Switcher (Hidden on small mobile screens or compact) */}
+                    <div className="hidden sm:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
                         <button
                             type="button"
                             onClick={() => setPreviewDevice('desktop')}
@@ -291,12 +293,7 @@ export default function Index({ store, reviews, appUrl }) {
                     </div>
 
                     {/* Right: Actions */}
-                    <div className="flex items-center gap-3">
-                        <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200">
-                            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                            <span>Brouillon</span>
-                        </span>
-
+                    <div className="flex items-center gap-2">
                         <a 
                             href={storeFullUrl} 
                             target="_blank" 
@@ -311,19 +308,55 @@ export default function Index({ store, reviews, appUrl }) {
                             type="button"
                             onClick={handleSubmit}
                             disabled={processing}
-                            className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 border border-amber-300 disabled:opacity-50"
+                            className="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5 border border-amber-300 disabled:opacity-50 cursor-pointer"
                         >
                             <Sparkles className="w-4 h-4 fill-slate-950 text-slate-950" />
-                            <span>{processing ? 'Enregistrement...' : 'Publier les modifications'}</span>
+                            <span>{processing ? '...' : 'Publier'}</span>
                         </button>
                     </div>
                 </header>
+
+                {/* MOBILE STUDIO NAVIGATION TABS (Visible only on < md screens) */}
+                <div className="flex md:hidden items-center justify-around bg-slate-950 text-white p-1.5 border-b border-slate-800 shrink-0 z-30 shadow-md">
+                    <button
+                        type="button"
+                        onClick={() => setMobileActiveTab('blocks')}
+                        className={`flex-1 py-2 px-1 rounded-xl text-[11px] font-extrabold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                            mobileActiveTab === 'blocks' ? 'bg-[#FFCC00] text-slate-950 shadow-xs' : 'text-slate-400 hover:text-white'
+                        }`}
+                    >
+                        <Layers className="w-3.5 h-3.5" />
+                        <span>1. Blocs</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setMobileActiveTab('edit')}
+                        className={`flex-1 py-2 px-1 rounded-xl text-[11px] font-extrabold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                            mobileActiveTab === 'edit' ? 'bg-[#FFCC00] text-slate-950 shadow-xs' : 'text-slate-400 hover:text-white'
+                        }`}
+                    >
+                        <Settings className="w-3.5 h-3.5" />
+                        <span>2. Config & Thème</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setMobileActiveTab('preview')}
+                        className={`flex-1 py-2 px-1 rounded-xl text-[11px] font-extrabold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                            mobileActiveTab === 'preview' ? 'bg-[#FFCC00] text-slate-950 shadow-xs' : 'text-slate-400 hover:text-white'
+                        }`}
+                    >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>3. Aperçu Direct</span>
+                    </button>
+                </div>
 
                 {/* MAIN STUDIO BUILDER CONTAINER */}
                 <div className="flex-1 flex overflow-hidden">
 
                     {/* 2. LEFT PANEL: DOUBLE COLUMN (LIBRARY + ACTIVE STRUCTURE) */}
-                    <div className="w-80 lg:w-96 bg-white border-r border-slate-200/80 flex flex-col shrink-0">
+                    <div className={`w-full md:w-80 lg:w-96 bg-white border-r border-slate-200/80 flex-col shrink-0 ${mobileActiveTab === 'blocks' ? 'flex' : 'hidden md:flex'}`}>
                         
                         {/* Section 1: Library (+ AJOUTER UN BLOC) */}
                         <div className="p-4 border-b border-slate-200/80 bg-slate-50/60">
@@ -379,15 +412,28 @@ export default function Index({ store, reviews, appUrl }) {
 
                             <Reorder.Group 
                                 values={data.sections_json || defaultSections} 
-                                onReorder={(newOrder) => setData('sections_json', newOrder)}
+                                onReorder={(newOrder) => {
+                                    // Ensure locked sections stay in valid structure and reviews stays after products
+                                    const prodIdx = newOrder.findIndex(s => s.id === 'products');
+                                    const revIdx = newOrder.findIndex(s => s.id === 'reviews');
+                                    if (prodIdx !== -1 && revIdx !== -1 && revIdx < prodIdx) {
+                                        const temp = newOrder[prodIdx];
+                                        newOrder[prodIdx] = newOrder[revIdx];
+                                        newOrder[revIdx] = temp;
+                                    }
+                                    setData('sections_json', newOrder);
+                                }}
                                 className="space-y-2"
                             >
                                 {(data.sections_json || defaultSections).map((sec) => {
                                     const isSelected = selectedBlockId === sec.id;
+                                    const isLocked = sec.locked || ['banner', 'hero', 'products'].includes(sec.id);
+
                                     return (
                                         <Reorder.Item 
                                             key={sec.id} 
                                             value={sec}
+                                            dragListener={!isLocked}
                                             className={`p-3 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
                                                 isSelected 
                                                     ? 'bg-amber-100/80 border-amber-400 text-slate-950 shadow-xs ring-1 ring-amber-400' 
@@ -398,37 +444,47 @@ export default function Index({ store, reviews, appUrl }) {
                                             onClick={() => {
                                                 setSelectedBlockId(sec.id);
                                                 setRightTab('config');
+                                                setMobileActiveTab('edit');
                                             }}
                                         >
                                             <div className="flex items-center gap-2.5 truncate">
-                                                <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600">
+                                                <div className={`cursor-grab active:cursor-grabbing ${isLocked ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-slate-600'}`}>
                                                     <GripVertical className="w-4 h-4" />
                                                 </div>
                                                 <div className="truncate">
                                                     <div className="text-xs font-bold truncate flex items-center gap-1.5">
                                                         <span>{sec.name}</span>
+                                                        {isLocked && (
+                                                            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[9px] font-extrabold uppercase">Obligatoire</span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => toggleSectionVisibility(sec.id)}
-                                                    className={`p-1.5 rounded-lg transition-colors ${sec.enabled ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:bg-slate-100'}`}
-                                                    title={sec.enabled ? "Masquer la section" : "Afficher la section"}
-                                                >
-                                                    {sec.enabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                                                </button>
+                                                {!isLocked ? (
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleSectionVisibility(sec.id)}
+                                                            className={`p-1.5 rounded-lg transition-colors ${sec.enabled ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:bg-slate-100'}`}
+                                                            title={sec.enabled ? "Masquer la section" : "Afficher la section"}
+                                                        >
+                                                            {sec.enabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                                                        </button>
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeBlockFromSections(sec.id)}
-                                                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                                                    title="Supprimer du canvas"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeBlockFromSections(sec.id)}
+                                                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                                                            title="Supprimer du canvas"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-[10px] text-slate-400 font-semibold px-2">Verrouillé</span>
+                                                )}
                                             </div>
                                         </Reorder.Item>
                                     );
@@ -438,7 +494,7 @@ export default function Index({ store, reviews, appUrl }) {
                     </div>
 
                     {/* 3. CENTER AREA: LIVE INTERACTIVE PREVIEW SANDBOX */}
-                    <div className="flex-1 bg-slate-100/90 p-4 sm:p-8 flex items-center justify-center overflow-y-auto relative">
+                    <div className={`flex-1 bg-slate-100/90 p-2 sm:p-8 items-center justify-center overflow-y-auto relative ${mobileActiveTab === 'preview' ? 'flex' : 'hidden md:flex'}`}>
                         
                         <div className={`transition-all duration-300 flex flex-col ${
                             previewDevice === 'mobile' 
@@ -457,6 +513,18 @@ export default function Index({ store, reviews, appUrl }) {
 
                             {/* Store Preview Canvas (Simulated Public Storefront) */}
                             <div className="flex-1 overflow-y-auto bg-slate-50 text-slate-900 font-sans text-xs">
+                                <style>{`
+                                    ${data.border_radius_style === 'square' ? `
+                                        .rounded-2xl, .rounded-3xl, .rounded-full, .rounded-xl {
+                                            border-radius: 4px !important;
+                                        }
+                                    ` : ''}
+                                    ${data.font_family && data.font_family !== 'Inter' ? `
+                                        body, button, input, textarea, select, h1, h2, h3, h4, h5, h6, span, p, div {
+                                            font-family: '${data.font_family}', system-ui, -apple-system, sans-serif !important;
+                                        }
+                                    ` : ''}
+                                `}</style>
                                 
                                 {/* 1. Announcement Bar */}
                                 {data.sections_json?.find(s => s.id === 'banner')?.enabled && (
@@ -612,7 +680,7 @@ export default function Index({ store, reviews, appUrl }) {
                     </div>
 
                     {/* 4. RIGHT PANEL: TABS (CONFIG vs THÈME) */}
-                    <div className="w-80 lg:w-96 bg-white border-l border-slate-200/80 flex flex-col shrink-0">
+                    <div className={`w-full md:w-80 lg:w-96 bg-white border-l border-slate-200/80 flex-col shrink-0 ${mobileActiveTab === 'edit' ? 'flex' : 'hidden md:flex'}`}>
                         
                         {/* Tabs Switcher */}
                         <div className="h-12 border-b border-slate-200/80 flex items-center justify-between px-2 bg-slate-50/80 shrink-0">
@@ -897,73 +965,36 @@ export default function Index({ store, reviews, appUrl }) {
                                 {selectedBlockId === 'reviews' && (
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between">
-                                            <div className="font-bold text-slate-900">Avis Clients reçus ({reviews?.length || 0})</div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowAddReviewForm(!showAddReviewForm)}
-                                                className="px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-bold text-[11px] flex items-center gap-1 shadow-2xs"
-                                            >
-                                                <Plus className="w-3 h-3" />
-                                                <span>Ajouter</span>
-                                            </button>
+                                            <div className="font-bold text-slate-900">Avis Clients Réels ({reviews?.length || 0})</div>
                                         </div>
 
-                                        {showAddReviewForm && (
-                                            <form onSubmit={handleCreateManualReviewSubmit} className="p-3 bg-amber-50 rounded-xl border border-amber-300 space-y-2">
-                                                <div className="font-bold text-slate-900 text-xs">Ajouter un avis manuel</div>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Nom du client (ex: Mariam K.)"
-                                                    value={manualReview.customer_name}
-                                                    onChange={(e) => setManualReview({ ...manualReview, customer_name: e.target.value })}
-                                                    className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs"
-                                                    required
-                                                />
-                                                <input
-                                                    type="text"
-                                                    placeholder="Ville (ex: Cotonou)"
-                                                    value={manualReview.customer_city}
-                                                    onChange={(e) => setManualReview({ ...manualReview, customer_city: e.target.value })}
-                                                    className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs"
-                                                />
-                                                <textarea
-                                                    rows={2}
-                                                    placeholder="Commentaire de l'acheteur..."
-                                                    value={manualReview.comment}
-                                                    onChange={(e) => setManualReview({ ...manualReview, comment: e.target.value })}
-                                                    className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs"
-                                                    required
-                                                />
-                                                <div className="flex justify-end gap-2 pt-1">
-                                                    <button type="button" onClick={() => setShowAddReviewForm(false)} className="px-2.5 py-1 rounded-lg bg-slate-200 text-slate-800 text-xs font-semibold">Annuler</button>
-                                                    <button type="submit" className="px-3 py-1 rounded-lg bg-amber-400 text-slate-950 font-bold text-xs">Enregistrer</button>
-                                                </div>
-                                            </form>
-                                        )}
+                                        <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                                            Seuls les avis authentiques déposés par vos clients apparaissent ci-dessous. Cliquez sur <strong>« Visible »</strong> ou <strong>« Masqué »</strong> pour choisir d'afficher ou masquer un avis sur votre vitrine.
+                                        </p>
 
                                         {reviews && reviews.length > 0 ? (
                                             <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                                                 {reviews.map((rev) => (
                                                     <div key={rev.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
                                                         <div className="flex items-center justify-between">
-                                                            <div className="font-bold text-slate-900 text-xs truncate max-w-[140px]">{rev.customer_name} ({rev.customer_city || 'Cotonou'})</div>
+                                                            <div className="font-bold text-slate-900 text-xs truncate max-w-[140px]">{rev.customer_name} ({rev.customer_city || 'Client BIOLINKO'})</div>
                                                             <div className="flex items-center gap-1">
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleToggleReviewFeatured(rev.id)}
-                                                                    className={`px-2 py-0.5 rounded font-bold text-[10px] border transition-all ${
+                                                                    className={`px-2 py-1 rounded font-bold text-[10px] border transition-all cursor-pointer ${
                                                                         rev.is_featured 
-                                                                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
-                                                                            : 'bg-slate-200 text-slate-600 border-slate-300'
+                                                                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200' 
+                                                                            : 'bg-slate-200 text-slate-600 border-slate-300 hover:bg-slate-300'
                                                                     }`}
                                                                 >
-                                                                    {rev.is_featured ? "Visible sur vitrine" : "Masqué"}
+                                                                    {rev.is_featured ? "✓ Visible sur vitrine" : "👁️ Masqué"}
                                                                 </button>
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleDeleteReview(rev.id)}
-                                                                    className="p-1 text-slate-400 hover:text-rose-600"
-                                                                    title="Supprimer"
+                                                                    className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"
+                                                                    title="Supprimer définitivement"
                                                                 >
                                                                     <Trash2 className="w-3.5 h-3.5" />
                                                                 </button>
@@ -974,8 +1005,8 @@ export default function Index({ store, reviews, appUrl }) {
                                                 ))}
                                             </div>
                                         ) : (
-                                            <div className="p-4 bg-slate-50 rounded-xl text-slate-500 text-center font-medium border border-slate-200">
-                                                Aucun avis client reçu pour le moment. Vous pouvez en ajouter manuellement ci-dessus.
+                                            <div className="p-4 bg-slate-50 rounded-xl text-slate-500 text-center font-medium border border-slate-200 text-xs">
+                                                Aucun avis client reçu pour le moment. Les avis envoyés par vos clients apparaîtront ici automatiquement.
                                             </div>
                                         )}
                                     </div>
@@ -983,7 +1014,10 @@ export default function Index({ store, reviews, appUrl }) {
 
                                 {selectedBlockId === 'benefits' && (
                                     <div className="space-y-3">
-                                        <div className="font-bold text-slate-900">Garanties Vendeur (4 items)</div>
+                                        <div className="font-bold text-slate-900">Garanties &amp; Engagements Vendeur (4 items)</div>
+                                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-950 font-medium leading-relaxed">
+                                            ℹ️ <strong>Note importante :</strong> Toute modification ou retrait des engagements officiels BIOLINKO est soumis à examen et validation sous 48h par l'équipe support.
+                                        </div>
                                         {data.benefits_json?.map((benefit, idx) => (
                                             <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                                                 <input
@@ -1091,10 +1125,10 @@ export default function Index({ store, reviews, appUrl }) {
                                     <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-900">POLICE D'ÉCRITURE</div>
                                     <div className="space-y-2">
                                         {[
-                                            { id: 'Inter', name: 'BIOLINKO', desc: 'Moderne (Inter)' },
-                                            { id: 'Sora', name: 'BIOLINKO', desc: 'Géométrique (Sora)' },
-                                            { id: 'Merriweather', name: 'BIOLINKO', desc: 'Classique (Merriweather)' },
-                                            { id: 'Pacifico', name: 'BIOLINKO', desc: 'Manuscrite (Pacifico)' }
+                                            { id: 'Inter', name: 'BIOLINKO', desc: 'Police officielle BIOLINKO (Inter - Par défaut)' },
+                                            { id: 'Outfit', name: 'BIOLINKO', desc: 'Moderne & Élégante (Outfit)' },
+                                            { id: 'Plus Jakarta Sans', name: 'BIOLINKO', desc: 'Tech & Clean (Plus Jakarta Sans)' },
+                                            { id: 'Roboto', name: 'BIOLINKO', desc: 'Standard Neutre (Roboto)' }
                                         ].map((font) => (
                                             <button
                                                 key={font.id}
@@ -1150,6 +1184,17 @@ export default function Index({ store, reviews, appUrl }) {
 
                     </div>
                 </div>
+
+                {/* FLOATING PUBLISH BUTTON FOR MOBILE (< md) */}
+                <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={processing}
+                    className="md:hidden fixed bottom-5 right-5 z-40 px-5 py-3 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-2xl flex items-center gap-2 border-2 border-slate-950 cursor-pointer"
+                >
+                    <Sparkles className="w-4 h-4 fill-slate-950 text-slate-950" />
+                    <span>{processing ? '...' : 'Publier la vitrine'}</span>
+                </button>
 
                 {/* SUCCESS SPRING MODAL */}
                 <AnimatePresence>

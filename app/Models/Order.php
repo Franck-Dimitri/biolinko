@@ -52,7 +52,7 @@ class Order extends Model
                 $order->uuid = (string) Str::uuid();
             }
             if (empty($order->tracking_code)) {
-                $order->tracking_code = 'BLK-' . strtoupper(Str::random(8));
+                $order->tracking_code = 'BLK-CMD-' . strtoupper(Str::random(10));
             }
         });
     }

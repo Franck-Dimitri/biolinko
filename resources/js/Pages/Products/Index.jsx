@@ -9,16 +9,19 @@ import {
 } from 'lucide-react';
 
 export default function Index({ store, products, metrics, appUrl }) {
+    const user = usePage().props.auth.user;
+    const userPlan = user?.plan || 'starter';
+
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
-    const [promoProduct, setPromoProduct] = useState(null);
     const [copiedId, setCopiedId] = useState(null);
     const [toastMessage, setToastMessage] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterCategory, setFilterCategory] = useState('all');
-    const [variantsList, setVariantsList] = useState([]);
-    const [variantInput, setVariantInput] = useState({ size: '', color: '', stock_quantity: 10 });
-    const [imagePreviews, setImagePreviews] = useState([]);
+
+    // Multi-Image Preview States
+    const [createImagePreviews, setCreateImagePreviews] = useState([]);
+    const [editImagePreviews, setEditImagePreviews] = useState([]);
 
     // Create Form
     const createForm = useForm({
@@ -36,40 +39,40 @@ export default function Index({ store, products, metrics, appUrl }) {
         variants: [],
     });
 
-    // Edit Info Form
+    // Unified Edit Form
     const editForm = useForm({
         title: '',
         description: '',
         price_vendor: '',
         stock: 10,
         min_order_quantity: 1,
+        is_promo: false,
+        promo_price: '',
+        promo_start_at: '',
+        promo_end_at: '',
         is_active: true,
         images_files: [],
         variants: [],
     });
 
-    // Dedicated Promo Form
-    const promoForm = useForm({
-        title: '',
-        price_vendor: '',
-        stock: 10,
-        min_order_quantity: 1,
-        is_active: true,
-        is_promo: true,
-        promo_price: '',
-        promo_start_at: '',
-        promo_end_at: '',
-    });
-
     const openEditModal = (product) => {
         setEditingProduct(product);
+        const existingImgs = product.images && product.images.length > 0 
+            ? product.images 
+            : [product.image_url || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'];
+        
+        setEditImagePreviews(existingImgs);
         editForm.clearErrors();
         editForm.setData({
             title: product.title || '',
             description: product.description || '',
             price_vendor: product.price_vendor || '',
-            stock: product.stock || 0,
+            stock: product.stock ?? 10,
             min_order_quantity: product.min_order_quantity || 1,
+            is_promo: Boolean(product.is_promo),
+            promo_price: product.promo_price || '',
+            promo_start_at: product.promo_start_at ? product.promo_start_at.substring(0, 10) : '',
+            promo_end_at: product.promo_end_at ? product.promo_end_at.substring(0, 10) : '',
             is_active: Boolean(product.is_active),
             images_files: [],
             variants: product.variants ? product.variants.map(v => ({
@@ -83,26 +86,78 @@ export default function Index({ store, products, metrics, appUrl }) {
         });
     };
 
-    const openPromoModal = (product) => {
-        setPromoProduct(product);
-        promoForm.clearErrors();
-        promoForm.setData({
+    // Quick stock replenishment
+    const handleQuickStockAdd = (product, amountToAdd = 10) => {
+        const newStock = Number(product.stock || 0) + amountToAdd;
+        editForm.setData({
             title: product.title,
             description: product.description || '',
             price_vendor: product.price_vendor,
-            stock: product.stock,
+            stock: newStock,
             min_order_quantity: product.min_order_quantity || 1,
-            is_active: Boolean(product.is_active),
-            is_promo: true,
+            is_promo: Boolean(product.is_promo),
             promo_price: product.promo_price || '',
             promo_start_at: product.promo_start_at ? product.promo_start_at.substring(0, 10) : '',
             promo_end_at: product.promo_end_at ? product.promo_end_at.substring(0, 10) : '',
+            is_active: Boolean(product.is_active),
+            images_files: [],
+            variants: product.variants ? product.variants.map(v => ({
+                id: v.id,
+                name: v.name || '',
+                size: v.size || '',
+                color: v.color || '',
+                price: v.price || '',
+                stock_quantity: v.stock_quantity ?? 10
+            })) : [],
+        });
+
+        editForm.put(route('products.update', product.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setToastMessage(`Stock réassorti (+${amountToAdd} unités) pour "${product.title}" !`);
+                setTimeout(() => setToastMessage(null), 3500);
+            },
         });
     };
 
-    // Variant Helpers for Create Form
+    // Create Image Handlers
+    const handleCreateImageChange = (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        const currentFiles = createForm.data.images_files || [];
+        const newFilesList = [...currentFiles, ...files].slice(0, 5);
+        createForm.setData('images_files', newFilesList);
+
+        const newPreviews = newFilesList.map(f => typeof f === 'string' ? f : URL.createObjectURL(f));
+        setCreateImagePreviews(newPreviews);
+    };
+
+    const handleRemoveCreateImage = (index) => {
+        const updatedFiles = createForm.data.images_files.filter((_, i) => i !== index);
+        createForm.setData('images_files', updatedFiles);
+        const updatedPreviews = createImagePreviews.filter((_, i) => i !== index);
+        setCreateImagePreviews(updatedPreviews);
+    };
+
+    // Edit Image Handlers
+    const handleEditImageChange = (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        const currentFiles = editForm.data.images_files || [];
+        const newFilesList = [...currentFiles, ...files].slice(0, 5);
+        editForm.setData('images_files', newFilesList);
+
+        const newPreviews = files.map(f => URL.createObjectURL(f));
+        setEditImagePreviews([...editImagePreviews, ...newPreviews].slice(0, 5));
+    };
+
+    // Variant Helpers
     const addCreateVariantRow = () => {
         const current = createForm.data.variants || [];
+        if (userPlan === 'starter' && current.length >= 1) {
+            alert("La formule STARTER est limitée à 1 variante par produit. Passez au plan PRO pour ajouter des variantes illimitées.");
+            return;
+        }
         createForm.setData('variants', [
             ...current,
             { name: '', size: '', color: '', price: '', stock_quantity: 10 }
@@ -120,9 +175,12 @@ export default function Index({ store, products, metrics, appUrl }) {
         createForm.setData('variants', current);
     };
 
-    // Variant Helpers for Edit Form
     const addEditVariantRow = () => {
         const current = editForm.data.variants || [];
+        if (userPlan === 'starter' && current.length >= 1) {
+            alert("La formule STARTER est limitée à 1 variante par produit. Passez au plan PRO pour ajouter des variantes illimitées.");
+            return;
+        }
         editForm.setData('variants', [
             ...current,
             { name: '', size: '', color: '', price: '', stock_quantity: 10 }
@@ -140,50 +198,7 @@ export default function Index({ store, products, metrics, appUrl }) {
         editForm.setData('variants', current);
     };
 
-    // Accumulate multi-image selection up to 5 photos max
-    const handleCreateImageChange = (e) => {
-        const newFiles = Array.from(e.target.files);
-        if (!newFiles.length) return;
-
-        const currentFiles = createForm.data.images_files || [];
-        const combinedFiles = [...currentFiles, ...newFiles].slice(0, 5);
-        createForm.setData('images_files', combinedFiles);
-
-        const previews = combinedFiles.map(file => typeof file === 'string' ? file : URL.createObjectURL(file));
-        setImagePreviews(previews);
-
-        e.target.value = '';
-    };
-
-    const handleRemoveImagePreview = (idxToRemove) => {
-        const currentFiles = createForm.data.images_files || [];
-        const updatedFiles = currentFiles.filter((_, i) => i !== idxToRemove);
-        createForm.setData('images_files', updatedFiles);
-
-        const updatedPreviews = imagePreviews.filter((_, i) => i !== idxToRemove);
-        setImagePreviews(updatedPreviews);
-    };
-
-    const handleQuickStockAdd = (product, amountToAdd = 10) => {
-        const newStock = Number(product.stock || 0) + amountToAdd;
-        editForm.setData({
-            title: product.title,
-            description: product.description || '',
-            price_vendor: product.price_vendor,
-            stock: newStock,
-            min_order_quantity: product.min_order_quantity || 1,
-            is_active: Boolean(product.is_active),
-        });
-
-        editForm.put(route('products.update', product.id), {
-            preserveScroll: true,
-            onSuccess: () => {
-                setToastMessage(`Stock réassorti (+${amountToAdd} unités) pour "${product.title}" !`);
-                setTimeout(() => setToastMessage(null), 3500);
-            },
-        });
-    };
-
+    // Submissions
     const handleCreateSubmit = (e) => {
         e.preventDefault();
         createForm.post(route('products.store'), {
@@ -191,8 +206,7 @@ export default function Index({ store, products, metrics, appUrl }) {
             onSuccess: () => {
                 setIsCreateModalOpen(false);
                 createForm.reset();
-                setVariantsList([]);
-                setImagePreviews([]);
+                setCreateImagePreviews([]);
                 setToastMessage('Nouveau produit ajouté au catalogue !');
                 setTimeout(() => setToastMessage(null), 3500);
             },
@@ -202,46 +216,12 @@ export default function Index({ store, products, metrics, appUrl }) {
     const handleEditSubmit = (e) => {
         e.preventDefault();
         if (!editingProduct) return;
-        editForm.put(route('products.update', editingProduct.id), {
+        editForm.post(route('products.update.post', editingProduct.id), {
+            forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
                 setEditingProduct(null);
-                setToastMessage('Fiche produit mise à jour !');
-                setTimeout(() => setToastMessage(null), 3500);
-            },
-        });
-    };
-
-    const handlePromoSubmit = (e) => {
-        e.preventDefault();
-        if (!promoProduct) return;
-
-        promoForm.setData('is_promo', true);
-
-        promoForm.put(route('products.update', promoProduct.id), {
-            preserveScroll: true,
-            onSuccess: () => {
-                setPromoProduct(null);
-                setToastMessage('Promotion enregistrée et activée avec succès !');
-                setTimeout(() => setToastMessage(null), 3500);
-            },
-        });
-    };
-
-    const handleDisablePromo = () => {
-        if (!promoProduct) return;
-
-        promoForm.setData({
-            ...promoForm.data,
-            is_promo: false,
-            promo_price: '',
-        });
-
-        promoForm.put(route('products.update', promoProduct.id), {
-            preserveScroll: true,
-            onSuccess: () => {
-                setPromoProduct(null);
-                setToastMessage('Promotion désactivée sur ce produit.');
+                setToastMessage('Fiche produit mise à jour avec succès !');
                 setTimeout(() => setToastMessage(null), 3500);
             },
         });
@@ -259,15 +239,18 @@ export default function Index({ store, products, metrics, appUrl }) {
         }
     };
 
-    const handleCopySmartLink = (product) => {
-        const url = `${appUrl}/${store.slug}?product=${product.id}`;
-        navigator.clipboard.writeText(url);
+    const handleCopyDirectLink = (product) => {
+        const directUrl = `${appUrl}/${store.slug}/p/${product.slug}`;
+        navigator.clipboard.writeText(directUrl);
         setCopiedId(product.id);
+        setToastMessage('Lien direct vers le produit copié !');
         setTimeout(() => setCopiedId(null), 2000);
+        setTimeout(() => setToastMessage(null), 3500);
     };
 
     const filteredProducts = products ? products.filter(p => {
-        const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()));
         if (filterCategory === 'promo') return matchesSearch && (p.is_promo && p.promo_price);
         if (filterCategory === 'low_stock') return matchesSearch && p.stock <= 3;
         return matchesSearch;
@@ -303,15 +286,14 @@ export default function Index({ store, products, metrics, appUrl }) {
                             Centre de Gestion des Produits
                         </h1>
                         <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1">
-                            Gérez votre catalogue, appliquez des promotions et téléversez vos visuels réels.
+                            Gérez votre catalogue, vos prix, vos variantes et téléversez vos visuels réels.
                         </p>
                     </div>
 
                     <button
                         onClick={() => {
                             createForm.reset();
-                            setVariantsList([]);
-                            setImagePreviews([]);
+                            setCreateImagePreviews([]);
                             setIsCreateModalOpen(true);
                         }}
                         className="px-5 py-2.5 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-semibold text-xs shadow-2xs transition-transform active:scale-95 flex items-center justify-center gap-2"
@@ -436,497 +418,617 @@ export default function Index({ store, products, metrics, appUrl }) {
                 {/* PRODUCTS CATALOGUE GRID */}
                 {filteredProducts && filteredProducts.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {filteredProducts.map((product) => (
-                            <motion.div
-                                key={product.id}
-                                whileHover={{ y: -3 }}
-                                className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between group"
-                            >
-                                <div>
-                                    <div className="h-48 bg-slate-50 relative overflow-hidden flex items-center justify-center p-3 border-b border-slate-100">
-                                        {product.image_url ? (
-                                            <img src={product.image_url} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                                        ) : product.images && product.images.length > 0 ? (
-                                            <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                                        ) : (
-                                            <ShoppingBag className="w-12 h-12 text-slate-300" />
-                                        )}
+                        {filteredProducts.map((product) => {
+                            const directUrl = `${appUrl}/${store.slug}/p/${product.slug}`;
+                            const isPromoActive = product.is_promo && product.promo_price > 0;
 
-                                        {product.is_promo && (
-                                            <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-[#FFCC00] text-slate-950 font-bold text-[10px] shadow-2xs flex items-center gap-1">
-                                                <Tag className="w-3 h-3 text-slate-950" />
-                                                <span>PROMO {product.promo_price ? `${Number(product.promo_price).toLocaleString()} FCFA` : ''}</span>
-                                            </div>
-                                        )}
+                            return (
+                                <motion.div
+                                    key={product.id}
+                                    whileHover={{ y: -3 }}
+                                    className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between group"
+                                >
+                                    <div>
+                                        {/* Image Box */}
+                                        <div className="h-48 bg-slate-50 relative overflow-hidden flex items-center justify-center p-3 border-b border-slate-100">
+                                            {product.image_url ? (
+                                                <img src={product.image_url} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                            ) : product.images && product.images.length > 0 ? (
+                                                <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                            ) : (
+                                                <ShoppingBag className="w-12 h-12 text-slate-300" />
+                                            )}
 
-                                        <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1">
-                                            <button
-                                                onClick={() => handleCopySmartLink(product)}
-                                                className="p-1.5 rounded-lg bg-white/90 backdrop-blur-xs text-slate-700 hover:text-slate-950 shadow-2xs text-[10px] font-semibold flex items-center gap-1 border border-slate-200"
-                                                title="Copier le lien direct vers ce produit"
-                                            >
-                                                {copiedId === product.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-slate-600" />}
-                                                <span>{copiedId === product.id ? 'Copié !' : 'Lien Produit'}</span>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-5 space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <div className="text-sm font-bold text-slate-950 truncate">{product.title}</div>
-                                            <div className="flex items-center gap-1 shrink-0">
-                                                <button
-                                                    onClick={() => openEditModal(product)}
-                                                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-950 transition-colors"
-                                                    title="Modifier"
-                                                >
-                                                    <Edit className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteProduct(product)}
-                                                    className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500 hover:text-rose-700 transition-colors"
-                                                    title="Supprimer"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-baseline justify-between gap-1 flex-wrap">
-                                            <div className="text-base font-extrabold text-slate-950">
-                                                {Number(product.price_vendor).toLocaleString()} FCFA
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="text-[11px] text-slate-500 font-medium">
-                                                    Stock: <strong className={product.stock <= 3 ? 'text-rose-600 font-bold' : 'text-slate-900 font-semibold'}>{product.stock}</strong>
+                                            {isPromoActive && (
+                                                <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-[#FFCC00] text-slate-950 font-bold text-[10px] shadow-2xs flex items-center gap-1">
+                                                    <Tag className="w-3 h-3 text-slate-950" />
+                                                    <span>PROMO {Number(product.promo_price).toLocaleString()} FCFA</span>
                                                 </div>
+                                            )}
+
+                                            <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1">
                                                 <button
-                                                    type="button"
-                                                    onClick={() => handleQuickStockAdd(product, 10)}
-                                                    className="px-2 py-0.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 text-[10px] font-bold transition-all border border-amber-300"
-                                                    title="Réassort rapide (+10 unités)"
+                                                    onClick={() => handleCopyDirectLink(product)}
+                                                    className="p-1.5 rounded-lg bg-white/90 backdrop-blur-xs text-slate-700 hover:text-slate-950 shadow-2xs text-[10px] font-semibold flex items-center gap-1 border border-slate-200"
+                                                    title="Copier le lien direct vers ce produit"
                                                 >
-                                                    +10 Stock
+                                                    {copiedId === product.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3 text-slate-600" />}
+                                                    <span>{copiedId === product.id ? 'Copié !' : 'Lien Direct'}</span>
                                                 </button>
+
+                                                <a
+                                                    href={directUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="p-1.5 rounded-lg bg-white/90 backdrop-blur-xs text-slate-700 hover:text-slate-950 shadow-2xs border border-slate-200"
+                                                    title="Voir la page produit publique"
+                                                >
+                                                    <Eye className="w-3.5 h-3.5" />
+                                                </a>
                                             </div>
                                         </div>
 
-                                        {product.variants && product.variants.length > 0 && (
-                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
-                                                <Layers2 className="w-3 h-3 text-amber-500" />
-                                                <span>{product.variants.length} variante(s)</span>
+                                        <div className="p-5 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <div className="text-sm font-bold text-slate-950 truncate">{product.title}</div>
+                                                <div className="flex items-center gap-1 shrink-0">
+                                                    <button
+                                                        onClick={() => openEditModal(product)}
+                                                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-950 transition-colors"
+                                                        title="Modifier le produit"
+                                                    >
+                                                        <Edit className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteProduct(product)}
+                                                        className="p-1.5 rounded-lg hover:bg-rose-50 text-rose-500 hover:text-rose-700 transition-colors"
+                                                        title="Supprimer"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
                                             </div>
-                                        )}
 
-                                        {/* STRICT DESCRIPTION LINE-CLAMP & OVERFLOW CONTROL */}
-                                        {product.description && (
-                                            <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-medium pt-0.5 break-words overflow-hidden text-ellipsis">
-                                                {product.description}
-                                            </p>
-                                        )}
-
-                                        {/* Badges Box: MoMo Payment & Shipping */}
-                                        <div className="grid grid-cols-2 gap-2 pt-2 text-[11px]">
-                                            <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-1.5 text-slate-700 font-medium">
-                                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                                <span className="truncate">Paiement MoMo</span>
+                                            <div className="flex items-baseline justify-between gap-1 flex-wrap">
+                                                <div className="text-base font-extrabold text-slate-950">
+                                                    {Number(product.price_vendor).toLocaleString()} FCFA
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="text-[11px] text-slate-500 font-medium">
+                                                        Stock: <strong className={product.stock <= 3 ? 'text-rose-600 font-bold' : 'text-slate-900 font-semibold'}>{product.stock}</strong>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleQuickStockAdd(product, 10)}
+                                                        className="px-2 py-0.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 text-[10px] font-bold transition-all border border-amber-300"
+                                                        title="Réassort rapide (+10 unités)"
+                                                    >
+                                                        +10 Stock
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-1.5 text-slate-700 font-medium">
-                                                <Truck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                                                <span className="truncate">Livraison Rapide</span>
+
+                                            {product.variants && product.variants.length > 0 && (
+                                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
+                                                    <Layers2 className="w-3 h-3 text-amber-500" />
+                                                    <span>{product.variants.length} variante(s)</span>
+                                                </div>
+                                            )}
+
+                                            {product.description && (
+                                                <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-medium pt-0.5 break-words overflow-hidden text-ellipsis">
+                                                    {product.description}
+                                                </p>
+                                            )}
+
+                                            <div className="grid grid-cols-2 gap-2 pt-2 text-[11px]">
+                                                <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-1.5 text-slate-700 font-medium">
+                                                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                                    <span className="truncate">Paiement MoMo</span>
+                                                </div>
+                                                <div className="p-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-1.5 text-slate-700 font-medium">
+                                                    <Truck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                                    <span className="truncate">Livraison Rapide</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* PROMOTION BUTTON */}
+                                    {/* Action Edit Button */}
                                     <div className="p-5 pt-0">
                                         <button
-                                            onClick={() => openPromoModal(product)}
-                                            className={`w-full py-2 rounded-2xl font-semibold text-[11px] transition-all shadow-2xs flex items-center justify-center gap-1.5 ${
-                                                product.is_promo
-                                                    ? 'bg-[#FFCC00] text-slate-950 hover:bg-amber-300'
-                                                    : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
-                                            }`}
+                                            onClick={() => openEditModal(product)}
+                                            className="w-full py-2.5 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs transition-all shadow-2xs flex items-center justify-center gap-1.5 border border-amber-300"
                                         >
-                                            <Tag className="w-3.5 h-3.5" />
-                                            <span>{product.is_promo ? 'PROMO ACTIVE (MODIFIER)' : 'METTRE EN PROMOTION'}</span>
+                                            <Edit className="w-3.5 h-3.5" />
+                                            <span>Modifier le Produit</span>
                                         </button>
                                     </div>
-                                </div>
-                            </motion.div>
-                        ))}
+                                </motion.div>
+                            );
+                        })}
                     </div>
                 ) : (
-                    <div className="p-12 text-center bg-white rounded-3xl border border-slate-200/80 text-slate-500 space-y-3">
-                        <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto text-2xl">
-                            <ShoppingBag className="w-6 h-6 text-amber-800" />
+                    <div className="p-12 text-center bg-white rounded-3xl border border-slate-200/90 space-y-4">
+                        <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto" />
+                        <div className="space-y-1">
+                            <h3 className="text-base font-bold text-slate-950">Aucun produit trouvé</h3>
+                            <p className="text-xs text-slate-500">Ajoutez votre premier produit au catalogue pour commencer à vendre.</p>
                         </div>
-                        <h3 className="text-base font-semibold text-slate-900">Aucun produit dans le catalogue</h3>
-                        <p className="text-xs max-w-sm mx-auto text-slate-500 font-medium">
-                            Ajoutez votre premier produit avec une photo pour commencer vos ventes.
-                        </p>
                     </div>
                 )}
 
-                {/* MODAL 1: CREATE PRODUCT */}
-                <AnimatePresence>
-                    {isCreateModalOpen && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.95 }}
-                                className="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-2xl w-full p-6 sm:p-8 space-y-6 relative max-h-[90vh] overflow-y-auto"
-                            >
-                                <button
-                                    onClick={() => setIsCreateModalOpen(false)}
-                                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 text-slate-500"
-                                >
+            </div>
+
+            {/* CREATE PRODUCT MODAL */}
+            <AnimatePresence>
+                {isCreateModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full p-6 sm:p-8 space-y-6 relative max-h-[90vh] overflow-y-auto"
+                        >
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                                <div>
+                                    <h3 className="text-xl font-extrabold text-slate-950">Nouveau Produit au Catalogue</h3>
+                                    <p className="text-xs text-slate-500 font-medium">Formulaire complet d'enregistrement d'article</p>
+                                </div>
+                                <button onClick={() => setIsCreateModalOpen(false)} className="p-2 rounded-full hover:bg-slate-100 text-slate-500">
                                     <X className="w-4 h-4" />
                                 </button>
+                            </div>
 
-                                <div className="space-y-1">
-                                    <h3 className="text-xl font-bold text-slate-950">Créer un Nouveau Produit</h3>
-                                    <p className="text-xs text-slate-500 font-medium">Complétez la fiche produit avec des images et variantes réelles</p>
+                            <form onSubmit={handleCreateSubmit} className="space-y-5 text-xs font-medium">
+                                <div>
+                                    <label className="block text-slate-700 font-bold mb-1">Titre de l'Article *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="ex: Sac en Cuir Artisanal Premium"
+                                        value={createForm.data.title}
+                                        onChange={(e) => createForm.setData('title', e.target.value)}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-medium focus:bg-white focus:border-amber-400"
+                                    />
                                 </div>
 
-                                {Object.keys(createForm.errors).length > 0 && (
-                                    <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 space-y-1">
-                                        <div className="font-bold flex items-center gap-1.5">
-                                            <AlertCircle className="w-4 h-4 text-rose-600" />
-                                            <span>Erreur lors de l'enregistrement :</span>
-                                        </div>
-                                        <ul className="list-disc list-inside pl-2 space-y-0.5 text-[11px]">
-                                            {Object.values(createForm.errors).map((err, idx) => (
-                                                <li key={idx}>{err}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-
-                                <form onSubmit={handleCreateSubmit} className="space-y-4">
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Titre du Produit *</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            placeholder="ex: Sac en Cuir Artisanal"
-                                            value={createForm.data.title}
-                                            onChange={(e) => createForm.setData('title', e.target.value)}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Description Détaillée *</label>
-                                        <textarea
-                                            rows="3"
-                                            required
-                                            placeholder="Description complète de votre article..."
-                                            value={createForm.data.description}
-                                            onChange={(e) => createForm.setData('description', e.target.value)}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Prix Vendeur (FCFA) *</label>
-                                            <input
-                                                type="number"
-                                                required
-                                                min="1"
-                                                placeholder="ex: 15000"
-                                                value={createForm.data.price_vendor}
-                                                onChange={(e) => createForm.setData('price_vendor', e.target.value)}
-                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Quantité en Stock *</label>
-                                            <input
-                                                type="number"
-                                                required
-                                                min="0"
-                                                placeholder="ex: 20"
-                                                value={createForm.data.stock}
-                                                onChange={(e) => createForm.setData('stock', e.target.value)}
-                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Qte Min Commande *</label>
-                                            <input
-                                                type="number"
-                                                required
-                                                min="1"
-                                                placeholder="ex: 1"
-                                                value={createForm.data.min_order_quantity}
-                                                onChange={(e) => createForm.setData('min_order_quantity', e.target.value)}
-                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* MULTI-IMAGE SELECTION WITH ACCUMULATION & INDIVIDUAL REMOVE */}
-                                    <div className="space-y-2">
-                                        <label className="block text-xs font-semibold text-slate-700">
-                                            Images du Produit (Jusqu'à 5 photos, cumulatives)
-                                        </label>
-                                        
-                                        <div className="flex items-center gap-3">
-                                            <label className="px-4 py-2.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-semibold cursor-pointer transition-colors inline-flex items-center gap-2 border border-amber-300/80">
-                                                <UploadCloud className="w-4 h-4 text-amber-800" />
-                                                <span>Ajouter des photos ({imagePreviews.length}/5)</span>
-                                                <input
-                                                    type="file"
-                                                    multiple
-                                                    accept="image/*"
-                                                    onChange={handleCreateImageChange}
-                                                    className="hidden"
-                                                />
-                                            </label>
-                                            
-                                            {imagePreviews.length > 0 && (
-                                                <span className="text-[11px] text-slate-500 font-medium">
-                                                    {imagePreviews.length} photo(s) sélectionnée(s)
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {/* PREVIEW GRID WITH REMOVE BUTTON */}
-                                        {imagePreviews.length > 0 && (
-                                            <div className="flex items-center gap-3 mt-3 overflow-x-auto p-2 bg-slate-50 rounded-2xl border border-slate-200">
-                                                {imagePreviews.map((src, i) => (
-                                                    <div key={i} className="relative group shrink-0 w-20 h-20">
-                                                        <img src={src} alt={`Preview ${i + 1}`} className="w-20 h-20 rounded-xl object-cover border border-slate-300" />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleRemoveImagePreview(i)}
-                                                            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-md hover:bg-rose-700 transition-colors"
-                                                            title="Supprimer cette photo"
-                                                        >
-                                                            <X className="w-3 h-3" />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <button
-                                        type="submit"
-                                        disabled={createForm.processing}
-                                        className="w-full py-3 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md transition-all"
-                                    >
-                                        Enregistrer le Produit au Catalogue
-                                    </button>
-                                </form>
-                            </motion.div>
-                        </div>
-                    )}
-                </AnimatePresence>
-
-                {/* MODAL 2: EDIT PRODUCT */}
-                <AnimatePresence>
-                    {editingProduct && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.95 }}
-                                className="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-xl w-full p-6 sm:p-8 space-y-6 relative max-h-[90vh] overflow-y-auto"
-                            >
-                                <button
-                                    onClick={() => setEditingProduct(null)}
-                                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 text-slate-500"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-
-                                <div className="space-y-1">
-                                    <h3 className="text-xl font-bold text-slate-950">Modifier le Produit</h3>
-                                    <p className="text-xs text-slate-500 font-medium">{editingProduct.title}</p>
+                                <div>
+                                    <label className="block text-slate-700 font-bold mb-1">Description *</label>
+                                    <textarea
+                                        rows={3}
+                                        required
+                                        placeholder="Description détaillée, matériaux, spécifications..."
+                                        value={createForm.data.description}
+                                        onChange={(e) => createForm.setData('description', e.target.value)}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-medium focus:bg-white focus:border-amber-400"
+                                    />
                                 </div>
 
-                                {Object.keys(editForm.errors).length > 0 && (
-                                    <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 space-y-1">
-                                        <div className="font-bold flex items-center gap-1.5">
-                                            <AlertCircle className="w-4 h-4 text-rose-600" />
-                                            <span>Erreur de modification :</span>
-                                        </div>
-                                        <ul className="list-disc list-inside pl-2 space-y-0.5 text-[11px]">
-                                            {Object.values(editForm.errors).map((err, idx) => (
-                                                <li key={idx}>{err}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-
-                                <form onSubmit={handleEditSubmit} className="space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Titre du Produit *</label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={editForm.data.title}
-                                            onChange={(e) => editForm.setData('title', e.target.value)}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Description *</label>
-                                        <textarea
-                                            rows="3"
-                                            required
-                                            value={editForm.data.description}
-                                            onChange={(e) => editForm.setData('description', e.target.value)}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Prix Vendeur (FCFA) *</label>
-                                            <input
-                                                type="number"
-                                                required
-                                                value={editForm.data.price_vendor}
-                                                onChange={(e) => editForm.setData('price_vendor', e.target.value)}
-                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Quantité Stock *</label>
-                                            <input
-                                                type="number"
-                                                required
-                                                value={editForm.data.stock}
-                                                onChange={(e) => editForm.setData('stock', e.target.value)}
-                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        type="submit"
-                                        disabled={editForm.processing}
-                                        className="w-full py-3 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md transition-all"
-                                    >
-                                        Mettre à jour les Informations
-                                    </button>
-                                </form>
-                            </motion.div>
-                        </div>
-                    )}
-                </AnimatePresence>
-
-                {/* MODAL 3: PROMO PRODUCT */}
-                <AnimatePresence>
-                    {promoProduct && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.95 }}
-                                className="bg-white rounded-3xl border border-slate-200 shadow-xl max-w-xl w-full p-6 sm:p-8 space-y-6 relative"
-                            >
-                                <button
-                                    onClick={() => setPromoProduct(null)}
-                                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 text-slate-500"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-
-                                <div className="space-y-1">
-                                    <h3 className="text-xl font-bold text-slate-950">Appliquer une Promotion</h3>
-                                    <p className="text-xs text-slate-500 font-medium">{promoProduct.title}</p>
-                                </div>
-
-                                {Object.keys(promoForm.errors).length > 0 && (
-                                    <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 space-y-1">
-                                        <div className="font-bold flex items-center gap-1.5">
-                                            <AlertCircle className="w-4 h-4 text-rose-600" />
-                                            <span>Erreur lors de la promotion :</span>
-                                        </div>
-                                        <ul className="list-disc list-inside pl-2 space-y-0.5 text-[11px]">
-                                            {Object.values(promoForm.errors).map((err, idx) => (
-                                                <li key={idx}>{err}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-
-                                <form onSubmit={handlePromoSubmit} className="space-y-4">
-                                    <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-slate-700">
-                                        Prix Normal Actuel : <strong className="text-slate-950 font-bold">{Number(promoProduct.price_vendor).toLocaleString()} FCFA</strong>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Prix Promotionnel Reduit (FCFA) *</label>
+                                        <label className="block text-slate-700 font-bold mb-1">Prix Vendeur Net (FCFA) *</label>
                                         <input
                                             type="number"
                                             required
-                                            placeholder="ex: 12000"
-                                            value={promoForm.data.promo_price}
-                                            onChange={(e) => promoForm.setData('promo_price', e.target.value)}
-                                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                            min="0"
+                                            placeholder="15000"
+                                            value={createForm.data.price_vendor}
+                                            onChange={(e) => createForm.setData('price_vendor', e.target.value)}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-extrabold focus:bg-white focus:border-amber-400"
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Date de Début (Optionnel)</label>
-                                            <input
-                                                type="date"
-                                                value={promoForm.data.promo_start_at}
-                                                onChange={(e) => promoForm.setData('promo_start_at', e.target.value)}
-                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Date de Fin (Optionnel)</label>
-                                            <input
-                                                type="date"
-                                                value={promoForm.data.promo_end_at}
-                                                onChange={(e) => promoForm.setData('promo_end_at', e.target.value)}
-                                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                            />
-                                        </div>
+                                    <div>
+                                        <label className="block text-slate-700 font-bold mb-1">Stock Initial *</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            min="0"
+                                            value={createForm.data.stock}
+                                            onChange={(e) => createForm.setData('stock', e.target.value)}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-bold focus:bg-white focus:border-amber-400"
+                                        />
                                     </div>
 
-                                    <div className="space-y-2 pt-2">
-                                        <button
-                                            type="submit"
-                                            disabled={promoForm.processing}
-                                            className="w-full py-3 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md transition-all"
-                                        >
-                                            {promoForm.processing ? 'Enregistrement en cours...' : 'Activer / Enregistrer la Promotion'}
-                                        </button>
+                                    <div>
+                                        <label className="block text-slate-700 font-bold mb-1">Qte Min Commande *</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            min="1"
+                                            value={createForm.data.min_order_quantity}
+                                            onChange={(e) => createForm.setData('min_order_quantity', e.target.value)}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-bold focus:bg-white focus:border-amber-400"
+                                        />
+                                    </div>
+                                </div>
 
-                                        {promoProduct.is_promo && (
-                                            <button
-                                                type="button"
-                                                onClick={handleDisablePromo}
-                                                disabled={promoForm.processing}
-                                                className="w-full py-2.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-all border border-rose-200"
-                                            >
-                                                Désactiver la Promotion (Retirer les Soldes)
-                                            </button>
+                                {/* PROMOTIONS SECTION */}
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Tag className="w-4 h-4 text-rose-600" />
+                                            <span className="font-bold text-slate-900">Activer le Prix Promotionnel</span>
+                                        </div>
+                                        {userPlan === 'starter' ? (
+                                            <span className="text-[10px] font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded border border-amber-300">Pack Pro Requis</span>
+                                        ) : (
+                                            <input
+                                                type="checkbox"
+                                                checked={createForm.data.is_promo}
+                                                onChange={(e) => createForm.setData('is_promo', e.target.checked)}
+                                                className="w-4 h-4 text-amber-500 rounded border-slate-300 focus:ring-amber-400 cursor-pointer"
+                                            />
                                         )}
                                     </div>
-                                </form>
-                            </motion.div>
-                        </div>
-                    )}
-                </AnimatePresence>
 
-            </div>
+                                    {userPlan === 'starter' && (
+                                        <p className="text-[11px] text-amber-800 font-medium">La mise en promotion des produits est réservée aux abonnements PRO, GROWTH et BUSINESS.</p>
+                                    )}
+
+                                    {createForm.data.is_promo && userPlan !== 'starter' && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                                            <div>
+                                                <label className="block text-slate-700 font-bold mb-1">Prix Promo Net (FCFA)</label>
+                                                <input
+                                                    type="number"
+                                                    value={createForm.data.promo_price}
+                                                    onChange={(e) => createForm.setData('promo_price', e.target.value)}
+                                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-rose-600 font-extrabold"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-slate-700 font-bold mb-1">Date Début Promo</label>
+                                                <input
+                                                    type="date"
+                                                    value={createForm.data.promo_start_at}
+                                                    onChange={(e) => createForm.setData('promo_start_at', e.target.value)}
+                                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-medium"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-slate-700 font-bold mb-1">Date Fin Promo</label>
+                                                <input
+                                                    type="date"
+                                                    value={createForm.data.promo_end_at}
+                                                    onChange={(e) => createForm.setData('promo_end_at', e.target.value)}
+                                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-medium"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* IMAGES FILE UPLOAD */}
+                                <div className="space-y-2">
+                                    <label className="block text-slate-700 font-bold">Images du Produit (Jusqu'à 5 photos)</label>
+                                    <div className="flex items-center gap-3">
+                                        <label className="px-4 py-2.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-950 font-bold cursor-pointer transition-colors inline-flex items-center gap-2 border border-amber-300">
+                                            <UploadCloud className="w-4 h-4 text-amber-900" />
+                                            <span>Télécharger des photos ({createImagePreviews.length}/5)</span>
+                                            <input type="file" multiple accept="image/*" onChange={handleCreateImageChange} className="hidden" />
+                                        </label>
+                                    </div>
+
+                                    {createImagePreviews.length > 0 && (
+                                        <div className="flex items-center gap-3 mt-3 overflow-x-auto p-2 bg-slate-50 rounded-2xl border border-slate-200">
+                                            {createImagePreviews.map((src, i) => (
+                                                <div key={i} className="relative group shrink-0 w-20 h-20">
+                                                    <img src={src} alt="" className="w-20 h-20 rounded-xl object-cover border border-slate-300" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveCreateImage(i)}
+                                                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-md"
+                                                    >
+                                                        <X className="w-3 h-3" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* VARIANTS SECTION */}
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-bold text-slate-900">Variantes de Produit (Tailles & Couleurs)</span>
+                                        <button
+                                            type="button"
+                                            onClick={addCreateVariantRow}
+                                            className="px-3 py-1 rounded-lg bg-amber-400 text-slate-950 font-bold text-xs shadow-2xs"
+                                        >
+                                            + Ajouter une variante
+                                        </button>
+                                    </div>
+
+                                    {createForm.data.variants && createForm.data.variants.length > 0 && (
+                                        <div className="space-y-2">
+                                            {createForm.data.variants.map((varRow, idx) => (
+                                                <div key={idx} className="p-3 bg-white rounded-xl border border-slate-200 grid grid-cols-5 gap-2 items-center">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Taille (ex: XL)"
+                                                        value={varRow.size}
+                                                        onChange={(e) => updateCreateVariantRow(idx, 'size', e.target.value)}
+                                                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs"
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Couleur (ex: Noir)"
+                                                        value={varRow.color}
+                                                        onChange={(e) => updateCreateVariantRow(idx, 'color', e.target.value)}
+                                                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs"
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Surprix FCFA"
+                                                        value={varRow.price}
+                                                        onChange={(e) => updateCreateVariantRow(idx, 'price', e.target.value)}
+                                                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold"
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Stock"
+                                                        value={varRow.stock_quantity}
+                                                        onChange={(e) => updateCreateVariantRow(idx, 'stock_quantity', e.target.value)}
+                                                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeCreateVariantRow(idx)}
+                                                        className="p-1 text-slate-400 hover:text-rose-600 text-center"
+                                                    >
+                                                        <Trash2 className="w-4 h-4 mx-auto" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={createForm.processing}
+                                    className="w-full py-3.5 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-md transition-all border border-amber-300"
+                                >
+                                    <span>Enregistrer le Produit au Catalogue</span>
+                                </button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* UNIFIED COMPLETE EDIT PRODUCT MODAL */}
+            <AnimatePresence>
+                {editingProduct && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full p-6 sm:p-8 space-y-6 relative max-h-[90vh] overflow-y-auto"
+                        >
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                                <div>
+                                    <h3 className="text-xl font-extrabold text-slate-950">Modifier le Produit</h3>
+                                    <p className="text-xs text-slate-500 font-medium">Modification intégrale du produit et de ses images</p>
+                                </div>
+                                <button onClick={() => setEditingProduct(null)} className="p-2 rounded-full hover:bg-slate-100 text-slate-500">
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleEditSubmit} className="space-y-5 text-xs font-medium">
+                                <div>
+                                    <label className="block text-slate-700 font-bold mb-1">Titre de l'Article *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={editForm.data.title}
+                                        onChange={(e) => editForm.setData('title', e.target.value)}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-bold focus:bg-white focus:border-amber-400"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-slate-700 font-bold mb-1">Description *</label>
+                                    <textarea
+                                        rows={3}
+                                        required
+                                        value={editForm.data.description}
+                                        onChange={(e) => editForm.setData('description', e.target.value)}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-medium focus:bg-white focus:border-amber-400"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div>
+                                        <label className="block text-slate-700 font-bold mb-1">Prix Vendeur Net (FCFA) *</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            min="0"
+                                            value={editForm.data.price_vendor}
+                                            onChange={(e) => editForm.setData('price_vendor', e.target.value)}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-extrabold focus:bg-white focus:border-amber-400"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-slate-700 font-bold mb-1">Stock Disponible *</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            min="0"
+                                            value={editForm.data.stock}
+                                            onChange={(e) => editForm.setData('stock', e.target.value)}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-bold focus:bg-white focus:border-amber-400"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-slate-700 font-bold mb-1">Qte Min Commande *</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            min="1"
+                                            value={editForm.data.min_order_quantity}
+                                            onChange={(e) => editForm.setData('min_order_quantity', e.target.value)}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-bold focus:bg-white focus:border-amber-400"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* PROMOTIONS SECTION IN EDIT */}
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Tag className="w-4 h-4 text-rose-600" />
+                                            <span className="font-bold text-slate-900">Activer le Prix Promotionnel</span>
+                                        </div>
+                                        {userPlan === 'starter' ? (
+                                            <span className="text-[10px] font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded border border-amber-300">Pack Pro Requis</span>
+                                        ) : (
+                                            <input
+                                                type="checkbox"
+                                                checked={editForm.data.is_promo}
+                                                onChange={(e) => editForm.setData('is_promo', e.target.checked)}
+                                                className="w-4 h-4 text-amber-500 rounded border-slate-300 focus:ring-amber-400 cursor-pointer"
+                                            />
+                                        )}
+                                    </div>
+
+                                    {userPlan === 'starter' && (
+                                        <p className="text-[11px] text-amber-800 font-medium">La mise en promotion des produits est réservée aux abonnements PRO, GROWTH et BUSINESS.</p>
+                                    )}
+
+                                    {editForm.data.is_promo && userPlan !== 'starter' && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                                            <div>
+                                                <label className="block text-slate-700 font-bold mb-1">Prix Promo Net (FCFA)</label>
+                                                <input
+                                                    type="number"
+                                                    value={editForm.data.promo_price}
+                                                    onChange={(e) => editForm.setData('promo_price', e.target.value)}
+                                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-rose-600 font-extrabold"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-slate-700 font-bold mb-1">Date Début Promo</label>
+                                                <input
+                                                    type="date"
+                                                    value={editForm.data.promo_start_at}
+                                                    onChange={(e) => editForm.setData('promo_start_at', e.target.value)}
+                                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-medium"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-slate-700 font-bold mb-1">Date Fin Promo</label>
+                                                <input
+                                                    type="date"
+                                                    value={editForm.data.promo_end_at}
+                                                    onChange={(e) => editForm.setData('promo_end_at', e.target.value)}
+                                                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-medium"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* EDIT IMAGES FILES UPLOAD & PREVIEW */}
+                                <div className="space-y-2">
+                                    <label className="block text-slate-700 font-bold">Modifier / Remplacer les Images</label>
+                                    
+                                    {editImagePreviews.length > 0 && (
+                                        <div className="flex items-center gap-3 overflow-x-auto p-2 bg-slate-50 rounded-2xl border border-slate-200 mb-2">
+                                            {editImagePreviews.map((src, i) => (
+                                                <div key={i} className="relative shrink-0 w-20 h-20">
+                                                    <img src={src} alt="" className="w-20 h-20 rounded-xl object-cover border border-slate-300" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <label className="px-4 py-2.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-950 font-bold cursor-pointer transition-colors inline-flex items-center gap-2 border border-amber-300">
+                                        <UploadCloud className="w-4 h-4 text-amber-900" />
+                                        <span>Sélectionner de nouvelles photos</span>
+                                        <input type="file" multiple accept="image/*" onChange={handleEditImageChange} className="hidden" />
+                                    </label>
+                                </div>
+
+                                {/* EDIT VARIANTS SECTION */}
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-bold text-slate-900">Variantes de Produit (Tailles & Couleurs)</span>
+                                        <button
+                                            type="button"
+                                            onClick={addEditVariantRow}
+                                            className="px-3 py-1 rounded-lg bg-amber-400 text-slate-950 font-bold text-xs shadow-2xs"
+                                        >
+                                            + Ajouter une variante
+                                        </button>
+                                    </div>
+
+                                    {editForm.data.variants && editForm.data.variants.length > 0 && (
+                                        <div className="space-y-2">
+                                            {editForm.data.variants.map((varRow, idx) => (
+                                                <div key={idx} className="p-3 bg-white rounded-xl border border-slate-200 grid grid-cols-5 gap-2 items-center">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Taille (ex: XL)"
+                                                        value={varRow.size}
+                                                        onChange={(e) => updateEditVariantRow(idx, 'size', e.target.value)}
+                                                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs"
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Couleur (ex: Noir)"
+                                                        value={varRow.color}
+                                                        onChange={(e) => updateEditVariantRow(idx, 'color', e.target.value)}
+                                                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs"
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Surprix FCFA"
+                                                        value={varRow.price}
+                                                        onChange={(e) => updateEditVariantRow(idx, 'price', e.target.value)}
+                                                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold"
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Stock"
+                                                        value={varRow.stock_quantity}
+                                                        onChange={(e) => updateEditVariantRow(idx, 'stock_quantity', e.target.value)}
+                                                        className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeEditVariantRow(idx)}
+                                                        className="p-1 text-slate-400 hover:text-rose-600 text-center"
+                                                    >
+                                                        <Trash2 className="w-4 h-4 mx-auto" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={editForm.processing}
+                                    className="w-full py-3.5 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-md transition-all border border-amber-300"
+                                >
+                                    <span>Enregistrer les Modifications du Produit</span>
+                                </button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
         </AuthenticatedLayout>
     );
 }

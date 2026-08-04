@@ -22,34 +22,108 @@ export default function Dashboard({ store, wallet, productsCount, ordersCount, t
 
             <div className="space-y-8 font-sans pb-12">
                 
-                {/* 1. PROMOTIONAL BANNER */}
+                {/* ONBOARDING & STORE PUBLICATION CHECKLIST BANNER */}
                 <motion.div 
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-6 sm:p-8 rounded-3xl bg-[#FFCC00] text-slate-950 shadow-xs border border-amber-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden"
+                    className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-6"
                 >
-                    <div className="space-y-1 z-10">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950 text-white text-[11px] font-semibold uppercase tracking-wider">
-                            <Sparkles className="w-3.5 h-3.5 text-[#FFCC00]" /> BIOLINKO SAAS PRO
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+                        <div className="space-y-1">
+                            <div className="inline-flex items-center gap-2">
+                                <span className={`w-3 h-3 rounded-full ${store.is_published ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                                    {store.is_published ? 'BOUTIQUE PUBLIÉE EN LIGNE' : 'BOUTIQUE EN MODE BROUILLON (MASQUÉE)'}
+                                </span>
+                            </div>
+                            <h2 className="text-xl sm:text-2xl font-bold text-slate-950 tracking-tight">
+                                Kit de Démarrage Vendeur BIOLINKO ({completionPercentage}% Complété)
+                            </h2>
+                            <p className="text-xs text-slate-500 font-medium">
+                                Suivez ces étapes simples pour activer et publier votre boutique officielle
+                            </p>
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
-                            Boostez vos ventes avec la gestion automatique du portefeuille MoMo.
-                        </h2>
+
+                        <div className="flex items-center gap-3">
+                            <Link
+                                href={`/${store.slug}`}
+                                target="_blank"
+                                className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-800 font-bold text-xs flex items-center gap-2 transition-all"
+                            >
+                                <Eye className="w-4 h-4 text-slate-600" />
+                                <span>Voir ma Vitrine</span>
+                            </Link>
+
+                            <Link
+                                href={route('store.togglePublish')}
+                                method="post"
+                                as="button"
+                                className={`px-5 py-2.5 rounded-xl font-extrabold text-xs shadow-md transition-all cursor-pointer ${
+                                    store.is_published 
+                                        ? 'bg-rose-600 hover:bg-rose-700 text-white' 
+                                        : 'bg-[#FFCC00] hover:bg-amber-400 text-slate-950 border border-amber-300'
+                                }`}
+                            >
+                                {store.is_published ? 'Masquer la Boutique' : '🚀 Publier ma Boutique'}
+                            </Link>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-3 z-10">
-                        <Link
+                    {/* PROGRESS BAR */}
+                    <div className="space-y-2">
+                        <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div 
+                                className="bg-[#FFCC00] h-2.5 rounded-full transition-all duration-500"
+                                style={{ width: `${completionPercentage}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* 5 STEPS CHECKLIST GRID */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-semibold">
+                        
+                        <div className={`p-4 rounded-2xl border flex items-center justify-between ${setupChecklist?.store_created ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+                            <div className="flex items-center gap-2">
+                                <CheckCircle2 className={`w-4 h-4 ${setupChecklist?.store_created ? 'text-emerald-600' : 'text-slate-300'}`} />
+                                <span>1. Inscription Compte Vendeur</span>
+                            </div>
+                        </div>
+
+                        <Link 
                             href={route('appearance.index')}
-                            className="px-5 py-2.5 rounded-xl bg-slate-950/10 hover:bg-slate-950/20 text-slate-950 font-semibold text-xs transition-colors"
+                            className={`p-4 rounded-2xl border flex items-center justify-between transition-all hover:scale-[1.02] ${setupChecklist?.appearance_configured ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950' : 'bg-slate-50 border-amber-300/80 text-slate-800'}`}
                         >
-                            Personnaliser Vitrine
+                            <div className="flex items-center gap-2">
+                                <CheckCircle2 className={`w-4 h-4 ${setupChecklist?.appearance_configured ? 'text-emerald-600' : 'text-amber-500'}`} />
+                                <span>2. Apparence &amp; Logo</span>
+                            </div>
+                            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
                         </Link>
-                        <Link
-                            href={route('orders.index')}
-                            className="px-6 py-3 rounded-2xl bg-slate-950 text-white hover:bg-slate-800 font-semibold text-xs shadow-xs transition-transform active:scale-95 whitespace-nowrap"
+
+                        <Link 
+                            href={route('products.index')}
+                            className={`p-4 rounded-2xl border flex items-center justify-between transition-all hover:scale-[1.02] ${setupChecklist?.first_product ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950' : 'bg-slate-50 border-amber-300/80 text-slate-800'}`}
                         >
-                            Gérer mes Commandes
+                            <div className="flex items-center gap-2">
+                                <CheckCircle2 className={`w-4 h-4 ${setupChecklist?.first_product ? 'text-emerald-600' : 'text-amber-500'}`} />
+                                <span>3. Créer 1er Produit ({productsCount})</span>
+                            </div>
+                            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
                         </Link>
+
+                        <Link 
+                            href={route('store.togglePublish')}
+                            method="post"
+                            as="button"
+                            className={`p-4 rounded-2xl border flex items-center justify-between text-left transition-all hover:scale-[1.02] cursor-pointer ${store?.is_published ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950' : 'bg-amber-100 border-amber-300 text-amber-950'}`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <CheckCircle2 className={`w-4 h-4 ${store?.is_published ? 'text-emerald-600' : 'text-amber-600'}`} />
+                                <span>4. Publier la Vitrine</span>
+                            </div>
+                            <Zap className="w-3.5 h-3.5 text-amber-600" />
+                        </Link>
+
                     </div>
                 </motion.div>
 

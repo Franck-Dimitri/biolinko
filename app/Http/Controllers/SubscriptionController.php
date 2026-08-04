@@ -50,7 +50,7 @@ class SubscriptionController extends Controller
             [
                 'id' => 'pro',
                 'name' => 'Pro',
-                'price' => 7000,
+                'price' => 2500,
                 'period' => 'FCFA / mois',
                 'badge' => 'Populaire',
                 'color' => 'amber',
@@ -70,7 +70,7 @@ class SubscriptionController extends Controller
             [
                 'id' => 'growth',
                 'name' => 'Growth',
-                'price' => 16000,
+                'price' => 7000,
                 'period' => 'FCFA / mois',
                 'badge' => 'Croissance',
                 'color' => 'indigo',
@@ -90,7 +90,7 @@ class SubscriptionController extends Controller
             [
                 'id' => 'business',
                 'name' => 'Business',
-                'price' => 30000,
+                'price' => 12000,
                 'period' => 'FCFA / mois',
                 'badge' => 'Illimité',
                 'color' => 'emerald',
@@ -118,14 +118,14 @@ class SubscriptionController extends Controller
             [
                 'months' => 6,
                 'label' => 'Semestriel (6 mois)',
-                'discount_percent' => 15,
-                'badge' => '-15% de réduction',
+                'discount_percent' => 10,
+                'badge' => '-10% de réduction',
             ],
             [
                 'months' => 12,
                 'label' => 'Annuel (1 an)',
-                'discount_percent' => 30,
-                'badge' => '-30% de réduction',
+                'discount_percent' => 20,
+                'badge' => '-20% de réduction',
             ],
         ];
 
@@ -171,9 +171,9 @@ class SubscriptionController extends Controller
 
         $planPrices = [
             'starter' => 0,
-            'pro' => 7000,
-            'growth' => 16000,
-            'business' => 30000,
+            'pro' => 2500,
+            'growth' => 7000,
+            'business' => 12000,
         ];
 
         $monthlyPrice = $planPrices[$targetPlan] ?? 0;
@@ -194,8 +194,8 @@ class SubscriptionController extends Controller
 
         // Apply discount percentage based on billing cycle
         $discountRate = match ($cycleMonths) {
-            6 => 0.14,  // -14%
-            12 => 0.30, // -30%
+            6 => 0.10,  // -10%
+            12 => 0.20, // -20%
             default => 0.0,
         };
 
@@ -229,8 +229,8 @@ class SubscriptionController extends Controller
             $idempotencyKey = (string) Str::uuid();
 
             $cycleLabel = match ($cycleMonths) {
-                6 => '6 mois (-14%)',
-                12 => '1 an (-30%)',
+                6 => '6 mois (-10%)',
+                12 => '1 an (-20%)',
                 default => '1 mois',
             };
 

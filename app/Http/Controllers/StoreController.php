@@ -49,4 +49,17 @@ class StoreController extends Controller
 
         return redirect()->back()->with('message', 'Paramètres de la boutique mis à jour avec succès !');
     }
+
+    public function togglePublish(Request $request): RedirectResponse
+    {
+        $store = $request->user()->store;
+        $store->is_published = !$store->is_published;
+        $store->save();
+
+        $statusMsg = $store->is_published 
+            ? 'Félicitations ! Votre boutique est désormais officielle et publiée en ligne !'
+            : 'Votre boutique a été repassée en mode brouillon (masquée du public).';
+
+        return redirect()->back()->with('message', $statusMsg);
+    }
 }

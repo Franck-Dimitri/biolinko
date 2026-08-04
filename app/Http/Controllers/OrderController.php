@@ -44,35 +44,35 @@ class OrderController extends Controller
             $ordersQuery->where('status', $statusFilter);
         }
 
-        $orders = $ordersQuery->latest()->get();
+        $orders = $ordersQuery->latest()->paginate(10)->withQueryString();
 
-        // Financial Metrics
-        $totalRevenue = Order::where('store_id', $store->id)
-            ->whereIn('status', ['paid', 'in_delivery', 'delivered'])
-            ->sum('price_vendor');
+        // Metrics Counts
+        $totalOrdersCount = Order::where('store_id', $store->id)->count();
+        $abandonedOrdersCount = Order::where('store_id', $store->id)
+            ->whereIn('status', ['pending', 'failed', 'cancelled'])
+            ->count();
 
-        $paidOrdersCount = Order::where('store_id', $store->id)
-            ->whereIn('status', ['paid', 'in_delivery', 'delivered'])
+        $toDeliverOrdersCount = Order::where('store_id', $store->id)
+            ->whereIn('status', ['paid', 'in_delivery'])
             ->count();
 
         $deliveredOrdersCount = Order::where('store_id', $store->id)
             ->where('status', 'delivered')
             ->count();
 
-        $withdrawals = Withdrawal::where('wallet_id', $wallet->id)
-            ->latest()
-            ->get();
+        $totalRevenue = Order::where('store_id', $store->id)
+            ->whereIn('status', ['paid', 'in_delivery', 'delivered'])
+            ->sum('price_vendor');
 
         return Inertia::render('Orders/Index', [
             'store' => $store,
             'orders' => $orders,
-            'wallet' => $wallet,
-            'withdrawals' => $withdrawals,
             'metrics' => [
-                'totalRevenue' => (float) $totalRevenue,
-                'totalOrdersCount' => Order::where('store_id', $store->id)->count(),
-                'paidOrdersCount' => $paidOrdersCount,
+                'totalOrdersCount' => $totalOrdersCount,
+                'abandonedOrdersCount' => $abandonedOrdersCount,
+                'toDeliverOrdersCount' => $toDeliverOrdersCount,
                 'deliveredOrdersCount' => $deliveredOrdersCount,
+                'totalRevenue' => (float) $totalRevenue,
             ],
             'filters' => [
                 'status' => $statusFilter,

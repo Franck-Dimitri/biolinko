@@ -91,6 +91,12 @@ class ProductController extends Controller
             'variants' => ['nullable', 'array'],
         ]);
 
+        if ($request->boolean('is_promo') && $userPlan === 'starter') {
+            return redirect()->back()->withErrors([
+                'title' => "La mise en promotion des produits est réservée aux abonnements PRO, GROWTH et BUSINESS. Passez au plan Pro pour activer les promotions.",
+            ]);
+        }
+
         $imagePaths = [];
 
         if ($request->hasFile('images_files')) {
@@ -191,6 +197,13 @@ class ProductController extends Controller
             'images_files.*' => ['nullable', 'image', 'max:5120'],
             'variants' => ['nullable', 'array'],
         ]);
+
+        $userPlan = $request->user()->plan ?? 'starter';
+        if ($request->boolean('is_promo') && $userPlan === 'starter') {
+            return redirect()->back()->withErrors([
+                'title' => "La mise en promotion des produits est réservée aux abonnements PRO, GROWTH et BUSINESS. Passez au plan Pro pour activer les promotions.",
+            ]);
+        }
 
         $imagePaths = $product->images ?? [];
 

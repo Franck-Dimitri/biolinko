@@ -17,6 +17,7 @@ use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\ToolPluginController;
 use App\Http\Controllers\SellerInvoiceController;
 use App\Http\Controllers\SmartLinkController;
+use App\Http\Controllers\WalletController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -49,6 +50,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
 Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('seller.dashboard');
     Route::post('/store', [StoreController::class, 'update'])->name('store.update');
+    Route::post('/store/publish', [StoreController::class, 'togglePublish'])->name('store.togglePublish');
 
     // Appearance / Store Customization
     Route::get('/appearance', [AppearanceController::class, 'index'])->name('appearance.index');
@@ -61,15 +63,21 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+    Route::post('/products/{product}', [ProductController::class, 'update'])->name('products.update.post');
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 
-    // Orders & Wallet Management
+    // Orders Management
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
-    Route::post('/wallet/withdraw', [OrderController::class, 'requestWithdrawal'])->name('wallet.withdraw');
+
+    // Wallet & Cashout Management
+    Route::get('/wallet', [WalletController::class, 'index'])->name('seller.wallet.index');
+    Route::post('/wallet/withdraw', [WalletController::class, 'requestWithdrawal'])->name('wallet.withdraw');
 
     // Invoices Management
     Route::get('/invoices', [SellerInvoiceController::class, 'index'])->name('seller.invoices.index');
+    Route::post('/invoices/manual', [SellerInvoiceController::class, 'storeManualInvoice'])->name('seller.invoices.storeManual');
+    Route::post('/invoices/{order}/remind', [SellerInvoiceController::class, 'sendReminder'])->name('seller.invoices.sendReminder');
     Route::get('/invoices/{order}/download', [SellerInvoiceController::class, 'download'])->name('seller.invoices.download');
     Route::get('/invoices/{order}/preview', [SellerInvoiceController::class, 'preview'])->name('seller.invoices.preview');
 
@@ -110,6 +118,9 @@ Route::get('/track/{tracking_code}', [OrderTrackingController::class, 'show'])->
 
 // Public SmartLink Fast Checkout Pages
 Route::get('/pay/{code}', [SmartLinkController::class, 'showPublic'])->name('smartlink.show');
+Route::get('/pay/sl/{code}', [SmartLinkController::class, 'showPublic']);
+Route::get('/store/{store_slug}/pay/sl/{code}', [SmartLinkController::class, 'showPublicByStore'])->name('smartlink.showByStore');
+Route::get('/{store_slug}/pay/sl/{code}', [SmartLinkController::class, 'showPublicByStore']);
 Route::post('/pay/{code}/checkout', [SmartLinkController::class, 'processPublicCheckout'])->name('smartlink.checkout');
 
 // HR-Skills Pay Webhook Callback Route (Exclude CSRF)
@@ -120,4 +131,5 @@ require __DIR__.'/auth.php';
 
 // Public Storefront Catch-All (MUST BE ABSOLUTELY LAST)
 Route::post('/{store_slug}/reviews', [StorefrontController::class, 'submitReview'])->name('storefront.reviews.store');
+Route::get('/{store_slug}/p/{product_slug}', [StorefrontController::class, 'showProduct'])->name('storefront.product.show');
 Route::get('/{store_slug}', [StorefrontController::class, 'show'])->name('storefront.show');
