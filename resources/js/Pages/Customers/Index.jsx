@@ -1,19 +1,27 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Users, Search, ShoppingBag, MessageSquare, Phone, 
     Mail, MapPin, Calendar, Award, ArrowUpRight, TrendingUp, Sparkles, UserCheck,
-    Trophy, ShoppingCart, Send, CheckSquare, Square, X, Zap, Check, Share2, Tag
+    Trophy, ShoppingCart, Send, CheckSquare, Square, X, Zap, Check, Share2, Tag,
+    Clock, AlertTriangle, Layers, Play, CheckCircle2
 } from 'lucide-react';
 
-export default function Index({ store, customers, top5Customers, abandonedOrders, products, smartLinks, metrics }) {
+export default function Index({ store, customers, top5Customers, abandonedOrders, products, smartLinks, metrics, whatsappQuota, campaignsHistory }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('directory'); // 'directory', 'abandoned', 'broadcast'
+    const [toastNotification, setToastNotification] = useState(null);
+
+    const showToastNotification = (message, type = 'success') => {
+        setToastNotification({ message, type });
+        setTimeout(() => setToastNotification(null), 4500);
+    };
     
     // Broadcast Modal State
     const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
+    const [campaignTitle, setCampaignTitle] = useState('Offre Spéciale Boutique');
     const [broadcastMessage, setBroadcastMessage] = useState('Bonjour ! Nous avons de superbes nouveautés et promotions en boutique.');
     const [selectedProductAttachment, setSelectedProductAttachment] = useState('');
     const [selectedSmartLinkAttachment, setSelectedSmartLinkAttachment] = useState('');
@@ -53,25 +61,36 @@ export default function Index({ store, customers, top5Customers, abandonedOrders
         return `https://wa.me/${phoneClean}?text=${encodeURIComponent(text)}`;
     };
 
-    // Build Broadcast Message Content
-    const buildBroadcastContent = () => {
+    // Build & Parse Broadcast Message Content for a specific customer
+    const parseBroadcastContentForCustomer = (customer) => {
         let msg = broadcastMessage.trim();
 
+        const nameParts = (customer?.name || '').trim().split(' ');
+        const prenom = nameParts[0] || 'Client';
+        const nom = nameParts.slice(1).join(' ') || customer?.name || '';
+        const ville = customer?.city || customer?.delivery_city || 'votre ville';
+
+        msg = msg.replace(/\{prenom\}/g, prenom);
+        msg = msg.replace(/\{nom\}/g, nom);
+        msg = msg.replace(/\{ville\}/g, ville);
+        msg = msg.replace(/\{nom_boutique\}/g, store?.name || 'notre boutique');
+
+        let itemUrl = '';
         if (selectedProductAttachment) {
             const prod = products.find(p => String(p.id) === String(selectedProductAttachment));
             if (prod) {
-                const prodUrl = `${window.location.origin}/${store.slug}/p/${prod.id}`;
-                msg += `\n\nArticle en vedette : ${prod.title} (${Number(prod.price_vendor).toLocaleString()} FCFA)\nDécouvrez-le ici : ${prodUrl}`;
+                itemUrl = `${window.location.origin}/${store.slug}/p/${prod.id}`;
             }
-        }
-
-        if (selectedSmartLinkAttachment) {
+        } else if (selectedSmartLinkAttachment) {
             const sl = smartLinks.find(s => String(s.id) === String(selectedSmartLinkAttachment));
             if (sl) {
-                const slUrl = `${window.location.origin}/store/${store.slug}/pay/sl/${sl.code}`;
-                msg += `\n\nOffre Spéciale SmartLink : ${sl.title} à ${Number(sl.total_amount).toLocaleString()} FCFA !\nCommandez en 1 clic : ${slUrl}`;
+                itemUrl = `${window.location.origin}/store/${store.slug}/pay/sl/${sl.code}`;
             }
         }
+        if (!itemUrl) {
+            itemUrl = `${window.location.origin}/${store.slug}`;
+        }
+        msg = msg.replace(/\{lien_produit\}/g, itemUrl);
 
         return msg;
     };
@@ -79,13 +98,46 @@ export default function Index({ store, customers, top5Customers, abandonedOrders
     // Dispatch WhatsApp Broadcast to a customer
     const sendWhatsAppBroadcastToCustomer = (customer) => {
         const phoneClean = (customer.whatsapp || customer.phone || '').replace(/[^0-9]/g, '');
-        const text = buildBroadcastContent();
+        const text = parseBroadcastContentForCustomer(customer);
         window.open(`https://wa.me/${phoneClean}?text=${encodeURIComponent(text)}`, '_blank');
     };
 
     return (
         <AuthenticatedLayout>
             <Head title="Répertoire & Fidélité Clients — BIOLINKO" />
+
+            {/* TOAST NOTIFICATION FLOATING BANNER */}
+            <AnimatePresence>
+                {toastNotification && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                        className={`fixed top-6 right-6 z-[100] px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border font-bold text-xs text-white ${
+                            toastNotification.type === 'error'
+                                ? 'bg-rose-950 border-rose-800 text-rose-100'
+                                : toastNotification.type === 'warning'
+                                ? 'bg-amber-950 border-amber-800 text-amber-100'
+                                : 'bg-slate-950 border-slate-800 text-slate-100'
+                        }`}
+                    >
+                        {toastNotification.type === 'error' ? (
+                            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                        ) : toastNotification.type === 'warning' ? (
+                            <Zap className="w-5 h-5 text-amber-400 fill-amber-400 shrink-0" />
+                        ) : (
+                            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                        )}
+                        <div className="flex-1 pr-2">{toastNotification.message}</div>
+                        <button
+                            onClick={() => setToastNotification(null)}
+                            className="p-1 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors cursor-pointer"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <div className="w-full space-y-8 font-sans pb-12">
                 
@@ -239,6 +291,16 @@ export default function Index({ store, customers, top5Customers, abandonedOrders
                     >
                         <ShoppingCart className="w-3.5 h-3.5" />
                         <span>Paniers Abandonnés ({abandonedOrders?.length || 0})</span>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab('campaigns')}
+                        className={`px-4 py-2 rounded-2xl font-extrabold text-xs transition-all flex items-center gap-2 cursor-pointer ${
+                            activeTab === 'campaigns' ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                    >
+                        <Send className="w-3.5 h-3.5 fill-white" />
+                        <span>Historique Campagnes ({campaignsHistory?.length || 0})</span>
                     </button>
                 </div>
 
@@ -414,6 +476,85 @@ export default function Index({ store, customers, top5Customers, abandonedOrders
                     </div>
                 )}
 
+                {/* TAB 3: HISTORIQUE DES CAMPAGNES WHATSAPP */}
+                {activeTab === 'campaigns' && (
+                    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden">
+                        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Send className="w-5 h-5 text-emerald-600 fill-emerald-600" />
+                                <h3 className="font-extrabold text-sm text-slate-950">Historique des Campagnes WhatsApp Lancées</h3>
+                            </div>
+                            <button
+                                onClick={() => setIsBroadcastModalOpen(true)}
+                                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                            >
+                                <Send className="w-3.5 h-3.5 fill-white" />
+                                <span>+ Nouvelle Campagne</span>
+                            </button>
+                        </div>
+
+                        {campaignsHistory && campaignsHistory.length > 0 ? (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-xs">
+                                    <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider">
+                                        <tr>
+                                            <th className="p-4">Campagne</th>
+                                            <th className="p-4">Destinataires</th>
+                                            <th className="p-4">Statut</th>
+                                            <th className="p-4">Date de Lancement</th>
+                                            <th className="p-4 text-right">Message</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+                                        {campaignsHistory.map((camp) => (
+                                            <tr key={camp.id} className="hover:bg-slate-50/70 transition-colors">
+                                                <td className="p-4 font-extrabold text-slate-950">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                                                            <Send className="w-4 h-4 text-emerald-600" />
+                                                        </div>
+                                                        <div>
+                                                            <div>{camp.title}</div>
+                                                            <div className="text-[10px] text-slate-400 font-normal">ID #{camp.id}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-900 font-bold text-[11px]">
+                                                        {camp.recipients_count || 0} client(s)
+                                                    </span>
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px] flex items-center gap-1 w-max">
+                                                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                                        <span>Envoyé & Exécuté</span>
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-slate-500 font-semibold">
+                                                    {new Date(camp.created_at).toLocaleDateString('fr-FR', {
+                                                        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                                                    })}
+                                                </td>
+                                                <td className="p-4 text-right">
+                                                    <span className="text-[11px] text-slate-500 font-mono italic max-w-xs truncate inline-block">
+                                                        "{camp.message_template}"
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="p-12 text-center text-slate-400 space-y-2">
+                                <Send className="w-10 h-10 text-slate-300 mx-auto" />
+                                <h4 className="font-bold text-slate-900 text-sm">Aucune campagne lancée pour le moment !</h4>
+                                <p className="text-xs text-slate-500">Cliquez sur « Nouvelle Campagne » pour diffuser une offre à vos clients.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* BROADCAST PROMOTIONAL CAMPAIGN MODAL */}
                 {isBroadcastModalOpen && (
                     <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
@@ -439,16 +580,70 @@ export default function Index({ store, customers, top5Customers, abandonedOrders
 
                             <div className="flex-1 overflow-y-auto p-6 space-y-6">
                                 
-                                {/* Message Body */}
+                                {/* Plan Quota Header Badge */}
+                                {whatsappQuota && (
+                                    <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                                        <div className="flex items-center gap-2 font-bold text-slate-900">
+                                            <Zap className="w-4 h-4 text-amber-600 fill-amber-500" />
+                                            <span>Quota Plan {whatsappQuota.remaining_campaigns > 0 ? 'Actif' : 'Atteint'} :</span>
+                                            <span className="px-2.5 py-0.5 rounded-full bg-slate-950 text-white font-extrabold text-[10px]">
+                                                {whatsappQuota.remaining_campaigns} / {whatsappQuota.max_campaigns_per_month} campagnes restantes ce mois
+                                            </span>
+                                        </div>
+                                        <div className="text-[11px] text-slate-600 font-medium">
+                                            Max. <span className="font-bold text-slate-900">{whatsappQuota.max_recipients_per_campaign} clients</span> par campagne
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Campaign Title */}
                                 <div>
                                     <label className="block text-xs font-bold text-slate-950 uppercase tracking-wider mb-2">
-                                        Texte du Message WhatsApp *
+                                        Nom de la Campagne *
                                     </label>
+                                    <input
+                                        type="text"
+                                        value={campaignTitle}
+                                        onChange={(e) => setCampaignTitle(e.target.value)}
+                                        placeholder="Ex: Promo Ventes Flash Été"
+                                        className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold focus:border-amber-400 outline-none"
+                                    />
+                                </div>
+
+                                {/* Message Body & Variable Tags */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="block text-xs font-bold text-slate-950 uppercase tracking-wider">
+                                            Texte du Message WhatsApp *
+                                        </label>
+                                        <span className="text-[10px] text-slate-500">Variables dynamiques disponibles :</span>
+                                    </div>
+
+                                    {/* Variable Tag Inserters */}
+                                    <div className="flex flex-wrap gap-1.5 mb-2">
+                                        {[
+                                            { tag: '{prenom}', label: 'Prénom Client' },
+                                            { tag: '{nom}', label: 'Nom Client' },
+                                            { tag: '{ville}', label: 'Ville' },
+                                            { tag: '{lien_produit}', label: 'Lien Produit' },
+                                            { tag: '{nom_boutique}', label: 'Boutique' },
+                                        ].map(item => (
+                                            <button
+                                                key={item.tag}
+                                                type="button"
+                                                onClick={() => setBroadcastMessage(prev => prev + ' ' + item.tag + ' ')}
+                                                className="px-2 py-1 rounded-md bg-slate-100 hover:bg-amber-100 hover:text-amber-800 text-slate-700 text-[10px] font-bold border border-slate-200 transition-all cursor-pointer"
+                                            >
+                                                + {item.tag}
+                                            </button>
+                                        ))}
+                                    </div>
+
                                     <textarea
                                         rows={4}
                                         value={broadcastMessage}
                                         onChange={(e) => setBroadcastMessage(e.target.value)}
-                                        placeholder="Ex: Chers clients, découvrez notre nouvelle promotion spéciale boutique !"
+                                        placeholder="Ex: Bonjour {prenom} ! Découvrez nos promos chez {nom_boutique} !"
                                         className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
                                     />
                                 </div>
@@ -480,13 +675,19 @@ export default function Index({ store, customers, top5Customers, abandonedOrders
                                         <select
                                             value={selectedSmartLinkAttachment}
                                             onChange={(e) => setSelectedSmartLinkAttachment(e.target.value)}
-                                            className="w-full px-3 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-bold focus:border-amber-400 outline-none"
+                                            disabled={whatsappQuota && !whatsappQuota.allow_smartlinks}
+                                            className={`w-full px-3 py-2.5 rounded-xl border text-xs font-bold focus:border-amber-400 outline-none ${
+                                                whatsappQuota && !whatsappQuota.allow_smartlinks ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed' : 'bg-white border-slate-200'
+                                            }`}
                                         >
                                             <option value="">-- Aucun SmartLink --</option>
                                             {smartLinks && smartLinks.map(s => (
                                                 <option key={s.id} value={s.id}>{s.title} ({Number(s.total_amount).toLocaleString()} F)</option>
                                             ))}
                                         </select>
+                                        {whatsappQuota && !whatsappQuota.allow_smartlinks && (
+                                            <p className="text-[10px] text-amber-600 font-semibold mt-1">SmartLinks réservés aux plans payants (Pro, Growth, Business)</p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -535,10 +736,10 @@ export default function Index({ store, customers, top5Customers, abandonedOrders
                                                     <button
                                                         type="button"
                                                         onClick={(e) => { e.stopPropagation(); sendWhatsAppBroadcastToCustomer(c); }}
-                                                        className="px-3 py-1 rounded-lg bg-emerald-500 text-white font-bold text-[10px] flex items-center gap-1 hover:bg-emerald-600"
+                                                        className="px-3 py-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-emerald-500 hover:text-white font-bold text-[10px] flex items-center gap-1 transition-colors"
                                                     >
-                                                        <MessageSquare className="w-3 h-3 fill-white" />
-                                                        <span>Envoyer direct</span>
+                                                        <MessageSquare className="w-3 h-3" />
+                                                        <span>1-par-1</span>
                                                     </button>
                                                 </div>
                                             );
@@ -547,18 +748,53 @@ export default function Index({ store, customers, top5Customers, abandonedOrders
                                 </div>
                             </div>
 
-                            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                                 <span className="text-xs text-slate-500 font-medium">
-                                    {selectedCustomerIds.length} client(s) recevront la diffusion
+                                    {selectedCustomerIds.length} client(s) sélectionné(s)
                                 </span>
 
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 w-full sm:w-auto">
                                     <button
                                         type="button"
                                         onClick={() => setIsBroadcastModalOpen(false)}
-                                        className="px-5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
+                                        className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
                                     >
                                         Fermer
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            if (selectedCustomerIds.length === 0) {
+                                                showToastNotification('Veuillez sélectionner au moins un client destinataire.', 'warning');
+                                                return;
+                                            }
+
+                                            if (whatsappQuota && whatsappQuota.remaining_campaigns <= 0) {
+                                                showToastNotification(`Quota mensuel atteint. Votre plan autorise ${whatsappQuota.max_campaigns_per_month} campagne(s) ce mois-ci.`, 'error');
+                                                return;
+                                            }
+
+                                            const selectedCustomersList = customers.filter(c => selectedCustomerIds.includes(c.id));
+
+                                            router.post(route('customers.campaign.store'), {
+                                                title: campaignTitle || 'Campagne WhatsApp',
+                                                message_template: broadcastMessage,
+                                                recipients: selectedCustomersList.map(c => ({ name: c.name, phone: c.phone || c.whatsapp })),
+                                                attached_products: selectedProductAttachment ? [selectedProductAttachment] : [],
+                                                smart_link_id: selectedSmartLinkAttachment || null,
+                                            }, {
+                                                preserveScroll: true,
+                                                onSuccess: () => {
+                                                    setIsBroadcastModalOpen(false);
+                                                    showToastNotification('🚀 Campagne WhatsApp 1-Clic lancée avec succès ! Les messages sont pris en charge en tâche de fond.', 'success');
+                                                }
+                                            });
+                                        }}
+                                        className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
+                                    >
+                                        <Send className="w-4 h-4 fill-white" />
+                                        <span>🚀 Lancer la Campagne 1-Clic</span>
                                     </button>
                                 </div>
                             </div>

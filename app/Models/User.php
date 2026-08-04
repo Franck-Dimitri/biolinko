@@ -170,4 +170,24 @@ class User extends Authenticatable
             default => 1,
         };
     }
+
+    public function getWhatsappCampaignsQuota(): array
+    {
+        $plan = strtolower($this->plan ?? 'starter');
+
+        return match ($plan) {
+            'pro' => ['max_campaigns_per_month' => 4, 'max_recipients_per_campaign' => 20, 'allow_smartlinks' => true, 'max_products' => 10],
+            'growth' => ['max_campaigns_per_month' => 10, 'max_recipients_per_campaign' => 30, 'allow_smartlinks' => true, 'max_products' => 20],
+            'business' => ['max_campaigns_per_month' => 15, 'max_recipients_per_campaign' => 50, 'allow_smartlinks' => true, 'max_products' => 50],
+            default => ['max_campaigns_per_month' => 1, 'max_recipients_per_campaign' => 10, 'allow_smartlinks' => false, 'max_products' => 2],
+        };
+    }
+
+    public function getUsedWhatsappCampaignsThisMonthCount(): int
+    {
+        return WhatsappCampaign::where('user_id', $this->id)
+            ->whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->count();
+    }
 }

@@ -89,6 +89,7 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
 
     // Customers Directory
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+    Route::post('/customers/campaign', [CustomerController::class, 'storeCampaign'])->name('customers.campaign.store');
 
     // Marketing & Pixels
     Route::get('/marketing', [MarketingController::class, 'index'])->name('seller.marketing.index');
