@@ -136,7 +136,7 @@ class CustomerController extends Controller
             ]);
         }
 
-        \App\Models\WhatsappCampaign::create([
+        $campaign = \App\Models\WhatsappCampaign::create([
             'store_id' => $store->id,
             'user_id' => $user->id,
             'title' => $validated['title'],
@@ -149,6 +149,27 @@ class CustomerController extends Controller
             'smart_link_id' => $validated['smart_link_id'] ?? null,
             'completed_at' => now(),
         ]);
+
+        // Attempt gateway send via WhatsappGatewayService
+        $gatewayService = app(\App\Services\WhatsappGatewayService::class);
+        $instanceName = 'store_' . $store->id;
+
+        foreach ($validated['recipients'] as $recipient) {
+            $phone = $recipient['phone'] ?? null;
+            if ($phone) {
+                $nameParts = explode(' ', trim($recipient['name'] ?? 'Client'));
+                $prenom = $nameParts[0] ?? 'Client';
+                $nom = count($nameParts) > 1 ? implode(' ', array_slice($nameParts, 1)) : ($recipient['name'] ?? '');
+
+                $text = str_replace(
+                    ['{prenom}', '{nom}', '{nom_boutique}'],
+                    [$prenom, $nom, $store->name],
+                    $validated['message_template']
+                );
+
+                $gatewayService->sendMessage($phone, $text, $instanceName);
+            }
+        }
 
         return redirect()->back()->with('message', 'Campagne WhatsApp 1-Clic exécutée avec succès !');
     }

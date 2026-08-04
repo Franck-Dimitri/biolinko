@@ -44,4 +44,9 @@ return [
         'currency' => 'XAF',
     ],
 
+    'whatsapp_gateway' => [
+        'base_url' => env('WHATSAPP_GATEWAY_URL', 'http://127.0.0.1:8080'),
+        'api_key' => env('WHATSAPP_GATEWAY_KEY', 'biolinko-secret-key-2026'),
+    ],
+
 ];
