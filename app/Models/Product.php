@@ -40,6 +40,16 @@ class Product extends Model
         'images' => 'array',
     ];
 
+    protected $appends = [
+        'price_display',
+    ];
+
+    public function getPriceDisplayAttribute(): float
+    {
+        $pv = (float) $this->price_vendor;
+        return (float) ceil($pv * 1.02);
+    }
+
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);

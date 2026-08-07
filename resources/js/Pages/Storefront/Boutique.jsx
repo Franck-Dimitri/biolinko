@@ -38,6 +38,40 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
     const [isAutoFilled, setIsAutoFilled] = useState(false);
     const [isSubmittingCheckout, setIsSubmittingCheckout] = useState(false);
 
+    // Customer Review Form State
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [reviewRating, setReviewRating] = useState(5);
+    const [reviewName, setReviewName] = useState('');
+    const [reviewCity, setReviewCity] = useState('');
+    const [reviewComment, setReviewComment] = useState('');
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+    const handleSubmitCustomerReview = (e) => {
+        e.preventDefault();
+        if (!reviewName || !reviewComment) return;
+
+        setIsSubmittingReview(true);
+        router.post(route('storefront.reviews.store', store.slug), {
+            customer_name: reviewName,
+            customer_city: reviewCity || 'Douala',
+            rating: reviewRating,
+            comment: reviewComment,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsSubmittingReview(false);
+                setIsReviewModalOpen(false);
+                setReviewName('');
+                setReviewCity('');
+                setReviewComment('');
+                showToast('Merci ! Votre avis a été enregistré avec succès.');
+            },
+            onError: () => {
+                setIsSubmittingReview(false);
+            }
+        });
+    };
+
     const handleSmartLinkAddToCart = (smartLink) => {
         if (!smartLink || !smartLink.items || smartLink.items.length === 0) return;
 
@@ -1130,21 +1164,32 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                             <p className="text-xs text-slate-500 font-medium">Ce que pensent les clients qui ont acheté chez {store.name}</p>
                                         </div>
 
-                                        <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-                                            <div className="text-center">
-                                                <div className="text-4xl font-bold text-slate-950">4.8</div>
-                                                <div className="flex text-amber-400 text-xs justify-center mt-1">
-                                                    <Star className="w-3.5 h-3.5 fill-amber-400" />
-                                                    <Star className="w-3.5 h-3.5 fill-amber-400" />
-                                                    <Star className="w-3.5 h-3.5 fill-amber-400" />
-                                                    <Star className="w-3.5 h-3.5 fill-amber-400" />
-                                                    <Star className="w-3.5 h-3.5 fill-amber-400" />
+                                        <div className="flex flex-col sm:flex-row items-center gap-3">
+                                            <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                                                <div className="text-center">
+                                                    <div className="text-4xl font-bold text-slate-950">4.8</div>
+                                                    <div className="flex text-amber-400 text-xs justify-center mt-1">
+                                                        <Star className="w-3.5 h-3.5 fill-amber-400" />
+                                                        <Star className="w-3.5 h-3.5 fill-amber-400" />
+                                                        <Star className="w-3.5 h-3.5 fill-amber-400" />
+                                                        <Star className="w-3.5 h-3.5 fill-amber-400" />
+                                                        <Star className="w-3.5 h-3.5 fill-amber-400" />
+                                                    </div>
+                                                </div>
+                                                <div className="text-xs text-slate-600 font-medium">
+                                                    <div>100% Achats Vérifiés</div>
+                                                    <div className="text-emerald-600 font-bold">{reviewsList.length} Avis Positifs</div>
                                                 </div>
                                             </div>
-                                            <div className="text-xs text-slate-600 font-medium">
-                                                <div>100% Achats Vérifiés</div>
-                                                <div className="text-emerald-600 font-bold">{reviewsList.length} Avis Positifs</div>
-                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsReviewModalOpen(true)}
+                                                className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-slate-950 hover:bg-slate-900 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-2xs cursor-pointer transition-all shrink-0"
+                                            >
+                                                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                                                <span>✍️ Laisser un avis client</span>
+                                            </button>
                                         </div>
                                     </div>
 
@@ -1264,6 +1309,100 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                     <p className="text-xs text-emerald-700">Redirection en cours...</p>
                                 </div>
                             )}
+                        </motion.div>
+                    </div>
+                {/* CUSTOMER REVIEW SUBMISSION MODAL */}
+                {isReviewModalOpen && (
+                    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden"
+                        >
+                            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                                <div className="flex items-center gap-2">
+                                    <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                                    <h3 className="font-extrabold text-sm text-slate-950">Déposer un avis sur {store.name}</h3>
+                                </div>
+                                <button
+                                    onClick={() => setIsReviewModalOpen(false)}
+                                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-200 cursor-pointer"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSubmitCustomerReview} className="p-6 space-y-4 text-xs font-sans">
+                                <div>
+                                    <label className="block font-bold text-slate-950 mb-1">Votre Nom & Prénom *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={reviewName}
+                                        onChange={(e) => setReviewName(e.target.value)}
+                                        placeholder="Ex: Mariam K."
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block font-bold text-slate-950 mb-1">Votre Ville de Résidence</label>
+                                    <input
+                                        type="text"
+                                        value={reviewCity}
+                                        onChange={(e) => setReviewCity(e.target.value)}
+                                        placeholder="Ex: Douala, Cotonou..."
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block font-bold text-slate-950 mb-1">Votre Note sur 5 Étoiles *</label>
+                                    <div className="flex items-center gap-2">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <button
+                                                key={star}
+                                                type="button"
+                                                onClick={() => setReviewRating(star)}
+                                                className="p-1 cursor-pointer transition-transform hover:scale-110"
+                                            >
+                                                <Star className={`w-6 h-6 ${star <= reviewRating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block font-bold text-slate-950 mb-1">Votre Témoignage / Commentaire *</label>
+                                    <textarea
+                                        rows={4}
+                                        required
+                                        value={reviewComment}
+                                        onChange={(e) => setReviewComment(e.target.value)}
+                                        placeholder="Ex: Produits de super qualité, livraison rapide et service client très réactif !"
+                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                    />
+                                </div>
+
+                                <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsReviewModalOpen(false)}
+                                        className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
+                                    >
+                                        Annuler
+                                    </button>
+
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmittingReview}
+                                        className="px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-900 text-white font-extrabold text-xs shadow-md cursor-pointer flex items-center gap-2"
+                                    >
+                                        <span>Publier mon avis</span>
+                                    </button>
+                                </div>
+                            </form>
                         </motion.div>
                     </div>
                 )}

@@ -1,59 +1,118 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ⚡ BIOLINKO — Plateforme SaaS E-Commerce & Link-in-Bio
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![Laravel](https://img.shields.io/badge/Laravel-11.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
+[![React](https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
+[![Inertia.js](https://img.shields.io/badge/Inertia.js-v1.x-9553E9?style=for-the-badge&logo=inertia&logoColor=white)](https://inertiajs.com)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v3.x-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
-## About Laravel
+**BIOLINKO** est une plateforme SaaS e-commerce tout-en-un conçue pour les entrepreneurs, commerçants et créateurs. Elle permet à n'importe quel vendeur de déployer sa vitrine e-commerce personnalisée en 2 minutes avec paiement **Fast Checkout Mobile Money (MTN & Orange)**, campagnes de relance **WhatsApp 1-Clic automatisées** (0 FCFA de frais API) et **facturation PDF certifiée**.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🌟 Fonctionnalités Clés
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **🎨 Studio d'Apparence & Vitrine Sur-Mesure** :
+  - Choix dynamique du style de bordures (**Coins Droits vs Arrondis**) et des typographies (`Inter`, `Outfit`, `Plus Jakarta Sans`, `Roboto`).
+  - Mode brouillon initial (`is_published = false`) pour préparer la boutique en toute confidentialité.
 
-## Learning Laravel
+- **💳 Fast Checkout Mobile Money (MTN & Orange 🇨🇲)** :
+  - Intégration de la passerelle **HR-Skills Pay API** avec notification USSD Push directe.
+  - Calcul automatique transparent des 2% de frais de plateforme.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **📱 Automation & Campagnes WhatsApp 1-Clic** :
+  - Microservice **Evolution API (Node.js)** auto-hébergé sous Docker pour l'envoi de messages réels en arrière-plan sans ouvrir d'onglets `wa.me`.
+  - Moteur d'injection de balises dynamiques (`{prenom}`, `{nom}`, `{ville}`, `{lien_produit}`).
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **📄 Facturation Certifiée & Portefeuille Virtuel** :
+  - Génération automatique de reçus PDF avec filigrane de sécurité et QR Code de certification unique.
+  - Portefeuille virtuel vendeur crédité automatiquement à chaque vente avec système de demande de virement Mobile Money.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- **💼 Tarification SaaS & Abonnements Multi-Niveaux** :
+  - Grille tarifaire complète (Starter, Pro, Growth, Business) avec gestion de quotas par plan et réductions annuelles (-10% sur 6 mois, -20% sur 1 an).
 
-## Agentic Development
+---
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## 🛠️ Stack Technique
 
+- **Backend** : PHP 8.2+ / Framework Laravel 11
+- **Frontend** : React 18 / Inertia.js / Tailwind CSS / Framer Motion / Lucide Icons
+- **Passerelle WhatsApp** : Evolution API (Baileys / Node.js) sous Docker
+- **Passerelle Paiement** : HR-Skills Pay API (MTN & Orange Money)
+- **Base de Données** : SQLite / PostgreSQL
+- **Tests** : Pest Test Suite (32 tests validés — 100% Pass)
+
+---
+
+## 🚀 Installation & Démarrage en Local
+
+### 1. Prérequis
+- PHP >= 8.2 avec extensions `gd`, `sqlite3`, `curl`, `mbstring`, `zip`.
+- Composer & Node.js (v18+).
+- Docker (pour la passerelle WhatsApp Evolution API).
+
+### 2. Clonage du projet
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/Franck-Dimitri/biolinko.git
+cd biolinko
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 3. Installation des dépendances
+```bash
+composer install
+npm install
+```
 
-## Contributing
+### 4. Fichier d'environnement
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 5. Migrations & Liens de stockage
+```bash
+php artisan migrate --seed
+php artisan storage:link
+```
 
-## Code of Conduct
+### 6. Lancement du serveur de développement
+```bash
+composer run dev
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 7. Lancement d'Evolution API (Passerelle WhatsApp)
+```bash
+docker run -d --name evolution-api -p 8080:8080 -e AUTHENTICATION_API_KEY=biolinko-secret-key-2026 evolutionapi/evolution-api:v2.1.1
+```
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🧪 Exécution des Tests Automatisés
 
-## License
+Le projet inclut une suite de tests unitaires et de fonctionnalités avec **Pest** :
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-# biolinko
+```bash
+./vendor/bin/pest
+```
+
+---
+
+## 👨‍💻 Concepteur & Développeur Lead
+
+Projet conçu, développé et maintenu par :
+
+**KOUONGME MBOUOM F. DIMITRI**  
+*Ingénieur Informaticien — Génie Logiciel*
+
+- 🌐 **Portfolio & Site Web** : [https://mrdims.dev](https://mrdims.dev)
+- 🐙 **GitHub** : [@Franck-Dimitri](https://github.com/Franck-Dimitri)
+- 📧 **Email** : [franckdimitrio09@gmail.com](mailto:franckdimitrio09@gmail.com)
+- 📱 **Téléphone / WhatsApp** : +237 676 38 39 86 / +237 690 22 60 35
+- 📍 **Localisation** : Yaoundé, Cameroun
+
+---
+
+## 📜 Licence
+
+Ce projet est sous licence [MIT](LICENSE).
