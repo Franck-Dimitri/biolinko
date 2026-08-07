@@ -26,3 +26,12 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Private Documentation, CDC & Reports
+BIOLINKO_CDC_*
+biolinko_vision_*
+documentation_bdd_*
+implementation_plan*
+rapport_*
+*.pdf
+

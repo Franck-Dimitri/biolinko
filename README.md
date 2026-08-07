@@ -52,36 +52,30 @@
 - Composer & Node.js (v18+).
 - Docker (pour la passerelle WhatsApp Evolution API).
 
-### 2. Clonage du projet
-```bash
-git clone https://github.com/Franck-Dimitri/biolinko.git
-cd biolinko
-```
-
-### 3. Installation des dépendances
+### 2. Installation des dépendances
 ```bash
 composer install
 npm install
 ```
 
-### 4. Fichier d'environnement
+### 3. Fichier d'environnement
 ```bash
 cp .env.example .env
 php artisan key:generate
 ```
 
-### 5. Migrations & Liens de stockage
+### 4. Migrations & Liens de stockage
 ```bash
 php artisan migrate --seed
 php artisan storage:link
 ```
 
-### 6. Lancement du serveur de développement
+### 5. Lancement du serveur de développement
 ```bash
 composer run dev
 ```
 
-### 7. Lancement d'Evolution API (Passerelle WhatsApp)
+### 6. Lancement d'Evolution API (Passerelle WhatsApp)
 ```bash
 docker run -d --name evolution-api -p 8080:8080 -e AUTHENTICATION_API_KEY=biolinko-secret-key-2026 evolutionapi/evolution-api:v2.1.1
 ```
