@@ -19,6 +19,7 @@ class User extends Authenticatable
         'email',
         'phone_whatsapp',
         'role',
+        'is_banned',
         'plan',
         'subscription_expires_at',
         'email_otp',
@@ -38,6 +39,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'subscription_expires_at' => 'datetime',
             'email_otp_expires_at' => 'datetime',
+            'is_banned' => 'boolean',
             'password' => 'hashed',
         ];
     }

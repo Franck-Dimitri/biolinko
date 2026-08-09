@@ -1,6 +1,14 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminStoreController;
+use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminWithdrawalController;
+use App\Http\Controllers\Admin\AdminTransactionController;
+use App\Http\Controllers\Admin\AdminSubscriptionController;
+use App\Http\Controllers\Admin\AdminProductController;
+use App\Http\Controllers\Admin\AdminSettingController;
+use App\Http\Controllers\Admin\AdminWalletController;
 use App\Http\Controllers\AppearanceController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CustomerController;
@@ -43,7 +51,41 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function (Request $re
 
 // 1. SUPER-ADMIN ROUTES (Prefix: /admin, Middleware: role:admin)
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(function () {
+    // 1. Dashboard Super-Admin
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+    
+    // 2. Boutiques Réseau
+    Route::get('/stores', [AdminStoreController::class, 'index'])->name('admin.stores.index');
+    Route::post('/stores/{store}/toggle-status', [AdminStoreController::class, 'toggleStatus'])->name('admin.stores.toggleStatus');
+    Route::post('/stores/{store}/plan', [AdminStoreController::class, 'updatePlan'])->name('admin.stores.plan');
+
+    // 3. Vendeurs & Utilisateurs
+    Route::get('/users', [AdminUserController::class, 'index'])->name('admin.users.index');
+    Route::post('/users/{user}/plan', [AdminUserController::class, 'updatePlan'])->name('admin.users.plan');
+    Route::post('/users/{user}/toggle-ban', [AdminUserController::class, 'toggleBan'])->name('admin.users.toggleBan');
+
+    // 4. Abonnements SaaS
+    Route::get('/subscriptions', [AdminSubscriptionController::class, 'index'])->name('admin.subscriptions.index');
+    Route::post('/subscriptions/{user}/update-plan', [AdminSubscriptionController::class, 'updatePlan'])->name('admin.subscriptions.updatePlan');
+
+    // 5. Catalogue Produits Réseau
+    Route::get('/products', [AdminProductController::class, 'index'])->name('admin.products.index');
+    Route::post('/products/{product}/toggle-active', [AdminProductController::class, 'toggleActive'])->name('admin.products.toggleActive');
+
+    // 6. Retraits Mobile Money
+    Route::get('/withdrawals', [AdminWithdrawalController::class, 'index'])->name('admin.withdrawals.index');
+    Route::post('/withdrawals/{withdrawal}/approve', [AdminWithdrawalController::class, 'approve'])->name('admin.withdrawals.approve');
+    Route::post('/withdrawals/{withdrawal}/reject', [AdminWithdrawalController::class, 'reject'])->name('admin.withdrawals.reject');
+
+    // 7. Portefeuille Admin & Gains Plateforme
+    Route::get('/wallet', [AdminWalletController::class, 'index'])->name('admin.wallet.index');
+
+    // 8. Ventes & Transactions
+    Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('admin.transactions.index');
+
+    // 9. Paramètres Plateforme & API
+    Route::get('/settings', [AdminSettingController::class, 'index'])->name('admin.settings.index');
+    Route::post('/settings', [AdminSettingController::class, 'update'])->name('admin.settings.update');
 });
 
 // 2. SELLER / VENDOR ROUTES (Prefix: /seller, Middleware: role:seller)
