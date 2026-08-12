@@ -938,7 +938,7 @@ export default function Welcome({ auth }) {
 
                         {/* Pro Plan */}
                         {(() => {
-                            const pricing = calculatePlanPricing(7000, selectedCycle);
+                            const pricing = calculatePlanPricing(2500, selectedCycle);
                             return (
                                 <div className="p-7 rounded-3xl bg-white border-2 border-amber-300 shadow-lg space-y-6 flex flex-col justify-between relative">
                                     <div className="absolute -top-3.5 right-4 px-3 py-1 rounded-full bg-[#FFCC00] text-slate-950 font-bold text-[10px] uppercase tracking-wider shadow-2xs flex items-center gap-1 border border-amber-300">
@@ -976,7 +976,7 @@ export default function Welcome({ auth }) {
 
                         {/* Growth Plan */}
                         {(() => {
-                            const pricing = calculatePlanPricing(16000, selectedCycle);
+                            const pricing = calculatePlanPricing(7000, selectedCycle);
                             return (
                                 <div className="p-7 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
                                     <div className="space-y-4">
@@ -1010,7 +1010,7 @@ export default function Welcome({ auth }) {
 
                         {/* Business Plan */}
                         {(() => {
-                            const pricing = calculatePlanPricing(30000, selectedCycle);
+                            const pricing = calculatePlanPricing(12000, selectedCycle);
                             return (
                                 <div className="p-7 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
                                     <div className="space-y-4">

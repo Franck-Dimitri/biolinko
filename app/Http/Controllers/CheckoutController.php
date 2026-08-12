@@ -213,13 +213,18 @@ class CheckoutController extends Controller
                 ? (float) $product->promo_price 
                 : (float) $product->price_vendor;
 
-            $pbUnit = ceil($currentPv * 1.02);
-            $tcUnit = ceil($pbUnit / 0.98);
+            // 1. BIOLINKO Net Margin (3% net, min 3 FCFA)
+            $unitSaasMargin = max(3, (float) ceil($currentPv * 0.03));
+
+            // 2. Mobile Money Gateway API Fee (2% deducted by HR-Skills Pay)
+            $subtotalWithMargin = $currentPv + $unitSaasMargin;
+            $unitTotalClient = (float) ceil($subtotalWithMargin / 0.98);
+            $unitApiFee = $unitTotalClient - $subtotalWithMargin;
 
             $itemVendorPrice = $currentPv * $quantity;
-            $itemSaasMargin = ($pbUnit - $currentPv) * $quantity;
-            $itemApiFee = ($tcUnit - $pbUnit) * $quantity;
-            $itemTotalClient = $tcUnit * $quantity;
+            $itemSaasMargin = $unitSaasMargin * $quantity;
+            $itemApiFee = $unitApiFee * $quantity;
+            $itemTotalClient = $unitTotalClient * $quantity;
 
             $priceVendorTotal += $itemVendorPrice;
             $saasMarginTotal += $itemSaasMargin;

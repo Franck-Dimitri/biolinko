@@ -184,10 +184,10 @@ export default function WalletIndex({ metrics, paidOrders, completedWithdrawals 
                                         <div>
                                             <div className="font-extrabold text-amber-700 font-mono text-sm">+{Number(ord.saas_margin || 0).toLocaleString()} FCFA</div>
                                             <div className="text-slate-600 text-[11px]">Boutique: <strong className="text-slate-950">{ord.store?.name}</strong></div>
-                                            <div className="text-[10px] text-slate-400">Réf: {ord.tracking_code}</div>
+                                            <div className="text-[10px] text-slate-400">Réf: {ord.tracking_code} (Client: {Number(ord.total_client).toLocaleString()} FCFA | Vendeur: {Number(ord.price_vendor).toLocaleString()} FCFA | Frais MoMo: {Number(ord.api_fee).toLocaleString()} FCFA)</div>
                                         </div>
                                         <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
-                                            2% Encaissé
+                                            Gain Net App
                                         </span>
                                     </div>
                                 ))}

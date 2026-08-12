@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -12,7 +13,16 @@ class ProductController extends Controller
 {
     public function index(Request $request): Response
     {
-        $store = $request->user()->store;
+        $user = $request->user();
+        $store = $user->store;
+
+        if (!$store) {
+            $store = $user->store()->create([
+                'name' => 'Boutique de ' . $user->name,
+                'slug' => Str::slug($user->name . '-' . rand(100, 999)),
+                'is_published' => false,
+            ]);
+        }
 
         $products = $store->products()
             ->with('variants')
@@ -48,6 +58,14 @@ class ProductController extends Controller
         $user = $request->user();
         $store = $user->store;
 
+        if (!$store) {
+            $store = $user->store()->create([
+                'name' => 'Boutique de ' . $user->name,
+                'slug' => Str::slug($user->name . '-' . rand(100, 999)),
+                'is_published' => false,
+            ]);
+        }
+
         // Plan quota limits enforcement
         $userPlan = $user->plan ?? 'starter';
         $maxProductsMap = [
@@ -61,6 +79,23 @@ class ProductController extends Controller
             return redirect()->back()->withErrors([
                 'title' => "Limite de {$maxAllowed} produits atteinte pour le plan " . strtoupper($userPlan) . ". Veuillez passer au plan supérieur.",
             ]);
+        }
+
+        $requestedStock = (int) $request->input('stock', 0);
+        if ($userPlan === 'starter') {
+            if ($requestedStock > 10) {
+                return redirect()->back()->withErrors([
+                    'stock' => "Sur le plan Starter (Gratuit), la quantité en stock d'un produit ne peut pas dépasser 10 unités. Passez au plan Pro pour un stock illimité.",
+                ]);
+            }
+
+            $currentStoreTotalStock = (int) $store->products()->sum('stock');
+            if (($currentStoreTotalStock + $requestedStock) > 10) {
+                $remainingStock = max(0, 10 - $currentStoreTotalStock);
+                return redirect()->back()->withErrors([
+                    'stock' => "Quota de stock atteint ! Sur le plan Starter (Gratuit), le stock cumulé total de votre boutique ne peut pas dépasser 10 unités. (Quantité restante disponible : {$remainingStock} unité(s)). Réduisez le stock d'autres produits ou passez au plan Pro.",
+                ]);
+            }
         }
 
         if ($request->input('promo_price') === '') {
@@ -115,12 +150,11 @@ class ProductController extends Controller
             $imagePaths[] = $validated['image_url_input'];
         }
 
-        // Fallback default placeholder if no image provided
         if (empty($imagePaths)) {
             $imagePaths[] = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600';
         }
 
-        $slug = \Illuminate\Support\Str::slug($validated['title']) . '-' . \Illuminate\Support\Str::random(4);
+        $slug = Str::slug($validated['title']) . '-' . Str::random(4);
 
         $product = $store->products()->create([
             'title' => $validated['title'],
@@ -134,43 +168,33 @@ class ProductController extends Controller
             'promo_start_at' => $validated['promo_start_at'] ?? null,
             'promo_end_at' => $validated['promo_end_at'] ?? null,
             'is_active' => $request->boolean('is_active', true),
-            'image_url' => $imagePaths[0],
             'images' => $imagePaths,
+            'main_image' => $imagePaths[0] ?? null,
         ]);
 
-        if (!empty($validated['variants'])) {
-            $validVariants = array_filter($validated['variants'], function($v) {
-                return !empty($v['name']) || !empty($v['size']) || !empty($v['color']);
-            });
-
-            if ($userPlan === 'starter' && count($validVariants) > 1) {
-                return redirect()->back()->withErrors([
-                    'title' => "La formule STARTER est limitée à 1 seule variante par produit. Passez au plan PRO pour ajouter des variantes illimitées.",
-                ]);
-            }
-
-            foreach ($validVariants as $v) {
-                $product->variants()->create([
-                    'name' => $v['name'] ?? null,
-                    'size' => $v['size'] ?? null,
-                    'color' => $v['color'] ?? null,
-                    'price' => !empty($v['price']) ? (float) $v['price'] : null,
-                    'stock_quantity' => isset($v['stock_quantity']) ? (int) $v['stock_quantity'] : 10,
-                ]);
+        // Process Variants if provided
+        if (!empty($validated['variants']) && is_array($validated['variants'])) {
+            foreach ($validated['variants'] as $varData) {
+                if (!empty($varData['name'])) {
+                    $product->variants()->create([
+                        'name' => $varData['name'],
+                        'price' => !empty($varData['price']) ? (float) $varData['price'] : null,
+                        'stock' => isset($varData['stock']) ? (int) $varData['stock'] : 0,
+                    ]);
+                }
             }
         }
 
-        return redirect()->back()->with('message', 'Produit créé avec succès !');
+        return redirect()->back()->with('message', 'Produit ajouté avec succès au catalogue !');
     }
 
     public function update(Request $request, Product $product): RedirectResponse
     {
         $store = $request->user()->store;
-        if ($product->store_id !== $store->id) {
-            abort(403);
+        if (!$store || $product->store_id !== $store->id) {
+            abort(403, 'Action non autorisée.');
         }
 
-        // Convert empty string inputs to null for optional fields
         if ($request->input('promo_price') === '') {
             $request->merge(['promo_price' => null]);
         }
@@ -203,6 +227,23 @@ class ProductController extends Controller
             return redirect()->back()->withErrors([
                 'title' => "La mise en promotion des produits est réservée aux abonnements PRO, GROWTH et BUSINESS. Passez au plan Pro pour activer les promotions.",
             ]);
+        }
+
+        if (array_key_exists('stock', $validated) && $userPlan === 'starter') {
+            $newStock = (int) $validated['stock'];
+            if ($newStock > 10) {
+                return redirect()->back()->withErrors([
+                    'stock' => "Sur le plan Starter (Gratuit), le stock d'un produit ne peut pas dépasser 10 unités. Passez au plan Pro pour un stock illimité.",
+                ]);
+            }
+
+            $otherProductsStock = (int) $store->products()->where('id', '!=', $product->id)->sum('stock');
+            if (($otherProductsStock + $newStock) > 10) {
+                $remainingStock = max(0, 10 - $otherProductsStock);
+                return redirect()->back()->withErrors([
+                    'stock' => "Quota de stock atteint ! Sur le plan Starter (Gratuit), le stock cumulé total de votre boutique ne peut pas dépasser 10 unités. (Quantité max disponible pour ce produit : {$remainingStock} unité(s)). Réduisez le stock d'autres produits ou passez au plan Pro.",
+                ]);
+            }
         }
 
         $imagePaths = $product->images ?? [];
@@ -259,46 +300,26 @@ class ProductController extends Controller
         }
 
         if (!empty($imagePaths)) {
-            $updateData['image_url'] = $imagePaths[0];
             $updateData['images'] = $imagePaths;
+            $updateData['main_image'] = $imagePaths[0] ?? null;
         }
 
         $product->update($updateData);
 
-        // Sync Variants
-        if ($request->has('variants')) {
-            $existingIds = [];
-            $variantsData = $request->input('variants', []);
-            if (is_array($variantsData)) {
-                foreach ($variantsData as $v) {
-                    if (empty($v['name']) && empty($v['size']) && empty($v['color'])) {
-                        continue;
-                    }
-                    if (!empty($v['id'])) {
-                        $variant = $product->variants()->find($v['id']);
-                        if ($variant) {
-                            $variant->update([
-                                'name' => $v['name'] ?? null,
-                                'size' => $v['size'] ?? null,
-                                'color' => $v['color'] ?? null,
-                                'price' => !empty($v['price']) ? (float) $v['price'] : null,
-                                'stock_quantity' => isset($v['stock_quantity']) ? (int) $v['stock_quantity'] : 10,
-                            ]);
-                            $existingIds[] = $variant->id;
-                        }
-                    } else {
-                        $newVar = $product->variants()->create([
-                            'name' => $v['name'] ?? null,
-                            'size' => $v['size'] ?? null,
-                            'color' => $v['color'] ?? null,
-                            'price' => !empty($v['price']) ? (float) $v['price'] : null,
-                            'stock_quantity' => isset($v['stock_quantity']) ? (int) $v['stock_quantity'] : 10,
+        // Update variants if provided
+        if (array_key_exists('variants', $validated)) {
+            $product->variants()->delete();
+            if (is_array($validated['variants'])) {
+                foreach ($validated['variants'] as $varData) {
+                    if (!empty($varData['name'])) {
+                        $product->variants()->create([
+                            'name' => $varData['name'],
+                            'price' => !empty($varData['price']) ? (float) $varData['price'] : null,
+                            'stock' => isset($varData['stock']) ? (int) $varData['stock'] : 0,
                         ]);
-                        $existingIds[] = $newVar->id;
                     }
                 }
             }
-            $product->variants()->whereNotIn('id', $existingIds)->delete();
         }
 
         return redirect()->back()->with('message', 'Produit mis à jour avec succès !');
@@ -307,11 +328,12 @@ class ProductController extends Controller
     public function destroy(Request $request, Product $product): RedirectResponse
     {
         $store = $request->user()->store;
-        if ($product->store_id !== $store->id) {
-            abort(403);
+        if (!$store || $product->store_id !== $store->id) {
+            abort(403, 'Action non autorisée.');
         }
 
         $product->delete();
-        return redirect()->back()->with('message', 'Produit supprimé !');
+
+        return redirect()->back()->with('message', 'Produit supprimé du catalogue avec succès.');
     }
 }

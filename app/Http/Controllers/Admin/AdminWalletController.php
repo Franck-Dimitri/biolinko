@@ -14,14 +14,20 @@ class AdminWalletController extends Controller
 {
     public function index(Request $request): Response
     {
-        // 1. Gain 2% Marge sur les Ventes
-        $totalSaasMargin = (float) Order::where('status', 'paid')->sum('saas_margin');
+        $paidQuery = function ($q) {
+            $q->where('payment_status', 'paid')
+              ->orWhereIn('status', ['paid', 'delivered', 'completed']);
+        };
 
-        // 2. Gain 1% Frais de Retrait Mobile Money (ex: 1% prélevé sur les Payouts validés)
+        // 1. Gain Marge Nette d'Application sur les Ventes
+        $paidOrdersCollection = Order::where($paidQuery)->get();
+        $totalSaasMargin = (float) $paidOrdersCollection->sum('saas_margin');
+
+        // 2. Gain 1% Frais de Retrait Mobile Money (1% prélevé sur les Payouts validés)
         $completedWithdrawalsSum = (float) Withdrawal::where('status', 'completed')->sum('amount');
         $totalWithdrawalFees = $completedWithdrawalsSum * 0.01;
 
-        // 3. Gain Abonnements SaaS (Pro, Growth, Business)
+        // 3. Gain Abonnements SaaS (Pro 2.5k, Growth 7k, Business 12k)
         $proRevenue = User::where('plan', 'pro')->count() * 2500;
         $growthRevenue = User::where('plan', 'growth')->count() * 7000;
         $businessRevenue = User::where('plan', 'business')->count() * 12000;
@@ -39,7 +45,7 @@ class AdminWalletController extends Controller
         ];
 
         // Revenue Breakdown History List
-        $paidOrders = Order::with('store')->where('status', 'paid')->latest()->take(10)->get();
+        $paidOrders = Order::with('store')->where($paidQuery)->latest()->take(10)->get();
         $completedWithdrawals = Withdrawal::with('wallet.store')->where('status', 'completed')->latest()->take(10)->get();
 
         return Inertia::render('Admin/Wallet/Index', [

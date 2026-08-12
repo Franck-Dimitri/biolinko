@@ -19,13 +19,18 @@ class AdminDashboardController extends Controller
 {
     public function index(Request $request): Response
     {
+        $paidQuery = function ($q) {
+            $q->where('payment_status', 'paid')
+              ->orWhereIn('status', ['paid', 'delivered', 'completed']);
+        };
+
         $totalVendors = User::where('role', 'seller')->orWhereNull('role')->count();
         $totalStores = Store::count();
         $totalProducts = Product::count();
         $totalOrders = Order::count();
         
-        $totalGmv = (float) Order::where('status', 'paid')->sum('total_client');
-        $totalSaasRevenue = (float) Order::where('status', 'paid')->sum('saas_margin');
+        $totalGmv = (float) Order::where($paidQuery)->sum('total_client');
+        $totalSaasRevenue = (float) Order::where($paidQuery)->sum('saas_margin');
         $pendingWithdrawalsCount = Withdrawal::where('status', 'pending')->count();
 
         $recentStores = Store::with('user')->latest()->take(10)->get();

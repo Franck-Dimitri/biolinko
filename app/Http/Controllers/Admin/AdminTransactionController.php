@@ -12,13 +12,22 @@ class AdminTransactionController extends Controller
 {
     public function index(Request $request): Response
     {
+        $paidQuery = function ($q) {
+            $q->where('payment_status', 'paid')
+              ->orWhereIn('status', ['paid', 'delivered', 'completed']);
+        };
+
         $statusFilter = $request->query('status', 'all');
         $search = trim($request->query('search', ''));
 
         $query = Order::with(['store', 'items']);
 
         if ($statusFilter !== 'all') {
-            $query->where('status', $statusFilter);
+            if ($statusFilter === 'paid') {
+                $query->where($paidQuery);
+            } else {
+                $query->where('status', $statusFilter);
+            }
         }
 
         if (!empty($search)) {
@@ -37,11 +46,11 @@ class AdminTransactionController extends Controller
 
         $metrics = [
             'total_orders' => Order::count(),
-            'paid_orders' => Order::where('status', 'paid')->count(),
-            'pending_orders' => Order::where('status', 'pending')->count(),
+            'paid_orders' => Order::where($paidQuery)->count(),
+            'pending_orders' => Order::where('status', 'pending')->where('payment_status', '!=', 'paid')->count(),
             'cancelled_orders' => Order::where('status', 'cancelled')->count(),
-            'total_gmv' => (float) Order::where('status', 'paid')->sum('total_client'),
-            'total_saas_revenue' => (float) Order::where('status', 'paid')->sum('saas_margin'),
+            'total_gmv' => (float) Order::where($paidQuery)->sum('total_client'),
+            'total_saas_revenue' => (float) Order::where($paidQuery)->sum('saas_margin'),
         ];
 
         return Inertia::render('Admin/Transactions/Index', [

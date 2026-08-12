@@ -1,12 +1,12 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import StorefrontLayout from '@/Layouts/StorefrontLayout';
-import { 
-    ShoppingBag, ShieldCheck, ArrowRight, X, 
-    Share2, Truck, Lock, MessageSquare, Star, Heart, 
-    Package, Sparkles, AlertCircle, Clock, MapPin, Tag, Check, Search, 
+import {
+    ShoppingBag, ShieldCheck, ArrowRight, X,
+    Share2, Truck, Lock, MessageSquare, Star, Heart,
+    Package, Sparkles, AlertCircle, Clock, MapPin, Tag, Check, Search,
     Store, ChevronRight, ArrowLeft, PhoneCall,
     Award, Shield, BadgeCheck, FileText, CheckCircle2, UserCheck, Play, Flame, Eye, Trash2, Plus, Minus,
     ShoppingCart, Mail, RefreshCw
@@ -91,7 +91,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
         setActiveSectionTab('cart');
         showToast(`Pack "${smartLink.title}" ajouté à votre panier !`);
     };
-    
+
     const [ussdModalState, setUssdModalState] = useState({
         isOpen: false,
         reference: null,
@@ -128,7 +128,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
 
         const saved = localStorage.getItem(`biolinko_cart_${store.id}`);
         if (saved) {
-            try { setCartItems(JSON.parse(saved)); } catch (e) {}
+            try { setCartItems(JSON.parse(saved)); } catch (e) { }
         }
 
         // Load saved customer info
@@ -147,7 +147,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                     }));
                     setIsAutoFilled(true);
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
     }, [store.id]);
 
@@ -338,10 +338,10 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
     // Filters
     const filteredProducts = products ? products.filter(p => {
         const q = searchQuery.toLowerCase();
-        const matchesSearch = q === '' || 
-            p.title.toLowerCase().includes(q) || 
+        const matchesSearch = q === '' ||
+            p.title.toLowerCase().includes(q) ||
             (p.description && p.description.toLowerCase().includes(q));
-        
+
         const catName = (p.category || '').toLowerCase();
         const pTitle = p.title.toLowerCase();
         let matchesCategory = true;
@@ -400,12 +400,12 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
     };
 
     return (
-        <StorefrontLayout 
-            store={store} 
-            activeTab={activeSectionTab} 
-            setActiveTab={setActiveSectionTab} 
-            searchQuery={searchQuery} 
-            setSearchQuery={setSearchQuery} 
+        <StorefrontLayout
+            store={store}
+            activeTab={activeSectionTab}
+            setActiveTab={setActiveSectionTab}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
             isOwner={isOwner}
         >
             <Head title={`${activeSectionTab === 'cart' ? 'Mon Panier d\'Achat' : store.name} — Vitrine Officielle`} />
@@ -413,7 +413,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
             {/* MAIN CONTENT AREA */}
             <div className="space-y-12 w-full">
                 <AnimatePresence mode="wait">
-                    
+
                     {/* STATE 1: FULL PAGE SHOPPING CART VIEW */}
                     {activeSectionTab === 'cart' ? (
                         <motion.div
@@ -427,8 +427,8 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                             {/* Breadcrumbs */}
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-                                    <button 
-                                        onClick={() => setActiveSectionTab('all')} 
+                                    <button
+                                        onClick={() => setActiveSectionTab('all')}
                                         className="hover:text-slate-950 flex items-center gap-1 text-slate-600"
                                     >
                                         <ArrowLeft className="w-3.5 h-3.5 text-slate-400" /> Continuer vos achats
@@ -450,7 +450,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
 
                             {cartItems.length > 0 ? (
                                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                                    
+
                                     {/* LEFT COLUMN: LIST OF CART ITEMS */}
                                     <div className="lg:col-span-7 space-y-4">
                                         <div className="bg-white rounded-3xl border border-slate-200/90 p-6 space-y-4 shadow-2xs">
@@ -651,9 +651,8 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                     whileTap={{ scale: (isSubmittingCheckout || processing) ? 1 : 0.97 }}
                                                     type="submit"
                                                     disabled={isSubmittingCheckout || processing}
-                                                    className={`w-full py-3.5 rounded-2xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 border ${
-                                                        (isSubmittingCheckout || processing) ? 'opacity-70 cursor-not-allowed pointer-events-none' : ''
-                                                    }`}
+                                                    className={`w-full py-3.5 rounded-2xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 border ${(isSubmittingCheckout || processing) ? 'opacity-70 cursor-not-allowed pointer-events-none' : ''
+                                                        }`}
                                                     style={{ backgroundColor: primaryColor, color: primaryTextColor, borderColor: primaryColor }}
                                                 >
                                                     {(isSubmittingCheckout || processing) ? (
@@ -699,7 +698,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                             )}
                         </motion.div>
                     ) : (
-                        
+
                         /* STATE 2: STORE HOMEPAGE / CATALOGUE VIEW */
                         <motion.div
                             key="store-home"
@@ -710,14 +709,14 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                             className="space-y-16"
                         >
                             {/* 1. HERO BANNER */}
-                            <motion.section 
+                            <motion.section
                                 initial={{ opacity: 0, scale: 0.99 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ duration: 0.4 }}
                                 className="relative rounded-3xl bg-white overflow-hidden p-6 sm:p-12 flex flex-col md:flex-row items-center justify-between gap-8 border border-slate-200/90 shadow-2xs"
                             >
                                 <div className="space-y-5 max-w-xl text-center md:text-left z-10">
-                                    <motion.span 
+                                    <motion.span
                                         initial={{ opacity: 0, x: -15 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         className="px-3 py-1 rounded-full font-semibold text-[11px] uppercase tracking-wider inline-block shadow-2xs border border-slate-200"
@@ -725,8 +724,8 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                     >
                                         {store.hero_badge_text || 'PROMOTIONS & TENDANCES'}
                                     </motion.span>
-                                    
-                                    <motion.h2 
+
+                                    <motion.h2
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight text-slate-950"
@@ -734,7 +733,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                         {store.hero_title || 'Découvrez nos Produits d\'Exception'}
                                     </motion.h2>
 
-                                    <motion.p 
+                                    <motion.p
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed"
@@ -743,7 +742,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                     </motion.p>
                                 </div>
 
-                                <motion.div 
+                                <motion.div
                                     animate={{ y: [0, -6, 0] }}
                                     transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
                                     className="relative w-full md:w-80 h-72 sm:h-80 rounded-2xl bg-slate-50 border border-slate-200 overflow-hidden shrink-0 shadow-2xs flex items-center justify-center p-3"
@@ -758,7 +757,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
 
                             {/* 2. CONFIDENCE & STATS BAR */}
                             {isSectionActive('benefits') && (
-                                <motion.section 
+                                <motion.section
                                     variants={staggerContainer}
                                     initial="hidden"
                                     whileInView="visible"
@@ -784,7 +783,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
 
                             {/* 2.5. SMARTLINKS OFFRES EXPRESS SECTION */}
                             {isSectionActive('smartlinks') && activeSmartLinks && activeSmartLinks.length > 0 && (
-                                <motion.section 
+                                <motion.section
                                     initial={{ opacity: 0, y: 15 }}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
@@ -859,7 +858,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                             )}
 
                             {/* 3. CATEGORIES & CATALOGUE PRODUITS SECTION (IMAGE 1 & IMAGE 2 DESIGN) */}
-                            <motion.section 
+                            <motion.section
                                 initial={{ opacity: 0, y: 15 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
@@ -911,11 +910,10 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                 key={cat.id}
                                                 type="button"
                                                 onClick={() => setSelectedCategory(cat.id)}
-                                                className={`py-1.5 px-4 rounded-full transition-all cursor-pointer ${
-                                                    selectedCategory === cat.id
+                                                className={`py-1.5 px-4 rounded-full transition-all cursor-pointer ${selectedCategory === cat.id
                                                         ? 'bg-[#FFCC00] text-slate-950 font-extrabold shadow-2xs'
                                                         : 'text-slate-600 hover:text-slate-950 hover:bg-slate-100'
-                                                }`}
+                                                    }`}
                                             >
                                                 {cat.label}
                                             </button>
@@ -939,23 +937,21 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                         <p className="text-xs text-slate-500 font-medium mt-0.5">Achetez en gros ou au détail directement auprès des vendeurs agréés</p>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button 
+                                        <button
                                             onClick={() => { setSelectedCategory('all'); setSearchQuery(''); }}
-                                            className={`px-4 py-2 rounded-full text-xs cursor-pointer ${
-                                                selectedCategory === 'all' && searchQuery === '' 
-                                                    ? 'bg-[#FFCC00] text-slate-950 font-extrabold shadow-2xs' 
+                                            className={`px-4 py-2 rounded-full text-xs cursor-pointer ${selectedCategory === 'all' && searchQuery === ''
+                                                    ? 'bg-[#FFCC00] text-slate-950 font-extrabold shadow-2xs'
                                                     : 'bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50'
-                                            }`}
+                                                }`}
                                         >
                                             Tous les articles
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={() => setActiveSectionTab(activeSectionTab === 'promo' ? 'all' : 'promo')}
-                                            className={`px-4 py-2 rounded-full text-xs cursor-pointer ${
-                                                activeSectionTab === 'promo'
+                                            className={`px-4 py-2 rounded-full text-xs cursor-pointer ${activeSectionTab === 'promo'
                                                     ? 'bg-rose-600 text-white font-extrabold shadow-2xs'
                                                     : 'bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50'
-                                            }`}
+                                                }`}
                                         >
                                             Promotions &amp; Ventes Flash
                                         </button>
@@ -963,7 +959,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                 </div>
 
                                 {filteredProducts.length > 0 ? (
-                                    <motion.div 
+                                    <motion.div
                                         variants={staggerContainer}
                                         initial="hidden"
                                         whileInView="visible"
@@ -972,8 +968,8 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                     >
                                         {filteredProducts.map((product) => {
                                             const directProductUrl = `/${store.slug}/p/${product.slug}`;
-                                            const unitPrice = (product.is_promo && product.promo_price > 0) 
-                                                ? Number(product.promo_price) 
+                                            const unitPrice = (product.is_promo && product.promo_price > 0)
+                                                ? Number(product.promo_price)
                                                 : Number(product.price_vendor);
                                             const displayPrice = Math.ceil(unitPrice * 1.02);
 
@@ -986,9 +982,9 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                 >
                                                     <a href={directProductUrl} className="block">
                                                         <div className="h-52 bg-slate-50 relative overflow-hidden flex items-center justify-center p-3 border-b border-slate-100">
-                                                            <img 
-                                                                src={product.image_url || (product.images?.[0]) || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'} 
-                                                                alt={product.title} 
+                                                            <img
+                                                                src={product.image_url || (product.images?.[0]) || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'}
+                                                                alt={product.title}
                                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                             />
                                                             {product.is_promo ? (
@@ -1065,7 +1061,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                             </motion.section>
 
                             {/* 4. PROMOTIONS SECTION */}
-                            <motion.section 
+                            <motion.section
                                 initial={{ opacity: 0, y: 15 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
@@ -1077,7 +1073,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                         <Flame className="w-3.5 h-3.5 fill-rose-600 text-rose-600" />
                                         <span>VENTES FLASH & OFFRES SOLDE</span>
                                     </div>
-                                    
+
                                     <h3 className="text-2xl sm:text-3xl font-bold text-slate-950 tracking-tight">
                                         Promotions Exclusives du Moment
                                     </h3>
@@ -1098,9 +1094,9 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                 <div key={promoItem.id} className="bg-white text-slate-900 rounded-2xl border border-slate-200 shadow-2xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between group">
                                                     <a href={directProductUrl} className="block">
                                                         <div className="h-48 bg-slate-50 relative overflow-hidden flex items-center justify-center p-3 border-b border-slate-100">
-                                                            <img 
-                                                                src={promoItem.image_url || (promoItem.images?.[0]) || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'} 
-                                                                alt={promoItem.title} 
+                                                            <img
+                                                                src={promoItem.image_url || (promoItem.images?.[0]) || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'}
+                                                                alt={promoItem.title}
                                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                             />
                                                             <div className="absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full bg-rose-600 text-white font-bold text-[10px] shadow-2xs flex items-center gap-1">
@@ -1148,7 +1144,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
 
                             {/* 5. CUSTOMER REVIEWS SECTION */}
                             {isSectionActive('reviews') && (
-                                <motion.section 
+                                <motion.section
                                     initial={{ opacity: 0, y: 15 }}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
@@ -1216,7 +1212,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
 
                             {/* 6. ABOUT STORE SECTION */}
                             {isSectionActive('about') && (
-                                <motion.section 
+                                <motion.section
                                     initial={{ opacity: 0, y: 15 }}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
@@ -1269,144 +1265,144 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
 
                 </AnimatePresence>
 
-            {/* USSD MODAL */}
-            <AnimatePresence>
-                {ussdModalState.isOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 sm:p-8 space-y-6 text-center relative overflow-hidden"
-                        >
-                            <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center mx-auto text-2xl shadow-inner font-bold">
-                                {ussdModalState.operator === 'ORANGE' ? '🍊' : '🟡'}
-                            </div>
+                {/* USSD MODAL */}
+                <AnimatePresence>
+                    {ussdModalState.isOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 sm:p-8 space-y-6 text-center relative overflow-hidden"
+                            >
+                                <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center mx-auto text-2xl shadow-inner font-bold">
+                                    {ussdModalState.operator === 'ORANGE' ? '🍊' : '🟡'}
+                                </div>
 
-                            <div className="space-y-2">
-                                <h3 className="text-xl font-extrabold text-slate-950">Validation USSD Mobile Money 🇨🇲</h3>
-                                <p className="text-xs text-slate-500 font-medium">
-                                    Opérateur : <strong className="text-slate-900">{ussdModalState.operator} MoMo</strong> ({ussdModalState.phone})
-                                </p>
-                            </div>
-
-                            {ussdModalState.status === 'PENDING' && (
-                                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-3">
-                                    <div className="flex items-center justify-center gap-2 text-amber-900 font-bold text-sm">
-                                        <RefreshCw className="w-5 h-5 animate-spin text-amber-600" />
-                                        <span>Prompt USSD Envoyé !</span>
-                                    </div>
-                                    <p className="text-xs text-slate-700 font-medium leading-relaxed">
-                                        Veuillez composer votre code secret PIN Mobile Money sur votre téléphone pour valider le règlement de <strong className="text-slate-950 font-bold">{Number(ussdModalState.amount).toLocaleString()} FCFA</strong>.
+                                <div className="space-y-2">
+                                    <h3 className="text-xl font-extrabold text-slate-950">Validation USSD Mobile Money 🇨🇲</h3>
+                                    <p className="text-xs text-slate-500 font-medium">
+                                        Opérateur : <strong className="text-slate-900">{ussdModalState.operator} MoMo</strong> ({ussdModalState.phone})
                                     </p>
                                 </div>
-                            )}
 
-                            {ussdModalState.status === 'SUCCESS' && (
-                                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-2">
-                                    <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
-                                    <h4 className="text-sm font-bold text-emerald-950">Paiement Confirmé !</h4>
-                                    <p className="text-xs text-emerald-700">Redirection en cours...</p>
-                                </div>
-                            )}
-                        </motion.div>
-                    </div>
-                {/* CUSTOMER REVIEW SUBMISSION MODAL */}
-                {isReviewModalOpen && (
-                    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden"
-                        >
-                            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                                <div className="flex items-center gap-2">
-                                    <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
-                                    <h3 className="font-extrabold text-sm text-slate-950">Déposer un avis sur {store.name}</h3>
-                                </div>
-                                <button
-                                    onClick={() => setIsReviewModalOpen(false)}
-                                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-200 cursor-pointer"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleSubmitCustomerReview} className="p-6 space-y-4 text-xs font-sans">
-                                <div>
-                                    <label className="block font-bold text-slate-950 mb-1">Votre Nom & Prénom *</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={reviewName}
-                                        onChange={(e) => setReviewName(e.target.value)}
-                                        placeholder="Ex: Mariam K."
-                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block font-bold text-slate-950 mb-1">Votre Ville de Résidence</label>
-                                    <input
-                                        type="text"
-                                        value={reviewCity}
-                                        onChange={(e) => setReviewCity(e.target.value)}
-                                        placeholder="Ex: Douala, Cotonou..."
-                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block font-bold text-slate-950 mb-1">Votre Note sur 5 Étoiles *</label>
-                                    <div className="flex items-center gap-2">
-                                        {[1, 2, 3, 4, 5].map((star) => (
-                                            <button
-                                                key={star}
-                                                type="button"
-                                                onClick={() => setReviewRating(star)}
-                                                className="p-1 cursor-pointer transition-transform hover:scale-110"
-                                            >
-                                                <Star className={`w-6 h-6 ${star <= reviewRating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} />
-                                            </button>
-                                        ))}
+                                {ussdModalState.status === 'PENDING' && (
+                                    <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-3">
+                                        <div className="flex items-center justify-center gap-2 text-amber-900 font-bold text-sm">
+                                            <RefreshCw className="w-5 h-5 animate-spin text-amber-600" />
+                                            <span>Prompt USSD Envoyé !</span>
+                                        </div>
+                                        <p className="text-xs text-slate-700 font-medium leading-relaxed">
+                                            Veuillez composer votre code secret PIN Mobile Money sur votre téléphone pour valider le règlement de <strong className="text-slate-950 font-bold">{Number(ussdModalState.amount).toLocaleString()} FCFA</strong>.
+                                        </p>
                                     </div>
-                                </div>
+                                )}
 
-                                <div>
-                                    <label className="block font-bold text-slate-950 mb-1">Votre Témoignage / Commentaire *</label>
-                                    <textarea
-                                        rows={4}
-                                        required
-                                        value={reviewComment}
-                                        onChange={(e) => setReviewComment(e.target.value)}
-                                        placeholder="Ex: Produits de super qualité, livraison rapide et service client très réactif !"
-                                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                    />
-                                </div>
-
-                                <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-100">
+                                {ussdModalState.status === 'SUCCESS' && (
+                                    <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-2">
+                                        <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+                                        <h4 className="text-sm font-bold text-emerald-950">Paiement Confirmé !</h4>
+                                        <p className="text-xs text-emerald-700">Redirection en cours...</p>
+                                    </div>
+                                )}
+                            </motion.div>
+                        </div>
+                    )}
+                    {isReviewModalOpen && (
+                        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden"
+                            >
+                                <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                                    <div className="flex items-center gap-2">
+                                        <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                                        <h3 className="font-extrabold text-sm text-slate-950">Déposer un avis sur {store.name}</h3>
+                                    </div>
                                     <button
-                                        type="button"
                                         onClick={() => setIsReviewModalOpen(false)}
-                                        className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
+                                        className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-200 cursor-pointer"
                                     >
-                                        Annuler
-                                    </button>
-
-                                    <button
-                                        type="submit"
-                                        disabled={isSubmittingReview}
-                                        className="px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-900 text-white font-extrabold text-xs shadow-md cursor-pointer flex items-center gap-2"
-                                    >
-                                        <span>Publier mon avis</span>
+                                        <X className="w-5 h-5" />
                                     </button>
                                 </div>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+
+                                <form onSubmit={handleSubmitCustomerReview} className="p-6 space-y-4 text-xs font-sans">
+                                    <div>
+                                        <label className="block font-bold text-slate-950 mb-1">Votre Nom & Prénom *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={reviewName}
+                                            onChange={(e) => setReviewName(e.target.value)}
+                                            placeholder="Ex: Mariam K."
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block font-bold text-slate-950 mb-1">Votre Ville de Résidence</label>
+                                        <input
+                                            type="text"
+                                            value={reviewCity}
+                                            onChange={(e) => setReviewCity(e.target.value)}
+                                            placeholder="Ex: Douala, Cotonou..."
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block font-bold text-slate-950 mb-1">Votre Note sur 5 Étoiles *</label>
+                                        <div className="flex items-center gap-2">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <button
+                                                    key={star}
+                                                    type="button"
+                                                    onClick={() => setReviewRating(star)}
+                                                    className="p-1 cursor-pointer transition-transform hover:scale-110"
+                                                >
+                                                    <Star className={`w-6 h-6 ${star <= reviewRating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`} />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block font-bold text-slate-950 mb-1">Votre Témoignage / Commentaire *</label>
+                                        <textarea
+                                            rows={4}
+                                            required
+                                            value={reviewComment}
+                                            onChange={(e) => setReviewComment(e.target.value)}
+                                            placeholder="Ex: Produits de super qualité, livraison rapide et service client très réactif !"
+                                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                        />
+                                    </div>
+
+                                    <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-100">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsReviewModalOpen(false)}
+                                            className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
+                                        >
+                                            Annuler
+                                        </button>
+
+                                        <button
+                                            type="submit"
+                                            disabled={isSubmittingReview}
+                                            className="px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-900 text-white font-extrabold text-xs shadow-md cursor-pointer flex items-center gap-2"
+                                        >
+                                            <span>Publier mon avis</span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
             </div>
         </StorefrontLayout>
     );
