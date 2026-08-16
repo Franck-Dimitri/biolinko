@@ -113,7 +113,7 @@ class CustomerController extends Controller
             'message_template' => ['required', 'string'],
             'recipients' => ['required', 'array', 'min:1'],
             'attached_products' => ['nullable', 'array'],
-            'smart_link_id' => ['nullable', 'integer', 'exists:smart_links,id'],
+            'smart_link_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('smart_links', 'id')->where('store_id', $store->id)],
         ]);
 
         $recipientsCount = count($validated['recipients']);

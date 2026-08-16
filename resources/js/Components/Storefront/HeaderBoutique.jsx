@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Store, ShoppingCart, Search, Truck, Share2, Check, Tag, Star, ArrowLeft } from 'lucide-react';
+import { Store, ShoppingCart, Search, Share2, Check, Tag, Star, Heart, User, ChevronDown } from 'lucide-react';
 
 function getContrastColor(hexColor) {
     if (!hexColor || typeof hexColor !== 'string' || !hexColor.startsWith('#')) return '#0F172A';
@@ -12,52 +12,48 @@ function getContrastColor(hexColor) {
     return yiq >= 165 ? '#0F172A' : '#FFFFFF';
 }
 
-export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, showBackToStore = false, searchQuery = '', setSearchQuery, activeTab = 'all', setActiveTab }) {
+export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, showBackToStore = false, searchQuery = '', setSearchQuery, activeTab = 'all', setActiveTab, hasPromos = false, hasSmartLinks = false }) {
     const primaryColor = store?.theme_color || '#FFCC00';
     const primaryTextColor = getContrastColor(primaryColor);
-    const [copiedLink, setCopiedLink] = useState(false);
 
-    const handleShareStore = () => {
-        navigator.clipboard.writeText(window.location.href);
-        setCopiedLink(true);
-        setTimeout(() => setCopiedLink(false), 2500);
-    };
-
-    const handleNavClick = (tabName) => {
+    const scrollToSection = (sectionId) => {
         if (setActiveTab) {
-            setActiveTab(tabName);
-        } else {
-            window.location.href = `/${store.slug}${tabName === 'all' ? '' : `?tab=${tabName}`}`;
+            setActiveTab('all');
         }
+        setTimeout(() => {
+            const el = document.getElementById(sectionId);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 100);
     };
 
     return (
         <header className="sticky top-0 z-40 font-sans shadow-2xs">
-            {/* 1. TOP ANNOUNCEMENT BAR */}
-            <div className="bg-slate-900 text-white text-[11px] font-medium py-2 px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 border-b border-slate-800">
-                <div className="flex items-center gap-4 mx-auto sm:mx-0">
-                    <span className="flex items-center gap-1.5 font-semibold" style={{ color: primaryColor }}>
-                        <Truck className="w-3.5 h-3.5" style={{ color: primaryColor }} /> {store.announcement_header || 'Livraison Offerte dès 25 000 FCFA'}
-                    </span>
-                    <span className="hidden md:inline text-slate-700">|</span>
-                    <span className="hidden md:inline text-slate-300">🔥 Ventes & Offres Solde Exclusives</span>
-                </div>
-
-                <div className="flex items-center gap-4 text-slate-300 text-[11px]">
-                    <button onClick={handleShareStore} className="hover:text-white flex items-center gap-1 transition-colors">
-                        {copiedLink ? <Check className="w-3 h-3 text-emerald-400" /> : <Share2 className="w-3 h-3" />}
-                        <span>{copiedLink ? 'Partagé !' : 'Partager la boutique'}</span>
-                    </button>
-                </div>
+            {/* LIGHT TOP ANNOUNCEMENT BAR (NO BLACK) */}
+            <div className="bg-amber-50 text-slate-800 text-[11px] font-semibold py-1.5 px-4 text-center border-b border-amber-100 flex items-center justify-center gap-4">
+                <span>🚚 Expédition Express 24h-48h partout</span>
+                <span className="hidden sm:inline">•</span>
+                <span className="hidden sm:inline">💳 100% Mobile Money MTN & Orange</span>
+                <span className="hidden md:inline">•</span>
+                <span className="hidden md:inline">⭐ Vendeur Officiel Certifié BIOLINKO</span>
             </div>
 
-            {/* 2. MAIN NAVBAR */}
+            {/* MAIN NAVBAR */}
             <div className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5">
                 <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
                     
-                    <a href={`/${store.slug}`} className="flex items-center gap-3 cursor-pointer shrink-0 group">
+                    {/* LOGO & STORE BRAND NAME */}
+                    <a 
+                        href={`/${store.slug}`} 
+                        onClick={(e) => {
+                            e.preventDefault();
+                            scrollToSection('hero');
+                        }}
+                        className="flex items-center gap-3 cursor-pointer shrink-0 group"
+                    >
                         <div 
-                            className="w-10 h-10 rounded-2xl font-bold flex items-center justify-center text-sm shadow-2xs overflow-hidden shrink-0 border border-slate-200 group-hover:scale-105 transition-transform"
+                            className="w-10 h-10 rounded-2xl font-black flex items-center justify-center text-base shadow-2xs overflow-hidden shrink-0 border border-slate-200 group-hover:scale-105 transition-transform"
                             style={{ backgroundColor: primaryColor, color: primaryTextColor }}
                         >
                             {store.logo_url ? (
@@ -67,88 +63,108 @@ export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, showB
                             )}
                         </div>
                         <div>
-                            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none group-hover:text-amber-600 transition-colors">{store.name}</h1>
-                            <p className="text-[11px] text-slate-500 font-medium mt-0.5">{store.category || 'Boutique Officielle Certifiée'}</p>
+                            <h1 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight leading-none group-hover:text-amber-600 transition-colors font-sans">{store.name}</h1>
+                            <p className="text-[11px] text-slate-500 font-semibold tracking-wide uppercase mt-0.5">{store.category || 'Boutique Officielle Certifiée'}</p>
                         </div>
                     </a>
 
-                    <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold">
+                    {/* CENTERED NAVIGATION LINKS */}
+                    <nav className="hidden lg:flex items-center gap-6 text-xs font-bold text-slate-700">
                         <button
-                            onClick={() => handleNavClick('all')}
-                            className={`transition-colors hover:text-slate-950 ${activeTab === 'all' && !showBackToStore ? 'text-slate-950 border-b-2 pb-1 font-extrabold' : 'text-slate-600'}`}
-                            style={{ borderColor: activeTab === 'all' && !showBackToStore ? primaryColor : 'transparent' }}
+                            type="button"
+                            onClick={() => scrollToSection('hero')}
+                            className="transition-colors hover:text-slate-950 cursor-pointer text-slate-700 hover:border-b-2 hover:border-slate-950 pb-0.5"
                         >
                             Accueil
                         </button>
                         <button
-                            onClick={() => handleNavClick('products')}
-                            className={`transition-colors hover:text-slate-950 ${activeTab === 'products' && !showBackToStore ? 'text-slate-950 border-b-2 pb-1 font-extrabold' : 'text-slate-600'}`}
-                            style={{ borderColor: activeTab === 'products' && !showBackToStore ? primaryColor : 'transparent' }}
+                            type="button"
+                            onClick={() => scrollToSection('categories')}
+                            className="transition-colors hover:text-slate-950 cursor-pointer text-slate-700 hover:border-b-2 hover:border-slate-950 pb-0.5"
                         >
-                            Catalogue Produits
+                            Catégories
                         </button>
                         <button
-                            onClick={() => handleNavClick('promo')}
-                            className={`transition-colors hover:text-slate-950 flex items-center gap-1 ${activeTab === 'promo' && !showBackToStore ? 'text-slate-950 border-b-2 pb-1 font-extrabold' : 'text-slate-600'}`}
-                            style={{ borderColor: activeTab === 'promo' && !showBackToStore ? primaryColor : 'transparent' }}
+                            type="button"
+                            onClick={() => scrollToSection('catalog-grid')}
+                            className="transition-colors hover:text-slate-950 cursor-pointer text-slate-700 hover:border-b-2 hover:border-slate-950 pb-0.5"
                         >
-                            <Tag className="w-3.5 h-3.5 text-rose-500" />
-                            <span>Promotions &amp; Soldes</span>
+                            Catalogue
                         </button>
                         <button
-                            onClick={() => handleNavClick('smartlinks')}
-                            className={`transition-colors hover:text-slate-950 flex items-center gap-1 ${activeTab === 'smartlinks' && !showBackToStore ? 'text-slate-950 border-b-2 pb-1 font-extrabold' : 'text-slate-600'}`}
-                            style={{ borderColor: activeTab === 'smartlinks' && !showBackToStore ? primaryColor : 'transparent' }}
+                            type="button"
+                            onClick={() => scrollToSection('best-sellers')}
+                            className="transition-colors hover:text-slate-950 cursor-pointer text-slate-700 hover:border-b-2 hover:border-slate-950 pb-0.5"
                         >
-                            <span>Offres SmartLinks</span>
+                            Meilleures Ventes
                         </button>
+                        {hasPromos && (
+                            <button
+                                type="button"
+                                onClick={() => scrollToSection('promotions')}
+                                className="transition-colors hover:text-slate-950 flex items-center gap-1 cursor-pointer text-rose-600 hover:border-b-2 hover:border-rose-600 pb-0.5"
+                            >
+                                <Tag className="w-3.5 h-3.5 text-rose-500" />
+                                <span>Promotions</span>
+                            </button>
+                        )}
+                        {hasSmartLinks && (
+                            <button
+                                type="button"
+                                onClick={() => scrollToSection('smartlinks')}
+                                className="transition-colors hover:text-slate-950 flex items-center gap-1 cursor-pointer text-amber-700 hover:border-b-2 hover:border-amber-600 pb-0.5"
+                            >
+                                <span>Packs SmartLinks</span>
+                            </button>
+                        )}
                         <button
-                            onClick={() => handleNavClick('reviews')}
-                            className={`transition-colors hover:text-slate-950 flex items-center gap-1 ${activeTab === 'reviews' && !showBackToStore ? 'text-slate-950 border-b-2 pb-1 font-extrabold' : 'text-slate-600'}`}
-                            style={{ borderColor: activeTab === 'reviews' && !showBackToStore ? primaryColor : 'transparent' }}
+                            type="button"
+                            onClick={() => scrollToSection('reviews')}
+                            className="transition-colors hover:text-slate-950 flex items-center gap-1 cursor-pointer text-slate-700 hover:border-b-2 hover:border-slate-950 pb-0.5"
                         >
                             <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
-                            <span>Avis Clients</span>
+                            <span>Avis</span>
                         </button>
                         <button
-                            onClick={() => handleNavClick('support')}
-                            className={`transition-colors hover:text-slate-950 ${activeTab === 'support' && !showBackToStore ? 'text-slate-950 border-b-2 pb-1 font-extrabold' : 'text-slate-600'}`}
-                            style={{ borderColor: activeTab === 'support' && !showBackToStore ? primaryColor : 'transparent' }}
+                            type="button"
+                            onClick={() => scrollToSection('about')}
+                            className="transition-colors hover:text-slate-950 cursor-pointer text-slate-700 hover:border-b-2 hover:border-slate-950 pb-0.5"
                         >
-                            Garantie &amp; Support
+                            À Propos &amp; Support
                         </button>
                     </nav>
 
-                    <div className="flex items-center gap-3">
+                    {/* RIGHT UTILITY ICONS (SEARCH & CART) */}
+                    <div className="flex items-center gap-4">
+                        {setSearchQuery && (
+                            <div className="relative hidden sm:block">
+                                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Rechercher..."
+                                    className="pl-9 pr-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-medium text-slate-800 outline-none w-36 focus:w-48 transition-all"
+                                />
+                            </div>
+                        )}
+
                         <button
                             onClick={onOpenCart}
-                            className="px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 text-xs font-bold shadow-2xs relative border bg-white text-slate-900 border-slate-200 hover:bg-slate-50 cursor-pointer"
+                            className="px-5 py-2.5 rounded-full text-xs font-extrabold shadow-sm transition-all active:scale-95 flex items-center gap-2 border cursor-pointer"
+                            style={{ backgroundColor: primaryColor, color: primaryTextColor, borderColor: primaryColor }}
+                            title="Mon Panier"
                         >
-                            <ShoppingCart className="w-4 h-4 text-amber-500" />
-                            <span>Mon Panier</span>
+                            <ShoppingCart className="w-4 h-4" style={{ color: primaryTextColor }} />
+                            <span className="hidden sm:inline">Panier</span>
                             {cartCount > 0 && (
-                                <span 
-                                    className="px-2 py-0.5 rounded-full text-[10px] font-extrabold shadow-2xs"
-                                    style={{ backgroundColor: primaryColor, color: primaryTextColor }}
-                                >
+                                <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black shadow-xs">
                                     {cartCount}
                                 </span>
                             )}
                         </button>
                     </div>
 
-                </div>
-            </div>
-
-            {/* STORE REASSURANCE BAR BELOW NAVBAR */}
-            <div className="bg-slate-50 border-b border-slate-200/80 py-2 px-4 text-center">
-                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 text-[11px] font-medium text-slate-600">
-                    <span className="font-extrabold text-slate-950">{store.name} — Boutique Certifiée Propulsée par BIOLINKO</span>
-                    <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-slate-700 font-semibold">
-                        <span className="flex items-center gap-1"><span className="text-amber-500 font-bold">✓</span> Produits Authentiques &amp; Garantis</span>
-                        <span className="flex items-center gap-1"><span className="text-amber-500 font-bold">✓</span> Livraison Rapide 24h-48h</span>
-                        <span className="flex items-center gap-1"><span className="text-amber-500 font-bold">✓</span> 100% Paiement Sécurisé Mobile Money</span>
-                    </div>
                 </div>
             </div>
         </header>

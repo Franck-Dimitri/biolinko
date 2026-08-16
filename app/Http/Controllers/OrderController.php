@@ -123,42 +123,50 @@ class OrderController extends Controller
         }
 
         $amount = (float) $validated['amount'];
-
-        if ($amount > (float) $wallet->balance_available) {
-            return back()->withErrors(['amount' => 'Solde disponible insuffisant pour ce retrait.']);
-        }
-
         $operatorChoice = $validated['operator'] ?? $this->hrSkillsPay->detectOperator($formattedPhone);
 
-        $withdrawal = Withdrawal::create([
-            'wallet_id' => $wallet->id,
-            'amount' => $amount,
-            'operator' => $operatorChoice,
-            'phone_number' => $formattedPhone,
-            'payment_operator' => $operatorChoice,
-            'status' => 'pending',
-        ]);
-
-        $wallet->decrement('balance_available', $amount);
-
-        // Initiate Cash-Out via HR-Skills Pay
         try {
-            $payoutData = $this->hrSkillsPay->initiatePayout($withdrawal, $formattedPhone, $operatorChoice);
+            return \Illuminate\Support\Facades\DB::transaction(function () use ($wallet, $amount, $formattedPhone, $operatorChoice) {
+                $lockedWallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
 
-            $withdrawal->update([
-                'hrskills_reference' => $payoutData['reference'],
-                'hrskills_transaction_id' => $payoutData['transaction_id'],
-            ]);
+                if ($amount > (float) $lockedWallet->balance_available) {
+                    return back()->withErrors(['amount' => 'Solde disponible insuffisant pour ce retrait.']);
+                }
 
-            return back()->with('message', 'Demande de virement Mobile Money de ' . number_format($amount) . ' FCFA soumise vers ' . $formattedPhone . ' (' . $operatorChoice . ').');
+                $withdrawal = Withdrawal::create([
+                    'wallet_id' => $lockedWallet->id,
+                    'amount' => $amount,
+                    'operator' => $operatorChoice,
+                    'phone_number' => $formattedPhone,
+                    'payment_operator' => $operatorChoice,
+                    'status' => 'pending',
+                ]);
+
+                $lockedWallet->decrement('balance_available', $amount);
+
+                // Initiate Cash-Out via HR-Skills Pay
+                try {
+                    $payoutData = $this->hrSkillsPay->initiatePayout($withdrawal, $formattedPhone, $operatorChoice);
+
+                    $withdrawal->update([
+                        'hrskills_reference' => $payoutData['reference'],
+                        'hrskills_transaction_id' => $payoutData['transaction_id'],
+                    ]);
+
+                    return back()->with('message', 'Demande de virement Mobile Money de ' . number_format($amount) . ' FCFA soumise vers ' . $formattedPhone . ' (' . $operatorChoice . ').');
+                } catch (\Exception $e) {
+                    Log::error('Withdrawal HR-Skills Payout Error', ['withdrawal_id' => $withdrawal->id, 'err' => $e->getMessage()]);
+
+                    // Restore vendor wallet balance on error
+                    $lockedWallet->increment('balance_available', $amount);
+                    $withdrawal->update(['status' => 'rejected']);
+
+                    return back()->withErrors(['phone_momo' => 'Échec de l\'envoi du virement Mobile Money : ' . $e->getMessage()]);
+                }
+            });
         } catch (\Exception $e) {
-            Log::error('Withdrawal HR-Skills Payout Error', ['withdrawal_id' => $withdrawal->id, 'err' => $e->getMessage()]);
-
-            // Restore vendor wallet balance on error
-            $wallet->increment('balance_available', $amount);
-            $withdrawal->update(['status' => 'rejected']);
-
-            return back()->withErrors(['phone_momo' => 'Échec de l\'envoi du virement Mobile Money : ' . $e->getMessage()]);
+            Log::error('Transaction withdrawal error', ['err' => $e->getMessage()]);
+            return back()->withErrors(['amount' => 'Une erreur est survenue lors de la demande de retrait.']);
         }
     }
 }

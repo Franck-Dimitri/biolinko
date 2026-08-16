@@ -2,12 +2,24 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, usePage, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { toast } from 'sonner';
 import { 
     Palette, Store, Phone, MapPin, Clock, ArrowRight, Check, X, 
     MessageSquare, ExternalLink, Image as ImageIcon, Sparkles, Sliders, Globe, ArrowLeft,
     Tag, Star, ShieldCheck, Heart, UserCheck, Trash2, Plus, Mail, Layers, CheckCircle2, Eye, EyeOff, GripVertical, RotateCcw,
     Smartphone, Monitor, Settings, Flame, Truck, ShoppingBag, ShoppingCart, RefreshCw, Headphones, Play, FileText, Upload
 } from 'lucide-react';
+
+function getContrastColor(hexColor) {
+    if (!hexColor || typeof hexColor !== 'string' || !hexColor.startsWith('#')) return '#0F172A';
+    const hex = hexColor.replace('#', '');
+    if (hex.length < 6) return '#0F172A';
+    const r = parseInt(hex.substring(0, 2), 16) || 0;
+    const g = parseInt(hex.substring(2, 4), 16) || 0;
+    const b = parseInt(hex.substring(4, 6), 16) || 0;
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    return yiq >= 165 ? '#0F172A' : '#FFFFFF';
+}
 
 export default function Index({ store, reviews, appUrl }) {
     const user = usePage().props.auth.user;
@@ -43,7 +55,11 @@ export default function Index({ store, reviews, appUrl }) {
     const defaultSections = [
         { id: 'banner', name: "Bandeau d'Annonce", desc: "Annonce une offre spéciale", enabled: true },
         { id: 'hero', name: "Hero / Bannière", desc: "Accueil avec titre et bouton", enabled: true },
+        { id: 'categories', name: "Nos Catégories", desc: "Grille de vos catégories", enabled: true },
         { id: 'products', name: "Catalogue", desc: "Grille de tous vos produits", enabled: true },
+        { id: 'best-sellers', name: "Meilleures Ventes", desc: "Produits populaires et tendances", enabled: true },
+        { id: 'promotions', name: "Offres en Promotion", desc: "Produits avec réduction", enabled: true },
+        { id: 'smartlinks', name: "Packs SmartLinks", desc: "Offres groupées et réductions", enabled: true },
         { id: 'benefits', name: "Engagements", desc: "Garanties & réassurance", enabled: true },
         { id: 'reviews', name: "Avis clients", desc: "Preuves sociales et témoignages", enabled: true },
         { id: 'about', name: "À propos / Contact", desc: "Présentation & coordonnées", enabled: true },
@@ -53,7 +69,11 @@ export default function Index({ store, reviews, appUrl }) {
         { id: 'brand', name: "Logo & Marque", desc: "Logo, nom, sous-domaine & bannière" },
         { id: 'banner', name: "Bandeau promo", desc: "Annonce une offre spéciale" },
         { id: 'hero', name: "Hero / Bannière", desc: "Accueil avec titre et bouton" },
+        { id: 'categories', name: "Nos Catégories", desc: "Grille de vos catégories" },
         { id: 'products', name: "Catalogue", desc: "Grille de tous vos produits" },
+        { id: 'best-sellers', name: "Meilleures Ventes", desc: "Produits populaires et tendances" },
+        { id: 'promotions', name: "Offres en Promotion", desc: "Produits avec réduction" },
+        { id: 'smartlinks', name: "Packs SmartLinks", desc: "Offres groupées et réductions" },
         { id: 'benefits', name: "Engagements", desc: "Garanties & réassurance" },
         { id: 'reviews', name: "Avis clients", desc: "Preuves sociales et témoignages" },
         { id: 'about', name: "À propos / Contact", desc: "Présentation, adresse & horaires" },
@@ -238,8 +258,16 @@ export default function Index({ store, reviews, appUrl }) {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
+                toast.success('Vitrine mise à jour avec succès !', {
+                    description: 'Vos modifications visuelles sont maintenant en ligne.'
+                });
                 setShowSuccessModal(true);
                 setTimeout(() => setShowSuccessModal(false), 3500);
+            },
+            onError: () => {
+                toast.error('Erreur lors de la sauvegarde.', {
+                    description: 'Veuillez vérifier les champs du formulaire.'
+                });
             }
         });
     };
@@ -413,27 +441,18 @@ export default function Index({ store, reviews, appUrl }) {
                             <Reorder.Group 
                                 values={data.sections_json || defaultSections} 
                                 onReorder={(newOrder) => {
-                                    // Ensure locked sections stay in valid structure and reviews stays after products
-                                    const prodIdx = newOrder.findIndex(s => s.id === 'products');
-                                    const revIdx = newOrder.findIndex(s => s.id === 'reviews');
-                                    if (prodIdx !== -1 && revIdx !== -1 && revIdx < prodIdx) {
-                                        const temp = newOrder[prodIdx];
-                                        newOrder[prodIdx] = newOrder[revIdx];
-                                        newOrder[revIdx] = temp;
-                                    }
                                     setData('sections_json', newOrder);
                                 }}
                                 className="space-y-2"
                             >
                                 {(data.sections_json || defaultSections).map((sec) => {
                                     const isSelected = selectedBlockId === sec.id;
-                                    const isLocked = sec.locked || ['banner', 'hero', 'products'].includes(sec.id);
 
                                     return (
                                         <Reorder.Item 
                                             key={sec.id} 
                                             value={sec}
-                                            dragListener={!isLocked}
+                                            dragListener={true}
                                             className={`p-3 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
                                                 isSelected 
                                                     ? 'bg-amber-100/80 border-amber-400 text-slate-950 shadow-xs ring-1 ring-amber-400' 
@@ -448,43 +467,34 @@ export default function Index({ store, reviews, appUrl }) {
                                             }}
                                         >
                                             <div className="flex items-center gap-2.5 truncate">
-                                                <div className={`cursor-grab active:cursor-grabbing ${isLocked ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-slate-600'}`}>
+                                                <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600">
                                                     <GripVertical className="w-4 h-4" />
                                                 </div>
                                                 <div className="truncate">
                                                     <div className="text-xs font-bold truncate flex items-center gap-1.5">
                                                         <span>{sec.name}</span>
-                                                        {isLocked && (
-                                                            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[9px] font-extrabold uppercase">Obligatoire</span>
-                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                                                {!isLocked ? (
-                                                    <>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => toggleSectionVisibility(sec.id)}
-                                                            className={`p-1.5 rounded-lg transition-colors ${sec.enabled ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:bg-slate-100'}`}
-                                                            title={sec.enabled ? "Masquer la section" : "Afficher la section"}
-                                                        >
-                                                            {sec.enabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                                                        </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleSectionVisibility(sec.id)}
+                                                    className={`p-1.5 rounded-lg transition-colors ${sec.enabled ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:bg-slate-100'}`}
+                                                    title={sec.enabled ? "Masquer la section" : "Afficher la section"}
+                                                >
+                                                    {sec.enabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                                                </button>
 
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeBlockFromSections(sec.id)}
-                                                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                                                            title="Supprimer du canvas"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </>
-                                                ) : (
-                                                    <span className="text-[10px] text-slate-400 font-semibold px-2">Verrouillé</span>
-                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeBlockFromSections(sec.id)}
+                                                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                                                    title="Supprimer du canvas"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
                                             </div>
                                         </Reorder.Item>
                                     );

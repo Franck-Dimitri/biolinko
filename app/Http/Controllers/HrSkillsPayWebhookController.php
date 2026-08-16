@@ -51,56 +51,77 @@ class HrSkillsPayWebhookController extends Controller
         // 1. Process Order (Cash-In)
         $order = Order::where('hrskills_reference', $reference)->first();
         if ($order) {
-            if ($event === 'payment.succeeded' || $status === 'SUCCESS') {
-                if ($order->payment_status !== 'paid') {
-                    $order->update([
-                        'status' => 'paid',
-                        'payment_status' => 'paid',
-                        'paid_at' => now(),
-                        'hrskills_transaction_id' => $data['transaction_id'] ?? $order->hrskills_transaction_id,
-                    ]);
+            \Illuminate\Support\Facades\DB::transaction(function () use ($order, $event, $status, $data, $reference) {
+                // Lock row to prevent race conditions
+                $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->first();
+                if (!$lockedOrder) return;
 
-                    // Credit vendor Wallet (solde disponible)
-                    $wallet = $order->store->wallet;
-                    if ($wallet) {
-                        $wallet->increment('balance_available', (float) $order->price_vendor);
+                if ($event === 'payment.succeeded' || $status === 'SUCCESS') {
+                    if ($lockedOrder->payment_status !== 'paid') {
+                        $lockedOrder->update([
+                            'status' => 'paid',
+                            'payment_status' => 'paid',
+                            'paid_at' => now(),
+                            'hrskills_transaction_id' => $data['transaction_id'] ?? $lockedOrder->hrskills_transaction_id,
+                        ]);
+
+                        // Credit vendor Wallet (solde disponible)
+                        $wallet = $lockedOrder->store->wallet;
+                        if ($wallet) {
+                            $wallet->lockForUpdate();
+                            $wallet->increment('balance_available', (float) $lockedOrder->price_vendor);
+                        }
+
+                        // Generate & Send PDF Invoice Emails to Vendor & Customer
+                        $this->invoiceService->sendOrderInvoiceEmails($lockedOrder);
+
+                        Log::info('Order Payment Succeeded via Webhook', ['order_id' => $lockedOrder->id, 'reference' => $reference]);
                     }
-
-                    // Generate & Send PDF Invoice Emails to Vendor & Customer
-                    $this->invoiceService->sendOrderInvoiceEmails($order);
-
-                    Log::info('Order Payment Succeeded via Webhook', ['order_id' => $order->id, 'reference' => $reference]);
+                } elseif ($event === 'payment.failed' || $status === 'FAILED') {
+                    if ($lockedOrder->payment_status !== 'paid') {
+                        $lockedOrder->update([
+                            'status' => 'cancelled',
+                            'payment_status' => 'failed',
+                        ]);
+                        Log::info('Order Payment Failed via Webhook', ['order_id' => $lockedOrder->id, 'reference' => $reference]);
+                    }
                 }
-            } elseif ($event === 'payment.failed' || $status === 'FAILED') {
-                $order->update([
-                    'status' => 'cancelled',
-                    'payment_status' => 'failed',
-                ]);
-                Log::info('Order Payment Failed via Webhook', ['order_id' => $order->id, 'reference' => $reference]);
-            }
+            });
+
             return response()->json(['status' => 'PROCESSED_ORDER'], 200);
         }
 
         // 2. Process Withdrawal (Cash-Out)
         $withdrawal = Withdrawal::where('hrskills_reference', $reference)->first();
         if ($withdrawal) {
-            if ($event === 'payment.succeeded' || $status === 'SUCCESS') {
-                $withdrawal->update([
-                    'status' => 'approved',
-                    'processed_at' => now(),
-                    'hrskills_transaction_id' => $data['transaction_id'] ?? $withdrawal->hrskills_transaction_id,
-                ]);
-                Log::info('Withdrawal Payout Succeeded via Webhook', ['withdrawal_id' => $withdrawal->id]);
-            } elseif ($event === 'payment.failed' || $status === 'FAILED') {
-                $withdrawal->update([
-                    'status' => 'rejected',
-                ]);
-                // Restore vendor wallet balance if payout failed
-                if ($withdrawal->wallet) {
-                    $withdrawal->wallet->increment('balance', (float) $withdrawal->amount);
+            \Illuminate\Support\Facades\DB::transaction(function () use ($withdrawal, $event, $status, $data) {
+                $lockedWithdrawal = Withdrawal::where('id', $withdrawal->id)->lockForUpdate()->first();
+                if (!$lockedWithdrawal) return;
+
+                if ($event === 'payment.succeeded' || $status === 'SUCCESS') {
+                    if ($lockedWithdrawal->status !== 'approved') {
+                        $lockedWithdrawal->update([
+                            'status' => 'approved',
+                            'processed_at' => now(),
+                            'hrskills_transaction_id' => $data['transaction_id'] ?? $lockedWithdrawal->hrskills_transaction_id,
+                        ]);
+                        Log::info('Withdrawal Payout Succeeded via Webhook', ['withdrawal_id' => $lockedWithdrawal->id]);
+                    }
+                } elseif ($event === 'payment.failed' || $status === 'FAILED') {
+                    if ($lockedWithdrawal->status !== 'rejected') {
+                        $lockedWithdrawal->update([
+                            'status' => 'rejected',
+                        ]);
+                        // Restore vendor wallet balance if payout failed
+                        if ($lockedWithdrawal->wallet) {
+                            $lockedWithdrawal->wallet->lockForUpdate();
+                            $lockedWithdrawal->wallet->increment('balance_available', (float) $lockedWithdrawal->amount);
+                        }
+                        Log::info('Withdrawal Payout Failed via Webhook', ['withdrawal_id' => $lockedWithdrawal->id]);
+                    }
                 }
-                Log::info('Withdrawal Payout Failed via Webhook', ['withdrawal_id' => $withdrawal->id]);
-            }
+            });
+
             return response()->json(['status' => 'PROCESSED_WITHDRAWAL'], 200);
         }
 

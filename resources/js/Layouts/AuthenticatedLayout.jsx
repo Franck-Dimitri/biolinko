@@ -1,6 +1,7 @@
 import Dropdown from '@/Components/Dropdown';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { Toaster } from 'sonner';
 import { 
     LayoutDashboard, ShoppingBag, Wallet, Settings, ExternalLink, LogOut, 
     User as UserIcon, Menu, X, PackageCheck, Users, BarChart3, 
@@ -15,6 +16,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased flex flex-col md:flex-row">
+            <Toaster position="top-right" richColors closeButton />
             
             {/* Mobile Header Bar */}
             <div className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-50">
