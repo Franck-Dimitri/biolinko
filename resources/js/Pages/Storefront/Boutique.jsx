@@ -898,7 +898,11 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                             alt={product.title} 
                                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-xl"
                                                         />
-                                                        {product.is_promo ? (
+                                                        {product.stock <= 0 ? (
+                                                            <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full bg-slate-900 text-white font-extrabold text-[10px] shadow-xs">
+                                                                Stock Épuisé
+                                                            </span>
+                                                        ) : product.is_promo ? (
                                                             <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full bg-rose-500 text-white font-extrabold text-[10px]">
                                                                 PROMO
                                                             </span>
@@ -909,15 +913,20 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                         )}
                                                         <button
                                                             type="button"
+                                                            disabled={product.stock <= 0}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                handleAddToCart(product);
+                                                                if (product.stock > 0) handleAddToCart(product);
                                                             }}
-                                                            className="absolute bottom-2 right-2 w-9 h-9 rounded-full shadow-md active:scale-95 transition-all flex items-center justify-center cursor-pointer border"
-                                                            style={{ backgroundColor: primaryColor, color: primaryTextColor, borderColor: primaryColor }}
-                                                            title="Ajouter au panier"
+                                                            className={`absolute bottom-2 right-2 w-9 h-9 rounded-full shadow-md transition-all flex items-center justify-center border ${
+                                                                product.stock <= 0
+                                                                    ? 'bg-slate-200 border-slate-300 cursor-not-allowed opacity-60'
+                                                                    : 'active:scale-95 cursor-pointer'
+                                                            }`}
+                                                            style={product.stock > 0 ? { backgroundColor: primaryColor, color: primaryTextColor, borderColor: primaryColor } : {}}
+                                                            title={product.stock <= 0 ? "Stock Épuisé" : "Ajouter au panier"}
                                                         >
-                                                            <ShoppingCart className="w-4 h-4" style={{ color: primaryTextColor }} />
+                                                            <ShoppingCart className="w-4 h-4" style={{ color: product.stock > 0 ? primaryTextColor : '#94A3B8' }} />
                                                         </button>
                                                     </div>
 
@@ -932,11 +941,13 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                         </div>
                                                         <div className="flex items-baseline justify-between gap-1 pt-0.5">
                                                             <span className="text-sm font-black text-slate-950">{displayPrice.toLocaleString()} FCFA</span>
-                                                            {product.is_promo && (
+                                                            {product.stock <= 0 ? (
+                                                                <span className="text-[11px] text-rose-600 font-extrabold">Stock Épuisé</span>
+                                                            ) : product.is_promo ? (
                                                                 <span className="text-xs text-slate-400 line-through font-medium">
                                                                     {Math.ceil(product.price_vendor * 1.02).toLocaleString()}
                                                                 </span>
-                                                            )}
+                                                            ) : null}
                                                         </div>
                                                     </div>
                                                 </a>
@@ -1225,7 +1236,11 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                                 />
                                                                 
                                                                 {/* BADGE TOP LEFT */}
-                                                                {product.is_promo ? (
+                                                                {product.stock <= 0 ? (
+                                                                    <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full bg-slate-900 text-white font-extrabold text-[10px] shadow-xs">
+                                                                        Stock Épuisé
+                                                                    </span>
+                                                                ) : product.is_promo ? (
                                                                     <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full bg-rose-500 text-white font-extrabold text-[10px]">
                                                                         PROMO
                                                                     </span>
@@ -1247,15 +1262,20 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                                 {/* FLOATING CART BUTTON BOTTOM RIGHT (CRESCENDO STYLE) */}
                                                                 <button
                                                                     type="button"
+                                                                    disabled={product.stock <= 0}
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        handleAddToCart(product);
+                                                                        if (product.stock > 0) handleAddToCart(product);
                                                                     }}
-                                                                    className="absolute bottom-2 right-2 w-9 h-9 rounded-full shadow-md active:scale-95 transition-all flex items-center justify-center cursor-pointer border"
-                                                                    style={{ backgroundColor: primaryColor, color: primaryTextColor, borderColor: primaryColor }}
-                                                                    title="Ajouter au panier"
+                                                                    className={`absolute bottom-2 right-2 w-9 h-9 rounded-full shadow-md transition-all flex items-center justify-center border ${
+                                                                        product.stock <= 0
+                                                                            ? 'bg-slate-200 border-slate-300 cursor-not-allowed opacity-60'
+                                                                            : 'active:scale-95 cursor-pointer'
+                                                                    }`}
+                                                                    style={product.stock > 0 ? { backgroundColor: primaryColor, color: primaryTextColor, borderColor: primaryColor } : {}}
+                                                                    title={product.stock <= 0 ? "Stock Épuisé" : "Ajouter au panier"}
                                                                 >
-                                                                    <ShoppingCart className="w-4 h-4" style={{ color: primaryTextColor }} />
+                                                                    <ShoppingCart className="w-4 h-4" style={{ color: product.stock > 0 ? primaryTextColor : '#94A3B8' }} />
                                                                 </button>
                                                             </div>
 
@@ -1270,11 +1290,13 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                                 </div>
                                                                 <div className="flex items-baseline justify-between gap-1 pt-0.5">
                                                                     <span className="text-sm font-black text-slate-950">{displayPrice.toLocaleString()} FCFA</span>
-                                                                    {product.is_promo && (
+                                                                    {product.stock <= 0 ? (
+                                                                        <span className="text-[11px] text-rose-600 font-extrabold">Stock Épuisé</span>
+                                                                    ) : product.is_promo ? (
                                                                         <span className="text-xs text-slate-400 line-through font-medium">
                                                                             {Math.ceil(product.price_vendor * 1.02).toLocaleString()}
                                                                         </span>
-                                                                    )}
+                                                                    ) : null}
                                                                 </div>
                                                             </div>
                                                         </a>

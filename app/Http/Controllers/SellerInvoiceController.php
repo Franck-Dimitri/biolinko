@@ -73,6 +73,9 @@ class SellerInvoiceController extends Controller
             return in_array($o->status, ['paid', 'PAID', 'in_delivery', 'delivered']);
         });
 
+        $onlinePaidOrders = $paidOrders->filter(fn($o) => !$o->is_manual);
+        $manualPaidOrders = $paidOrders->filter(fn($o) => $o->is_manual);
+
         $pendingOrders = $allOrders->filter(function ($o) {
             return in_array($o->status, ['pending', 'UNPAID', 'unpaid']);
         });
@@ -81,6 +84,10 @@ class SellerInvoiceController extends Controller
             'total_invoices' => $allOrders->count(),
             'total_amount' => (float) $paidOrders->sum('price_vendor'),
             'paid_count' => $paidOrders->count(),
+            'online_paid_count' => $onlinePaidOrders->count(),
+            'online_paid_amount' => (float) $onlinePaidOrders->sum('price_vendor'),
+            'manual_paid_count' => $manualPaidOrders->count(),
+            'manual_paid_amount' => (float) $manualPaidOrders->sum('price_vendor'),
             'pending_count' => $pendingOrders->count(),
             'pending_amount' => (float) $pendingOrders->sum('price_vendor'),
         ];
@@ -152,6 +159,7 @@ class SellerInvoiceController extends Controller
             'api_fee' => 0,
             'total_client' => $totalAmount,
             'status' => 'pending',
+            'is_manual' => true,
             'payment_status' => 'pending',
             'payment_phone' => $validated['customer_phone'],
         ]);
@@ -176,6 +184,38 @@ class SellerInvoiceController extends Controller
         }
 
         return redirect()->back()->with('message', "Facture manuelle {$invoiceCode} créée avec succès !");
+    }
+
+    /**
+     * Update invoice status (e.g. mark manual invoice as paid or cancelled).
+     */
+    public function updateStatus(Request $request, Order $order): RedirectResponse
+    {
+        $user = Auth::user();
+        if (!$user->store || $order->store_id !== $user->store->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:pending,paid,cancelled,delivered'],
+        ]);
+
+        $newStatus = $validated['status'];
+        $updateData = ['status' => $newStatus];
+
+        if (in_array($newStatus, ['paid', 'delivered'])) {
+            $updateData['payment_status'] = 'paid';
+            $updateData['paid_at'] = now();
+        } elseif ($newStatus === 'cancelled') {
+            $updateData['payment_status'] = 'failed';
+        } elseif ($newStatus === 'pending') {
+            $updateData['payment_status'] = 'pending';
+            $updateData['paid_at'] = null;
+        }
+
+        $order->update($updateData);
+
+        return redirect()->back()->with('message', "Statut de la facture {$order->tracking_code} mis à jour avec succès !");
     }
 
     /**

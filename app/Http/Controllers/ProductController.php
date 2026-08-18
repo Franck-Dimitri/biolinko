@@ -48,18 +48,11 @@ class ProductController extends Controller
         $user = $request->user();
         $store = $user->store;
 
-        // Plan quota limits enforcement
-        $userPlan = $user->plan ?? 'starter';
-        $maxProductsMap = [
-            'starter' => 10,
-            'pro' => 50,
-            'growth' => 200,
-            'business' => 99999,
-        ];
-        $maxAllowed = $maxProductsMap[$userPlan] ?? 10;
-        if ($store->products()->count() >= $maxAllowed) {
+        // Plan quota limits enforcement (10 products max & 25 total stock capacity for Starter)
+        $quotaError = $this->checkStockAndProductQuotas($user, $store, (int) $request->input('stock', 0));
+        if ($quotaError) {
             return redirect()->back()->withErrors([
-                'title' => "Limite de {$maxAllowed} produits atteinte pour le plan " . strtoupper($userPlan) . ". Veuillez passer au plan supérieur.",
+                'title' => $quotaError,
             ]);
         }
 
@@ -252,6 +245,12 @@ class ProductController extends Controller
             $updateData['price_vendor'] = $validated['price_vendor'];
         }
         if (array_key_exists('stock', $validated)) {
+            $quotaError = $this->checkStockAndProductQuotas($request->user(), $store, (int) $validated['stock'], $product->id);
+            if ($quotaError) {
+                return redirect()->back()->withErrors([
+                    'title' => $quotaError,
+                ]);
+            }
             $updateData['stock'] = $validated['stock'];
         }
         if (array_key_exists('is_active', $validated)) {
@@ -313,5 +312,47 @@ class ProductController extends Controller
 
         $product->delete();
         return redirect()->back()->with('message', 'Produit supprimé !');
+    }
+
+    /**
+     * Check product count and total stock quotas per subscription plan.
+     */
+    protected function checkStockAndProductQuotas($user, $store, int $addedStock, ?int $existingProductId = null): ?string
+    {
+        $userPlan = strtolower($user->plan ?? 'starter');
+        $maxProductsMap = [
+            'starter' => 10,
+            'pro' => 50,
+            'growth' => 200,
+            'business' => 99999,
+        ];
+        $maxStockMap = [
+            'starter' => 25,
+            'pro' => 500,
+            'growth' => 2500,
+            'business' => 999999,
+        ];
+
+        $maxProducts = $maxProductsMap[$userPlan] ?? 10;
+        $maxStock = $maxStockMap[$userPlan] ?? 25;
+
+        // Check product count limit if creating a new product
+        if (!$existingProductId && $store->products()->count() >= $maxProducts) {
+            return "Limite de {$maxProducts} produits atteinte pour le plan " . strtoupper($userPlan) . ". Passez au plan supérieur pour ajouter plus de produits.";
+        }
+
+        // Calculate current total stock across all store products
+        $currentStockQuery = $store->products();
+        if ($existingProductId) {
+            $currentStockQuery->where('id', '!=', $existingProductId);
+        }
+        $currentTotalStock = (int) $currentStockQuery->sum('stock');
+        $projectedTotalStock = $currentTotalStock + $addedStock;
+
+        if ($projectedTotalStock > $maxStock) {
+            return "Capacité de stock maximale atteinte pour le plan " . strtoupper($userPlan) . ". Votre limite de stock cumulé est de {$maxStock} articles (Stock actuel : {$currentTotalStock}/{$maxStock}). Veuillez ajuster le stock ou passer au plan supérieur.";
+        }
+
+        return null;
     }
 }

@@ -119,6 +119,7 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
     // Invoices Management
     Route::get('/invoices', [SellerInvoiceController::class, 'index'])->name('seller.invoices.index');
     Route::post('/invoices/manual', [SellerInvoiceController::class, 'storeManualInvoice'])->name('seller.invoices.storeManual');
+    Route::patch('/invoices/{order}/status', [SellerInvoiceController::class, 'updateStatus'])->name('seller.invoices.updateStatus');
     Route::post('/invoices/{order}/remind', [SellerInvoiceController::class, 'sendReminder'])->name('seller.invoices.sendReminder');
     Route::get('/invoices/{order}/download', [SellerInvoiceController::class, 'download'])->name('seller.invoices.download');
     Route::get('/invoices/{order}/preview', [SellerInvoiceController::class, 'preview'])->name('seller.invoices.preview');

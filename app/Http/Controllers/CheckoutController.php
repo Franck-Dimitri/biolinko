@@ -209,6 +209,23 @@ class CheckoutController extends Controller
             $minQ = $product->min_order_quantity || 1;
             $quantity = max((int)$item['quantity'], $minQ);
 
+            // Stock Check Enforcement
+            if ($product->stock <= 0) {
+                $errMsg = "Désolé, le produit '{$product->title}' est actuellement en rupture de stock (Stock Épuisé).";
+                if ($request->wantsJson() || $request->header('X-Inertia')) {
+                    return response()->json(['error' => $errMsg], 422);
+                }
+                return back()->withErrors(['product_id' => $errMsg]);
+            }
+
+            if ($quantity > $product->stock) {
+                $errMsg = "Désolé, il ne reste que {$product->stock} article(s) disponible(s) en stock pour '{$product->title}'.";
+                if ($request->wantsJson() || $request->header('X-Inertia')) {
+                    return response()->json(['error' => $errMsg], 422);
+                }
+                return back()->withErrors(['quantity' => $errMsg]);
+            }
+
             $currentPv = ($product->is_promo && $product->promo_price > 0) 
                 ? (float) $product->promo_price 
                 : (float) $product->price_vendor;

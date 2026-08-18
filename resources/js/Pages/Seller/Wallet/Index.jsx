@@ -121,6 +121,17 @@ export default function Index({ store, wallet, withdrawals, metrics, appUrl }) {
                     </motion.div>
                 </div>
 
+                {/* INFORMATIVE BANNER */}
+                <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/90 text-amber-950 text-xs font-medium flex items-start gap-3 shadow-2xs">
+                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                        <span className="font-extrabold text-amber-900 block">Règle de Sécurité des Retraits Portefeuille :</span>
+                        <p className="text-[11px] leading-relaxed text-amber-900/90">
+                            Votre solde disponible retirable provient exclusivement des encaissements enregistrés en ligne via l'API Mobile Money Biolinko. Les factures enregistrées manuellement pour vos clients directs en magasin n'alimentent pas ce solde retirable.
+                        </p>
+                    </div>
+                </div>
+
                 {/* WITHDRAWAL HISTORY TABLE */}
                 <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-6 shadow-2xs">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-4">

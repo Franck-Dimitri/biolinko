@@ -27,6 +27,7 @@ class Order extends Model
         'api_fee',
         'total_client',
         'status',
+        'is_manual',
         'hrskills_reference',
         'hrskills_transaction_id',
         'payment_status',
@@ -36,6 +37,7 @@ class Order extends Model
     ];
 
     protected $casts = [
+        'is_manual' => 'boolean',
         'price_vendor' => 'decimal:2',
         'saas_margin' => 'decimal:2',
         'api_fee' => 'decimal:2',

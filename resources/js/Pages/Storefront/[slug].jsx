@@ -200,9 +200,15 @@ export default function ProductSlugShow({ store, product, appUrl }) {
                         <div className="text-xs text-slate-600 font-semibold flex items-center gap-2">
                             <span className="text-amber-500 font-bold">★ 4.9 / 5</span>
                             <span>•</span>
-                            <span className="text-emerald-700 font-bold flex items-center gap-1">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> En Stock (Prêt à expédier)
-                            </span>
+                            {product.stock > 0 ? (
+                                <span className="text-emerald-700 font-bold flex items-center gap-1">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> En Stock ({product.stock} disponible{product.stock > 1 ? 's' : ''})
+                                </span>
+                            ) : (
+                                <span className="text-rose-600 font-bold flex items-center gap-1">
+                                    <X className="w-3.5 h-3.5 text-rose-600" /> Stock Épuisé (Rupture)
+                                </span>
+                            )}
                         </div>
 
                         {/* PRIX UNITAIRE (CLEAN SINGLE PRICE DISPLAY) */}
@@ -232,15 +238,17 @@ export default function ProductSlugShow({ store, product, appUrl }) {
                             <span className="font-bold text-slate-900">Quantité désirée :</span>
                             <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl p-1">
                                 <button
+                                    disabled={product.stock <= 0}
                                     onClick={() => setQuantity(Math.max(product.min_order_quantity || 1, quantity - 1))}
-                                    className="w-7 h-7 rounded-lg bg-white shadow-2xs font-bold text-slate-800 flex items-center justify-center cursor-pointer"
+                                    className="w-7 h-7 rounded-lg bg-white shadow-2xs font-bold text-slate-800 flex items-center justify-center cursor-pointer disabled:opacity-50"
                                 >
                                     -
                                 </button>
-                                <span className="w-10 text-center font-extrabold text-slate-950">{quantity}</span>
+                                <span className="w-10 text-center font-extrabold text-slate-950">{product.stock <= 0 ? 0 : quantity}</span>
                                 <button
-                                    onClick={() => setQuantity(quantity + 1)}
-                                    className="w-7 h-7 rounded-lg bg-white shadow-2xs font-bold text-slate-800 flex items-center justify-center cursor-pointer"
+                                    disabled={product.stock <= 0 || quantity >= product.stock}
+                                    onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                                    className="w-7 h-7 rounded-lg bg-white shadow-2xs font-bold text-slate-800 flex items-center justify-center cursor-pointer disabled:opacity-50"
                                 >
                                     +
                                 </button>
@@ -250,25 +258,35 @@ export default function ProductSlugShow({ store, product, appUrl }) {
                         {/* MONTANT TOTAL BOX */}
                         <div className="bg-[#18181B] text-white p-4 rounded-2xl flex items-center justify-between font-bold text-sm shadow-md">
                             <span>Montant Total à Régler :</span>
-                            <span className="text-amber-400 font-extrabold text-base">{Number(unitPrice * quantity).toLocaleString()} FCFA</span>
+                            <span className="text-amber-400 font-extrabold text-base">{Number(unitPrice * (product.stock <= 0 ? 0 : quantity)).toLocaleString()} FCFA</span>
                         </div>
 
                         {/* ACTION BUTTONS */}
                         <div className="space-y-2 pt-1">
                             <button
+                                disabled={product.stock <= 0}
                                 onClick={() => handleAddToCart(true)}
-                                className="w-full py-3.5 rounded-2xl bg-[#FFCC00] hover:bg-amber-400 text-slate-950 font-extrabold text-xs shadow-md border border-amber-300 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                className={`w-full py-3.5 rounded-2xl font-extrabold text-xs shadow-md border transition-all flex items-center justify-center gap-2 ${
+                                    product.stock <= 0
+                                        ? 'bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed'
+                                        : 'bg-[#FFCC00] hover:bg-amber-400 text-slate-950 border-amber-300 cursor-pointer'
+                                }`}
                             >
-                                <ShoppingCart className="w-4 h-4 text-slate-950" />
-                                <span>Ajouter au Panier &amp; Voir le Panier</span>
+                                <ShoppingCart className="w-4 h-4" />
+                                <span>{product.stock <= 0 ? 'Stock Épuisé' : 'Ajouter au Panier & Voir le Panier'}</span>
                             </button>
 
                             <button
+                                disabled={product.stock <= 0}
                                 onClick={() => handleAddToCart(true)}
-                                className="w-full py-3.5 rounded-2xl bg-[#18181B] hover:bg-slate-900 text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                className={`w-full py-3.5 rounded-2xl font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-2 ${
+                                    product.stock <= 0
+                                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                        : 'bg-[#18181B] hover:bg-slate-900 text-white cursor-pointer'
+                                }`}
                             >
                                 <ShieldCheck className="w-4 h-4 text-amber-400" />
-                                <span>Achat Rapide 1-Clic Sécurisé</span>
+                                <span>{product.stock <= 0 ? 'Rupture de Stock' : 'Achat Rapide 1-Clic Sécurisé'}</span>
                             </button>
 
                             <p className="text-[10px] text-slate-400 font-medium text-center">

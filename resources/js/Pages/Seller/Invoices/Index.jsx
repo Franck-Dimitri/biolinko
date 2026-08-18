@@ -126,6 +126,10 @@ export default function InvoicesIndex({ store, invoices, stats, filters, appUrl 
         );
     };
 
+    const handleUpdateStatus = (orderId, newStatus) => {
+        router.patch(route('seller.invoices.updateStatus', orderId), { status: newStatus }, { preserveScroll: true });
+    };
+
     return (
         <AuthenticatedLayout>
             <Head title="Espace Factures — BIOLINKO" />
@@ -154,16 +158,16 @@ export default function InvoicesIndex({ store, invoices, stats, filters, appUrl 
                             <div className="w-9 h-9 rounded-2xl flex items-center justify-center font-bold shadow-2xs" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
                                 <FileText className="w-5 h-5" />
                             </div>
-                            <h1 className="text-2xl font-extrabold text-slate-950 tracking-tight">Espace Factures</h1>
+                            <h1 className="text-2xl font-extrabold text-slate-950 tracking-tight">Espace Factures & Encaissements</h1>
                         </div>
                         <p className="text-xs text-slate-500 font-medium">
-                            Générez des factures manuelle, suivez les encaissements et effectuez des relances email & WhatsApp directes.
+                            Générez des factures manuelles, gérez vos encaissements et suivez le détails de vos règlements en ligne et direct vendeur.
                         </p>
                     </div>
 
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="px-5 py-3 rounded-2xl font-extrabold text-xs shadow-md transition-transform active:scale-95 flex items-center justify-center gap-2 border"
+                        className="px-5 py-3 rounded-2xl font-extrabold text-xs shadow-md transition-transform active:scale-95 flex items-center justify-center gap-2 border cursor-pointer"
                         style={{ backgroundColor: primaryColor, color: primaryTextColor, borderColor: primaryColor }}
                     >
                         <Plus className="w-4 h-4" />
@@ -171,10 +175,53 @@ export default function InvoicesIndex({ store, invoices, stats, filters, appUrl 
                     </button>
                 </div>
 
-                {/* 4 STATS SUMMARY CARDS INCLUDING UNPAID INVOICES */}
+                {/* EXPLICIT PAYOUT POLICY BANNER */}
+                <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/90 text-amber-950 text-xs font-medium flex items-start gap-3 shadow-2xs">
+                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                        <span className="font-extrabold text-amber-900 block">💡 Guide d'Encaissement & Portefeuille Retirable :</span>
+                        <p className="text-[11px] leading-relaxed text-amber-900/90">
+                            Seuls les paiements des clients effectués directement en ligne via l'<strong>API Mobile Money Biolinko</strong> créditent votre solde disponible retirable sur la plateforme. Les factures manuelles créées en magasin ou hors ligne sont destinées à votre gestion comptable et facturation directe client.
+                        </p>
+                    </div>
+                </div>
+
+                {/* 4 STATS SUMMARY CARDS BREAKDOWN */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     
-                    {/* CARD 1: FACTURES NON PAYEES (EN ATTENTE) */}
+                    {/* CARD 1: VENTES EN LIGNE (API MOBILE MONEY) */}
+                    <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs space-y-2">
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                            <span>Ventes Web (API MoMo)</span>
+                            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-900 flex items-center justify-center font-bold">
+                                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                            </div>
+                        </div>
+                        <div className="text-2xl font-extrabold text-slate-950">
+                            {Number(stats?.online_paid_amount || 0).toLocaleString()} FCFA
+                        </div>
+                        <div className="text-xs font-bold text-emerald-700">
+                            {stats?.online_paid_count || 0} commandes · Crédité sur portefeuille
+                        </div>
+                    </div>
+
+                    {/* CARD 2: VENTES MANUELLES (MAGASIN / DIRECT) */}
+                    <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs space-y-2">
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                            <span>Ventes Manuelles</span>
+                            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-900 flex items-center justify-center font-bold">
+                                <FileText className="w-4 h-4 text-blue-600" />
+                            </div>
+                        </div>
+                        <div className="text-2xl font-extrabold text-slate-950">
+                            {Number(stats?.manual_paid_amount || 0).toLocaleString()} FCFA
+                        </div>
+                        <div className="text-xs font-bold text-blue-700">
+                            {stats?.manual_paid_count || 0} factures · Encaissement direct
+                        </div>
+                    </div>
+
+                    {/* CARD 3: FACTURES NON PAYEES (EN ATTENTE) */}
                     <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs space-y-2">
                         <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
                             <span>Factures Non Payées</span>
@@ -183,58 +230,26 @@ export default function InvoicesIndex({ store, invoices, stats, filters, appUrl 
                             </div>
                         </div>
                         <div className="text-2xl font-extrabold text-slate-950">
-                            {stats?.pending_count || 0} <span className="text-xs text-slate-400 font-medium">en attente</span>
+                            {Number(stats?.pending_amount || 0).toLocaleString()} FCFA
                         </div>
                         <div className="text-xs font-bold text-amber-700">
-                            Volume : {Number(stats?.pending_amount || 0).toLocaleString()} FCFA
+                            {stats?.pending_count || 0} factures en attente
                         </div>
                     </div>
 
-                    {/* CARD 2: FACTURES PAYEES (ACQUITTEES) */}
+                    {/* CARD 4: CHIFFRE D'AFFAIRES CUMULE */}
                     <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs space-y-2">
                         <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            <span>Factures Payées</span>
-                            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-900 flex items-center justify-center font-bold">
-                                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                            </div>
-                        </div>
-                        <div className="text-2xl font-extrabold text-slate-950">
-                            {stats?.paid_count || 0}
-                        </div>
-                        <div className="text-xs font-bold text-emerald-600">
-                            100% Acquittées Mobile Money
-                        </div>
-                    </div>
-
-                    {/* CARD 3: MONTANT TOTAL ENCAISSE */}
-                    <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs space-y-2">
-                        <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            <span>Total Encaissé</span>
-                            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-900 flex items-center justify-center font-bold">
-                                <CreditCard className="w-4 h-4 text-blue-600" />
+                            <span>C.A. Global Reglé</span>
+                            <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-900 flex items-center justify-center font-bold">
+                                <CreditCard className="w-4 h-4 text-purple-600" />
                             </div>
                         </div>
                         <div className="text-2xl font-extrabold text-slate-950">
                             {Number(stats?.total_amount || 0).toLocaleString()} FCFA
                         </div>
                         <div className="text-xs font-medium text-slate-500">
-                            Montant net des ventes réglées
-                        </div>
-                    </div>
-
-                    {/* CARD 4: TOTAL FACTURES GENERES */}
-                    <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-2xs space-y-2">
-                        <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            <span>Total Factures</span>
-                            <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-900 flex items-center justify-center font-bold">
-                                <FileText className="w-4 h-4 text-purple-600" />
-                            </div>
-                        </div>
-                        <div className="text-2xl font-extrabold text-slate-950">
-                            {stats?.total_invoices || 0}
-                        </div>
-                        <div className="text-xs font-medium text-slate-500">
-                            Directes & Manuelles cumulées
+                            {stats?.total_invoices || 0} factures générées au total
                         </div>
                     </div>
 
@@ -245,7 +260,7 @@ export default function InvoicesIndex({ store, invoices, stats, filters, appUrl 
                     <div className="flex items-center gap-1.5 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
                         <button
                             onClick={() => handleFilterStatus('all')}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
                                 selectedStatus === 'all' ? 'bg-slate-950 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                         >
@@ -253,7 +268,7 @@ export default function InvoicesIndex({ store, invoices, stats, filters, appUrl 
                         </button>
                         <button
                             onClick={() => handleFilterStatus('paid')}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
                                 selectedStatus === 'paid' ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
                             }`}
                         >
@@ -261,11 +276,11 @@ export default function InvoicesIndex({ store, invoices, stats, filters, appUrl 
                         </button>
                         <button
                             onClick={() => handleFilterStatus('pending')}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
                                 selectedStatus === 'pending' ? 'bg-amber-500 text-slate-950 shadow-2xs' : 'bg-amber-50 text-amber-900 hover:bg-amber-100'
                             }`}
                         >
-                            En Attente Non Payées ({stats?.pending_count || 0})
+                            En Attente ({stats?.pending_count || 0})
                         </button>
                     </div>
 
@@ -282,7 +297,7 @@ export default function InvoicesIndex({ store, invoices, stats, filters, appUrl 
                         </div>
                         <button
                             type="submit"
-                            className="px-4 py-2 rounded-xl bg-slate-950 hover:bg-slate-900 text-white font-bold text-xs shrink-0 transition-all shadow-2xs"
+                            className="px-4 py-2 rounded-xl bg-slate-950 hover:bg-slate-900 text-white font-bold text-xs shrink-0 transition-all shadow-2xs cursor-pointer"
                         >
                             Filtrer
                         </button>
@@ -296,13 +311,13 @@ export default function InvoicesIndex({ store, invoices, stats, filters, appUrl 
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                        <th className="py-3.5 px-6">N° Facture</th>
+                                        <th className="py-3.5 px-6">N° Facture & Type</th>
                                         <th className="py-3.5 px-4">Date</th>
                                         <th className="py-3.5 px-4">Client & Contact</th>
                                         <th className="py-3.5 px-4">Article / Prestation</th>
                                         <th className="py-3.5 px-4">Montant Total</th>
-                                        <th className="py-3.5 px-4 text-center">Statut</th>
-                                        <th className="py-3.5 px-6 text-right">Actions & Relances</th>
+                                        <th className="py-3.5 px-4 text-center">Changer Statut</th>
+                                        <th className="py-3.5 px-6 text-right">Actions PDF & Relances</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
@@ -310,9 +325,20 @@ export default function InvoicesIndex({ store, invoices, stats, filters, appUrl 
                                         <tr key={order.id} className="hover:bg-slate-50/70 transition-colors">
                                             
                                             <td className="py-4 px-6 font-mono font-bold text-slate-950 whitespace-nowrap">
-                                                <div className="flex items-center gap-2">
-                                                    <FileText className="w-4 h-4 text-amber-500 shrink-0" />
-                                                    <span>{order.tracking_code}</span>
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <FileText className="w-4 h-4 text-amber-500 shrink-0" />
+                                                        <span>{order.tracking_code}</span>
+                                                    </div>
+                                                    {order.is_manual ? (
+                                                        <span className="inline-block px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 text-[10px] font-bold border border-blue-200">
+                                                            Facture Manuelle (Magasin)
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-block px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200">
+                                                            Commande Web (API MoMo)
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
 
@@ -326,7 +352,7 @@ export default function InvoicesIndex({ store, invoices, stats, filters, appUrl 
                                             </td>
 
                                             <td className="py-4 px-4 whitespace-nowrap text-slate-700 max-w-xs truncate">
-                                                {order.items?.[0]?.product_title || 'Commande boutique'}
+                                                {order.items?.[0]?.product_title || 'Prestation / Article'}
                                             </td>
 
                                             <td className="py-4 px-4 whitespace-nowrap font-extrabold text-slate-950">
@@ -334,33 +360,42 @@ export default function InvoicesIndex({ store, invoices, stats, filters, appUrl 
                                             </td>
 
                                             <td className="py-4 px-4 whitespace-nowrap text-center">
-                                                {order.status === 'paid' || order.status === 'in_delivery' || order.status === 'delivered' ? (
-                                                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-950 font-bold text-[11px] border border-emerald-300">
-                                                        Payée
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 text-amber-950 font-bold text-[11px] border border-amber-300">
-                                                        Non Payée
-                                                    </span>
-                                                )}
+                                                <select
+                                                    value={order.status === 'in_delivery' || order.status === 'delivered' ? 'paid' : order.status}
+                                                    onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
+                                                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold border outline-none bg-white cursor-pointer shadow-2xs"
+                                                >
+                                                    <option value="pending">⏳ En attente</option>
+                                                    <option value="paid">✅ Payée (Acquittée)</option>
+                                                    <option value="cancelled">❌ Annulée</option>
+                                                </select>
                                             </td>
 
                                             <td className="py-4 px-6 whitespace-nowrap text-right">
-                                                <div className="flex items-center justify-end gap-2">
+                                                <div className="flex items-center justify-end gap-1.5">
                                                     <button
                                                         onClick={() => setPreviewOrder(order)}
-                                                        className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs transition-all flex items-center gap-1.5"
-                                                        title="Afficher la facture"
+                                                        className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs transition-all flex items-center gap-1 cursor-pointer"
+                                                        title="Aperçu rapide"
                                                     >
                                                         <Eye className="w-3.5 h-3.5 text-slate-700" />
-                                                        <span>Afficher</span>
+                                                        <span>Aperçu</span>
                                                     </button>
+
+                                                    <a
+                                                        href={route('seller.invoices.download', order.id)}
+                                                        className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all flex items-center gap-1 shadow-2xs"
+                                                        title="Télécharger PDF"
+                                                    >
+                                                        <Download className="w-3.5 h-3.5" />
+                                                        <span>PDF</span>
+                                                    </a>
 
                                                     <a
                                                         href={getWhatsAppRelanceUrl(order)}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs transition-all flex items-center gap-1.5 shadow-2xs"
+                                                        className="px-2.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs transition-all flex items-center gap-1 shadow-2xs"
                                                         title="Relancer sur WhatsApp"
                                                     >
                                                         <MessageSquare className="w-3.5 h-3.5" />
@@ -370,7 +405,7 @@ export default function InvoicesIndex({ store, invoices, stats, filters, appUrl 
                                                     {order.customer_email && (
                                                         <button
                                                             onClick={() => handleSendEmailReminder(order)}
-                                                            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all"
+                                                            className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs transition-all cursor-pointer"
                                                             title="Envoyer par email"
                                                         >
                                                             <Mail className="w-3.5 h-3.5" />

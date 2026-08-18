@@ -72,6 +72,24 @@ class HrSkillsPayWebhookController extends Controller
                             $wallet->increment('balance_available', (float) $lockedOrder->price_vendor);
                         }
 
+                        // Decrement product & variant stock upon successful payment
+                        foreach ($lockedOrder->items as $item) {
+                            if ($item->product_id) {
+                                $product = \App\Models\Product::find($item->product_id);
+                                if ($product) {
+                                    $newStock = max(0, $product->stock - (int) $item->quantity);
+                                    $product->update(['stock' => $newStock]);
+                                }
+                            }
+                            if ($item->variant_id) {
+                                $variant = \App\Models\ProductVariant::find($item->variant_id);
+                                if ($variant) {
+                                    $newVarStock = max(0, $variant->stock_quantity - (int) $item->quantity);
+                                    $variant->update(['stock_quantity' => $newVarStock]);
+                                }
+                            }
+                        }
+
                         // Generate & Send PDF Invoice Emails to Vendor & Customer
                         $this->invoiceService->sendOrderInvoiceEmails($lockedOrder);
 

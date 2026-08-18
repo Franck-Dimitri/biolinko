@@ -370,6 +370,39 @@ export default function Index({ store, products, metrics, appUrl }) {
                     </div>
                 </div>
 
+                {/* SUBSCRIPTION PLAN QUOTA INDICATOR BANNER */}
+                <div className="p-4 rounded-3xl bg-slate-900 text-white shadow-md border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-amber-400/20 text-amber-400 border border-amber-400/30 flex items-center justify-center font-bold text-sm shrink-0">
+                            <Zap className="w-5 h-5 text-amber-400" />
+                        </div>
+                        <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-black uppercase tracking-wider text-amber-400">
+                                    ABONNEMENT {userPlan.toUpperCase()}
+                                </span>
+                                {userPlan === 'starter' && (
+                                    <span className="px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-300 text-[10px] font-bold border border-amber-400/20">
+                                        Pack Gratuit
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs text-slate-300 font-medium">
+                                Limites du plan : <strong className="text-white">{products ? products.length : 0} / {userPlan === 'starter' ? 10 : userPlan === 'pro' ? 50 : userPlan === 'growth' ? 200 : 'Illimité'}</strong> produits • Stock cumulé total : <strong className="text-white">{(products || []).reduce((acc, p) => acc + Number(p.stock || 0), 0)} / {userPlan === 'starter' ? 25 : userPlan === 'pro' ? 500 : userPlan === 'growth' ? 2500 : 'Illimité'}</strong> articles.
+                            </p>
+                        </div>
+                    </div>
+                    {userPlan === 'starter' && (
+                        <a
+                            href={route('seller.subscriptions.index')}
+                            className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-extrabold text-xs shadow-sm transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5"
+                        >
+                            <span>Passer au Plan PRO</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                        </a>
+                    )}
+                </div>
+
                 {/* SEARCH & FILTERS BAR */}
                 <div className="p-4 rounded-3xl bg-white border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="w-full sm:w-80 relative">
