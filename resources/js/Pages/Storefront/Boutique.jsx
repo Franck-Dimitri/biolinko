@@ -35,6 +35,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
     const [searchQuery, setSearchQuery] = useState('');
     const [cartItems, setCartItems] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('all');
+    const [viewMode, setViewMode] = useState('home'); // 'home' | 'catalog' | 'bestsellers'
     const [isAutoFilled, setIsAutoFilled] = useState(false);
     const [isSubmittingCheckout, setIsSubmittingCheckout] = useState(false);
 
@@ -844,6 +845,189 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                 </div>
                             )}
                         </motion.div>
+                    ) : viewMode === 'catalog' ? (
+                        /* DEDICATED FULL CATALOG VIEW */
+                        <motion.div
+                            key="store-catalog-page"
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -15 }}
+                            transition={{ duration: 0.35, ease: 'easeOut' }}
+                            className="space-y-8"
+                        >
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-br from-amber-100/60 via-amber-50/40 to-slate-50 p-6 sm:p-8 rounded-[32px] border border-amber-200/80 shadow-2xs">
+                                <div className="space-y-1">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => { setViewMode('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                        className="inline-flex items-center gap-1.5 text-xs font-black text-amber-900 hover:text-amber-700 transition-colors mb-1 cursor-pointer"
+                                    >
+                                        <ArrowLeft className="w-4 h-4" />
+                                        <span>Retour à la boutique</span>
+                                    </button>
+                                    <h2 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">Catalogue des Produits ({products?.length || 0})</h2>
+                                    <p className="text-xs sm:text-sm text-slate-600 font-medium">Tous les articles disponibles chez {store.name}</p>
+                                </div>
+
+                                <div className="w-full sm:w-auto relative">
+                                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Rechercher un produit..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full sm:w-64 pl-9 pr-4 py-2.5 bg-white rounded-full border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-amber-400 focus:outline-hidden shadow-2xs"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* FULL CATALOG GRID */}
+                            {filteredProducts.length > 0 ? (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                                    {filteredProducts.map((product) => {
+                                        const directProductUrl = `/${store.slug}/p/${product.slug}`;
+                                        const unitPrice = (product.is_promo && product.promo_price > 0) ? Number(product.promo_price) : Number(product.price_vendor);
+                                        const displayPrice = Math.ceil(unitPrice * 1.02);
+
+                                        return (
+                                            <div key={product.id} className="bg-white rounded-3xl border border-slate-100 shadow-2xs hover:shadow-xl transition-all overflow-hidden flex flex-col justify-between group relative p-3">
+                                                <a href={directProductUrl} className="block">
+                                                    <div className="h-48 bg-slate-50 rounded-2xl relative overflow-hidden flex items-center justify-center p-2 border border-slate-100/80">
+                                                        <img 
+                                                            src={product.image_url || (product.images?.[0]) || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400'} 
+                                                            alt={product.title} 
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-xl"
+                                                        />
+                                                        {product.is_promo ? (
+                                                            <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full bg-rose-500 text-white font-extrabold text-[10px]">
+                                                                PROMO
+                                                            </span>
+                                                        ) : (
+                                                            <span className="absolute top-2 left-2 px-2.5 py-0.5 rounded-full bg-indigo-600 text-white font-extrabold text-[10px]">
+                                                                Nouveau
+                                                            </span>
+                                                        )}
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleAddToCart(product);
+                                                            }}
+                                                            className="absolute bottom-2 right-2 w-9 h-9 rounded-full shadow-md active:scale-95 transition-all flex items-center justify-center cursor-pointer border"
+                                                            style={{ backgroundColor: primaryColor, color: primaryTextColor, borderColor: primaryColor }}
+                                                            title="Ajouter au panier"
+                                                        >
+                                                            <ShoppingCart className="w-4 h-4" style={{ color: primaryTextColor }} />
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="pt-3.5 px-1 space-y-1">
+                                                        <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">
+                                                            {product.category || store.category || 'Article'}
+                                                        </span>
+                                                        <h4 className="font-extrabold text-sm text-slate-950 truncate group-hover:text-amber-600 transition-colors">{product.title}</h4>
+                                                        <div className="flex items-center gap-1 text-[11px] text-amber-500">
+                                                            <span>★★★★★</span>
+                                                            <span className="text-slate-400 font-semibold">(128 avis)</span>
+                                                        </div>
+                                                        <div className="flex items-baseline justify-between gap-1 pt-0.5">
+                                                            <span className="text-sm font-black text-slate-950">{displayPrice.toLocaleString()} FCFA</span>
+                                                            {product.is_promo && (
+                                                                <span className="text-xs text-slate-400 line-through font-medium">
+                                                                    {Math.ceil(product.price_vendor * 1.02).toLocaleString()}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 text-slate-500 space-y-3">
+                                    <ShoppingBag className="w-10 h-10 text-slate-300 mx-auto" />
+                                    <h3 className="text-base font-bold text-slate-900">Aucun produit ne correspond à votre recherche</h3>
+                                </div>
+                            )}
+                        </motion.div>
+                    ) : viewMode === 'bestsellers' ? (
+                        /* DEDICATED FULL BESTSELLERS VIEW */
+                        <motion.div
+                            key="store-bestsellers-page"
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -15 }}
+                            transition={{ duration: 0.35, ease: 'easeOut' }}
+                            className="space-y-8"
+                        >
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-br from-emerald-100/60 via-emerald-50/40 to-slate-50 p-6 sm:p-8 rounded-[32px] border border-emerald-200/80 shadow-2xs">
+                                <div className="space-y-1">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => { setViewMode('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                        className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-900 hover:text-emerald-700 transition-colors mb-1 cursor-pointer"
+                                    >
+                                        <ArrowLeft className="w-4 h-4" />
+                                        <span>Retour à la boutique</span>
+                                    </button>
+                                    <h2 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">Meilleures Ventes & Tendances 🔥</h2>
+                                    <p className="text-xs sm:text-sm text-slate-600 font-medium">Les articles les plus plébiscités et recommandés par nos clients</p>
+                                </div>
+                            </div>
+
+                            {/* FULL BEST SELLERS GRID */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {(products && products.length > 0 ? products : [
+                                    { id: 'bs1', title: 'Produit Vedette Premier', price_vendor: 50000, description: 'Qualité exceptionnelle garantie.' },
+                                    { id: 'bs2', title: 'Article Tendance Bestseller', price_vendor: 85000, description: 'Le choix préféré de nos clients.' },
+                                    { id: 'bs3', title: 'Pack Offre Spéciale', price_vendor: 150000, description: 'Sélection premium garantie.' },
+                                ]).map((bs, i) => {
+                                    const priceDisplay = Math.ceil(bs.price_vendor * 1.02);
+
+                                    return (
+                                        <div key={bs.id || i} className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
+                                            <div>
+                                                <div className="h-64 bg-slate-100 rounded-2xl overflow-hidden relative mb-4">
+                                                    <img 
+                                                        src={bs.image_url || (bs.images?.[0]) || 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600'} 
+                                                        alt={bs.title} 
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    />
+                                                    <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] uppercase shadow-2xs">
+                                                        Meilleure Vente #{(i % 5) + 1}
+                                                    </span>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <h4 className="font-black text-base text-slate-950 group-hover:text-amber-600 transition-colors">{bs.title}</h4>
+                                                    <div className="text-lg font-black text-slate-950">{priceDisplay.toLocaleString()} FCFA</div>
+                                                    <div className="flex items-center gap-1.5 text-xs text-amber-500">
+                                                        <span>★★★★★</span>
+                                                        <span className="text-slate-400 font-medium">(5.0 • Top Tendance)</span>
+                                                    </div>
+                                                    <p className="text-xs text-slate-500 font-medium leading-relaxed line-clamp-2">
+                                                        {bs.description || 'Produit sélectionné avec soin par le vendeur.'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="pt-4 mt-4 border-t border-slate-100 flex items-center gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleAddToCart(bs)}
+                                                    className="flex-1 py-3.5 rounded-2xl font-extrabold text-xs shadow-md transition-all active:scale-97 flex items-center justify-center gap-2 cursor-pointer border"
+                                                    style={{ backgroundColor: primaryColor, color: primaryTextColor, borderColor: primaryColor }}
+                                                >
+                                                    <ShoppingCart className="w-4 h-4" style={{ color: primaryTextColor }} />
+                                                    <span>Ajouter au Panier</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </motion.div>
                     ) : (
                         /* STATE 2: STORE HOMEPAGE / CATALOGUE VIEW (NOVATREND MOCKUP) */
                         <motion.div
@@ -867,8 +1051,8 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                         {/* LEFT TEXT & CTAS */}
                                         <div className="lg:col-span-7 space-y-6 text-left">
                                             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white text-slate-800 font-extrabold text-[11px] uppercase tracking-wider shadow-2xs border border-slate-200">
-                                                <BadgeCheck className="w-4 h-4 text-emerald-500" />
-                                                <span>{store.hero_badge_text || 'BOUTIQUE OFFICIELLE CERTIFIÉE'}</span>
+                                                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                                                <span>{store.hero_badge_text || store.category || 'BOUTIQUE OFFICIELLE'}</span>
                                             </div>
 
                                             <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-950 tracking-tight leading-[1.08]">
@@ -894,17 +1078,16 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                     <ArrowRight className="w-4 h-4" style={{ color: primaryTextColor }} />
                                                 </button>
 
-                                                {store.phone_whatsapp && (
-                                                    <a
-                                                        href={`https://wa.me/${store.phone_whatsapp.replace(/[^0-9]/g, '')}?text=Bonjour%20${encodeURIComponent(store.name)}`}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="px-7 py-4 rounded-full bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 font-extrabold text-xs shadow-2xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
-                                                    >
-                                                        <MessageSquare className="w-4 h-4 text-emerald-600 fill-emerald-600" />
-                                                        <span>WhatsApp Direct</span>
-                                                    </a>
-                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const el = document.getElementById('catalog-grid');
+                                                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                                                    }}
+                                                    className="px-7 py-4 rounded-full bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 font-extrabold text-xs shadow-2xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+                                                >
+                                                    <span>Explorer le Catalogue</span>
+                                                </button>
                                             </div>
 
                                             {/* 3 MINI REASSURANCE CHIPS (CRESCENDO STYLE) */}
@@ -1013,10 +1196,13 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                         <h3 className="text-2xl font-black text-slate-950 tracking-tight">Catalogue de Produits</h3>
                                         <button 
                                             type="button"
-                                            onClick={() => setSelectedCategory('all')} 
-                                            className="text-xs font-extrabold text-slate-600 hover:text-slate-950 flex items-center gap-1 cursor-pointer"
+                                            onClick={() => {
+                                                setViewMode('catalog');
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }} 
+                                            className="text-xs font-extrabold text-slate-600 hover:text-slate-950 flex items-center gap-1 cursor-pointer hover:underline"
                                         >
-                                            <span>Tout afficher</span>
+                                            <span>Tout afficher ({products?.length || 0})</span>
                                             <ArrowRight className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
@@ -1112,8 +1298,11 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                         <h3 className="text-2xl font-black text-slate-950 tracking-tight">Meilleures Ventes</h3>
                                         <button 
                                             type="button"
-                                            onClick={() => setSelectedCategory('all')} 
-                                            className="text-xs font-extrabold text-slate-600 hover:text-slate-950 flex items-center gap-1 cursor-pointer"
+                                            onClick={() => {
+                                                setViewMode('bestsellers');
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }} 
+                                            className="text-xs font-extrabold text-slate-600 hover:text-slate-950 flex items-center gap-1 cursor-pointer hover:underline"
                                         >
                                             <span>Voir les tendances</span>
                                             <ArrowRight className="w-3.5 h-3.5" />
@@ -1336,7 +1525,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                         Achat vérifié
                                                     </span>
                                                 </div>
-                                                <p className="text-xs text-slate-700 font-medium leading-relaxed italic">"{rev.comment}"</p>
+                                                <p className="text-xs text-slate-700 font-medium leading-relaxed italic break-words overflow-hidden max-w-full">"{rev.comment}"</p>
                                                 <div className="text-xs font-black text-slate-950 pt-2 border-t border-slate-200/60 flex justify-between">
                                                     <span>{rev.name}</span>
                                                     <span className="text-slate-400 font-normal">{rev.city}</span>
@@ -1347,28 +1536,28 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                 </section>
                             )}
 
-                            {/* 9. À PROPOS & SUPPORT SECTION */}
+                            {/* 9. À PROPOS & SUPPORT SECTION (LIGHT THEME - NO BLACK) */}
                             {isSectionActive('about') && (
-                                <section id="about" className="bg-slate-950 text-white rounded-[32px] p-8 sm:p-12 space-y-6 relative overflow-hidden shadow-xl border border-slate-800">
+                                <section id="about" className="bg-white text-slate-950 rounded-[32px] p-8 sm:p-12 space-y-6 relative overflow-hidden shadow-2xs border border-slate-200">
                                     <div className="max-w-2xl space-y-4 z-10 relative">
-                                        <span className="px-3 py-1 rounded-full bg-slate-800 text-amber-400 font-extrabold text-[10px] uppercase tracking-wider inline-block border border-slate-700">
+                                        <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-800 font-extrabold text-[10px] uppercase tracking-wider inline-block border border-amber-200">
                                             À PROPOS DE LA BOUTIQUE
                                         </span>
-                                        <h3 className="text-3xl font-black tracking-tight">{store.name}</h3>
-                                        <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
+                                        <h3 className="text-3xl font-black tracking-tight text-slate-950">{store.name}</h3>
+                                        <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
                                             {store.description || `Bienvenue sur la vitrine officielle de ${store.name}. Nous sélectionnons pour vous les meilleurs articles livrés avec soin.`}
                                         </p>
 
-                                        <div className="pt-4 flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-300">
+                                        <div className="pt-4 flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-700">
                                             {store.phone_whatsapp && (
-                                                <a href={`https://wa.me/${store.phone_whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-emerald-400 transition-colors">
-                                                    <MessageSquare className="w-4 h-4 text-emerald-400" />
+                                                <a href={`https://wa.me/${store.phone_whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-amber-600 transition-colors">
+                                                    <MessageSquare className="w-4 h-4 text-emerald-600" />
                                                     <span>WhatsApp: {store.phone_whatsapp}</span>
                                                 </a>
                                             )}
                                             {store.city && (
                                                 <div className="flex items-center gap-2">
-                                                    <MapPin className="w-4 h-4 text-amber-400" />
+                                                    <MapPin className="w-4 h-4 text-amber-600" />
                                                     <span>Localisation: {store.city}</span>
                                                 </div>
                                             )}

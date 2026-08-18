@@ -30,16 +30,7 @@ export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, showB
 
     return (
         <header className="sticky top-0 z-40 font-sans shadow-2xs">
-            {/* LIGHT TOP ANNOUNCEMENT BAR (NO BLACK) */}
-            <div className="bg-amber-50 text-slate-800 text-[11px] font-semibold py-1.5 px-4 text-center border-b border-amber-100 flex items-center justify-center gap-4">
-                <span>🚚 Expédition Express 24h-48h partout</span>
-                <span className="hidden sm:inline">•</span>
-                <span className="hidden sm:inline">💳 100% Mobile Money MTN & Orange</span>
-                <span className="hidden md:inline">•</span>
-                <span className="hidden md:inline">⭐ Vendeur Officiel Certifié BIOLINKO</span>
-            </div>
-
-            {/* MAIN NAVBAR */}
+            {/* MAIN NAVBAR ONLY */}
             <div className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5">
                 <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
                     
@@ -64,7 +55,7 @@ export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, showB
                         </div>
                         <div>
                             <h1 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight leading-none group-hover:text-amber-600 transition-colors font-sans">{store.name}</h1>
-                            <p className="text-[11px] text-slate-500 font-semibold tracking-wide uppercase mt-0.5">{store.category || 'Boutique Officielle Certifiée'}</p>
+                            <p className="text-[11px] text-slate-500 font-semibold tracking-wide uppercase mt-0.5">{store.category || 'Boutique Officielle'}</p>
                         </div>
                     </a>
 
