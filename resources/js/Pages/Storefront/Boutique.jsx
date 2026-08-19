@@ -8,9 +8,9 @@ import {
     ShoppingBag, ShieldCheck, ArrowRight, X, 
     Share2, Truck, Lock, MessageSquare, Star, Heart, 
     Package, Sparkles, AlertCircle, Clock, MapPin, Tag, Check, Search, 
-    Store, ChevronRight, ArrowLeft, PhoneCall,
+    Store, ChevronRight, ChevronLeft, ArrowLeft, PhoneCall,
     Award, Shield, BadgeCheck, FileText, CheckCircle2, UserCheck, Play, Flame, Eye, Trash2, Plus, Minus,
-    ShoppingCart, Mail, RefreshCw
+    ShoppingCart, Mail, RefreshCw, CreditCard, RotateCcw
 } from 'lucide-react';
 
 function getContrastColor(hexColor) {
@@ -30,6 +30,22 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
 
     const primaryColor = store?.theme_color || '#FFCC00';
     const primaryTextColor = getContrastColor(primaryColor);
+
+    const [currentHeroSlide, setCurrentHeroSlide] = useState(0);
+    const heroProductsList = (products && products.length > 0) ? products : [];
+
+    useEffect(() => {
+        if (!heroProductsList || heroProductsList.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentHeroSlide((prev) => (prev + 1) % heroProductsList.length);
+        }, 4000);
+        return () => clearInterval(interval);
+    }, [heroProductsList.length]);
+
+    const activeHeroProduct = heroProductsList[currentHeroSlide] || null;
+    const activeHeroPromoPct = (activeHeroProduct && activeHeroProduct.is_promo && activeHeroProduct.promo_price > 0 && Number(activeHeroProduct.promo_price) < Number(activeHeroProduct.price_vendor))
+        ? Math.round(((Number(activeHeroProduct.price_vendor) - Number(activeHeroProduct.promo_price)) / Number(activeHeroProduct.price_vendor)) * 100)
+        : null;
 
     const [activeSectionTab, setActiveSectionTab] = useState('all'); // 'all', 'products', 'promo', 'reviews', 'about', 'cart'
     const [searchQuery, setSearchQuery] = useState('');
@@ -1049,43 +1065,44 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                             transition={{ duration: 0.35, ease: 'easeOut' }}
                             className="space-y-16"
                         >
-                            {/* 1. CRESCENDO & NOVATREND STYLE LIGHT HERO SECTION */}
+                            {/* 1. CRESCENDO & NOVATREND STYLE LIGHT HERO SECTION WITH DYNAMIC PRODUCT SLIDESHOW */}
                             {isSectionActive('hero') && (
                                 <motion.section 
                                     id="hero"
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.4 }}
-                                    className="relative rounded-[36px] bg-gradient-to-br from-amber-100/50 via-amber-50/30 to-slate-50 p-8 sm:p-12 lg:p-16 border border-slate-200/80 shadow-xs overflow-hidden"
+                                    className="relative rounded-[32px] sm:rounded-[40px] bg-gradient-to-br from-amber-50/80 via-white to-slate-50 p-6 sm:p-10 lg:p-14 border border-slate-200/90 shadow-2xs overflow-hidden"
                                 >
-                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
                                         {/* LEFT TEXT & CTAS */}
-                                        <div className="lg:col-span-7 space-y-6 text-left">
+                                        <div className="lg:col-span-7 space-y-5 sm:space-y-6 text-left">
                                             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white text-slate-800 font-extrabold text-[11px] uppercase tracking-wider shadow-2xs border border-slate-200">
                                                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                                                 <span>{store.hero_badge_text || store.category || 'BOUTIQUE OFFICIELLE'}</span>
                                             </div>
 
-                                            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-950 tracking-tight leading-[1.08]">
+                                            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-950 tracking-tight leading-[1.15] break-words">
                                                 {store.hero_title || `Sentez la Qualité. Live the Moment.`}
                                             </h2>
 
-                                            <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed max-w-xl">
+                                            <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed max-w-xl line-clamp-3 sm:line-clamp-none">
                                                 {store.hero_subtitle || store.description || 'Produits haut de gamme conçus pour ceux qui exigent l\'excellence et le style moderne. Livraison express 24h-48h.'}
                                             </p>
 
-                                            {/* CTA BUTTONS */}
-                                            <div className="flex flex-wrap items-center gap-3.5 pt-2">
+                                            {/* CTA BUTTONS (MOBILE RESPONSIVE SNAPPY TEXT) */}
+                                            <div className="flex flex-wrap items-center gap-3 pt-1">
                                                 <button
                                                     type="button"
                                                     onClick={() => {
                                                         const el = document.getElementById('catalog-grid');
                                                         if (el) el.scrollIntoView({ behavior: 'smooth' });
                                                     }}
-                                                    className="px-8 py-4 rounded-full font-extrabold text-xs shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer border"
+                                                    className="px-6 sm:px-8 py-3.5 sm:py-4 rounded-full font-extrabold text-xs shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer border"
                                                     style={{ backgroundColor: primaryColor, color: primaryTextColor, borderColor: primaryColor }}
                                                 >
-                                                    <span>Commander Maintenant</span>
+                                                    <span className="sm:hidden">Commander</span>
+                                                    <span className="hidden sm:inline">Commander Maintenant</span>
                                                     <ArrowRight className="w-4 h-4" style={{ color: primaryTextColor }} />
                                                 </button>
 
@@ -1095,54 +1112,139 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                         const el = document.getElementById('catalog-grid');
                                                         if (el) el.scrollIntoView({ behavior: 'smooth' });
                                                     }}
-                                                    className="px-7 py-4 rounded-full bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 font-extrabold text-xs shadow-2xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+                                                    className="px-5 sm:px-7 py-3.5 sm:py-4 rounded-full bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 font-extrabold text-xs shadow-2xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
                                                 >
-                                                    <span>Explorer le Catalogue</span>
+                                                    <span className="sm:hidden">Voir Catalogue</span>
+                                                    <span className="hidden sm:inline">Explorer le Catalogue</span>
                                                 </button>
                                             </div>
 
-                                            {/* 3 MINI REASSURANCE CHIPS (CRESCENDO STYLE) */}
+                                            {/* 3 MINI REASSURANCE CHIPS (NO EMOJIS, SVG ICONS) */}
                                             <div className="pt-4 flex flex-wrap items-center gap-4 text-xs font-bold text-slate-600 border-t border-slate-200/60">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="p-1.5 rounded-full bg-white border border-slate-200 text-amber-500">🚚</span>
-                                                    <span>Livraison Express partout</span>
+                                                    <span className="p-1.5 rounded-full bg-white border border-slate-200 text-amber-500">
+                                                        <Truck className="w-3.5 h-3.5" />
+                                                    </span>
+                                                    <span>Livraison Express 24h-48h</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="p-1.5 rounded-full bg-white border border-slate-200 text-emerald-500">💳</span>
+                                                    <span className="p-1.5 rounded-full bg-white border border-slate-200 text-emerald-600">
+                                                        <CreditCard className="w-3.5 h-3.5" />
+                                                    </span>
                                                     <span>Paiement MoMo USSD 100% Sécurisé</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="p-1.5 rounded-full bg-white border border-slate-200 text-blue-500">🔄</span>
-                                                    <span>Garantie Satisfait ou Remboursé</span>
+                                                    <span className="p-1.5 rounded-full bg-white border border-slate-200 text-blue-600">
+                                                        <RotateCcw className="w-3.5 h-3.5" />
+                                                    </span>
+                                                    <span>Service Client Direct</span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* RIGHT HERO VISUAL WITH PASTEL BADGE (CRESCENDO STYLE) */}
+                                        {/* RIGHT HERO VISUAL: DYNAMIC AUTO-SLIDING PRODUCT SHOWCASE WITH CAROUSEL */}
                                         <div className="lg:col-span-5 relative flex items-center justify-center">
-                                            <div className="w-full max-w-[380px] aspect-square rounded-[36px] bg-gradient-to-tr from-amber-200/50 to-amber-100/30 p-4 border border-white shadow-xl relative overflow-hidden flex items-center justify-center">
-                                                <img 
-                                                    src={products && products.length > 0 && (products[0].image_url || products[0].images?.[0]) ? (products[0].image_url || products[0].images[0]) : (store.banner_url || store.logo_url || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800")} 
-                                                    alt={store.name} 
-                                                    className="w-full h-full object-contain hover:scale-105 transition-transform duration-500" 
-                                                />
+                                            <div className="w-full max-w-[380px] aspect-square rounded-[32px] sm:rounded-[36px] bg-white p-4 border border-slate-200/90 shadow-xl relative overflow-hidden flex flex-col justify-between group">
+                                                
+                                                {/* DYNAMIC DISCOUNT BADGE: DISPLAYED ONLY IF ACTIVE PRODUCT IS ON PROMO */}
+                                                {activeHeroPromoPct ? (
+                                                    <div className="absolute top-4 right-4 z-20 px-3 py-1.5 rounded-full bg-rose-600 text-white font-black text-xs text-center shadow-md border-2 border-white flex items-center gap-1">
+                                                        <Tag className="w-3.5 h-3.5 text-white" />
+                                                        <span>-{activeHeroPromoPct}% OFF</span>
+                                                    </div>
+                                                ) : null}
 
-                                                {/* DISCOUNT PINK BADGE */}
-                                                <div className="absolute top-4 right-4 w-20 h-20 rounded-full bg-rose-500 text-white font-black text-xs text-center flex flex-col items-center justify-center shadow-lg border-2 border-white leading-tight rotate-12">
-                                                    <span>Jusqu'à</span>
-                                                    <span className="text-base font-black">-30%</span>
-                                                </div>
+                                                {/* SLIDING PRODUCT IMAGE */}
+                                                <AnimatePresence mode="wait">
+                                                    <motion.div
+                                                        key={currentHeroSlide}
+                                                        initial={{ opacity: 0, scale: 0.96 }}
+                                                        animate={{ opacity: 1, scale: 1 }}
+                                                        exit={{ opacity: 0, scale: 1.04 }}
+                                                        transition={{ duration: 0.4 }}
+                                                        className="w-full h-full flex flex-col items-center justify-center relative p-2"
+                                                    >
+                                                        {activeHeroProduct ? (
+                                                            <a 
+                                                                href={`/${store.slug}/p/${activeHeroProduct.slug}`}
+                                                                className="w-full h-full flex flex-col items-center justify-center group/img relative"
+                                                            >
+                                                                <img 
+                                                                    src={activeHeroProduct.image_url || (activeHeroProduct.images?.[0]) || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800'} 
+                                                                    alt={activeHeroProduct.title} 
+                                                                    className="w-full h-48 sm:h-56 object-contain rounded-2xl group-hover/img:scale-105 transition-transform duration-500" 
+                                                                />
+                                                                
+                                                                {/* PRODUCT INFO PREVIEW FOOTER BAR */}
+                                                                <div className="mt-3 w-full bg-slate-50 border border-slate-200/80 p-2.5 rounded-2xl flex items-center justify-between gap-2 text-xs">
+                                                                    <div className="min-w-0">
+                                                                        <div className="font-extrabold text-slate-950 truncate text-[11px] sm:text-xs">
+                                                                            {activeHeroProduct.title}
+                                                                        </div>
+                                                                        <div className="text-[10px] text-slate-500 font-medium">
+                                                                            {activeHeroProduct.category || store.name}
+                                                                        </div>
+                                                                    </div>
+                                                                    <span className="px-2.5 py-1 rounded-xl bg-slate-950 text-white font-extrabold text-[11px] shrink-0">
+                                                                        {Math.ceil(((activeHeroProduct.is_promo && activeHeroProduct.promo_price > 0 ? activeHeroProduct.promo_price : activeHeroProduct.price_vendor) * 1.02)).toLocaleString()} FCFA
+                                                                    </span>
+                                                                </div>
+                                                            </a>
+                                                        ) : (
+                                                            <img 
+                                                                src={store.banner_url || store.logo_url || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800"} 
+                                                                alt={store.name} 
+                                                                className="w-full h-full object-contain rounded-2xl" 
+                                                            />
+                                                        )}
+                                                    </motion.div>
+                                                </AnimatePresence>
+
+                                                {/* CAROUSEL CONTROLS & PAGINATION DOTS */}
+                                                {heroProductsList.length > 1 && (
+                                                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-slate-950/70 backdrop-blur-md px-3 py-1.5 rounded-full text-white">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setCurrentHeroSlide((prev) => (prev - 1 + heroProductsList.length) % heroProductsList.length)}
+                                                            className="p-1 rounded-full hover:bg-white/20 transition-colors cursor-pointer"
+                                                        >
+                                                            <ChevronLeft className="w-3.5 h-3.5" />
+                                                        </button>
+
+                                                        <div className="flex items-center gap-1 px-1">
+                                                            {heroProductsList.slice(0, 6).map((_, idx) => (
+                                                                <button
+                                                                    key={idx}
+                                                                    type="button"
+                                                                    onClick={() => setCurrentHeroSlide(idx)}
+                                                                    className={`w-2 h-2 rounded-full transition-all cursor-pointer ${
+                                                                        currentHeroSlide === idx ? 'w-4 bg-white' : 'bg-white/40'
+                                                                    }`}
+                                                                />
+                                                            ))}
+                                                        </div>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setCurrentHeroSlide((prev) => (prev + 1) % heroProductsList.length)}
+                                                            className="p-1 rounded-full hover:bg-white/20 transition-colors cursor-pointer"
+                                                        >
+                                                            <ChevronRight className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                )}
+
                                             </div>
                                         </div>
                                     </div>
                                 </motion.section>
                             )}
 
-                            {/* 2. SHOP BY CATEGORIES (PASTEL 4-CARD GRID - CRESCENDO STYLE) */}
+                            {/* 2. SHOP BY CATEGORIES (CLEAN UNIFIED GRID) */}
                             {isSectionActive('categories') && storeCategories && storeCategories.length > 0 && (
                                 <section id="categories" className="space-y-6">
                                     <div className="flex items-center justify-between">
-                                        <h3 className="text-2xl font-black text-slate-950 tracking-tight">Acheter par Catégorie</h3>
+                                        <h3 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">Acheter par Catégorie</h3>
                                         <button 
                                             type="button"
                                             onClick={() => setSelectedCategory('all')} 
@@ -1155,13 +1257,6 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                         {storeCategories.slice(0, 4).map((cat, idx) => {
-                                            const bgColors = [
-                                                'bg-amber-50/80 border-amber-200/80 text-amber-900',
-                                                'bg-blue-50/80 border-blue-200/80 text-blue-900',
-                                                'bg-emerald-50/80 border-emerald-200/80 text-emerald-900',
-                                                'bg-rose-50/80 border-rose-200/80 text-rose-900'
-                                            ];
-                                            const cardBg = bgColors[idx % bgColors.length];
                                             const categoryProduct = products.find(p => p.category === cat.name || p.category_id === cat.id) || products[idx % products.length];
 
                                             return (
@@ -1169,15 +1264,15 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                     key={cat.id || idx}
                                                     type="button"
                                                     onClick={() => setSelectedCategory(cat.id)}
-                                                    className={`p-6 rounded-3xl border shadow-2xs hover:shadow-md transition-all text-left flex flex-col justify-between relative overflow-hidden group cursor-pointer h-52 ${cardBg}`}
+                                                    className="p-6 rounded-3xl border border-slate-200/90 bg-slate-50/70 hover:bg-white text-slate-950 shadow-2xs hover:shadow-md transition-all text-left flex flex-col justify-between relative overflow-hidden group cursor-pointer h-52"
                                                 >
                                                     <div className="space-y-1.5 max-w-[140px] z-10">
-                                                        <span className="p-2 rounded-xl bg-white/80 backdrop-blur-xs shadow-2xs inline-block text-base">
-                                                            🏷️
+                                                        <span className="p-2 rounded-xl bg-white border border-slate-200 shadow-2xs inline-block text-slate-700">
+                                                            <Tag className="w-4 h-4 text-slate-800" />
                                                         </span>
                                                         <h4 className="text-base font-black tracking-tight leading-snug">{cat.name}</h4>
-                                                        <p className="text-[11px] font-medium opacity-80">Sélection de qualité</p>
-                                                        <div className="pt-2 flex items-center gap-1 text-xs font-extrabold group-hover:translate-x-1 transition-transform">
+                                                        <p className="text-[11px] font-medium text-slate-500">Sélection de qualité</p>
+                                                        <div className="pt-2 flex items-center gap-1 text-xs font-extrabold group-hover:translate-x-1 transition-transform text-slate-900">
                                                             <span>Acheter</span>
                                                             <ArrowRight className="w-3.5 h-3.5" />
                                                         </div>
@@ -1466,7 +1561,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                             <div key={sl.id} className="bg-white rounded-3xl p-6 border border-amber-200/90 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between space-y-4">
                                                 <div className="space-y-3">
                                                     <div className="flex items-center justify-between">
-                                                        <span className="px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] uppercase">
+                                                        <span className="px-3 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] uppercase tracking-wider">
                                                             PACK SMARTLINK
                                                         </span>
                                                         <span className="text-xs font-bold text-slate-500">
@@ -1479,13 +1574,29 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                         <p className="text-xs text-slate-600 font-medium leading-relaxed">{sl.description}</p>
                                                     )}
 
+                                                    {/* PRODUCTS WITH PHOTOS IN PACK */}
                                                     <div className="space-y-2 pt-2 border-t border-slate-100">
-                                                        {(sl.items || []).map((it, idx) => (
-                                                            <div key={idx} className="flex items-center justify-between text-xs text-slate-700 font-medium">
-                                                                <span className="truncate max-w-[200px]">✓ {it.product?.title || 'Article du pack'}</span>
-                                                                <span className="font-bold text-slate-900">x{it.quantity || 1}</span>
-                                                            </div>
-                                                        ))}
+                                                        {(sl.items || []).map((it, idx) => {
+                                                            const itemImg = it.image_url || it.product?.image_url;
+                                                            const itemTitle = it.product_name || it.product?.title || 'Article du pack';
+                                                            return (
+                                                                <div key={idx} className="flex items-center justify-between gap-3 text-xs text-slate-700 font-medium bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                                                                    <div className="flex items-center gap-2.5 min-w-0">
+                                                                        <div className="w-10 h-10 rounded-xl bg-slate-200 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
+                                                                            {itemImg ? (
+                                                                                <img src={itemImg} alt={itemTitle} className="w-full h-full object-cover" />
+                                                                            ) : (
+                                                                                <ShoppingBag className="w-4 h-4 text-slate-400" />
+                                                                            )}
+                                                                        </div>
+                                                                        <span className="truncate font-bold text-slate-900">{itemTitle}</span>
+                                                                    </div>
+                                                                    <span className="font-extrabold text-slate-950 bg-white px-2 py-1 rounded-lg border border-slate-200 shrink-0 text-[11px]">
+                                                                        x{it.quantity || 1}
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
                                                 </div>
 
@@ -1493,18 +1604,17 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                     <div>
                                                         <div className="text-[10px] text-slate-400 font-medium uppercase">Prix du Pack</div>
                                                         <div className="text-lg font-black text-slate-950">
-                                                            {Math.ceil((sl.price_total || 0) * 1.02).toLocaleString()} FCFA
+                                                            {Math.ceil((sl.total_amount || sl.price_total || 0) * 1.02).toLocaleString()} FCFA
                                                         </div>
                                                     </div>
 
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleSmartLinkAddToCart(sl)}
-                                                        className="px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs shadow-2xs transition-all flex items-center gap-2 cursor-pointer"
+                                                    <a
+                                                        href={`/smartlink/${sl.code}`}
+                                                        className="px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-2xs transition-all flex items-center gap-2 cursor-pointer border border-amber-300"
                                                     >
-                                                        <ShoppingCart className="w-4 h-4" />
-                                                        <span>Commander le Pack</span>
-                                                    </button>
+                                                        <ShoppingBag className="w-4 h-4" />
+                                                        <span>Acheter le Pack</span>
+                                                    </a>
                                                 </div>
                                             </div>
                                         ))}
@@ -1530,31 +1640,47 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                         </button>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        {(reviewsList && reviewsList.length > 0 ? reviewsList : [
-                                            { name: 'Koffi A.', city: 'Cotonou', rating: 5, comment: 'Commande reçue en 24h ! Produit conforme et paiement Mobile Money très fluide.' },
-                                            { name: 'Grace M.', city: 'Douala', rating: 5, comment: 'Excellente boutique. Le vendeur est réactif et les articles sont de qualité supérieure.' },
-                                            { name: 'Christian T.', city: 'Abidjan', rating: 5, comment: 'Service impeccable. Je recommande vivement BIOLINKO pour les achats en ligne.' },
-                                        ]).map((rev, i) => (
-                                            <div key={i} className="p-5 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-3">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-1 text-amber-500">
-                                                        {Array.from({ length: rev.rating || 5 }).map((_, s) => (
-                                                            <Star key={s} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                                                        ))}
+                                    {reviewsList && reviewsList.length > 0 ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            {reviewsList.map((rev, i) => (
+                                                <div key={rev.id || i} className="p-5 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-1 text-amber-500">
+                                                            {Array.from({ length: rev.rating || 5 }).map((_, s) => (
+                                                                <Star key={s} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                                                            ))}
+                                                        </div>
+                                                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                                            Achat vérifié
+                                                        </span>
                                                     </div>
-                                                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                                                        Achat vérifié
-                                                    </span>
+                                                    <p className="text-xs text-slate-700 font-medium leading-relaxed italic break-words overflow-hidden max-w-full">"{rev.comment}"</p>
+                                                    <div className="text-xs font-black text-slate-950 pt-2 border-t border-slate-200/60 flex justify-between">
+                                                        <span>{rev.customer_name || rev.name}</span>
+                                                        <span className="text-slate-400 font-normal">{rev.customer_city || rev.city || ''}</span>
+                                                    </div>
                                                 </div>
-                                                <p className="text-xs text-slate-700 font-medium leading-relaxed italic break-words overflow-hidden max-w-full">"{rev.comment}"</p>
-                                                <div className="text-xs font-black text-slate-950 pt-2 border-t border-slate-200/60 flex justify-between">
-                                                    <span>{rev.name}</span>
-                                                    <span className="text-slate-400 font-normal">{rev.city}</span>
-                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-8 sm:p-12 text-center rounded-2xl bg-slate-50 border border-dashed border-slate-300 space-y-3">
+                                            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto shadow-2xs">
+                                                <Star className="w-6 h-6 fill-amber-400 text-amber-500" />
                                             </div>
-                                        ))}
-                                    </div>
+                                            <div className="text-sm font-black text-slate-950">Aucun avis publié pour le moment</div>
+                                            <p className="text-xs text-slate-500 font-medium max-w-md mx-auto leading-relaxed">
+                                                Cette boutique n'a pas encore reçu d'avis de clients. Soyez le tout premier à donner votre avis sur {store.name} !
+                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsReviewModalOpen(true)}
+                                                className="px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-extrabold text-xs transition-colors inline-flex items-center gap-2 cursor-pointer shadow-2xs"
+                                            >
+                                                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                                                <span>Déposer le Premier Avis</span>
+                                            </button>
+                                        </div>
+                                    )}
                                 </section>
                             )}
 

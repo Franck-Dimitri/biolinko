@@ -34,6 +34,7 @@ export default function SmartLinkShow({ smartLink, store, isValid }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [paymentSuccess, setPaymentSuccess] = useState(null);
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -108,8 +109,8 @@ export default function SmartLinkShow({ smartLink, store, isValid }) {
                 {/* LEFT COL: OFFER DETAILS & PRODUCTS INCLUDED */}
                 <div className="md:col-span-6 space-y-6">
                     
-                    {/* Offer Title Banner */}
-                    <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-2xs space-y-4 relative overflow-hidden">
+                    {/* Offer Title Banner & Photo Showcase */}
+                    <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-2xs space-y-5 relative overflow-hidden">
                         <div className="flex items-center gap-2 text-amber-800 text-xs font-bold uppercase tracking-wider bg-amber-100 px-3 py-1 rounded-full w-max border border-amber-300">
                             <Zap className="w-4 h-4 fill-amber-500" />
                             <span>Offre Express SmartLink</span>
@@ -118,6 +119,61 @@ export default function SmartLinkShow({ smartLink, store, isValid }) {
                         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight leading-snug">
                             {smartLink.title}
                         </h1>
+
+                        {/* PRODUCT PHOTO SHOWCASE / GALLERY */}
+                        {smartLink.items && smartLink.items.length > 0 && (
+                            <div className="space-y-3 pt-1">
+                                {/* MAIN SELECTED PRODUCT PHOTO PREVIEW */}
+                                <div className="w-full h-64 sm:h-72 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden relative group shadow-2xs">
+                                    {smartLink.items[selectedImageIndex]?.image_url ? (
+                                        <img 
+                                            src={smartLink.items[selectedImageIndex].image_url} 
+                                            alt={smartLink.items[selectedImageIndex].product_name || 'Produit'} 
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-2">
+                                            <ShoppingBag className="w-12 h-12 stroke-[1.5]" />
+                                            <span className="text-xs font-medium">Offre Pack Spéciale</span>
+                                        </div>
+                                    )}
+
+                                    {/* ITEM BADGE OVERLAY */}
+                                    <div className="absolute bottom-3 left-3 right-3 bg-slate-950/85 backdrop-blur-md text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center justify-between shadow-md">
+                                        <span className="truncate">{smartLink.items[selectedImageIndex]?.product_name || 'Article du Pack'}</span>
+                                        <span className="bg-amber-400 text-slate-950 text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0 ml-2">
+                                            x{smartLink.items[selectedImageIndex]?.quantity || 1} inclus
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* MINI THUMBNAIL PHOTO SELECTOR (IF MULTIPLE ITEMS) */}
+                                {smartLink.items.length > 1 && (
+                                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                                        {smartLink.items.map((item, idx) => (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => setSelectedImageIndex(idx)}
+                                                className={`w-14 h-14 rounded-xl border-2 overflow-hidden transition-all shrink-0 cursor-pointer ${
+                                                    selectedImageIndex === idx 
+                                                        ? 'border-amber-400 ring-2 ring-amber-400/30 scale-105 shadow-2xs' 
+                                                        : 'border-slate-200 opacity-70 hover:opacity-100'
+                                                }`}
+                                            >
+                                                {item.image_url ? (
+                                                    <img src={item.image_url} alt={item.product_name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                                        <ShoppingBag className="w-4 h-4" />
+                                                    </div>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Price Breakdown Box */}
                         <div className="p-5 rounded-2xl bg-slate-900 text-white flex items-center justify-between shadow-md">

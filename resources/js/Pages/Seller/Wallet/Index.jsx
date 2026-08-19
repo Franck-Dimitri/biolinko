@@ -61,8 +61,8 @@ export default function Index({ store, wallet, withdrawals, metrics, appUrl }) {
                     </button>
                 </div>
 
-                {/* 3 METRIC CARDS */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {/* 4 METRIC CARDS */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {/* Card 1: Available Balance */}
                     <motion.div 
                         whileHover={{ y: -2 }}
@@ -109,7 +109,7 @@ export default function Index({ store, wallet, withdrawals, metrics, appUrl }) {
                         className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-2xs space-y-3 relative overflow-hidden"
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ventes Cumulées Néte</span>
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ventes Nettes Cumulées</span>
                             <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
                                 <DollarSign className="w-5 h-5" />
                             </div>
@@ -117,7 +117,27 @@ export default function Index({ store, wallet, withdrawals, metrics, appUrl }) {
                         <div className="text-3xl font-extrabold text-slate-950">
                             {Number(metrics.lifetime_earnings).toLocaleString()} <span className="text-sm font-bold text-slate-500">FCFA</span>
                         </div>
-                        <div className="text-[11px] text-slate-500 font-medium">Revenus nets réels après déduction des frais</div>
+                        <div className="text-[11px] text-slate-500 font-medium">Revenus nets réels après frais</div>
+                    </motion.div>
+
+                    {/* Card 4: Total Withdrawn */}
+                    <motion.div 
+                        whileHover={{ y: -2 }}
+                        className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-2xs space-y-3 relative overflow-hidden"
+                    >
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Solde Total Retiré</span>
+                            <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                                <ArrowUpRight className="w-5 h-5" />
+                            </div>
+                        </div>
+                        <div className="text-3xl font-extrabold text-slate-950">
+                            {Number(metrics.total_withdrawals || 0).toLocaleString()} <span className="text-sm font-bold text-slate-500">FCFA</span>
+                        </div>
+                        <div className="text-[11px] text-purple-700 font-semibold flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Total déjà versé par MoMo</span>
+                        </div>
                     </motion.div>
                 </div>
 

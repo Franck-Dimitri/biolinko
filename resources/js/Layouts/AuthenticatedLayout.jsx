@@ -13,6 +13,7 @@ export default function AuthenticatedLayout({ header, children }) {
     const store = usePage().props.store || user.store;
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans antialiased flex flex-col md:flex-row">
@@ -350,24 +351,6 @@ export default function AuthenticatedLayout({ header, children }) {
                             </div>
                         </>
                     )}
-
-                    {/* NAV GROUP 2: TOOLS & WALLET */}
-                    <div className="space-y-1">
-                        <div className="px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
-                            Outils & Retraits
-                        </div>
-
-                        <Link
-                            href={route('orders.index')}
-                            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-950 hover:bg-slate-50 transition-all"
-                        >
-                            <div className="flex items-center gap-3">
-                                <Wallet className="w-4 h-4 text-amber-600" />
-                                <span>Portefeuille MoMo</span>
-                            </div>
-                            <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-semibold">Retrait</span>
-                        </Link>
-                    </div>
                 </div>
 
                 {/* BOTTOM USER PROFILE CARD */}
@@ -445,11 +428,67 @@ export default function AuthenticatedLayout({ header, children }) {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <button className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 relative">
-                            <Bell className="w-5 h-5" />
-                            <span className="w-2 h-2 rounded-full bg-amber-500 absolute top-1.5 right-1.5" />
-                        </button>
+                    <div className="flex items-center gap-3">
+                        {/* NOTIFICATIONS DROPDOWN POPOVER */}
+                        <div className="relative">
+                            <button 
+                                onClick={() => setShowNotifications(!showNotifications)}
+                                className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-slate-950 relative transition-colors cursor-pointer"
+                                title="Notifications"
+                            >
+                                <Bell className="w-5 h-5" />
+                                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-white absolute top-1.5 right-1.5 animate-pulse" />
+                            </button>
+
+                            {showNotifications && (
+                                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl border border-slate-200 shadow-xl py-3 z-50 animate-in fade-in zoom-in-95 duration-150">
+                                    <div className="px-4 pb-2.5 border-b border-slate-100 flex items-center justify-between">
+                                        <span className="text-xs font-extrabold text-slate-950 uppercase tracking-wider">Notifications (3)</span>
+                                        <button 
+                                            onClick={() => setShowNotifications(false)}
+                                            className="text-[10px] font-bold text-amber-700 hover:underline"
+                                        >
+                                            Fermer
+                                        </button>
+                                    </div>
+                                    <div className="divide-y divide-slate-100 max-h-64 overflow-y-auto text-xs">
+                                        <div className="p-3.5 hover:bg-slate-50 transition-colors cursor-pointer">
+                                            <div className="font-bold text-slate-950 flex items-center justify-between">
+                                                <span>Paiement MoMo Reçu</span>
+                                                <span className="text-[10px] text-slate-400 font-normal">À l'instant</span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 mt-0.5">Votre portefeuille a été crédité pour une commande validée.</p>
+                                        </div>
+                                        <div className="p-3.5 hover:bg-slate-50 transition-colors cursor-pointer">
+                                            <div className="font-bold text-slate-950 flex items-center justify-between">
+                                                <span>Boutique Biolinko Active</span>
+                                                <span className="text-[10px] text-slate-400 font-normal">Il y a 10 min</span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 mt-0.5">Votre catalogue et SmartLinks sont prêts pour les partages.</p>
+                                        </div>
+                                        <div className="p-3.5 hover:bg-slate-50 transition-colors cursor-pointer">
+                                            <div className="font-bold text-slate-950 flex items-center justify-between">
+                                                <span>Système Réseau USSD</span>
+                                                <span className="text-[10px] text-slate-400 font-normal">Aujourd'hui</span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 mt-0.5">Service d'encaissement Mobile Money 100% opérationnel.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* DIRECT LOGOUT BUTTON */}
+                        <Link
+                            href={route('logout')}
+                            method="post"
+                            as="button"
+                            className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-700 font-bold text-xs flex items-center gap-2 border border-slate-200 transition-all cursor-pointer"
+                            title="Se Déconnecter"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            <span className="hidden sm:inline">Déconnexion</span>
+                        </Link>
                     </div>
                 </header>
 

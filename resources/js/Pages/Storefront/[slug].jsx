@@ -5,7 +5,7 @@ import StorefrontLayout from '@/Layouts/StorefrontLayout';
 import { 
     Store, ShoppingCart, ArrowLeft, Star, ShieldCheck, CheckCircle2, 
     Truck, Share2, Plus, Minus, Tag, Check,
-    ShoppingBag, Eye, ArrowRight, BadgeCheck
+    ShoppingBag, Eye, ArrowRight, BadgeCheck, CreditCard, FileText, RotateCcw, X, MessageCircle
 } from 'lucide-react';
 
 function getContrastColor(hexColor) {
@@ -115,6 +115,9 @@ export default function ProductSlugShow({ store, product, appUrl }) {
     };
 
     const reviewsList = store?.reviews || [];
+    const avgRating = reviewsList.length > 0 
+        ? (reviewsList.reduce((acc, r) => acc + (r.rating || 5), 0) / reviewsList.length).toFixed(1)
+        : null;
     // Ensure all active products from store are loaded
     const relatedProducts = (store?.products || []).filter(p => p.id !== product.id).slice(0, 4);
 
@@ -165,20 +168,32 @@ export default function ProductSlugShow({ store, product, appUrl }) {
                             ))}
                         </div>
 
-                        {/* GARANTIE & PROTECTION BIOLINKO */}
-                        <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-2xl p-4 space-y-3 text-xs text-slate-800">
-                            <div className="font-extrabold text-amber-950 flex items-center gap-1.5 text-xs">
-                                <ShieldCheck className="w-4 h-4 text-amber-600" />
-                                <span>Garantie &amp; Protection BIOLINKO</span>
+                        {/* ENGAGEMENT SERVICE VENDEUR */}
+                        <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 space-y-3 text-xs text-slate-800 shadow-2xs">
+                            <div className="font-extrabold text-slate-950 flex items-center gap-1.5 text-xs">
+                                <Truck className="w-4 h-4 text-amber-500" />
+                                <span>Engagement Service &amp; Expédition</span>
                             </div>
                             <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
-                                Vos paiements sont entièrement protégés par BIOLINKO. Le vendeur garantit l'expédition rapide et la conformité de vos articles sous 48h.
+                                Commandez en toute confiance directement auprès de {store.name}. Traitement rapide et expédition directe.
                             </p>
-                            <div className="grid grid-cols-2 gap-2 text-[10px] font-bold text-slate-700 pt-1 border-t border-amber-200/80">
-                                <div>🚚 Expédié sous 24h</div>
-                                <div>📱 Orange / MTN MoMo</div>
-                                <div>🔄 Retour gratuit si défaut</div>
-                                <div>📄 Facture Numérique Certifiée</div>
+                            <div className="grid grid-cols-2 gap-2 text-[10px] font-bold text-slate-700 pt-2 border-t border-slate-200/80">
+                                <div className="flex items-center gap-1.5">
+                                    <Truck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                    <span>Expédition 24h - 48h</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <CreditCard className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                    <span>Paiement MoMo Direct</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <RotateCcw className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                                    <span>Service Après-Vente</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <FileText className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                                    <span>Reçu de Commande</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -187,8 +202,8 @@ export default function ProductSlugShow({ store, product, appUrl }) {
                     <div className="lg:col-span-5 space-y-4 bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs">
                         
                         <div className="flex items-center justify-between gap-2">
-                            <span className="border border-amber-400 bg-amber-50 text-amber-900 font-extrabold text-[10px] px-2.5 py-1 rounded-lg uppercase tracking-wider">
-                                FOURNISSEUR CERTIFIÉ
+                            <span className="border border-emerald-300 bg-emerald-50 text-emerald-950 font-extrabold text-[10px] px-2.5 py-1 rounded-lg uppercase tracking-wider flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Article Officiel Store
                             </span>
                             <span className="text-xs font-mono font-bold text-slate-400">
                                 SKU : {product.sku || `BLK-PROD-${product.id}`}
@@ -198,7 +213,13 @@ export default function ProductSlugShow({ store, product, appUrl }) {
                         <h1 className="text-xl sm:text-2xl font-extrabold text-slate-950 leading-tight">{product.title}</h1>
 
                         <div className="text-xs text-slate-600 font-semibold flex items-center gap-2">
-                            <span className="text-amber-500 font-bold">★ 4.9 / 5</span>
+                            {avgRating ? (
+                                <span className="text-amber-600 font-bold flex items-center gap-1">
+                                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {avgRating} / 5 ({reviewsList.length} avis)
+                                </span>
+                            ) : (
+                                <span className="text-slate-400 text-[11px] font-medium">Aucun avis pour l'instant</span>
+                            )}
                             <span>•</span>
                             {product.stock > 0 ? (
                                 <span className="text-emerald-700 font-bold flex items-center gap-1">
@@ -221,7 +242,7 @@ export default function ProductSlugShow({ store, product, appUrl }) {
                         <div className="grid grid-cols-2 gap-2 text-xs">
                             <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-0.5">
                                 <div className="text-[10px] text-slate-400 font-medium">Origine Expédition</div>
-                                <div className="font-bold text-slate-900">Douala, Cameroun</div>
+                                <div className="font-bold text-slate-900">{store.city || 'Douala, Cameroun'}</div>
                             </div>
                             <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-0.5">
                                 <div className="text-[10px] text-slate-400 font-medium">Délai de Livraison</div>
@@ -300,54 +321,50 @@ export default function ProductSlugShow({ store, product, appUrl }) {
                     <div className="lg:col-span-3 space-y-4">
                         <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-2xs space-y-4">
                             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-950">PROFIL FOURNISSEUR</span>
-                                <span className="bg-amber-100 text-amber-900 font-extrabold text-[10px] px-2 py-0.5 rounded-full border border-amber-300">
-                                    Gold Supplier
+                                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-950">BOUTIQUE OFFICIELLE</span>
+                                <span className="bg-emerald-50 text-emerald-900 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full border border-emerald-200">
+                                    Vendeur Actif
                                 </span>
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 font-bold flex items-center justify-center shadow-2xs overflow-hidden border border-slate-200 shrink-0">
+                                <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white font-bold flex items-center justify-center shadow-2xs overflow-hidden border border-slate-200 shrink-0">
                                     {store.logo_url ? (
                                         <img src={store.logo_url} alt="Logo" className="w-full h-full object-cover" />
                                     ) : (
-                                        <Store className="w-6 h-6 text-slate-950" />
+                                        <Store className="w-6 h-6 text-amber-400" />
                                     )}
                                 </div>
                                 <div className="space-y-0.5">
                                     <h4 className="font-extrabold text-sm text-slate-950 leading-tight flex items-center gap-1">
                                         <span>{store.name}</span>
-                                        <span className="text-amber-500">✓</span>
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                                     </h4>
-                                    <p className="text-[11px] text-slate-500 font-medium">{store.category || 'Vendeur Certifié BIOLINKO'}</p>
+                                    <p className="text-[11px] text-slate-500 font-medium">{store.category || 'Boutique Indépendante'}</p>
                                 </div>
                             </div>
 
                             <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2 font-semibold text-slate-700">
                                 <div className="flex justify-between">
-                                    <span className="text-slate-500 font-medium">Note Vendeur :</span>
-                                    <span className="text-amber-600 font-extrabold">★ 4.9 / 5.0</span>
+                                    <span className="text-slate-500 font-medium">Évaluation :</span>
+                                    <span className="text-slate-900 font-extrabold">{avgRating ? `★ ${avgRating} / 5.0` : 'Boutique Vérifiée'}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-slate-500 font-medium">Taux de Réponse :</span>
-                                    <span className="text-emerald-600 font-bold">98.5% (&lt; 1h)</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-slate-500 font-medium">Expéditions à Temps :</span>
-                                    <span className="text-emerald-600 font-bold">99.2%</span>
+                                    <span className="text-slate-500 font-medium">Localisation :</span>
+                                    <span className="text-slate-900 font-bold">{store.city || 'Douala, Cameroun'}</span>
                                 </div>
                             </div>
 
                             <div className="text-xs text-slate-600 font-medium flex items-center justify-between pt-1">
-                                <span className="text-slate-400">Gérant Agréé :</span>
-                                <span className="font-bold text-slate-900">{store.manager_name || 'Jean Vendeur'}</span>
+                                <span className="text-slate-400">Gérant de Store :</span>
+                                <span className="font-bold text-slate-900">{store.manager_name || store.name}</span>
                             </div>
 
                             <a
                                 href={`/${store.slug}`}
                                 className="w-full py-3 rounded-2xl bg-[#18181B] hover:bg-slate-900 text-white font-bold text-xs text-center shadow-xs block transition-all"
                             >
-                                Visiter le Store du Vendeur
+                                Visiter la Vitrine de la Boutique
                             </a>
                         </div>
                     </div>
@@ -382,7 +399,7 @@ export default function ProductSlugShow({ store, product, appUrl }) {
                                 activeDetailTab === 'vendor' ? 'bg-[#FFCC00] text-slate-950 shadow-2xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold'
                             }`}
                         >
-                            Profil Officiel du Fournisseur
+                            À propos du Vendeur
                         </button>
                         <button
                             type="button"
@@ -391,7 +408,7 @@ export default function ProductSlugShow({ store, product, appUrl }) {
                                 activeDetailTab === 'escrow' ? 'bg-[#FFCC00] text-slate-950 shadow-2xs' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold'
                             }`}
                         >
-                            Garanties &amp; Support BIOLINKO
+                            Livraison &amp; Modalités de Paiement
                         </button>
                     </div>
 
@@ -404,19 +421,19 @@ export default function ProductSlugShow({ store, product, appUrl }) {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                                     <span className="text-slate-500 font-medium">Code Article / SKU :</span>
-                                    <span className="font-mono font-bold text-slate-950">{product.sku || '80ZVXC3E'}</span>
+                                    <span className="font-mono font-bold text-slate-950">{product.sku || `BLK-PROD-${product.id}`}</span>
                                 </div>
                                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                                    <span className="text-slate-500 font-medium">Poids d'expédition :</span>
-                                    <span className="font-bold text-slate-950">Standard (&lt; 1kg)</span>
+                                    <span className="text-slate-500 font-medium">Ville d'expédition :</span>
+                                    <span className="font-bold text-slate-950">{store.city || 'Douala, Cameroun'}</span>
                                 </div>
                                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                                     <span className="text-slate-500 font-medium">Disponibilité du Stock :</span>
-                                    <span className="font-bold text-emerald-600">{product.stock || 10} pièces prêtes</span>
+                                    <span className="font-bold text-emerald-600">{product.stock || 1} pièces disponibles</span>
                                 </div>
                                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                                    <span className="text-slate-500 font-medium">Garantie &amp; Support :</span>
-                                    <span className="font-bold text-slate-950">Garantie Retrait &amp; Remboursement 48h</span>
+                                    <span className="text-slate-500 font-medium">Mode d'Expédition :</span>
+                                    <span className="font-bold text-slate-950">Livraison Directe Vendeur</span>
                                 </div>
                             </div>
 
@@ -440,13 +457,13 @@ export default function ProductSlugShow({ store, product, appUrl }) {
 
                     {activeDetailTab === 'vendor' && (
                         <div className="space-y-4 text-xs">
-                            <h4 className="text-xs font-extrabold text-slate-950 uppercase tracking-wider">INFORMATIONS OFFICIELLES FOURNISSEUR</h4>
+                            <h4 className="text-xs font-extrabold text-slate-950 uppercase tracking-wider">INFORMATIONS SUR LE VENDEUR</h4>
                             <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                                 <div className="font-bold text-sm text-slate-950">{store.name}</div>
-                                <div className="text-slate-600">{store.description || 'Boutique certifiée et agréée sur la plateforme BIOLINKO Pay.'}</div>
+                                <div className="text-slate-600">{store.description || `Bienvenue sur la boutique officielle de ${store.name}.`}</div>
                                 <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-slate-500 font-medium">
-                                    <span>Gérant : {store.manager_name || 'Jean Vendeur'}</span>
-                                    <a href={`/${store.slug}`} className="text-amber-600 font-bold hover:underline">Accéder à la boutique complète →</a>
+                                    <span>Gérant : {store.manager_name || store.name}</span>
+                                    <a href={`/${store.slug}`} className="text-amber-600 font-bold hover:underline">Voir tous les articles de cette boutique →</a>
                                 </div>
                             </div>
                         </div>
@@ -454,10 +471,10 @@ export default function ProductSlugShow({ store, product, appUrl }) {
 
                     {activeDetailTab === 'escrow' && (
                         <div className="space-y-3 text-xs text-slate-700">
-                            <h4 className="text-xs font-extrabold text-slate-950 uppercase tracking-wider">CHARTE DE GARANTIE ET EXPÉDITION BIOLINKO ESCROW</h4>
-                            <div className="p-5 rounded-2xl bg-amber-50/80 border border-amber-200/80 space-y-2 text-slate-800 font-medium">
-                                <div className="font-bold text-amber-950">Protection Intégrale de l'Acheteur :</div>
-                                <p>Toutes les commandes effectuées via BIOLINKO sont protégées par le système séquestre neutre. Vos fonds ne sont transférés au vendeur qu'après livraison et validation de conformité sous 48h.</p>
+                            <h4 className="text-xs font-extrabold text-slate-950 uppercase tracking-wider">LIVRAISON ET MODALITÉS DE PAIEMENT</h4>
+                            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-slate-800 font-medium">
+                                <div className="font-bold text-slate-950">Informations sur la commande :</div>
+                                <p>Toutes vos commandes sont gérées directement par le vendeur {store.name}. Les livraisons sont effectuées selon l'adresse indiquée lors de la commande et le paiement s'effectue via Mobile Money (Orange Money, MTN Mobile Money).</p>
                             </div>
                         </div>
                     )}
@@ -469,28 +486,36 @@ export default function ProductSlugShow({ store, product, appUrl }) {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/90 shadow-2xs">
                         <div>
                             <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-900 font-semibold text-[11px] border border-slate-200">
-                                ÉVALUATIONS PRODUIT
+                                ÉVALUATIONS CLIENTS
                             </span>
-                            <h3 className="text-xl font-bold text-slate-950 mt-2">Avis Clients pour ce Produit</h3>
-                            <p className="text-xs text-slate-500 font-medium">Témoignages vérifiés d'acheteurs ayant commandé chez {store.name}</p>
+                            <h3 className="text-xl font-bold text-slate-950 mt-2">Avis &amp; Témoignages</h3>
+                            <p className="text-xs text-slate-500 font-medium">Avis vérifiés d'acheteurs ayant commandé chez {store.name}</p>
                         </div>
 
-                        <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                            <div className="text-center">
-                                <div className="text-3xl font-bold text-slate-950">4.8</div>
-                                <div className="flex text-amber-400 text-xs justify-center mt-1">
-                                    <Star className="w-3.5 h-3.5 fill-amber-400" />
-                                    <Star className="w-3.5 h-3.5 fill-amber-400" />
-                                    <Star className="w-3.5 h-3.5 fill-amber-400" />
-                                    <Star className="w-3.5 h-3.5 fill-amber-400" />
-                                    <Star className="w-3.5 h-3.5 fill-amber-400" />
+                        {avgRating ? (
+                            <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                                <div className="text-center">
+                                    <div className="text-3xl font-bold text-slate-950">{avgRating}</div>
+                                    <div className="flex text-amber-400 text-xs justify-center mt-1">
+                                        {Array.from({ length: Math.round(avgRating) }).map((_, i) => (
+                                            <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="text-xs text-slate-600 font-medium">
+                                    <div>Achats Vérifiés</div>
+                                    <div className="text-emerald-600 font-bold">{reviewsList.length} Avis Publiés</div>
                                 </div>
                             </div>
-                            <div className="text-xs text-slate-600 font-medium">
-                                <div>100% Achats Vérifiés</div>
-                                <div className="text-emerald-600 font-bold">{reviewsList.length} Avis Positifs</div>
-                            </div>
-                        </div>
+                        ) : (
+                            <a
+                                href={`/${store.slug}#reviews`}
+                                className="px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-2xs transition-all flex items-center gap-2 cursor-pointer border border-amber-300 self-start sm:self-auto"
+                            >
+                                <Star className="w-4 h-4 text-slate-950 fill-slate-950" />
+                                <span>Déposer un Avis sur la Boutique</span>
+                            </a>
+                        )}
                     </div>
 
                     {reviewsList.length > 0 ? (
@@ -498,7 +523,7 @@ export default function ProductSlugShow({ store, product, appUrl }) {
                             {reviewsList.slice(0, 3).map((rev, idx) => (
                                 <div key={rev.id || idx} className="p-5 rounded-2xl bg-white border border-slate-200/90 space-y-2.5 shadow-2xs">
                                     <div className="flex items-center justify-between">
-                                        <div className="font-bold text-xs text-slate-950">{rev.customer_name} ({rev.customer_city || 'Cotonou'})</div>
+                                        <div className="font-bold text-xs text-slate-950">{rev.customer_name || rev.name} ({rev.customer_city || rev.city || 'Client'})</div>
                                         <span className="text-[10px] text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-bold">Acheteur Vérifié</span>
                                     </div>
                                     <div className="flex text-amber-400">
@@ -513,8 +538,19 @@ export default function ProductSlugShow({ store, product, appUrl }) {
                             ))}
                         </div>
                     ) : (
-                        <div className="p-8 text-center bg-white rounded-3xl border border-slate-200 text-slate-500 font-medium text-xs">
-                            Aucun avis pour le moment sur ce produit.
+                        <div className="p-8 text-center bg-white rounded-3xl border border-dashed border-slate-300 text-slate-500 font-medium text-xs space-y-3">
+                            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
+                                <Star className="w-5 h-5 fill-amber-400 text-amber-500" />
+                            </div>
+                            <div className="font-bold text-slate-950">Aucun avis publié pour le moment</div>
+                            <p className="max-w-md mx-auto text-slate-500">Soyez le tout premier client à donner votre avis sur {store.name} !</p>
+                            <a
+                                href={`/${store.slug}#reviews`}
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-950 text-white font-extrabold text-xs hover:bg-slate-800 transition-colors shadow-2xs"
+                            >
+                                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                                <span>Déposer le Premier Avis</span>
+                            </a>
                         </div>
                     )}
                 </div>

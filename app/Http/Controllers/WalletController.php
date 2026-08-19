@@ -45,7 +45,7 @@ class WalletController extends Controller
                 'available_balance' => (float) $wallet->balance_available,
                 'pending_balance' => (float) $wallet->balance_pending,
                 'lifetime_earnings' => $lifetimeEarnings,
-                'total_withdrawals' => (float) $withdrawals->where('status', 'APPROVED')->sum('amount'),
+                'total_withdrawals' => (float) $withdrawals->filter(fn($w) => in_array(strtoupper($w->status), ['APPROVED', 'COMPLETED', 'VALIDE', 'PAYE']))->sum('amount'),
                 'min_withdrawal' => 50100,
             ],
             'appUrl' => config('app.url', 'http://localhost:8000'),

@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, usePage, router } from '@inertiajs/react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { toast } from 'sonner';
@@ -322,6 +322,22 @@ export default function Index({ store, reviews, appUrl }) {
 
                     {/* Right: Actions */}
                     <div className="flex items-center gap-2">
+                        {/* STORE PUBLICATION STATUS TOGGLE */}
+                        <Link
+                            href={route('store.togglePublish')}
+                            method="post"
+                            as="button"
+                            className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                                store?.is_published 
+                                    ? 'bg-emerald-500 hover:bg-emerald-600 text-white' 
+                                    : 'bg-amber-400 hover:bg-amber-300 text-slate-950 border border-amber-300'
+                            }`}
+                            title={store?.is_published ? 'Votre boutique est visible du public. Cliquez pour masquer.' : 'Votre boutique est en mode brouillon. Cliquez pour la rendre publique.'}
+                        >
+                            <span className={`w-2 h-2 rounded-full ${store?.is_published ? 'bg-white animate-pulse' : 'bg-slate-950'}`} />
+                            <span>{store?.is_published ? 'Boutique Publiée (En ligne)' : '🚀 Publier ma Boutique'}</span>
+                        </Link>
+
                         <a 
                             href={storeFullUrl} 
                             target="_blank" 
@@ -336,10 +352,10 @@ export default function Index({ store, reviews, appUrl }) {
                             type="button"
                             onClick={handleSubmit}
                             disabled={processing}
-                            className="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-xs transition-all flex items-center gap-1.5 border border-amber-300 disabled:opacity-50 cursor-pointer"
+                            className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow-2xs transition-all flex items-center gap-1.5 border border-slate-800 disabled:opacity-50 cursor-pointer"
                         >
-                            <Sparkles className="w-4 h-4 fill-slate-950 text-slate-950" />
-                            <span>{processing ? '...' : 'Publier'}</span>
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                            <span>{processing ? 'Enregistrement...' : 'Sauvegarder'}</span>
                         </button>
                     </div>
                 </header>

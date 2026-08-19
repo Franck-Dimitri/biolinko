@@ -17,15 +17,20 @@ export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, showB
     const primaryTextColor = getContrastColor(primaryColor);
 
     const scrollToSection = (sectionId) => {
-        if (setActiveTab) {
-            setActiveTab('all');
-        }
-        setTimeout(() => {
-            const el = document.getElementById(sectionId);
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const el = document.getElementById(sectionId);
+        if (el) {
+            if (setActiveTab) {
+                setActiveTab('all');
             }
-        }, 100);
+            setTimeout(() => {
+                const target = document.getElementById(sectionId);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+        } else {
+            window.location.href = `/${store.slug}#${sectionId}`;
+        }
     };
 
     return (
@@ -38,8 +43,11 @@ export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, showB
                     <a 
                         href={`/${store.slug}`} 
                         onClick={(e) => {
-                            e.preventDefault();
-                            scrollToSection('hero');
+                            const el = document.getElementById('hero');
+                            if (el) {
+                                e.preventDefault();
+                                scrollToSection('hero');
+                            }
                         }}
                         className="flex items-center gap-3 cursor-pointer shrink-0 group"
                     >
