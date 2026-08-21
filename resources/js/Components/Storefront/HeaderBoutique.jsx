@@ -33,9 +33,24 @@ export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, showB
         }
     };
 
+    const storeSections = store?.sections_json;
+    const isBannerEnabled = Array.isArray(storeSections) 
+        ? storeSections.some(s => s.id === 'banner' && s.enabled !== false && s.enabled !== 'false' && s.enabled !== 0 && s.enabled !== '0')
+        : true;
+
     return (
         <header className="sticky top-0 z-40 font-sans shadow-2xs">
-            {/* MAIN NAVBAR ONLY */}
+            {/* 0. ANNOUNCEMENT HEADER BANNER */}
+            {isBannerEnabled && store?.announcement_header && (
+                <div 
+                    className="text-xs font-extrabold py-2 px-4 text-center transition-all flex items-center justify-center gap-2 shadow-2xs border-b border-slate-950/10"
+                    style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+                >
+                    <span className="truncate max-w-5xl">{store.announcement_header}</span>
+                </div>
+            )}
+
+            {/* MAIN NAVBAR */}
             <div className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5">
                 <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
                     

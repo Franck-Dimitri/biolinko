@@ -49,8 +49,8 @@ class AppearanceController extends Controller
             'hero_title' => ['nullable', 'string', 'max:255'],
             'hero_subtitle' => ['nullable', 'string'],
             'hero_cta_text' => ['nullable', 'string', 'max:255'],
-            'benefits_json' => ['nullable', 'array'],
-            'sections_json' => ['nullable', 'array'],
+            'benefits_json' => ['nullable'],
+            'sections_json' => ['nullable'],
             'location_address' => ['nullable', 'string', 'max:255'],
             'support_email' => ['nullable', 'email', 'max:255'],
             'logo_file' => ['nullable', 'image', 'max:5120'],
@@ -67,22 +67,29 @@ class AppearanceController extends Controller
             $validated['banner_url'] = '/storage/' . $path;
         }
 
-        if (isset($validated['sections_json'])) {
-            if (is_string($validated['sections_json'])) {
-                $validated['sections_json'] = json_decode($validated['sections_json'], true);
+        if ($request->has('sections_json')) {
+            $sections = $request->input('sections_json');
+            if (is_string($sections)) {
+                $sections = json_decode($sections, true);
             }
-            if (is_array($validated['sections_json'])) {
+            if (is_array($sections)) {
                 $validated['sections_json'] = array_values(array_map(function ($sec) {
                     if (is_array($sec) && isset($sec['enabled'])) {
                         $sec['enabled'] = filter_var($sec['enabled'], FILTER_VALIDATE_BOOLEAN);
                     }
                     return $sec;
-                }, $validated['sections_json']));
+                }, $sections));
             }
         }
 
-        if (isset($validated['benefits_json']) && is_string($validated['benefits_json'])) {
-            $validated['benefits_json'] = json_decode($validated['benefits_json'], true);
+        if ($request->has('benefits_json')) {
+            $benefits = $request->input('benefits_json');
+            if (is_string($benefits)) {
+                $benefits = json_decode($benefits, true);
+            }
+            if (is_array($benefits)) {
+                $validated['benefits_json'] = $benefits;
+            }
         }
 
         $store->update($validated);

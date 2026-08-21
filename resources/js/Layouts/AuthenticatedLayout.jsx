@@ -382,14 +382,14 @@ export default function AuthenticatedLayout({ header, children }) {
 
                     <Dropdown>
                         <Dropdown.Trigger>
-                            <div className="p-2 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between hover:bg-slate-100 transition-all cursor-pointer">
+                            <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between hover:bg-slate-100 transition-all cursor-pointer">
                                 <div className="flex items-center gap-2.5 truncate">
                                     <div className="w-8 h-8 rounded-xl bg-[#FFCC00] text-slate-950 font-bold flex items-center justify-center text-xs shrink-0">
                                         {user.name.charAt(0).toUpperCase()}
                                     </div>
                                     <div className="truncate text-left">
-                                        <div className="text-xs font-semibold text-slate-950 truncate">{user.name}</div>
-                                        <div className="text-[10px] text-slate-400 truncate">{user.email}</div>
+                                        <div className="text-xs font-bold text-slate-950 truncate">{user.name}</div>
+                                        <div className="text-[10px] text-slate-500 font-medium truncate">{user.email}</div>
                                     </div>
                                 </div>
                                 <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
@@ -402,11 +402,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                     Console Super Admin
                                 </Dropdown.Link>
                             )}
-                            <Dropdown.Link href={route('profile.edit')}>
-                                Mon Profil
-                            </Dropdown.Link>
-                            <Dropdown.Link href={route('logout')} method="post" as="button">
-                                Déconnexion
+                            <Dropdown.Link href={route('logout')} method="post" as="button" className="text-rose-600 font-bold flex items-center gap-2 hover:bg-rose-50">
+                                <LogOut className="w-4 h-4 text-rose-600 inline mr-1.5" />
+                                <span>Déconnexion</span>
                             </Dropdown.Link>
                         </Dropdown.Content>
                     </Dropdown>
