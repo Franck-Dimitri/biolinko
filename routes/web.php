@@ -167,8 +167,30 @@ Route::get('/store/{store_slug}/pay/sl/{code}', [SmartLinkController::class, 'sh
 Route::get('/{store_slug}/pay/sl/{code}', [SmartLinkController::class, 'showPublicByStore']);
 Route::post('/pay/{code}/checkout', [SmartLinkController::class, 'processPublicCheckout'])->name('smartlink.checkout');
 
-// HR-Skills Pay Webhook Callback Route (Exclude CSRF)
-Route::post('/api/webhooks/hrskills-pay', [HrSkillsPayWebhookController::class, 'handle'])->name('webhooks.hrskills-pay');
+// Public Legal Pages (Terms, Privacy, Cookies)
+Route::get('/conditions-generales', function () {
+    return Inertia::render('Legal/Terms');
+})->name('legal.terms');
+
+Route::get('/terms', function () {
+    return redirect()->route('legal.terms');
+});
+
+Route::get('/politique-de-confidentialite', function () {
+    return Inertia::render('Legal/Privacy');
+})->name('legal.privacy');
+
+Route::get('/privacy', function () {
+    return redirect()->route('legal.privacy');
+});
+
+Route::get('/politique-des-cookies', function () {
+    return Inertia::render('Legal/Cookies');
+})->name('legal.cookies');
+
+Route::get('/cookies', function () {
+    return redirect()->route('legal.cookies');
+});
 
 // Load auth routes BEFORE public catch-all
 require __DIR__.'/auth.php';

@@ -229,7 +229,7 @@ export default function Register() {
                                         className="w-4 h-4 text-amber-500 border-slate-300 rounded focus:ring-amber-400"
                                     />
                                     <label htmlFor="terms" className="ml-2 text-xs font-semibold text-slate-600">
-                                        J'accepte les termes et conditions d'utilisation
+                                        J'accepte les <Link href={route('legal.terms')} target="_blank" className="text-amber-600 underline hover:text-amber-700">Conditions Générales</Link> et la <Link href={route('legal.privacy')} target="_blank" className="text-amber-600 underline hover:text-amber-700">Politique de Confidentialité</Link>
                                     </label>
                                 </div>
 

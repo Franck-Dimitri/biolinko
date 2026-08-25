@@ -360,15 +360,15 @@ export default function Welcome({ auth }) {
                                                 <span className="flex items-center gap-1.5">
                                                     <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Plan Pro
                                                 </span>
-                                                <span className="text-[10px] font-bold">7 000 FCFA</span>
+                                                <span className="text-[10px] font-bold">2 500 FCFA</span>
                                             </a>
                                             <a href="#pricing" className="p-2 rounded-xl hover:bg-amber-50 flex items-center justify-between text-xs font-semibold text-slate-900">
                                                 <span>Plan Growth</span>
-                                                <span className="text-[10px] text-slate-500 font-normal">16 000 FCFA</span>
+                                                <span className="text-[10px] text-slate-500 font-normal">7 000 FCFA</span>
                                             </a>
                                             <a href="#pricing" className="p-2 rounded-xl hover:bg-amber-50 flex items-center justify-between text-xs font-semibold text-slate-900">
                                                 <span>Plan Business</span>
-                                                <span className="text-[10px] text-slate-500 font-normal">30 000 FCFA</span>
+                                                <span className="text-[10px] text-slate-500 font-normal">12 000 FCFA</span>
                                             </a>
                                         </motion.div>
                                     )}
@@ -938,7 +938,7 @@ export default function Welcome({ auth }) {
 
                         {/* Pro Plan */}
                         {(() => {
-                            const pricing = calculatePlanPricing(7000, selectedCycle);
+                            const pricing = calculatePlanPricing(2500, selectedCycle);
                             return (
                                 <div className="p-7 rounded-3xl bg-white border-2 border-amber-300 shadow-lg space-y-6 flex flex-col justify-between relative">
                                     <div className="absolute -top-3.5 right-4 px-3 py-1 rounded-full bg-[#FFCC00] text-slate-950 font-bold text-[10px] uppercase tracking-wider shadow-2xs flex items-center gap-1 border border-amber-300">
@@ -976,7 +976,7 @@ export default function Welcome({ auth }) {
 
                         {/* Growth Plan */}
                         {(() => {
-                            const pricing = calculatePlanPricing(16000, selectedCycle);
+                            const pricing = calculatePlanPricing(7000, selectedCycle);
                             return (
                                 <div className="p-7 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
                                     <div className="space-y-4">
@@ -995,9 +995,9 @@ export default function Welcome({ auth }) {
                                         <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
                                             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Jusqu'à 200 produits max</li>
                                             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Toutes les fonctionnalités Pro incluses</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Pixels Marketing (Facebook, TikTok, Google Ads)</li>
                                             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Relances WhatsApp illimitées</li>
                                             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Retraits MoMo prioritaires (&lt; 4h)</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Analytics avancés (Ventes 14j & Top 5)</li>
                                             <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Support VIP Dédié 24h/24</li>
                                         </ul>
                                     </div>
@@ -1010,7 +1010,7 @@ export default function Welcome({ auth }) {
 
                         {/* Business Plan */}
                         {(() => {
-                            const pricing = calculatePlanPricing(30000, selectedCycle);
+                            const pricing = calculatePlanPricing(12000, selectedCycle);
                             return (
                                 <div className="p-7 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
                                     <div className="space-y-4">
@@ -1268,9 +1268,9 @@ export default function Welcome({ auth }) {
                             <div className="space-y-3 text-xs">
                                 <div className="font-bold text-slate-950 uppercase tracking-wider">Légal</div>
                                 <ul className="space-y-2 text-slate-600 font-normal">
-                                    <li><span className="hover:text-amber-600 cursor-pointer">Mentions Légales</span></li>
-                                    <li><span className="hover:text-amber-600 cursor-pointer">Conditions d'Utilisation</span></li>
-                                    <li><span className="hover:text-amber-600 cursor-pointer">Politique de Confidentialité</span></li>
+                                    <li><Link href={route('legal.terms')} className="hover:text-amber-600 transition-colors">Conditions Générales (CGU)</Link></li>
+                                    <li><Link href={route('legal.privacy')} className="hover:text-amber-600 transition-colors">Politique de Confidentialité</Link></li>
+                                    <li><Link href={route('legal.cookies')} className="hover:text-amber-600 transition-colors">Politique des Cookies</Link></li>
                                 </ul>
                             </div>
 
