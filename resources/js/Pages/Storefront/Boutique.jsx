@@ -54,6 +54,19 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
     const [viewMode, setViewMode] = useState('home'); // 'home' | 'catalog' | 'bestsellers'
     const [isAutoFilled, setIsAutoFilled] = useState(false);
     const [isSubmittingCheckout, setIsSubmittingCheckout] = useState(false);
+    const [wishlist, setWishlist] = useState([]);
+
+    const toggleWishlist = (productId) => {
+        setWishlist((prev) => {
+            if (prev.includes(productId)) {
+                toast.info('Produit retiré des favoris');
+                return prev.filter(id => id !== productId);
+            } else {
+                toast.success('Produit ajouté aux favoris !');
+                return [...prev, productId];
+            }
+        });
+    };
 
     const showToast = (msg) => {
         toast.success(msg, {

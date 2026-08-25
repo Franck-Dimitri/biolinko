@@ -1,7 +1,7 @@
 import InputError from '@/Components/InputError';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Folder, GraduationCap, Key, Layers, MessageCircle, Zap, ShoppingBag, Sparkles, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Store, ShoppingCart, CreditCard, Package, Truck, Zap, ShoppingBag, Sparkles, ArrowRight } from 'lucide-react';
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -40,40 +40,40 @@ export default function Login({ status, canResetPassword }) {
                             </Link>
 
                             <h2 className="text-3xl sm:text-4xl font-black font-serif text-slate-950 tracking-tight leading-snug mb-8">
-                                Créez et vendez vos produits en quelques clics
+                                Votre boutique en ligne &amp; encaissement en direct
                             </h2>
 
-                            {/* Category Badges Grid */}
+                            {/* Category Badges Grid: E-commerce, Boutique, Achats & Paiements */}
                             <div className="flex flex-wrap gap-2.5">
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-slate-950 text-xs font-bold shadow-xs">
-                                    <Folder className="w-3.5 h-3.5 text-amber-500" /> Fichiers
+                                    <Store className="w-3.5 h-3.5 text-amber-600" /> Boutique en Ligne
                                 </span>
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-slate-950 text-xs font-bold shadow-xs">
-                                    <GraduationCap className="w-3.5 h-3.5 text-blue-500" /> Formations
+                                    <ShoppingCart className="w-3.5 h-3.5 text-blue-600" /> Achat en Ligne
                                 </span>
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-slate-950 text-xs font-bold shadow-xs">
-                                    <Key className="w-3.5 h-3.5 text-purple-500" /> Licences
+                                    <CreditCard className="w-3.5 h-3.5 text-emerald-600" /> Paiement MoMo USSD
                                 </span>
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-slate-950 text-xs font-bold shadow-xs">
-                                    <Layers className="w-3.5 h-3.5 text-emerald-500" /> Bundles
+                                    <Package className="w-3.5 h-3.5 text-purple-600" /> Catalogue Produits
                                 </span>
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-slate-950 text-xs font-bold shadow-xs">
-                                    <MessageCircle className="w-3.5 h-3.5 text-pink-500" /> Coaching
+                                    <Zap className="w-3.5 h-3.5 text-amber-500" /> Packs SmartLinks
                                 </span>
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-slate-950 text-xs font-bold shadow-xs">
-                                    <Zap className="w-3.5 h-3.5 text-amber-600" /> Services
+                                    <Truck className="w-3.5 h-3.5 text-indigo-600" /> Livraison Express
                                 </span>
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-slate-950 text-xs font-bold shadow-xs">
-                                    <ShoppingBag className="w-3.5 h-3.5 text-rose-500" /> Mode & Luxe
+                                    <ShoppingBag className="w-3.5 h-3.5 text-rose-500" /> Mode &amp; Accessoires
                                 </span>
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-slate-950 text-xs font-bold shadow-xs">
-                                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" /> Cosmétiques
+                                    <Sparkles className="w-3.5 h-3.5 text-pink-500" /> Cosmétiques &amp; Beauté
                                 </span>
                             </div>
                         </div>
 
                         <div className="pt-12 text-xs font-semibold text-slate-900/80">
-                            ⚡ Fast Checkout Mobile Money & Relances WhatsApp
+                            ⚡ Fast Checkout Mobile Money (MTN &amp; Orange) &amp; Suivi WhatsApp
                         </div>
                     </motion.div>
 
