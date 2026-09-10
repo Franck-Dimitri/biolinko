@@ -14,6 +14,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HrSkillsPayWebhookController;
+use App\Http\Controllers\WhatsappWebhookController;
 use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderTrackingController;
@@ -86,7 +87,12 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
     // 9. Paramètres Plateforme & API
     Route::get('/settings', [AdminSettingController::class, 'index'])->name('admin.settings.index');
     Route::post('/settings', [AdminSettingController::class, 'update'])->name('admin.settings.update');
+    Route::get('/settings/whatsapp-status', [AdminSettingController::class, 'getWhatsappStatus'])->name('admin.settings.whatsapp.status');
+    Route::post('/settings/whatsapp-connect', [AdminSettingController::class, 'connectWhatsapp'])->name('admin.settings.whatsapp.connect');
+    Route::post('/settings/whatsapp-disconnect', [AdminSettingController::class, 'disconnectWhatsapp'])->name('admin.settings.whatsapp.disconnect');
+    Route::post('/settings/whatsapp-test', [AdminSettingController::class, 'testWhatsappMessage'])->name('admin.settings.whatsapp.test');
 });
+
 
 // 2. SELLER / VENDOR ROUTES (Prefix: /seller, Middleware: role:seller)
 Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(function () {
@@ -153,6 +159,10 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// Webhook Endpoints (CSRF Exempted in bootstrap/app.php)
+Route::post('/api/webhooks/hrskills-pay', [HrSkillsPayWebhookController::class, 'handle'])->name('webhooks.hrskills-pay');
+Route::post('/api/webhooks/whatsapp', [WhatsappWebhookController::class, 'handle'])->name('webhooks.whatsapp');
 
 // Public Client Fast Checkout & Order Tracking & Customer Lookup
 Route::get('/checkout/lookup-customer', [CheckoutController::class, 'lookupCustomer'])->name('checkout.lookupCustomer');

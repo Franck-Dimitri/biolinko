@@ -21,6 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
             'plan' => \App\Http\Middleware\EnsureUserHasPlan::class,
         ]);
+
+        $middleware->validateCsrfTokens(except: [
+            'api/webhooks/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
