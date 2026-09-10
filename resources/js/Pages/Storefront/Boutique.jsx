@@ -1924,6 +1924,26 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                 )}
             </AnimatePresence>
             </div>
+
+            {/* Floating WhatsApp Live Contact Button */}
+            {store?.phone_whatsapp && (
+                <motion.a
+                    href={`https://wa.me/${store.phone_whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Bonjour ${store.name}, je vous contacte depuis votre boutique en ligne Biolinko !`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    whileHover={{ scale: 1.06 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-3 rounded-full shadow-2xl transition-all cursor-pointer group border-2 border-white/20"
+                    title="Discuter avec nous sur WhatsApp"
+                >
+                    <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
+                    <MessageSquare className="w-5 h-5 text-white" />
+                    <span className="text-xs font-black tracking-wide hidden sm:inline">Discuter sur WhatsApp</span>
+                </motion.a>
+            )}
         </StorefrontLayout>
     );
 }
+
