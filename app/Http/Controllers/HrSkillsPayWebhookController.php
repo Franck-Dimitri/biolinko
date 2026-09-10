@@ -93,6 +93,14 @@ class HrSkillsPayWebhookController extends Controller
                         // Generate & Send PDF Invoice Emails to Vendor & Customer
                         $this->invoiceService->sendOrderInvoiceEmails($lockedOrder);
 
+                        // Send Real-Time WhatsApp Receipt & Invoice to Customer and Merchant
+                        try {
+                            app(\App\Services\WhatsappGatewayService::class)->notifyOrderPaid($lockedOrder);
+                        } catch (\Exception $e) {
+                            Log::warning('WhatsApp notifyOrderPaid failed in webhook', ['order_id' => $lockedOrder->id, 'err' => $e->getMessage()]);
+                        }
+
+
                         Log::info('Order Payment Succeeded via Webhook', ['order_id' => $lockedOrder->id, 'reference' => $reference]);
                     }
                 } elseif ($event === 'payment.failed' || $status === 'FAILED') {

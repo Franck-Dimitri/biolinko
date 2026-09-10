@@ -97,7 +97,15 @@ class OrderController extends Controller
             'status' => $validated['status'],
         ]);
 
-        return back()->with('message', 'Statut de la commande mis à jour avec succès.');
+        // Send real-time WhatsApp shipping / delivery notification to customer
+        try {
+            app(\App\Services\WhatsappGatewayService::class)->notifyOrderShippingUpdate($order, $validated['status']);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('WhatsApp notifyOrderShippingUpdate failed', ['order_id' => $order->id, 'err' => $e->getMessage()]);
+        }
+
+        return back()->with('message', 'Statut de la commande mis à jour et notification WhatsApp envoyée !');
+
     }
 
     public function requestWithdrawal(Request $request): RedirectResponse

@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion WhatsApp — Biolinko</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #090D16;
+            color: #F3F4F6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+        }
+        .container {
+            max-width: 680px;
+            width: 100%;
+        }
+        .card {
+            background: #111827;
+            border: 1px solid #1F2937;
+            border-radius: 24px;
+            padding: 36px 28px;
+            text-align: center;
+            box-shadow: 0 25px 60px -15px rgba(0,0,0,0.7);
+            position: relative;
+            overflow: hidden;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #10B981, #06B6D4, #10B981);
+            background-size: 200% 100%;
+            animation: moveGradient 3s linear infinite;
+        }
+        @keyframes moveGradient {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            color: #10B981;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .badge-dot {
+            width: 8px; height: 8px;
+            background: #10B981;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #10B981;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+        h1 {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        p.subtitle {
+            color: #9CA3AF;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+        p.subtitle strong {
+            color: #34D399;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: #1F2937;
+            padding: 4px;
+            border-radius: 14px;
+            margin-bottom: 24px;
+            gap: 4px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            background: transparent;
+            border: none;
+            color: #9CA3AF;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .tab-btn.active {
+            background: #10B981;
+            color: #064E3B;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .tab-btn .tag {
+            background: rgba(0,0,0,0.15);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        /* Views */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* QR View */
+        .qr-box {
+            background: #FFFFFF;
+            padding: 16px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            border: 4px solid #1F2937;
+        }
+        .qr-box img {
+            width: 240px;
+            height: 240px;
+            display: block;
+            border-radius: 8px;
+        }
+        .qr-placeholder {
+            width: 240px;
+            height: 240px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6B7280;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* Pairing Code View */
+        .code-box {
+            background: #1F2937;
+            border: 2px dashed #374151;
+            border-radius: 18px;
+            padding: 28px 16px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .code-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 42px;
+            font-weight: 800;
+            letter-spacing: 6px;
+            color: #34D399;
+            text-shadow: 0 0 25px rgba(52, 211, 153, 0.4);
+            margin-bottom: 12px;
+            user-select: all;
+            transition: all 0.3s ease;
+        }
+        .code-display.updating {
+            opacity: 0.3;
+            transform: scale(0.96);
+        }
+        .timer-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #9CA3AF;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .timer-val {
+            color: #F59E0B;
+            font-size: 16px;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .progress-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #374151;
+            border-radius: 999px;
+            margin-top: 14px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #10B981, #F59E0B, #EF4444);
+            transition: width 1s linear;
+        }
+
+        /* Instructions list */
+        .instructions {
+            background: rgba(31, 41, 55, 0.6);
+            border: 1px solid #1F2937;
+            border-radius: 16px;
+            padding: 18px;
+            text-align: left;
+            margin-bottom: 24px;
+            font-size: 13px;
+            color: #D1D5DB;
+        }
+        .instructions ol {
+            padding-left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .instructions li strong {
+            color: #FFFFFF;
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: #93C5FD;
+            text-align: left;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            line-height: 1.5;
+        }
+
+        .actions-row {
+            display: flex;
+            gap: 12px;
+        }
+        .btn {
+            flex: 1;
+            padding: 13px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: #10B981;
+            color: #064E3B;
+        }
+        .btn-primary:hover {
+            background: #34D399;
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: #1F2937;
+            color: #D1D5DB;
+            border: 1px solid #374151;
+        }
+        .btn-secondary:hover {
+            background: #374151;
+            color: #FFF;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Success screen */
+        .success-box {
+            display: none;
+            background: rgba(16, 185, 129, 0.12);
+            border: 2px solid #10B981;
+            border-radius: 24px;
+            padding: 40px 24px;
+            text-align: center;
+            animation: fadeIn 0.4s ease;
+        }
+        .success-box .icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            display: inline-block;
+            animation: bounce 1s infinite alternate ease-in-out;
+        }
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-8px); }
+        }
+        .success-box h2 {
+            color: #34D399;
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+        .success-box p {
+            color: #D1D5DB;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .user-info {
+            background: #111827;
+            border: 1px solid #1F2937;
+            border-radius: 14px;
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: #9CA3AF;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .status-pill {
+            font-size: 11px;
+            color: #9CA3AF;
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .status-indicator {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: #10B981;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="badge">
+                <span class="badge-dot"></span>
+                <span>Evolution API v2.3.7 • mrdims.dev</span>
+            </div>
+
+            <!-- CONNECTING VIEW -->
+            <div id="connecting-view">
+                <h1>Associer votre WhatsApp</h1>
+                <p class="subtitle">Session cible : <strong>+237 676 38 39 86</strong> (test_dims)</p>
+
+                <div class="tabs">
+                    <button class="tab-btn active" id="tab-qr-btn" onclick="switchTab('qr')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        <span>Scanner QR Code</span>
+                        <span class="tag" style="background:#064E3B; color:#A7F3D0;">1 Sec • Recommandé</span>
+                    </button>
+                    <button class="tab-btn" id="tab-code-btn" onclick="switchTab('code')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                        <span>Saisir le Code</span>
+                    </button>
+                </div>
+
+                <!-- TAB QR -->
+                <div class="tab-content active" id="tab-qr">
+                    <div class="qr-box">
+                        <img id="qr-img" src="" alt="QR Code WhatsApp" style="display:none;" />
+                        <div class="qr-placeholder" id="qr-loading">Chargement du QR Code...</div>
+                    </div>
+                    <div class="instructions">
+                        <ol>
+                            <li>Ouvrez <strong>WhatsApp</strong> sur votre téléphone</li>
+                            <li>Appuyez sur <strong>Menu (⋮)</strong> ou <strong>Paramètres</strong> &gt; <strong>Appareils connectés</strong></li>
+                            <li>Touchez <strong>« Connecter un appareil »</strong></li>
+                            <li><strong>Pointez la caméra</strong> vers le QR Code ci-dessus</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- TAB CODE -->
+                <div class="tab-content" id="tab-code">
+                    <div class="code-box">
+                        <div class="code-display" id="pairing-code">CHARGEMENT...</div>
+                        <div class="timer-container">
+                            <span>Cycle actif :</span>
+                            <span class="timer-val" id="countdown">20s</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar" id="progress"></div>
+                        </div>
+                    </div>
+                    <div class="instructions">
+                        <ol>
+                            <li>Ouvrez <strong>WhatsApp</strong> &gt; <strong>Appareils connectés</strong> &gt; <strong>Connecter un appareil</strong></li>
+                            <li>En bas, touchez <strong>« Associer avec un numéro de téléphone »</strong></li>
+                            <li>Saisissez immédiatement le code affiché ci-dessus</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="alert-info">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2" style="flex-shrink:0; margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <div>
+                        <strong>Conseil important :</strong> Si vous avez d'anciens appareils connectés inutilisés dans WhatsApp, supprimez-les (WhatsApp limite à 4 appareils max). Le QR Code est instantané et évite les délais de frappe.
+                    </div>
+                </div>
+
+                <div class="actions-row">
+                    <button class="btn btn-secondary" onclick="restartInstance()" id="btn-restart">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+                        <span>Régénérer une session fraîche</span>
+                    </button>
+                </div>
+
+                <div class="status-pill">
+                    <span class="status-indicator" id="status-dot"></span>
+                    <span id="status-text">Synchronisation en direct avec le serveur...</span>
+                </div>
+            </div>
+
+            <!-- SUCCESS VIEW -->
+            <div class="success-box" id="success-view">
+                <div class="icon">🎉</div>
+                <h2>WhatsApp Connecté avec Succès !</h2>
+                <p>
+                    Félicitations ! L'instance <strong>test_dims</strong> est désormais synchronisée et active.<br>
+                    Biolinko peut envoyer vos devis, factures et messages automatiquement.
+                </p>
+                <div class="user-info" id="session-info">
+                    Instance: test_dims • Statut: OPEN • Integration: BAILEYS
+                </div>
+
+                <div style="background:#1F2937; padding:18px; border-radius:16px; margin-bottom:20px; text-align:left;">
+                    <label style="display:block; font-size:13px; font-weight:700; color:#E5E7EB; margin-bottom:8px;">
+                        Numéro destinataire du test :
+                    </label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="target-phone" value="237676383986" 
+                               style="flex:1; background:#111827; border:1px solid #374151; border-radius:10px; padding:12px 16px; color:#FFF; font-family:'JetBrains Mono',monospace; font-size:15px;" 
+                               placeholder="Ex: 237676383986" />
+                        <button class="btn btn-primary" onclick="sendTestMessage()" id="btn-test-msg" style="flex:0 0 auto; white-space:nowrap;">
+                            🚀 Envoyer le test
+                        </button>
+                    </div>
+                    <div style="font-size:12px; color:#9CA3AF; margin-top:10px; line-height:1.5;">
+                        💡 <strong>Astuce :</strong> Si vous envoyez à votre propre numéro (<strong>237676383986</strong>), ouvrez WhatsApp et regardez dans votre conversation <strong>« Vous »</strong> (Message à vous-même / Bloc-notes). WhatsApp ne déclenche pas de sonnerie externe pour les messages que vous vous envoyez à vous-même. Vous pouvez aussi tester avec le numéro d'un proche !
+                    </div>
+                </div>
+
+                <p id="test-msg-result" style="margin-top: 12px; font-size: 14px; font-weight:600; color: #34D399; display: none;"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://evolutionapi.mrdims.dev";
+        const API_KEY = "Biolinko_EvoApi_9f83a7c41d2e5b60e7f8a9c0";
+        const INSTANCE_NAME = "test_dims";
+        const PHONE_NUMBER = "237676383986";
+
+        let currentPairingCode = "";
+        let countdownSec = 20;
+        let countdownTimer = null;
+        let pollingInterval = null;
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            if (tab === 'qr') {
+                document.getElementById('tab-qr-btn').classList.add('active');
+                document.getElementById('tab-qr').classList.add('active');
+            } else {
+                document.getElementById('tab-code-btn').classList.add('active');
+                document.getElementById('tab-code').classList.add('active');
+            }
+        }
+
+        function startCountdown() {
+            clearInterval(countdownTimer);
+            countdownSec = 20;
+            updateCountdownUI();
+
+            countdownTimer = setInterval(() => {
+                countdownSec--;
+                updateCountdownUI();
+                if (countdownSec <= 0) {
+                    countdownSec = 20;
+                }
+            }, 1000);
+        }
+
+        function updateCountdownUI() {
+            document.getElementById('countdown').textContent = countdownSec + 's';
+            const pct = (countdownSec / 20) * 100;
+            document.getElementById('progress').style.width = pct + '%';
+        }
+
+        async function pollSync() {
+            try {
+                // 1. Vérifie l'état global de l'instance
+                const stateRes = await fetch(`${API_URL}/instance/connectionState/${INSTANCE_NAME}`, {
+                    headers: { 'apikey': API_KEY }
+                });
+                
+                if (stateRes.ok) {
+                    const stateData = await stateRes.json();
+                    const state = stateData?.instance?.state;
+                    
+                    if (state === 'open') {
+                        onConnected();
+                        return;
+                    }
+                }
+
+                // 2. Récupère le QR et le pairingCode actifs
+                const connRes = await fetch(`${API_URL}/instance/connect/${INSTANCE_NAME}`, {
+                    headers: { 'apikey': API_KEY }
+                });
+
+                if (connRes.ok) {
+                    const connData = await connRes.json();
+                    
+                    if (connData?.instance?.state === 'open') {
+                        onConnected();
+                        return;
+                    }
+
+                    // Mise à jour du QR Code
+                    if (connData?.base64) {
+                        const img = document.getElementById('qr-img');
+                        img.src = connData.base64;
+                        img.style.display = 'block';
+                        document.getElementById('qr-loading').style.display = 'none';
+                    }
+
+                    // Mise à jour du Pairing Code
+                    if (connData?.pairingCode) {
+                        const newCode = connData.pairingCode;
+                        if (newCode !== currentPairingCode) {
+                            currentPairingCode = newCode;
+                            const formatted = newCode.length === 8 
+                                ? `${newCode.slice(0, 4)}-${newCode.slice(4)}` 
+                                : newCode;
+                            
+                            const codeEl = document.getElementById('pairing-code');
+                            codeEl.classList.add('updating');
+                            setTimeout(() => {
+                                codeEl.textContent = formatted;
+                                codeEl.style.color = "#34D399";
+                                codeEl.classList.remove('updating');
+                            }, 150);
+                            
+                            startCountdown();
+                        }
+                    }
+                    
+                    document.getElementById('status-text').textContent = `En attente de connexion... (Cycle #${connData?.count || 1})`;
+                }
+            } catch (err) {
+                console.warn("Poll sync error:", err);
+            }
+        }
+
+        function onConnected() {
+            clearInterval(pollingInterval);
+            clearInterval(countdownTimer);
+            document.getElementById('connecting-view').style.display = 'none';
+            document.getElementById('success-view').style.display = 'block';
+        }
+
+        async function restartInstance() {
+            const btn = document.getElementById('btn-restart');
+            btn.disabled = true;
+            document.getElementById('status-text').textContent = "Régénération d'une session neuve en cours...";
+
+            try {
+                // Delete
+                await fetch(`${API_URL}/instance/delete/${INSTANCE_NAME}`, {
+                    method: 'DELETE',
+                    headers: { 'apikey': API_KEY }
+                }).catch(() => {});
+
+                // Create fresh
+                await fetch(`${API_URL}/instance/create`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': API_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        instanceName: INSTANCE_NAME,
+                        qrcode: true,
+                        number: PHONE_NUMBER,
+                        integration: "WHATSAPP-BAILEYS"
+                    })
+                });
+
+                currentPairingCode = "";
+                document.getElementById('pairing-code').textContent = "CHARGEMENT...";
+                document.getElementById('pairing-code').style.color = "#F59E0B";
+                document.getElementById('qr-img').style.display = 'none';
+                document.getElementById('qr-loading').style.display = 'flex';
+                document.getElementById('status-text').textContent = "Nouvelle session initialisée !";
+
+                // Poll immédiatement
+                await pollSync();
+            } catch (err) {
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function sendTestMessage() {
+            const btn = document.getElementById('btn-test-msg');
+            const resEl = document.getElementById('test-msg-result');
+            const phoneInput = document.getElementById('target-phone');
+            const targetNumber = phoneInput ? phoneInput.value.trim() : PHONE_NUMBER;
+
+            btn.disabled = true;
+            btn.textContent = "Envoi en cours...";
+            resEl.style.display = 'none';
+
+            try {
+                const res = await fetch(`${API_URL}/message/sendText/${INSTANCE_NAME}`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': API_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        number: targetNumber,
+                        text: "🚀 *Biolinko WhatsApp Connect réussi !*\n\nVotre instance Evolution API fonctionne parfaitement sur mrdims.dev.\n\nPrêt pour automatiser vos factures et confirmations !"
+                    })
+                });
+
+                const data = await res.json();
+                if (data?.key?.id) {
+                    resEl.textContent = `✅ Message délivré avec succès au ${targetNumber} ! (ID: ${data.key.id})`;
+                    resEl.style.color = "#34D399";
+                    resEl.style.display = 'block';
+                } else {
+                    resEl.textContent = "Message envoyé avec statut : " + (data?.status || 'Envoyé');
+                    resEl.style.color = "#34D399";
+                    resEl.style.display = 'block';
+                }
+            } catch (err) {
+                resEl.textContent = "Erreur lors de l'envoi : " + err.message;
+                resEl.style.color = "#EF4444";
+                resEl.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "🚀 Envoyer le test";
+            }
+        }
+
+        // Lancement initial
+        startCountdown();
+        pollSync();
+        pollingInterval = setInterval(pollSync, 2500);
+    </script>
+</body>
+</html>

@@ -45,8 +45,10 @@ return [
     ],
 
     'whatsapp_gateway' => [
-        'base_url' => env('WHATSAPP_GATEWAY_URL', 'http://127.0.0.1:8080'),
-        'api_key' => env('WHATSAPP_GATEWAY_KEY', 'biolinko-secret-key-2026'),
+        'base_url' => env('WHATSAPP_GATEWAY_URL', env('EVOLUTION_API_URL', 'https://evolutionapi.mrdims.dev')),
+        'api_key' => env('WHATSAPP_GATEWAY_KEY', env('EVOLUTION_API_KEY', 'Biolinko_EvoApi_9f83a7c41d2e5b60e7f8a9c0')),
+        'default_instance' => env('WHATSAPP_GATEWAY_DEFAULT_INSTANCE', env('EVOLUTION_INSTANCE', 'test_dims')),
     ],
 
 ];
+

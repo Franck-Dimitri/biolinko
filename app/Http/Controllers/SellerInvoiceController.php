@@ -228,6 +228,16 @@ class SellerInvoiceController extends Controller
             abort(403);
         }
 
+        // 1. Send WhatsApp 1-Click Reminder
+        $whatsappSuccess = false;
+        try {
+            $res = app(\App\Services\WhatsappGatewayService::class)->send1ClickReminder($order);
+            $whatsappSuccess = $res['success'] ?? false;
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('WhatsApp 1-Click reminder failed', ['order_id' => $order->id, 'err' => $e->getMessage()]);
+        }
+
+        // 2. Send Email Reminder (backup if email provided)
         if ($order->customer_email) {
             try {
                 $this->invoiceService->sendOrderInvoiceEmails($order);
@@ -236,8 +246,13 @@ class SellerInvoiceController extends Controller
             }
         }
 
-        return redirect()->back()->with('message', 'Relance envoyée avec succès au client !');
+        $msg = $whatsappSuccess 
+            ? "Relance WhatsApp envoyée avec succès au client ({$order->customer_phone}) !" 
+            : "Relance effectuée avec succès au client !";
+
+        return redirect()->back()->with('message', $msg);
     }
+
 
     /**
      * Download PDF invoice for an order.

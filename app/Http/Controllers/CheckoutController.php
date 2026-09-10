@@ -10,6 +10,7 @@ use App\Models\ProductVariant;
 use App\Models\Store;
 use App\Services\HrSkillsPayService;
 use App\Services\OrderInvoiceService;
+use App\Services\WhatsappGatewayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,12 +21,18 @@ class CheckoutController extends Controller
 {
     protected HrSkillsPayService $hrSkillsPay;
     protected OrderInvoiceService $invoiceService;
+    protected WhatsappGatewayService $whatsappService;
 
-    public function __construct(HrSkillsPayService $hrSkillsPay, OrderInvoiceService $invoiceService)
-    {
+    public function __construct(
+        HrSkillsPayService $hrSkillsPay,
+        OrderInvoiceService $invoiceService,
+        WhatsappGatewayService $whatsappService
+    ) {
         $this->hrSkillsPay = $hrSkillsPay;
         $this->invoiceService = $invoiceService;
+        $this->whatsappService = $whatsappService;
     }
+
 
     public function lookupCustomer(Request $request): JsonResponse
     {
@@ -106,7 +113,11 @@ class CheckoutController extends Controller
 
                     // Generate & Send PDF Invoice Emails to Vendor & Customer
                     $this->invoiceService->sendOrderInvoiceEmails($order);
+
+                    // Send Real-time WhatsApp confirmation and invoice link
+                    $this->whatsappService->notifyOrderPaid($order);
                 }
+
 
                 return response()->json([
                     'status' => 'SUCCESS',
@@ -320,6 +331,14 @@ class CheckoutController extends Controller
         foreach ($preparedOrderItems as $itemData) {
             $order->items()->create($itemData);
         }
+
+        // Notify Customer & Vendor via WhatsApp that order has been initiated
+        try {
+            $this->whatsappService->notifyOrderPlaced($order);
+        } catch (\Exception $e) {
+            Log::warning('WhatsApp notifyOrderPlaced failed', ['order_id' => $order->id, 'err' => $e->getMessage()]);
+        }
+
 
         // INITIATE HR-SKILLS PAY CASH-IN (MOBILE MONEY USSD PUSH)
         try {
