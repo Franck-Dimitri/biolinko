@@ -1,20 +1,33 @@
+import { Loader2 } from 'lucide-react';
+
 export default function PrimaryButton({
     className = '',
-    disabled,
+    disabled = false,
+    loading = false,
+    processing = false,
+    loadingText,
     children,
     ...props
 }) {
+    const isBusy = Boolean(disabled || loading || processing);
+
     return (
         <button
             {...props}
+            disabled={isBusy}
+            aria-busy={isBusy}
             className={
-                `inline-flex items-center rounded-md border border-transparent bg-gray-800 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition duration-150 ease-in-out hover:bg-gray-700 focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:bg-gray-900 ${
-                    disabled && 'opacity-25'
-                } ` + className
+                `inline-flex items-center justify-center gap-2 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-200 select-none ${
+                    isBusy
+                        ? 'opacity-70 cursor-not-allowed pointer-events-none scale-[0.99]'
+                        : 'hover:scale-[1.01] active:scale-[0.98] cursor-pointer'
+                } ${className}`
             }
-            disabled={disabled}
         >
-            {children}
+            {(loading || processing) && (
+                <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+            )}
+            <span>{(loading || processing) && loadingText ? loadingText : children}</span>
         </button>
     );
 }

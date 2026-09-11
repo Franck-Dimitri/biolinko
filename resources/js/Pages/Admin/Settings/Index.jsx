@@ -214,7 +214,7 @@ export default function SettingsIndex({ settings }) {
         <AuthenticatedLayout>
             <Head title="Paramètres Plateforme & WhatsApp Bot — Administration BIOLINKO" />
 
-            <div className="space-y-8 font-sans pb-16 max-w-7xl mx-auto">
+            <div className="space-y-8 font-sans pb-16 mx-auto">
                 {/* HERO BANNER */}
                 <div className="p-6 sm:p-8 rounded-3xl bg-linear-to-r from-[#FFCC00] via-amber-300 to-[#FFD700] text-slate-950 shadow-sm border border-amber-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                     <div className="space-y-1.5">

@@ -24,7 +24,7 @@ function getContrastColor(hexColor) {
     return yiq >= 165 ? '#0F172A' : '#FFFFFF';
 }
 
-export default function Boutique({ store, products, activeSmartLinks = [], appUrl }) {
+export default function Boutique({ store, products, activeSmartLinks = [], appUrl, isPreview = false }) {
     const authUser = usePage().props.auth?.user;
     const isOwner = authUser && authUser.id === store.user_id;
 
@@ -475,6 +475,31 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
             hasSmartLinks={activeSmartLinks && activeSmartLinks.length > 0}
         >
             <Head title={`${activeSectionTab === 'cart' ? 'Mon Panier d\'Achat' : store.name} — Vitrine Officielle`} />
+            
+            {/* PREVIEW MODE BANNER FOR SELLER */}
+            {isPreview && (
+                <div className="bg-[#FFCC00] text-slate-950 p-3.5 sm:p-4 rounded-2xl mb-6 shadow-sm border border-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-slate-950 text-[#FFCC00] flex items-center justify-center shrink-0">
+                            <Eye className="w-4 h-4" />
+                        </div>
+                        <div>
+                            <span className="font-extrabold uppercase tracking-wide text-[11px] block text-slate-950">
+                                Mode Prévisualisation Marchand
+                            </span>
+                            <span className="text-slate-800 font-medium">
+                                Cette boutique est actuellement privée. Seul vous pouvez la voir tant qu'elle n'a pas été publiée.
+                            </span>
+                        </div>
+                    </div>
+                    <a
+                        href="/dashboard"
+                        className="px-4 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-black text-xs transition-colors shrink-0 shadow-xs"
+                    >
+                        Gérer &amp; Publier sur le Dashboard
+                    </a>
+                </div>
+            )}
 
             {/* MAIN CONTENT AREA */}
             <div className="space-y-12 w-full">

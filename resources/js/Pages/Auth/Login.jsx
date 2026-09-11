@@ -1,7 +1,7 @@
 import InputError from '@/Components/InputError';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Store, ShoppingCart, CreditCard, Package, Truck, Zap, ShoppingBag, Sparkles, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Store, ShoppingCart, CreditCard, Package, Truck, Zap, ShoppingBag, Sparkles, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -180,10 +180,21 @@ export default function Login({ status, canResetPassword }) {
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full py-3.5 px-6 rounded-xl bg-[#FFCC00] hover:bg-amber-300 active:scale-[0.99] text-slate-950 font-black text-sm shadow-sm transition-all duration-200 flex items-center justify-center gap-2"
+                                    className={`w-full py-3.5 px-6 rounded-xl bg-[#FFCC00] hover:bg-amber-300 active:scale-[0.99] text-slate-950 font-black text-sm shadow-sm transition-all duration-200 flex items-center justify-center gap-2 select-none cursor-pointer ${
+                                        processing ? 'opacity-75 cursor-not-allowed pointer-events-none scale-[0.99]' : ''
+                                    }`}
                                 >
-                                    <span>Se connecter</span>
-                                    <ArrowRight className="w-4 h-4" />
+                                    {processing ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                                            <span>Connexion en cours...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span>Se connecter</span>
+                                            <ArrowRight className="w-4 h-4" />
+                                        </>
+                                    )}
                                 </button>
                             </form>
 

@@ -9,13 +9,40 @@ use Inertia\Response;
 
 class StorefrontController extends Controller
 {
-    public function show(string $slug): Response
+    public function show(string $slug)
     {
         $store = Store::where('slug', $slug)
-            ->with(['reviews' => function ($q) {
+            ->with(['user', 'reviews' => function ($q) {
                 $q->where('is_featured', true)->latest();
             }])
-            ->firstOrFail();
+            ->first();
+
+        // 1. Boutique inexistante
+        if (!$store) {
+            return Inertia::render('Errors/StoreUnavailable', [
+                'reason' => 'not_found',
+                'slug' => $slug,
+            ])->toResponse(request())->setStatusCode(404);
+        }
+
+        // 2. Compte vendeur banni / suspendu
+        if ($store->user && $store->user->is_banned) {
+            return Inertia::render('Errors/StoreUnavailable', [
+                'reason' => 'banned',
+                'storeName' => $store->name,
+                'slug' => $slug,
+            ])->toResponse(request())->setStatusCode(403);
+        }
+
+        // 3. Boutique non publiée (privée / en brouillon)
+        $isOwnerOrAdmin = auth()->check() && (auth()->id() === $store->user_id || (method_exists(auth()->user(), 'isAdmin') && auth()->user()->isAdmin()));
+        if (!$store->is_published && !$isOwnerOrAdmin) {
+            return Inertia::render('Errors/StoreUnavailable', [
+                'reason' => 'unpublished',
+                'storeName' => $store->name,
+                'slug' => $slug,
+            ])->toResponse(request())->setStatusCode(403);
+        }
 
         $products = $store->products()
             ->where('is_active', true)
@@ -63,6 +90,7 @@ class StorefrontController extends Controller
             'products' => $products,
             'activeSmartLinks' => $activeSmartLinks,
             'appUrl' => config('app.url', 'http://localhost:8000'),
+            'isPreview' => !$store->is_published && $isOwnerOrAdmin,
         ]);
     }
 
@@ -113,18 +141,58 @@ class StorefrontController extends Controller
         return redirect()->back()->with('message', 'Merci ! Votre avis a été enregistré avec succès.');
     }
 
-    public function showProduct(string $slug, string $product_slug): Response
+    public function showProduct(string $slug, string $product_slug)
     {
-        $store = Store::where('slug', $slug)
-            ->with([
-                'reviews' => function ($q) {
-                    $q->latest();
-                },
-                'products' => function ($q) {
-                    $q->where('is_active', true)->latest();
-                }
-            ])
-            ->firstOrFail();
+        $store = Store::where('slug', $slug)->with(['user', 'reviews'])->first();
+
+        // 1. Boutique inexistante
+        if (!$store) {
+            return Inertia::render('Errors/StoreUnavailable', [
+                'reason' => 'not_found',
+                'slug' => $slug,
+            ])->toResponse(request())->setStatusCode(404);
+        }
+
+        // 2. Compte vendeur banni / suspendu
+        if ($store->user && $store->user->is_banned) {
+            return Inertia::render('Errors/StoreUnavailable', [
+                'reason' => 'banned',
+                'storeName' => $store->name,
+                'slug' => $slug,
+            ])->toResponse(request())->setStatusCode(403);
+        }
+
+        // 3. Boutique non publiée
+        $isOwnerOrAdmin = auth()->check() && (auth()->id() === $store->user_id || (method_exists(auth()->user(), 'isAdmin') && auth()->user()->isAdmin()));
+        if (!$store->is_published && !$isOwnerOrAdmin) {
+            return Inertia::render('Errors/StoreUnavailable', [
+                'reason' => 'unpublished',
+                'storeName' => $store->name,
+                'slug' => $slug,
+            ])->toResponse(request())->setStatusCode(403);
+        }
+
+        // 4. Produit inexistant ou inactif
+        $product = $store->products()
+            ->where('slug', $product_slug)
+            ->where('is_active', true)
+            ->with('variants')
+            ->first();
+
+        if (!$product) {
+            return Inertia::render('Errors/ProductUnavailable', [
+                'store' => [
+                    'name' => $store->name,
+                    'slug' => $store->slug,
+                    'logo_url' => $store->logo_url,
+                ],
+                'productSlug' => $product_slug,
+            ])->toResponse(request())->setStatusCode(404);
+        }
+
+        $store->load(['products' => function ($q) {
+            $q->where('is_active', true)->latest();
+        }]);
 
         $store->products->transform(function ($p) {
             $pv = (float) $p->price_vendor;
@@ -135,12 +203,6 @@ class StorefrontController extends Controller
             }
             return $p;
         });
-
-        $product = $store->products()
-            ->where('slug', $product_slug)
-            ->where('is_active', true)
-            ->with('variants')
-            ->firstOrFail();
 
         $pv = (float) $product->price_vendor;
         if ($product->is_promo && $product->promo_price > 0) {
@@ -169,6 +231,7 @@ class StorefrontController extends Controller
             'store' => $store,
             'product' => $product,
             'appUrl' => config('app.url', 'http://localhost:8000'),
+            'isPreview' => !$store->is_published && $isOwnerOrAdmin,
         ]);
     }
 }

@@ -19,7 +19,7 @@ function getContrastColor(hexColor) {
     return yiq >= 165 ? '#0F172A' : '#FFFFFF';
 }
 
-export default function ProductSlugShow({ store, product, appUrl }) {
+export default function ProductSlugShow({ store, product, appUrl, isPreview = false }) {
     const authUser = usePage().props.auth?.user;
     const isOwner = authUser && authUser.id === store.user_id;
 
@@ -125,8 +125,33 @@ export default function ProductSlugShow({ store, product, appUrl }) {
         <StorefrontLayout store={store} isOwner={isOwner}>
             <Head title={`${product.title} — ${store.name}`} />
 
-            <div className="space-y-12">
-                {/* BREADCRUMBS */}
+            <div className="space-y-6">
+                {/* PREVIEW MODE BANNER FOR SELLER */}
+                {isPreview && (
+                    <div className="bg-[#FFCC00] text-slate-950 p-3.5 sm:p-4 rounded-2xl mb-6 shadow-sm border border-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl bg-slate-950 text-[#FFCC00] flex items-center justify-center shrink-0">
+                                <Eye className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <span className="font-extrabold uppercase tracking-wide text-[11px] block text-slate-950">
+                                    Mode Prévisualisation Marchand
+                                </span>
+                                <span className="text-slate-800 font-medium">
+                                    Cette boutique est actuellement privée. Seul vous pouvez la voir tant qu'elle n'a pas été publiée.
+                                </span>
+                            </div>
+                        </div>
+                        <a
+                            href="/dashboard"
+                            className="px-4 py-2 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-black text-xs transition-colors shrink-0 shadow-xs"
+                        >
+                            Gérer &amp; Publier sur le Dashboard
+                        </a>
+                    </div>
+                )}
+
+                {/* BREADCRUMB */}
                 <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
                     <a href={`/${store.slug}`} className="hover:text-slate-950 flex items-center gap-1 text-slate-600">
                         <ArrowLeft className="w-3.5 h-3.5 text-slate-400" /> Accueil Boutique

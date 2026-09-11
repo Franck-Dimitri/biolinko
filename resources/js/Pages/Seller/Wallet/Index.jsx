@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Wallet as WalletIcon, ArrowUpRight, ArrowDownLeft, ShieldCheck, 
-    RefreshCw, CheckCircle2, Clock, Smartphone, AlertCircle, Sparkles, DollarSign
+    RefreshCw, CheckCircle2, Clock, Smartphone, AlertCircle, Sparkles, DollarSign, Loader2
 } from 'lucide-react';
 
 export default function Index({ store, wallet, withdrawals, metrics, appUrl }) {
@@ -158,7 +158,7 @@ export default function Index({ store, wallet, withdrawals, metrics, appUrl }) {
                             <p className="text-xs text-slate-500 font-medium">Suivez toutes vos demandes de virement vers votre compte MoMo</p>
                         </div>
                         <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-800 font-bold text-xs border border-slate-200">
-                            Seuil min: 50 100 FCFA
+                            Seuil min: 5 000 FCFA
                         </span>
                     </div>
 
@@ -287,10 +287,19 @@ export default function Index({ store, wallet, withdrawals, metrics, appUrl }) {
 
                                 <button
                                     type="submit"
-                                    disabled={processing}
-                                    className="w-full py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-md transition-all border border-amber-300 disabled:opacity-50"
+                                    disabled={processing || requestedAmount < 5000 || requestedAmount > (wallet?.balance_available || 0)}
+                                    className={`w-full py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-md transition-all border border-amber-300 flex items-center justify-center gap-2 cursor-pointer ${
+                                        processing ? 'opacity-75 cursor-not-allowed pointer-events-none scale-[0.99]' : ''
+                                    }`}
                                 >
-                                    <span>{processing ? 'Envoi de la demande...' : `Confirmer le Retrait de ${netPayout.toLocaleString()} FCFA`}</span>
+                                    {processing ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                                            <span>Traitement du retrait en cours...</span>
+                                        </>
+                                    ) : (
+                                        <span>Confirmer le Retrait de {netPayout.toLocaleString()} FCFA</span>
+                                    )}
                                 </button>
                             </form>
                         </motion.div>
