@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ApplicationLogo from '@/Components/ApplicationLogo';
 import { 
     Zap, Sparkles, ShoppingBag, Smartphone, MessageSquare, PackageCheck, 
     Wallet, ShieldCheck, ArrowRight, ChevronDown, ChevronUp, 
@@ -269,11 +270,9 @@ export default function Welcome({ auth }) {
                         
                         {/* Logo */}
                         <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-                            <div className="w-9 h-9 rounded-xl bg-[#FFCC00] flex items-center justify-center text-slate-950 font-black text-lg group-hover:rotate-6 transition-transform duration-300 border border-amber-300 shadow-2xs">
-                                <Zap className="w-5 h-5 fill-slate-950" />
-                            </div>
-                            <span className="text-2xl font-bold tracking-tight text-slate-950">
-                                biolinko
+                            <ApplicationLogo className="w-10 h-10 shadow-xs group-hover:scale-105 transition-transform" />
+                            <span className="text-2xl font-black tracking-tight text-slate-950 font-display">
+                                biolinko<span className="text-[#FFCC00]">.</span>
                             </span>
                         </Link>
 
@@ -1221,10 +1220,10 @@ export default function Welcome({ auth }) {
                             
                             <div className="lg:col-span-2 space-y-4">
                                 <div className="flex items-center gap-2.5">
-                                    <div className="w-8 h-8 rounded-xl bg-[#FFCC00] flex items-center justify-center text-slate-950 font-black text-lg border border-amber-300">
-                                        <Zap className="w-4 h-4 fill-slate-950" />
-                                    </div>
-                                    <span className="text-2xl font-bold tracking-tight text-slate-950">biolinko</span>
+                                    <ApplicationLogo className="w-9 h-9 shadow-xs" />
+                                    <span className="text-2xl font-black tracking-tight text-slate-950 font-display">
+                                        biolinko<span className="text-[#FFCC00]">.</span>
+                                    </span>
                                 </div>
                                 <p className="text-xs text-slate-500 leading-relaxed font-normal max-w-sm">
                                     BIOLINKO est la solution e-commerce entreprise pour créer votre boutique, vendre sur vos réseaux sociaux et encaisser par Mobile Money.

@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
+import ApplicationLogo from '@/Components/ApplicationLogo';
 import { ShoppingBag, PackageSearch, Store, ArrowLeft, Home, Sparkles } from 'lucide-react';
 
 export default function ProductUnavailable({ store, productSlug }) {
@@ -16,10 +17,8 @@ export default function ProductUnavailable({ store, productSlug }) {
             {/* HEADER */}
             <header className="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between relative z-10">
                 <Link href="/" className="flex items-center gap-2.5 group">
-                    <div className="w-10 h-10 rounded-2xl bg-[#FFCC00] text-slate-950 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
-                        <ShoppingBag className="w-5 h-5" />
-                    </div>
-                    <span className="text-2xl font-black tracking-tight text-slate-950">
+                    <ApplicationLogo className="w-10 h-10 shadow-xs group-hover:scale-105 transition-transform" />
+                    <span className="text-2xl font-black tracking-tight text-slate-950 font-display">
                         biolinko<span className="text-[#FFCC00]">.</span>
                     </span>
                 </Link>

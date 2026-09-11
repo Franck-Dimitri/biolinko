@@ -1,4 +1,5 @@
 import Dropdown from '@/Components/Dropdown';
+import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { Toaster } from 'sonner';
@@ -21,12 +22,10 @@ export default function AuthenticatedLayout({ header, children }) {
             
             {/* Mobile Header Bar */}
             <div className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-50">
-                <Link href="/dashboard" className="flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-2xl bg-[#FFCC00] text-slate-950 flex items-center justify-center shadow-2xs">
-                        <ShoppingBag className="w-5 h-5 text-slate-950" />
-                    </div>
-                    <span className="text-xl font-bold tracking-tight text-slate-950 font-sans">
-                        biolinko
+                <Link href="/dashboard" className="flex items-center gap-2.5">
+                    <ApplicationLogo className="w-9 h-9 shadow-xs" />
+                    <span className="text-xl font-extrabold tracking-tight text-slate-950 font-display">
+                        biolinko<span className="text-[#FFCC00]">.</span>
                     </span>
                 </Link>
                 <button
@@ -46,12 +45,10 @@ export default function AuthenticatedLayout({ header, children }) {
                 <div className="space-y-6">
                     {/* Brand Logo */}
                     <div className="flex items-center justify-between px-2 pt-2">
-                        <Link href="/dashboard" className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-2xl bg-[#FFCC00] text-slate-950 flex items-center justify-center shadow-2xs">
-                                <ShoppingBag className="w-5 h-5 text-slate-950" />
-                            </div>
-                            <span className="text-2xl font-bold tracking-tight text-slate-950 font-sans">
-                                biolinko
+                        <Link href="/dashboard" className="flex items-center gap-2.5 group">
+                            <ApplicationLogo className="w-9 h-9 shadow-xs group-hover:scale-105 transition-transform" />
+                            <span className="text-2xl font-extrabold tracking-tight text-slate-950 font-display">
+                                biolinko<span className="text-[#FFCC00]">.</span>
                             </span>
                         </Link>
                     </div>

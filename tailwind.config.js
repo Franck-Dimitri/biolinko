@@ -14,7 +14,9 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['"Nunito"', ...defaultTheme.fontFamily.sans],
-                display: ['"Nunito"', ...defaultTheme.fontFamily.sans],
+                display: ['"Montserrat"', '"Nunito"', ...defaultTheme.fontFamily.sans],
+                secondary: ['"Montserrat"', ...defaultTheme.fontFamily.sans],
+                heading: ['"Montserrat"', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 brand: {

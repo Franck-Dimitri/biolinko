@@ -75,9 +75,12 @@ export default function FooterBoutique({ store, setActiveTab }) {
 
             <div className="max-w-7xl mx-auto pt-8 mt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400 font-medium text-[11px]">
                 <div>© {new Date().getFullYear()} {store.name}. Tous droits réservés.</div>
-                <div className="text-slate-500 font-semibold flex items-center gap-1">
+                <div className="text-slate-500 font-semibold flex items-center gap-1.5">
                     <span>Propulsé avec passion par</span>
-                    <span className="font-bold px-2 py-0.5 rounded text-[10px]" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>BIOLINKO SaaS</span>
+                    <a href="/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-bold px-2 py-0.5 rounded-md bg-slate-900 text-white hover:bg-black transition-colors shadow-2xs">
+                        <img src="/branding/biolinko_black_on_yellow.png" alt="Biolinko" className="w-3.5 h-3.5 rounded-xs" />
+                        <span>BIOLINKO</span>
+                    </a>
                 </div>
             </div>
         </footer>
