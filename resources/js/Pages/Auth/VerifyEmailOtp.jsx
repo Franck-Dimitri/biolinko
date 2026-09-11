@@ -62,6 +62,8 @@ export default function VerifyEmailOtp({ email, status }) {
                     <PrimaryButton
                         className="w-full py-3.5 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
                         disabled={processing || data.otp.length < 6}
+                        processing={processing}
+                        loadingText="Vérification en cours..."
                     >
                         <span>Valider et Activer Mon Compte</span>
                         <ArrowRight className="w-4 h-4" />

@@ -93,7 +93,7 @@ export default function UpdateProfileInformation({
                 )}
 
                 <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
+                    <PrimaryButton disabled={processing} processing={processing} loadingText="Enregistrement...">Sauvegarder</PrimaryButton>
 
                     <Transition
                         show={recentlySuccessful}
