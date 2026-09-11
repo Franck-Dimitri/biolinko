@@ -119,7 +119,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
             variant_label: `Pack: ${smartLink.title}`,
             min_order_quantity: 1,
             price_vendor: item.unit_price,
-            price_display: Math.ceil(item.unit_price * 1.02),
+            price_display: Math.ceil(item.unit_price),
             quantity: item.quantity,
         }));
 
@@ -210,7 +210,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
             currentPv = parseFloat(variantObj.price);
         }
 
-        const pbUnit = Math.ceil(currentPv * 1.02);
+        const pbUnit = Math.ceil(currentPv);
 
         const existingIndex = cartItems.findIndex(
             item => item.product_id === product.id && item.variant_id === (variantObj ? variantObj.id : null)
@@ -284,9 +284,9 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
     };
 
     // Calculate Cart Totals
-    const cartSubtotalPb = cartItems.reduce((acc, item) => acc + (item.price_display * item.quantity), 0);
-    const cartMomoFee = Math.ceil((cartSubtotalPb / 0.98) - cartSubtotalPb);
-    const cartTotalClientTc = cartSubtotalPb + cartMomoFee;
+    const cartSubtotalPb = cartItems.reduce((acc, item) => acc + ((item.price_display || item.price_vendor) * item.quantity), 0);
+    const cartServiceFee = Math.ceil(cartSubtotalPb * 0.03);
+    const cartTotalClientTc = cartSubtotalPb + cartServiceFee;
     const totalCartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
     const handleCheckoutSubmitFromCartPage = (e) => {
@@ -817,8 +817,8 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                     <span>{Number(cartSubtotalPb).toLocaleString()} FCFA</span>
                                                 </div>
                                                 <div className="flex justify-between text-slate-500 font-medium">
-                                                    <span>Frais API Mobile Money (2%) :</span>
-                                                    <span>+{Number(cartMomoFee).toLocaleString()} FCFA</span>
+                                                    <span>Frais de service plateforme (3%) :</span>
+                                                    <span>+{Number(cartServiceFee).toLocaleString()} FCFA</span>
                                                 </div>
                                                 <div className="pt-2 border-t border-slate-200 flex justify-between font-bold text-sm text-slate-950">
                                                     <span>Total Général TTC Client :</span>
@@ -919,7 +919,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                     {filteredProducts.map((product) => {
                                         const directProductUrl = `/${store.slug}/p/${product.slug}`;
                                         const unitPrice = (product.is_promo && product.promo_price > 0) ? Number(product.promo_price) : Number(product.price_vendor);
-                                        const displayPrice = Math.ceil(unitPrice * 1.02);
+                                        const displayPrice = Math.ceil(unitPrice);
 
                                         return (
                                             <div key={product.id} className="bg-white rounded-3xl border border-slate-100 shadow-2xs hover:shadow-xl transition-all overflow-hidden flex flex-col justify-between group relative p-3">
@@ -977,7 +977,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                                 <span className="text-[11px] text-rose-600 font-extrabold">Stock Épuisé</span>
                                                             ) : product.is_promo ? (
                                                                 <span className="text-xs text-slate-400 line-through font-medium">
-                                                                    {Math.ceil(product.price_vendor * 1.02).toLocaleString()}
+                                                                    {Math.ceil(product.price_vendor).toLocaleString()}
                                                                 </span>
                                                             ) : null}
                                                         </div>
@@ -1026,7 +1026,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                     { id: 'bs2', title: 'Article Tendance Bestseller', price_vendor: 85000, description: 'Le choix préféré de nos clients.' },
                                     { id: 'bs3', title: 'Pack Offre Spéciale', price_vendor: 150000, description: 'Sélection premium garantie.' },
                                 ]).map((bs, i) => {
-                                    const priceDisplay = Math.ceil(bs.price_vendor * 1.02);
+                                    const priceDisplay = Math.ceil(bs.price_vendor);
 
                                     return (
                                         <div key={bs.id || i} className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
@@ -1207,7 +1207,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                                                 </div>
                                                                             </div>
                                                                             <span className="px-2.5 py-1 rounded-xl bg-slate-950 text-white font-extrabold text-[11px] shrink-0">
-                                                                                {Math.ceil(((activeHeroProduct.is_promo && activeHeroProduct.promo_price > 0 ? activeHeroProduct.promo_price : activeHeroProduct.price_vendor) * 1.02)).toLocaleString()} FCFA
+                                                                                {Math.ceil(((activeHeroProduct.is_promo && activeHeroProduct.promo_price > 0 ? activeHeroProduct.promo_price : activeHeroProduct.price_vendor))).toLocaleString()} FCFA
                                                                             </span>
                                                                         </div>
                                                                     </a>
@@ -1341,7 +1341,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                     {filteredProducts.map((product) => {
                                                         const directProductUrl = `/${store.slug}/p/${product.slug}`;
                                                         const unitPrice = (product.is_promo && product.promo_price > 0) ? Number(product.promo_price) : Number(product.price_vendor);
-                                                        const displayPrice = Math.ceil(unitPrice * 1.02);
+                                                        const displayPrice = Math.ceil(unitPrice);
 
                                                         return (
                                                             <div key={product.id} className="bg-white rounded-3xl border border-slate-100 shadow-2xs hover:shadow-xl transition-all overflow-hidden flex flex-col justify-between group relative p-3">
@@ -1392,7 +1392,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                                             </div>
                                                                             {product.is_promo && product.price_vendor > product.promo_price && (
                                                                                 <div className="text-[10px] text-slate-400 line-through">
-                                                                                    {Math.ceil(product.price_vendor * 1.02).toLocaleString()} FCFA
+                                                                                    {Math.ceil(product.price_vendor).toLocaleString()} FCFA
                                                                                 </div>
                                                                             )}
                                                                         </div>
@@ -1437,7 +1437,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                 {products.slice(0, 4).map((product) => {
                                                     const directProductUrl = `/${store.slug}/p/${product.slug}`;
                                                     const unitPrice = (product.is_promo && product.promo_price > 0) ? Number(product.promo_price) : Number(product.price_vendor);
-                                                    const displayPrice = Math.ceil(unitPrice * 1.02);
+                                                    const displayPrice = Math.ceil(unitPrice);
 
                                                     return (
                                                         <div key={`bs-${product.id}`} className="bg-white rounded-3xl border border-slate-100 shadow-2xs hover:shadow-xl transition-all overflow-hidden flex flex-col justify-between group relative p-3">
@@ -1502,7 +1502,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                 {promoProducts.map((product) => {
                                                     const directProductUrl = `/${store.slug}/p/${product.slug}`;
                                                     const unitPrice = Number(product.promo_price);
-                                                    const displayPrice = Math.ceil(unitPrice * 1.02);
+                                                    const displayPrice = Math.ceil(unitPrice);
                                                     const discount = Math.round(((product.price_vendor - product.promo_price) / product.price_vendor) * 100);
 
                                                     return (
@@ -1535,7 +1535,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                                             {displayPrice.toLocaleString()} FCFA
                                                                         </div>
                                                                         <div className="text-[10px] text-slate-400 line-through">
-                                                                            {Math.ceil(product.price_vendor * 1.02).toLocaleString()} FCFA
+                                                                            {Math.ceil(product.price_vendor).toLocaleString()} FCFA
                                                                         </div>
                                                                     </div>
 
@@ -1607,7 +1607,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                             <div>
                                                                 <div className="text-[10px] text-slate-400 font-medium uppercase">Prix du Pack</div>
                                                                 <div className="text-lg font-black text-slate-950">
-                                                                    {Math.ceil((sl.total_amount || sl.price_total || 0) * 1.02).toLocaleString()} FCFA
+                                                                    {Math.ceil(sl.total_amount || sl.price_total || 0).toLocaleString()} FCFA
                                                                 </div>
                                                             </div>
 

@@ -62,10 +62,10 @@ export default function TransactionsIndex({ orders, metrics, filters }) {
                         </div>
                     </div>
 
-                    {/* Marge SaaS 2% */}
+                    {/* Marge SaaS 3% */}
                     <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
                         <div className="flex items-center justify-between text-xs font-medium text-slate-500">
-                            <span>Revenus SaaS (Marge 2%)</span>
+                            <span>Revenus SaaS (Marge 3%)</span>
                             <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
                                 <DollarSign className="w-4 h-4" />
                             </div>
@@ -152,7 +152,7 @@ export default function TransactionsIndex({ orders, metrics, filters }) {
                                     <th className="py-4 px-6">Boutique</th>
                                     <th className="py-4 px-6">Acheteur Client</th>
                                     <th className="py-4 px-6">Montant Total TTC</th>
-                                    <th className="py-4 px-6">Marge SaaS 2%</th>
+                                    <th className="py-4 px-6">Marge SaaS 3%</th>
                                     <th className="py-4 px-6 text-right">Statut</th>
                                 </tr>
                             </thead>

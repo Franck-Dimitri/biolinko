@@ -11,15 +11,13 @@ export default function Index({ store, wallet, withdrawals, metrics, appUrl }) {
     const [showWithdrawModal, setShowWithdrawModal] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        amount: 50100,
+        amount: 5000,
         payment_operator: 'MTN',
         phone: store?.phone_whatsapp || '',
     });
 
     const requestedAmount = Number(data.amount) || 0;
-    const appFee = Math.round(requestedAmount * 0.01);
-    const momoFee = Math.round(requestedAmount * 0.01);
-    const totalFee = appFee + momoFee;
+    const totalFee = Math.round(requestedAmount * 0.015); // 1.5% Frais de retrait
     const netPayout = Math.max(0, requestedAmount - totalFee);
 
     const handleWithdrawSubmit = (e) => {
@@ -53,7 +51,7 @@ export default function Index({ store, wallet, withdrawals, metrics, appUrl }) {
 
                     <button
                         onClick={() => setShowWithdrawModal(true)}
-                        disabled={metrics.available_balance < 50100}
+                        disabled={metrics.available_balance < 5000}
                         className="px-5 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 border border-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <ArrowUpRight className="w-4 h-4" />
@@ -171,7 +169,7 @@ export default function Index({ store, wallet, withdrawals, metrics, appUrl }) {
                                     <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-600 uppercase font-bold text-[10px] tracking-wider">
                                         <th className="py-3 px-4 rounded-l-xl">Référence / Date</th>
                                         <th className="py-3 px-4">Montant Demandé</th>
-                                        <th className="py-3 px-4">Frais (2%)</th>
+                                        <th className="py-3 px-4">Frais (1,5%)</th>
                                         <th className="py-3 px-4">Montant Net Reçu</th>
                                         <th className="py-3 px-4">Opérateur & Téléphone</th>
                                         <th className="py-3 px-4 rounded-r-xl text-right">Statut</th>
@@ -238,13 +236,13 @@ export default function Index({ store, wallet, withdrawals, metrics, appUrl }) {
                                     <label className="block text-slate-700 font-bold mb-1">Montant à retirer (FCFA) *</label>
                                     <input
                                         type="number"
-                                        min={50100}
+                                        min={5000}
                                         required
                                         value={data.amount}
                                         onChange={(e) => setData('amount', e.target.value)}
                                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-extrabold text-sm focus:bg-white focus:border-amber-400"
                                     />
-                                    <p className="text-[10px] text-slate-500 mt-1 font-semibold">Montant minimum : 50 100 FCFA</p>
+                                    <p className="text-[10px] text-slate-500 mt-1 font-semibold">Montant minimum : 5 000 FCFA</p>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
@@ -276,12 +274,8 @@ export default function Index({ store, wallet, withdrawals, metrics, appUrl }) {
                                 {/* FEE BREAKDOWN */}
                                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
                                     <div className="flex justify-between text-slate-600">
-                                        <span>Frais BIOLINKO App (1%) :</span>
-                                        <span className="font-bold text-slate-900">{appFee.toLocaleString()} FCFA</span>
-                                    </div>
-                                    <div className="flex justify-between text-slate-600">
-                                        <span>Frais Retrait MoMo (1%) :</span>
-                                        <span className="font-bold text-slate-900">{momoFee.toLocaleString()} FCFA</span>
+                                        <span>Frais de Retrait MoMo (1,5%) :</span>
+                                        <span className="font-bold text-slate-900">{totalFee.toLocaleString()} FCFA</span>
                                     </div>
                                     <div className="pt-2 border-t border-slate-200 flex justify-between font-extrabold text-slate-950 text-sm">
                                         <span>Montant Net Versé :</span>

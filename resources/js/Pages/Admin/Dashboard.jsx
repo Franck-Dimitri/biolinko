@@ -101,7 +101,7 @@ export default function Dashboard({ metrics, recentStores, pendingWithdrawals })
                                 {Number(metrics?.totalSaasRevenue || 0).toLocaleString()} FCFA
                             </div>
                             <div className="flex items-center gap-1.5 text-[11px] font-medium text-amber-700">
-                                <span className="px-2 py-0.5 rounded-full bg-amber-100 font-semibold">Commission 2%</span>
+                                <span className="px-2 py-0.5 rounded-full bg-amber-100 font-semibold">Commission 3%</span>
                                 <span className="text-slate-400">Marge plateforme</span>
                             </div>
                         </div>

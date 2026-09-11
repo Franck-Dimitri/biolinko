@@ -46,7 +46,7 @@ class WalletController extends Controller
                 'pending_balance' => (float) $wallet->balance_pending,
                 'lifetime_earnings' => $lifetimeEarnings,
                 'total_withdrawals' => (float) $withdrawals->filter(fn($w) => in_array(strtoupper($w->status), ['APPROVED', 'COMPLETED', 'VALIDE', 'PAYE']))->sum('amount'),
-                'min_withdrawal' => 50100,
+                'min_withdrawal' => 5000,
             ],
             'appUrl' => config('app.url', 'http://localhost:8000'),
         ]);
@@ -67,7 +67,7 @@ class WalletController extends Controller
         );
 
         $validated = $request->validate([
-            'amount' => ['required', 'numeric', 'min:50100'],
+            'amount' => ['required', 'numeric', 'min:5000'],
             'payment_operator' => ['required', 'string', 'in:MTN,ORANGE,mtn,orange'],
             'phone' => ['required', 'string', 'max:50'],
         ]);
@@ -80,10 +80,9 @@ class WalletController extends Controller
             ]);
         }
 
-        // Fee calculations: 1% BIOLINKO App Fee + 1% Mobile Money Cashout Fee (Total 2%)
-        $appFee = round($requestedAmount * 0.01);
-        $momoFee = round($requestedAmount * 0.01);
-        $netPayout = $requestedAmount - ($appFee + $momoFee);
+        // Fee calculations: 1.5% BIOLINKO Mobile Money Withdrawal Fee
+        $withdrawalFee = round($requestedAmount * 0.015);
+        $netPayout = $requestedAmount - $withdrawalFee;
 
         // Deduct from available balance
         $wallet->balance_available -= $requestedAmount;

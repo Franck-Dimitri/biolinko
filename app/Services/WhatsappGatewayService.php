@@ -474,7 +474,7 @@ class WhatsappGatewayService
             . "📋 *Motif communiqué :*\n"
             . "_{$reason}_\n\n"
             . "Pour toute réclamation ou question, vous pouvez écrire à support@biolinko.app ou répondre directement à ce message.\n\n"
-            . "_[Équipe de Conformité & Modération BIOLINKO 🇨🇲]_";
+            . "_[Équipe de Conformité & Modération BIOLINKO]_";
 
         $this->sendMessage($phone, $msg);
     }

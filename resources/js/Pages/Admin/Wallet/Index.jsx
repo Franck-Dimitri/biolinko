@@ -10,8 +10,8 @@ export default function WalletIndex({ metrics, paidOrders, completedWithdrawals 
     const user = usePage().props.auth.user;
 
     const streamsData = [
-        { label: 'Gain 2% Marge Ventes', val: metrics?.total_saas_margin || 0, color: 'from-amber-400 to-[#FFCC00]' },
-        { label: 'Gain 1% Frais Retraits MoMo', val: metrics?.total_withdrawal_fees || 0, color: 'from-emerald-400 to-emerald-600' },
+        { label: 'Gain 3% Marge Ventes', val: metrics?.total_saas_margin || 0, color: 'from-amber-400 to-[#FFCC00]' },
+        { label: 'Gain 1,5% Frais Retraits MoMo', val: metrics?.total_withdrawal_fees || 0, color: 'from-emerald-400 to-emerald-600' },
         { label: 'Gain Abonnements SaaS', val: metrics?.total_subscription_revenue || 0, color: 'from-purple-400 to-purple-600' },
     ];
 
@@ -33,7 +33,7 @@ export default function WalletIndex({ metrics, paidOrders, completedWithdrawals 
                             Solde Cumulé &amp; Revenus Réseau BIOLINKO
                         </h2>
                         <p className="text-xs text-slate-900 font-medium">
-                            Suivez l'intégralité des gains issus des commissions de 2% sur les ventes, des frais de 1% sur les retraits MoMo et des abonnements SaaS.
+                            Suivez l'intégralité des gains issus des frais de service de 3% sur les ventes, des frais de 1,5% sur les retraits MoMo et des abonnements SaaS.
                         </p>
                     </div>
                 </div>
@@ -60,10 +60,10 @@ export default function WalletIndex({ metrics, paidOrders, completedWithdrawals 
                         </div>
                     </div>
 
-                    {/* Gain 2% Marge Ventes */}
+                    {/* Gain 3% Marge Ventes */}
                     <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
                         <div className="flex items-center justify-between text-xs font-medium text-slate-500">
-                            <span>Marge 2% sur les Ventes</span>
+                            <span>Marge 3% sur les Ventes</span>
                             <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
                                 <DollarSign className="w-4 h-4" />
                             </div>
@@ -76,10 +76,10 @@ export default function WalletIndex({ metrics, paidOrders, completedWithdrawals 
                         </div>
                     </div>
 
-                    {/* Gain 1% Frais Retraits MoMo */}
+                    {/* Gain 1,5% Frais Retraits MoMo */}
                     <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
                         <div className="flex items-center justify-between text-xs font-medium text-slate-500">
-                            <span>Gain 1% Retraits MoMo</span>
+                            <span>Gain 1,5% Retraits MoMo</span>
                             <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
                                 <TrendingUp className="w-4 h-4" />
                             </div>
@@ -154,7 +154,7 @@ export default function WalletIndex({ metrics, paidOrders, completedWithdrawals 
                                 <span>Sécurité &amp; Traçabilité</span>
                             </h3>
                             <p className="text-xs text-slate-500 leading-relaxed font-medium">
-                                Toutes les commissions (2% ventes, 1% retraits) sont calculées et enregistrées automatiquement lors des événements webhook Mobile Money.
+                                Toutes les commissions (3% ventes, 1,5% retraits) sont calculées et enregistrées automatiquement lors des événements webhook Mobile Money.
                             </p>
                             <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 font-medium">
                                 🔥 <strong>Garantie BIOLINKO</strong> : Aucun frais caché. Solde transférable vers le compte bancaire/MoMo principal du Super-Admin.
@@ -172,7 +172,7 @@ export default function WalletIndex({ metrics, paidOrders, completedWithdrawals 
                         <div className="flex items-center justify-between">
                             <h3 className="text-base font-semibold text-slate-950 flex items-center gap-2">
                                 <DollarSign className="w-4 h-4 text-amber-600" />
-                                <span>Gains 2% Ventes Récents</span>
+                                <span>Gains 3% Ventes Récents</span>
                             </h3>
                             <span className="text-xs text-slate-400 font-medium">{paidOrders?.length || 0} transaction(s)</span>
                         </div>
@@ -187,7 +187,7 @@ export default function WalletIndex({ metrics, paidOrders, completedWithdrawals 
                                             <div className="text-[10px] text-slate-400">Réf: {ord.tracking_code}</div>
                                         </div>
                                         <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
-                                            2% Encaissé
+                                            3% Encaissé
                                         </span>
                                     </div>
                                 ))}
@@ -204,7 +204,7 @@ export default function WalletIndex({ metrics, paidOrders, completedWithdrawals 
                         <div className="flex items-center justify-between">
                             <h3 className="text-base font-semibold text-slate-950 flex items-center gap-2">
                                 <TrendingUp className="w-4 h-4 text-emerald-600" />
-                                <span>Gains 1% Frais Payout Retraits</span>
+                                <span>Gains 1,5% Frais Payout Retraits</span>
                             </h3>
                             <span className="text-xs text-slate-400 font-medium">{completedWithdrawals?.length || 0} virement(s)</span>
                         </div>
@@ -214,12 +214,12 @@ export default function WalletIndex({ metrics, paidOrders, completedWithdrawals 
                                 {completedWithdrawals.map((w) => (
                                     <div key={w.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3 text-xs">
                                         <div>
-                                            <div className="font-extrabold text-emerald-600 font-mono text-sm">+{Number(w.amount * 0.01).toLocaleString()} FCFA</div>
+                                            <div className="font-extrabold text-emerald-600 font-mono text-sm">+{Number(w.amount * 0.015).toLocaleString()} FCFA</div>
                                             <div className="text-slate-600 text-[11px]">Boutique: <strong className="text-slate-950">{w.wallet?.store?.name || 'N/A'}</strong></div>
                                             <div className="text-[10px] text-slate-400">Retrait #{w.id} ({Number(w.amount).toLocaleString()} FCFA)</div>
                                         </div>
                                         <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
-                                            1% Payout Fee
+                                            1,5% Payout Fee
                                         </span>
                                     </div>
                                 ))}

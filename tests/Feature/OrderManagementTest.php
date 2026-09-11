@@ -41,9 +41,9 @@ test('vendor can update order status', function () {
         'customer_phone' => '237699123456',
         'city' => 'Douala',
         'price_vendor' => 10000,
-        'saas_margin' => 200,
-        'api_fee' => 200,
-        'total_client' => 10400,
+        'saas_margin' => 300,
+        'api_fee' => 0,
+        'total_client' => 10300,
         'status' => 'paid',
     ]);
 

@@ -614,8 +614,8 @@ export default function Index({ store, orders, metrics, filters, appUrl }) {
                                     <span className="font-bold text-slate-950">{Number(selectedInvoiceOrder.price_vendor || selectedInvoiceOrder.total_amount).toLocaleString()} FCFA</span>
                                 </div>
                                 <div className="flex justify-between text-slate-500">
-                                    <span>Frais de paiement Mobile Money inclus (2%) :</span>
-                                    <span>+{Number(selectedInvoiceOrder.api_fee || 0).toLocaleString()} FCFA</span>
+                                    <span>Frais de service plateforme (3%) :</span>
+                                    <span>+{Number(selectedInvoiceOrder.saas_margin || selectedInvoiceOrder.api_fee || 0).toLocaleString()} FCFA</span>
                                 </div>
                                 <div className="pt-2 border-t border-slate-200 flex justify-between font-extrabold text-sm text-slate-950">
                                     <span>Total Général TTC Client :</span>

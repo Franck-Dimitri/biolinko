@@ -152,7 +152,7 @@ export default function Welcome({ auth }) {
             },
             {
                 q: "Y a-t-il des commissions sur mes prix de vente ?",
-                a: "Aucune commission. Vous touchez 100% de votre prix fixe. Les frais de réseau (2%) et de service (2%) sont affichés au client lors du checkout."
+                a: "Aucune commission. Vous touchez 100% de votre prix fixe. Les frais de service plateforme (3%) sont payés par le client lors du checkout."
             }
         ],
         features: [

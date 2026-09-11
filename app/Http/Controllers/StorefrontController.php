@@ -27,8 +27,8 @@ class StorefrontController extends Controller
                 
                 if ($product->is_promo && $product->promo_price > 0) {
                     $promoPv = (float) $product->promo_price;
-                    $pb = ceil($promoPv * 1.02); // New Promo Base Price
-                    $originalPb = ceil($pv * 1.02); // Original Base Price before discount
+                    $pb = $promoPv; // Promo Base Vendor Price
+                    $originalPb = $pv; // Original Base Vendor Price
                     $savings = $originalPb - $pb;
 
                     $product->price_display = $pb;
@@ -36,14 +36,14 @@ class StorefrontController extends Controller
                     $product->savings_display = $savings;
                     $product->discount_percentage = $originalPb > 0 ? round(($savings / $originalPb) * 100) : 0;
                 } else {
-                    $pb = ceil($pv * 1.02);
+                    $pb = $pv;
                     $product->price_display = $pb;
                     $product->original_price_display = null;
                     $product->savings_display = 0;
                     $product->discount_percentage = 0;
                 }
 
-                $tc = ceil($pb / 0.98); // Total Checkout Price with MoMo fee
+                $tc = ceil($pb * 1.03); // Total Checkout Price with 3% platform fee
                 $product->price_client_total = $tc;
                 $product->api_fee_unit = $tc - $pb;
                 return $product;
@@ -129,12 +129,9 @@ class StorefrontController extends Controller
         $store->products->transform(function ($p) {
             $pv = (float) $p->price_vendor;
             if ($p->is_promo && $p->promo_price > 0) {
-                $promoPv = (float) $p->promo_price;
-                $pb = ceil($promoPv * 1.02);
-                $p->price_display = $pb;
+                $p->price_display = (float) $p->promo_price;
             } else {
-                $pb = ceil($pv * 1.02);
-                $p->price_display = $pb;
+                $p->price_display = $pv;
             }
             return $p;
         });
@@ -148,8 +145,8 @@ class StorefrontController extends Controller
         $pv = (float) $product->price_vendor;
         if ($product->is_promo && $product->promo_price > 0) {
             $promoPv = (float) $product->promo_price;
-            $pb = ceil($promoPv * 1.02);
-            $originalPb = ceil($pv * 1.02);
+            $pb = $promoPv;
+            $originalPb = $pv;
             $savings = $originalPb - $pb;
 
             $product->price_display = $pb;
@@ -157,14 +154,14 @@ class StorefrontController extends Controller
             $product->savings_display = $savings;
             $product->discount_percentage = $originalPb > 0 ? round(($savings / $originalPb) * 100) : 0;
         } else {
-            $pb = ceil($pv * 1.02);
+            $pb = $pv;
             $product->price_display = $pb;
             $product->original_price_display = null;
             $product->savings_display = 0;
             $product->discount_percentage = 0;
         }
 
-        $tc = ceil($pb / 0.98);
+        $tc = ceil($pb * 1.03);
         $product->price_client_total = $tc;
         $product->api_fee_unit = $tc - $pb;
 

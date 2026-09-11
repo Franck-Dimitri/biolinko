@@ -46,8 +46,8 @@ class Product extends Model
 
     public function getPriceDisplayAttribute(): float
     {
-        $pv = (float) $this->price_vendor;
-        return (float) ceil($pv * 1.02);
+        $pv = (float) ($this->is_promo && $this->promo_price > 0 ? $this->promo_price : $this->price_vendor);
+        return (float) $pv;
     }
 
     public function store(): BelongsTo

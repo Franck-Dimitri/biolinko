@@ -241,12 +241,13 @@ class CheckoutController extends Controller
                 ? (float) $product->promo_price 
                 : (float) $product->price_vendor;
 
-            $pbUnit = ceil($currentPv * 1.02);
-            $tcUnit = ceil($pbUnit / 0.98);
+            // 3% Platform fee paid by customer; 0% HR Pay Cash-In; Vendor receives 100% of price_vendor
+            $saasMarginUnit = ceil($currentPv * 0.03);
+            $tcUnit = $currentPv + $saasMarginUnit;
 
             $itemVendorPrice = $currentPv * $quantity;
-            $itemSaasMargin = ($pbUnit - $currentPv) * $quantity;
-            $itemApiFee = ($tcUnit - $pbUnit) * $quantity;
+            $itemSaasMargin = $saasMarginUnit * $quantity;
+            $itemApiFee = 0;
             $itemTotalClient = $tcUnit * $quantity;
 
             $priceVendorTotal += $itemVendorPrice;

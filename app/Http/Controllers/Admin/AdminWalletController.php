@@ -14,12 +14,12 @@ class AdminWalletController extends Controller
 {
     public function index(Request $request): Response
     {
-        // 1. Gain 2% Marge sur les Ventes
+        // 1. Gain 3% Marge sur les Ventes
         $totalSaasMargin = (float) Order::where('status', 'paid')->sum('saas_margin');
 
-        // 2. Gain 1% Frais de Retrait Mobile Money (ex: 1% prélevé sur les Payouts validés)
+        // 2. Gain 1,5% Frais de Retrait Mobile Money (1,5% prélevé sur les Payouts validés)
         $completedWithdrawalsSum = (float) Withdrawal::where('status', 'completed')->sum('amount');
-        $totalWithdrawalFees = $completedWithdrawalsSum * 0.01;
+        $totalWithdrawalFees = $completedWithdrawalsSum * 0.015;
 
         // 3. Gain Abonnements SaaS (Pro, Growth, Business)
         $proRevenue = User::where('plan', 'pro')->count() * 2500;

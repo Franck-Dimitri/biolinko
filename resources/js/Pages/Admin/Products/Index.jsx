@@ -169,7 +169,7 @@ export default function ProductsIndex({ products, metrics, filters }) {
                                     <th className="py-4 px-6">Produit</th>
                                     <th className="py-4 px-6">Boutique</th>
                                     <th className="py-4 px-6">Prix Vendeur</th>
-                                    <th className="py-4 px-6">Prix Client (+2%)</th>
+                                    <th className="py-4 px-6">Prix Client (+3%)</th>
                                     <th className="py-4 px-6">Stock</th>
                                     <th className="py-4 px-6 text-right">Actions Modération</th>
                                 </tr>
@@ -206,7 +206,7 @@ export default function ProductsIndex({ products, metrics, filters }) {
                                                 {Number(p.price_vendor).toLocaleString()} FCFA
                                             </td>
                                             <td className="py-4 px-6 font-extrabold text-amber-700">
-                                                {Number(p.price_display || Math.ceil(p.price_vendor * 1.02)).toLocaleString()} FCFA
+                                                {Number(Math.ceil((p.is_promo && p.promo_price > 0 ? p.promo_price : p.price_vendor) * 1.03)).toLocaleString()} FCFA
                                             </td>
                                             <td className="py-4 px-6">
                                                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${

@@ -66,7 +66,7 @@ export default function ProductSlugShow({ store, product, appUrl }) {
             currentPv = parseFloat(variantObj.price);
         }
 
-        const pbUnit = Math.ceil(currentPv * 1.02);
+        const pbUnit = Math.ceil(currentPv);
 
         const existingIndex = cartItems.findIndex(
             item => item.product_id === product.id && item.variant_id === (variantObj ? variantObj.id : null)
@@ -104,8 +104,8 @@ export default function ProductSlugShow({ store, product, appUrl }) {
     };
 
     const unitPrice = selectedVariant?.price 
-        ? Math.ceil(Math.ceil(parseFloat(selectedVariant.price) * 1.02) / 0.98)
-        : (product.price_client_total || Math.ceil(Math.ceil(parseFloat(product.price_vendor) * 1.02) / 0.98));
+        ? parseFloat(selectedVariant.price)
+        : (product.price_display || parseFloat(product.is_promo && product.promo_price > 0 ? product.promo_price : product.price_vendor));
 
     const totalCartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -575,7 +575,7 @@ export default function ProductSlugShow({ store, product, appUrl }) {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                             {relatedProducts.map((relProduct) => {
                                 const relUrl = `/${store.slug}/p/${relProduct.slug}`;
-                                const relPrice = Math.ceil((relProduct.is_promo && relProduct.promo_price ? relProduct.promo_price : relProduct.price_vendor) * 1.02);
+                                const relPrice = Math.ceil(relProduct.is_promo && relProduct.promo_price ? relProduct.promo_price : relProduct.price_vendor);
 
                                 return (
                                     <div key={relProduct.id} className="bg-white rounded-2xl border border-slate-200 shadow-2xs hover:shadow-md transition-all overflow-hidden flex flex-col justify-between group">

@@ -27,8 +27,8 @@ export default function CartDrawer({
 
     const totalCartCount = cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
     const cartSubtotal = cartItems.reduce((acc, item) => acc + ((item.price_display || item.price_vendor || 0) * (item.quantity || 1)), 0);
-    const estimatedMomoFee = Math.ceil((cartSubtotal / 0.98) - cartSubtotal);
-    const cartTotalClient = cartSubtotal + estimatedMomoFee;
+    const estimatedServiceFee = Math.ceil(cartSubtotal * 0.03); // 3% Frais de service
+    const cartTotalClient = cartSubtotal + estimatedServiceFee;
 
     return (
         <AnimatePresence>
@@ -192,9 +192,9 @@ export default function CartDrawer({
                                         </div>
                                         <div className="flex items-center justify-between text-[11px] text-slate-500">
                                             <span className="flex items-center gap-1">
-                                                <span>Frais MoMo USSD (estimé ~2%)</span>
+                                                <span>Frais de service plateforme (3%)</span>
                                             </span>
-                                            <span>+{estimatedMomoFee.toLocaleString()} FCFA</span>
+                                            <span>+{estimatedServiceFee.toLocaleString()} FCFA</span>
                                         </div>
                                         <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-sm">
                                             <span className="font-extrabold text-slate-950">Total à régler</span>
