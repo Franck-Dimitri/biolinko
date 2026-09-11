@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ModerationNotificationMail;
 use App\Models\Product;
+use App\Services\WhatsappGatewayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -61,5 +65,46 @@ class AdminProductController extends Controller
 
         $statusText = $product->is_active ? 'activé' : 'désactivé';
         return redirect()->back()->with('message', "Le produit {$product->title} a été {$statusText}.");
+    }
+
+    /**
+     * Delete a product by moderation with mandatory reason and email/whatsapp notification.
+     */
+    public function destroy(Request $request, Product $product, WhatsappGatewayService $whatsapp): RedirectResponse
+    {
+        $request->validate([
+            'reason' => ['required', 'string', 'min:5', 'max:1000'],
+        ]);
+
+        $reason = $request->input('reason');
+        $productTitle = $product->title;
+        $product->loadMissing('store.user');
+        $seller = $product->store?->user;
+
+        // 1. Notify Seller via Email
+        if ($seller && $seller->email) {
+            try {
+                Mail::to($seller->email)->send(new ModerationNotificationMail(
+                    $seller,
+                    'product_deleted',
+                    $productTitle,
+                    $reason
+                ));
+            } catch (\Exception $e) {
+                Log::warning('Failed to send product deletion email', ['err' => $e->getMessage()]);
+            }
+
+            // 2. Notify Seller via WhatsApp if phone available
+            try {
+                $whatsapp->notifyModerationAction($seller, 'product_deleted', $productTitle, $reason);
+            } catch (\Exception $e) {
+                Log::warning('Failed to send product deletion WhatsApp', ['err' => $e->getMessage()]);
+            }
+        }
+
+        // 3. Delete product
+        $product->delete();
+
+        return redirect()->back()->with('message', "Le produit \"{$productTitle}\" a été supprimé et le vendeur a été notifié par email et WhatsApp.");
     }
 }

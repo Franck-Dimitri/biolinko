@@ -6,9 +6,10 @@ import {
     ArrowLeft, User, Mail, Phone, MessageSquare, ExternalLink, 
     Shield, Ban, CheckCircle2, AlertTriangle, Package, ShoppingBag, 
     DollarSign, Wallet, Calendar, Clock, Eye, Sparkles, Crown, 
-    MapPin, Tag, Store as StoreIcon, Globe, RefreshCw, Check
+    MapPin, Tag, Store as StoreIcon, Globe, RefreshCw, Check, Trash2, ShieldAlert
 } from 'lucide-react';
 import { toast } from 'sonner';
+import ModerationModal from '@/Components/Admin/ModerationModal';
 
 export default function UserShow({ vendor, stats }) {
     const store = vendor.store;
@@ -38,6 +39,81 @@ export default function UserShow({ vendor, stats }) {
                 toast.error('Échec de la mise à jour du plan.');
             },
         });
+    };
+
+    // Moderation modal state
+    const [moderationModal, setModerationModal] = useState({
+        isOpen: false,
+        type: 'product', // 'product' | 'store' | 'user'
+        itemName: '',
+        targetInfo: null,
+        targetId: null,
+    });
+    const [isSubmittingModeration, setIsSubmittingModeration] = useState(false);
+
+    const openModerationModal = (type, itemName, targetId, targetInfo = null) => {
+        setModerationModal({
+            isOpen: true,
+            type,
+            itemName,
+            targetId,
+            targetInfo,
+        });
+    };
+
+    const closeModerationModal = () => {
+        setModerationModal((prev) => ({ ...prev, isOpen: false }));
+    };
+
+    const handleConfirmModeration = ({ reason, action }) => {
+        setIsSubmittingModeration(true);
+
+        if (moderationModal.type === 'product') {
+            router.delete(route('admin.products.destroy', moderationModal.targetId), {
+                data: { reason },
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsSubmittingModeration(false);
+                    closeModerationModal();
+                    toast.success(`Le produit "${moderationModal.itemName}" a été supprimé et le vendeur a été notifié.`);
+                },
+                onError: (errs) => {
+                    setIsSubmittingModeration(false);
+                    toast.error(errs?.reason || 'Erreur lors de la suppression du produit.');
+                },
+            });
+        } else if (moderationModal.type === 'store') {
+            router.post(route('admin.stores.moderate', moderationModal.targetId), {
+                action: action || 'suspend',
+                reason,
+            }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsSubmittingModeration(false);
+                    closeModerationModal();
+                    toast.success(`Action effectuée sur la vitrine "${moderationModal.itemName}". Le vendeur a été notifié.`);
+                },
+                onError: (errs) => {
+                    setIsSubmittingModeration(false);
+                    toast.error(errs?.reason || 'Erreur lors de la modération de la vitrine.');
+                },
+            });
+        } else if (moderationModal.type === 'user') {
+            router.post(route('admin.users.toggleBan', moderationModal.targetId), {
+                reason,
+            }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsSubmittingModeration(false);
+                    closeModerationModal();
+                    toast.success(`Le compte de ${moderationModal.itemName} a été banni et notifié par email et WhatsApp.`);
+                },
+                onError: (errs) => {
+                    setIsSubmittingModeration(false);
+                    toast.error(errs?.user || 'Erreur lors du bannissement.');
+                },
+            });
+        }
     };
 
     // Clean WhatsApp phone link
@@ -127,34 +203,45 @@ export default function UserShow({ vendor, stats }) {
                                         <ExternalLink className="w-3.5 h-3.5" /> Voir sa vitrine
                                     </a>
 
-                                    <Link
-                                        href={route('admin.users.toggleStore', vendor.id)}
-                                        method="post"
-                                        as="button"
-                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                                            store.is_published
-                                                ? 'bg-amber-100 hover:bg-amber-200 text-amber-900'
-                                                : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-900'
-                                        }`}
-                                    >
-                                        {store.is_published ? 'Masquer la vitrine' : 'Publier la vitrine'}
-                                    </Link>
+                                    {store.is_published ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => openModerationModal('store', store.name, store.id, `Vitrine: biolinko.app/${store.slug}`)}
+                                            className="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900"
+                                        >
+                                            <ShieldAlert className="w-3.5 h-3.5" /> Modérer / Masquer vitrine
+                                        </button>
+                                    ) : (
+                                        <Link
+                                            href={route('admin.users.toggleStore', vendor.id)}
+                                            method="post"
+                                            as="button"
+                                            className="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-900"
+                                        >
+                                            <CheckCircle2 className="w-3.5 h-3.5" /> Publier la vitrine
+                                        </Link>
+                                    )}
                                 </>
                             )}
 
-                            <Link
-                                href={route('admin.users.toggleBan', vendor.id)}
-                                method="post"
-                                as="button"
-                                className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                                    vendor.is_banned
-                                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                                        : 'bg-rose-100 hover:bg-rose-200 text-rose-800'
-                                }`}
-                            >
-                                <Ban className="w-3.5 h-3.5" />
-                                {vendor.is_banned ? 'Réactiver le compte' : 'Bannir le compte'}
-                            </Link>
+                            {vendor.is_banned ? (
+                                <Link
+                                    href={route('admin.users.toggleBan', vendor.id)}
+                                    method="post"
+                                    as="button"
+                                    className="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                >
+                                    <CheckCircle2 className="w-3.5 h-3.5" /> Réactiver le compte
+                                </Link>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => openModerationModal('user', vendor.name, vendor.id, `Email: ${vendor.email}`)}
+                                    className="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800"
+                                >
+                                    <Ban className="w-3.5 h-3.5" /> Bannir le compte
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -304,6 +391,7 @@ export default function UserShow({ vendor, stats }) {
                                                     <th className="py-3 px-4">Stock</th>
                                                     <th className="py-3 px-4">Variantes</th>
                                                     <th className="py-3 px-4">Statut</th>
+                                                    <th className="py-3 px-4 text-right">Actions Modération</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100 font-medium">
@@ -352,6 +440,27 @@ export default function UserShow({ vendor, stats }) {
                                                             }`}>
                                                                 {prod.is_active ? 'Actif' : 'Inactif'}
                                                             </span>
+                                                        </td>
+                                                        <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
+                                                            <Link
+                                                                href={route('admin.products.toggleActive', prod.id)}
+                                                                method="post"
+                                                                as="button"
+                                                                className={`px-2.5 py-1 rounded-lg font-bold text-[10px] transition cursor-pointer ${
+                                                                    prod.is_active 
+                                                                        ? 'bg-amber-100 hover:bg-amber-200 text-amber-900' 
+                                                                        : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                                                                }`}
+                                                            >
+                                                                {prod.is_active ? 'Désactiver' : 'Activer'}
+                                                            </Link>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openModerationModal('product', prod.title, prod.id, `Réf: /${prod.slug} • Prix: ${formatFCFA(prod.price_vendor)}`)}
+                                                                className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[10px] transition cursor-pointer inline-flex items-center gap-1 border border-rose-200"
+                                                            >
+                                                                <Trash2 className="w-3 h-3 text-rose-600" /> Supprimer
+                                                            </button>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -542,6 +651,17 @@ export default function UserShow({ vendor, stats }) {
                     </div>
                 </div>
             </div>
+
+            {/* REUSABLE MODERATION MODAL */}
+            <ModerationModal
+                isOpen={moderationModal.isOpen}
+                onClose={closeModerationModal}
+                onConfirm={handleConfirmModeration}
+                type={moderationModal.type}
+                itemName={moderationModal.itemName}
+                targetInfo={moderationModal.targetInfo}
+                isLoading={isSubmittingModeration}
+            />
         </AuthenticatedLayout>
     );
 }

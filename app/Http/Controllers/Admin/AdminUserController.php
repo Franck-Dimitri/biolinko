@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ModerationNotificationMail;
 use App\Models\User;
+use App\Services\WhatsappGatewayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -126,31 +130,116 @@ class AdminUserController extends Controller
         return redirect()->back()->with('message', "Plan du vendeur {$user->name} mis à jour vers " . strtoupper($validated['plan']) . " !");
     }
 
-    public function toggleBan(Request $request, User $user): RedirectResponse
+    public function toggleBan(Request $request, User $user, WhatsappGatewayService $whatsapp): RedirectResponse
     {
         if ($user->isAdmin()) {
             return redirect()->back()->withErrors(['user' => 'Impossible de bannir un compte administrateur.']);
         }
 
-        $user->update([
-            'is_banned' => !$user->is_banned,
-        ]);
+        $isCurrentlyBanned = $user->is_banned;
+        $reason = $request->input('reason');
 
-        $statusText = $user->is_banned ? 'banni' : 'réactivé';
-        return redirect()->back()->with('message', "Le vendeur {$user->name} a été {$statusText} avec succès.");
+        if (!$isCurrentlyBanned) {
+            // Banning user: require or default a clear reason
+            $reason = $reason ?: 'Non-respect répété des conditions générales d\'utilisation et règles commerciales de la plateforme.';
+            
+            $user->update(['is_banned' => true]);
+
+            // Suspend their store as well
+            if ($user->store) {
+                $user->store->update(['is_published' => false]);
+            }
+
+            // Send Email Notification
+            if ($user->email) {
+                try {
+                    Mail::to($user->email)->send(new ModerationNotificationMail(
+                        $user,
+                        'account_banned',
+                        $user->name,
+                        $reason
+                    ));
+                } catch (\Exception $e) {
+                    Log::warning('Failed to send account ban email', ['err' => $e->getMessage()]);
+                }
+            }
+
+            // Send WhatsApp Notification
+            try {
+                $whatsapp->notifyModerationAction($user, 'account_banned', $user->name, $reason);
+            } catch (\Exception $e) {
+                Log::warning('Failed to send account ban WhatsApp', ['err' => $e->getMessage()]);
+            }
+
+            return redirect()->back()->with('message', "Le vendeur {$user->name} a été banni et notifié par email et WhatsApp.");
+        } else {
+            // Unbanning user
+            $user->update(['is_banned' => false]);
+
+            $unbanReason = $reason ?: 'Compte réexaminé et réactivé après mise en conformité.';
+
+            // Send Email Notification
+            if ($user->email) {
+                try {
+                    Mail::to($user->email)->send(new ModerationNotificationMail(
+                        $user,
+                        'account_unbanned',
+                        $user->name,
+                        $unbanReason
+                    ));
+                } catch (\Exception $e) {
+                    Log::warning('Failed to send account unban email', ['err' => $e->getMessage()]);
+                }
+            }
+
+            // Send WhatsApp Notification
+            try {
+                $whatsapp->notifyModerationAction($user, 'account_unbanned', $user->name, $unbanReason);
+            } catch (\Exception $e) {
+                Log::warning('Failed to send account unban WhatsApp', ['err' => $e->getMessage()]);
+            }
+
+            return redirect()->back()->with('message', "Le vendeur {$user->name} a été réactivé avec succès.");
+        }
     }
 
-    public function toggleStore(Request $request, User $user): RedirectResponse
+    public function toggleStore(Request $request, User $user, WhatsappGatewayService $whatsapp): RedirectResponse
     {
         if (!$user->store) {
             return redirect()->back()->withErrors(['store' => 'Aucune boutique associée à ce vendeur.']);
         }
 
-        $user->store->update([
-            'is_published' => !$user->store->is_published,
+        $store = $user->store;
+        $willBePublished = !$store->is_published;
+        $reason = $request->input('reason');
+
+        $store->update([
+            'is_published' => $willBePublished,
         ]);
 
-        $status = $user->store->is_published ? 'publiée en ligne' : 'passée en mode brouillon';
-        return redirect()->back()->with('message', "La vitrine {$user->store->name} a été {$status} avec succès.");
+        if (!$willBePublished && $reason) {
+            // Suspended with reason -> notify
+            if ($user->email) {
+                try {
+                    Mail::to($user->email)->send(new ModerationNotificationMail(
+                        $user,
+                        'store_suspended',
+                        $store->name,
+                        $reason
+                    ));
+                } catch (\Exception $e) {
+                    Log::warning('Failed to send store suspension email', ['err' => $e->getMessage()]);
+                }
+            }
+
+            try {
+                $whatsapp->notifyModerationAction($user, 'store_suspended', $store->name, $reason);
+            } catch (\Exception $e) {
+                Log::warning('Failed to send store suspension WhatsApp', ['err' => $e->getMessage()]);
+            }
+        }
+
+        $status = $willBePublished ? 'publiée en ligne' : 'passée en mode brouillon';
+        return redirect()->back()->with('message', "La vitrine {$store->name} a été {$status} avec succès.");
     }
 }

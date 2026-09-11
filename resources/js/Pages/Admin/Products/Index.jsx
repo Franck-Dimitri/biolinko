@@ -3,12 +3,39 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-    Package, Search, ShieldCheck, Tag, ExternalLink, AlertCircle, CheckCircle2, Flame
+    Package, Search, ShieldCheck, Tag, ExternalLink, AlertCircle, CheckCircle2, Flame, Trash2
 } from 'lucide-react';
+import { toast } from 'sonner';
+import ModerationModal from '@/Components/Admin/ModerationModal';
 
 export default function ProductsIndex({ products, metrics, filters }) {
     const [search, setSearch] = useState(filters?.search || '');
     const [promo, setPromo] = useState(filters?.promo || 'all');
+
+    // Moderation delete modal state
+    const [deleteModal, setDeleteModal] = useState({
+        isOpen: false,
+        product: null,
+    });
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleConfirmDelete = ({ reason }) => {
+        if (!deleteModal.product) return;
+        setIsDeleting(true);
+        router.delete(route('admin.products.destroy', deleteModal.product.id), {
+            data: { reason },
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsDeleting(false);
+                setDeleteModal({ isOpen: false, product: null });
+                toast.success('Le produit a été supprimé et le vendeur a été notifié par email et WhatsApp.');
+            },
+            onError: (errs) => {
+                setIsDeleting(false);
+                toast.error(errs?.reason || 'Erreur lors de la suppression du produit.');
+            },
+        });
+    };
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -188,7 +215,7 @@ export default function ProductsIndex({ products, metrics, filters }) {
                                                     {p.stock} en stock
                                                 </span>
                                             </td>
-                                            <td className="py-4 px-6 text-right space-x-2">
+                                            <td className="py-4 px-6 text-right space-x-2 whitespace-nowrap">
                                                 <Link
                                                     href={route('admin.products.toggleActive', p.id)}
                                                     method="post"
@@ -201,6 +228,13 @@ export default function ProductsIndex({ products, metrics, filters }) {
                                                 >
                                                     {p.is_active ? 'Désactiver' : 'Activer'}
                                                 </Link>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setDeleteModal({ isOpen: true, product: p })}
+                                                    className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1 border border-rose-200"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5 text-rose-600" /> Supprimer
+                                                </button>
                                             </td>
                                         </tr>
                                     ))
@@ -216,6 +250,17 @@ export default function ProductsIndex({ products, metrics, filters }) {
                     </div>
                 </div>
             </div>
+
+            {/* MODERATION DELETE PRODUCT MODAL */}
+            <ModerationModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, product: null })}
+                onConfirm={handleConfirmDelete}
+                type="product"
+                itemName={deleteModal.product?.title || ''}
+                targetInfo={deleteModal.product ? `Boutique : ${deleteModal.product.store?.name || 'N/A'} • Vendeur : ${deleteModal.product.store?.user?.email || 'N/A'}` : null}
+                isLoading={isDeleting}
+            />
         </AuthenticatedLayout>
     );
 }

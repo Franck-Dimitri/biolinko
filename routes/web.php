@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
     Route::get('/stores', [AdminStoreController::class, 'index'])->name('admin.stores.index');
     Route::post('/stores/{store}/toggle-status', [AdminStoreController::class, 'toggleStatus'])->name('admin.stores.toggleStatus');
     Route::post('/stores/{store}/plan', [AdminStoreController::class, 'updatePlan'])->name('admin.stores.plan');
+    Route::post('/stores/{store}/moderate', [AdminStoreController::class, 'moderateStore'])->name('admin.stores.moderate');
 
     // 3. Vendeurs & Utilisateurs
     Route::get('/users', [AdminUserController::class, 'index'])->name('admin.users.index');
@@ -74,6 +75,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
     // 5. Catalogue Produits Réseau
     Route::get('/products', [AdminProductController::class, 'index'])->name('admin.products.index');
     Route::post('/products/{product}/toggle-active', [AdminProductController::class, 'toggleActive'])->name('admin.products.toggleActive');
+    Route::delete('/products/{product}', [AdminProductController::class, 'destroy'])->name('admin.products.destroy');
 
     // 6. Retraits Mobile Money
     Route::get('/withdrawals', [AdminWithdrawalController::class, 'index'])->name('admin.withdrawals.index');

@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ModerationNotificationMail;
 use App\Models\Store;
+use App\Services\WhatsappGatewayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -82,5 +86,55 @@ class AdminStoreController extends Controller
         }
 
         return redirect()->back()->with('message', "Plan de la boutique {$store->name} mis à jour vers " . strtoupper($validated['plan_type']) . " !");
+    }
+
+    /**
+     * Suspend or delete a store with mandatory reason and notifications.
+     */
+    public function moderateStore(Request $request, Store $store, WhatsappGatewayService $whatsapp): RedirectResponse
+    {
+        $request->validate([
+            'reason' => ['required', 'string', 'min:5', 'max:1000'],
+            'action' => ['required', 'string', 'in:suspend,delete'],
+        ]);
+
+        $reason = $request->input('reason');
+        $action = $request->input('action');
+        $storeName = $store->name;
+        $store->loadMissing('user');
+        $seller = $store->user;
+
+        // 1. Notify Seller via Email
+        if ($seller && $seller->email) {
+            try {
+                Mail::to($seller->email)->send(new ModerationNotificationMail(
+                    $seller,
+                    $action === 'delete' ? 'store_suspended' : 'store_suspended',
+                    $storeName,
+                    $reason
+                ));
+            } catch (\Exception $e) {
+                Log::warning('Failed to send store moderation email', ['err' => $e->getMessage()]);
+            }
+
+            // 2. Notify Seller via WhatsApp
+            try {
+                $whatsapp->notifyModerationAction(
+                    $seller,
+                    'store_suspended',
+                    $storeName,
+                    $reason
+                );
+            } catch (\Exception $e) {
+                Log::warning('Failed to send store moderation WhatsApp', ['err' => $e->getMessage()]);
+            }
+        }
+
+        // 3. Suspend publication
+        $store->update([
+            'is_published' => false,
+        ]);
+
+        return redirect()->back()->with('message', "La vitrine {$storeName} a été suspendue et le vendeur a été notifié par email et WhatsApp.");
     }
 }

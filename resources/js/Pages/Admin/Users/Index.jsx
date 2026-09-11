@@ -6,10 +6,38 @@ import {
     Users, Search, ShieldCheck, Crown, ExternalLink, CheckCircle2, 
     UserCheck, Shield, Ban, Eye, ArrowRight, Wallet, ShoppingBag, Package
 } from 'lucide-react';
+import { toast } from 'sonner';
+import ModerationModal from '@/Components/Admin/ModerationModal';
 
 export default function UsersIndex({ users, metrics, filters }) {
     const [search, setSearch] = useState(filters?.search || '');
     const [role, setRole] = useState(filters?.role || 'all');
+
+    // Moderation ban modal state
+    const [banModal, setBanModal] = useState({
+        isOpen: false,
+        user: null,
+    });
+    const [isBanning, setIsBanning] = useState(false);
+
+    const handleConfirmBan = ({ reason }) => {
+        if (!banModal.user) return;
+        setIsBanning(true);
+        router.post(route('admin.users.toggleBan', banModal.user.id), {
+            reason,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsBanning(false);
+                setBanModal({ isOpen: false, user: null });
+                toast.success('Le compte a été banni et le vendeur a été notifié par email et WhatsApp.');
+            },
+            onError: (errs) => {
+                setIsBanning(false);
+                toast.error(errs?.user || 'Erreur lors du bannissement.');
+            },
+        });
+    };
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -244,18 +272,24 @@ export default function UsersIndex({ users, metrics, filters }) {
                                                 </Link>
 
                                                 {u.role !== 'admin' && (
-                                                    <Link
-                                                        href={route('admin.users.toggleBan', u.id)}
-                                                        method="post"
-                                                        as="button"
-                                                        className={`px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all cursor-pointer ${
-                                                            u.is_banned 
-                                                                ? 'bg-emerald-600 hover:bg-emerald-700 text-white' 
-                                                                : 'bg-rose-100 hover:bg-rose-200 text-rose-800'
-                                                        }`}
-                                                    >
-                                                        {u.is_banned ? 'Réactiver' : 'Bannir'}
-                                                    </Link>
+                                                    u.is_banned ? (
+                                                        <Link
+                                                            href={route('admin.users.toggleBan', u.id)}
+                                                            method="post"
+                                                            as="button"
+                                                            className="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                        >
+                                                            Réactiver
+                                                        </Link>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setBanModal({ isOpen: true, user: u })}
+                                                            className="px-3 py-1.5 rounded-xl font-bold text-[11px] transition-all cursor-pointer bg-rose-100 hover:bg-rose-200 text-rose-800"
+                                                        >
+                                                            Bannir
+                                                        </button>
+                                                    )
                                                 )}
                                             </td>
                                         </tr>
@@ -272,6 +306,17 @@ export default function UsersIndex({ users, metrics, filters }) {
                     </div>
                 </div>
             </div>
+
+            {/* MODERATION BAN USER MODAL */}
+            <ModerationModal
+                isOpen={banModal.isOpen}
+                onClose={() => setBanModal({ isOpen: false, user: null })}
+                onConfirm={handleConfirmBan}
+                type="user"
+                itemName={banModal.user?.name || ''}
+                targetInfo={banModal.user ? `Email : ${banModal.user.email} • Vitrine : ${banModal.user.store?.name || 'Aucune'}` : null}
+                isLoading={isBanning}
+            />
         </AuthenticatedLayout>
     );
 }

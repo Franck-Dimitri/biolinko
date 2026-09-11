@@ -450,10 +450,32 @@ class WhatsappGatewayService
     }
 
     /**
-     * Generate or retrieve QR Code session for vendor WhatsApp instance.
+     * Send moderation notification via WhatsApp to merchant.
      */
-    public function getQrCode(string $instanceName = 'test_dims'): array
+    public function notifyModerationAction(\App\Models\User $user, string $type, string $itemName, string $reason): void
     {
-        return $this->connectInstance($instanceName);
+        $phone = $user->phone_whatsapp ?: ($user->store?->phone_whatsapp ?? null);
+        if (!$phone) {
+            return;
+        }
+
+        $actionText = match ($type) {
+            'product_deleted' => "Votre produit *{$itemName}* a été retiré et supprimé de la plateforme.",
+            'store_deleted' => "Votre vitrine *{$itemName}* a été définitivement supprimée de la plateforme.",
+            'store_suspended' => "Votre vitrine *{$itemName}* a été suspendue et repassée en brouillon.",
+            'account_banned' => "L'accès à votre compte vendeur a été restreint/suspendu.",
+            'account_unbanned' => "Votre compte vendeur a été réactivé avec succès.",
+            default => "Une décision de modération a été prise sur votre compte.",
+        };
+
+        $msg = "⚠️ *Notification de Modération — BIOLINKO*\n\n"
+            . "Bonjour *{$user->name}*,\n\n"
+            . "{$actionText}\n\n"
+            . "📋 *Motif communiqué :*\n"
+            . "_{$reason}_\n\n"
+            . "Pour toute réclamation ou question, vous pouvez écrire à support@biolinko.app ou répondre directement à ce message.\n\n"
+            . "_[Équipe de Conformité & Modération BIOLINKO 🇨🇲]_";
+
+        $this->sendMessage($phone, $msg);
     }
 }
