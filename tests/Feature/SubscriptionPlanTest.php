@@ -39,15 +39,15 @@ test('user with starter plan is restricted by pro plan middleware', function () 
 
 test('user upgraded to pro, growth, business gets updated store and template limits', function () {
     $proUser = User::factory()->create(['role' => 'seller', 'plan' => 'pro', 'subscription_expires_at' => now()->addDays(30)]);
-    expect($proUser->getPlanMaxStores())->toBe(2);
+    expect($proUser->getPlanMaxStores())->toBe(1);
     expect($proUser->getPlanMaxTemplates())->toBe(2);
 
     $growthUser = User::factory()->create(['role' => 'seller', 'plan' => 'growth', 'subscription_expires_at' => now()->addDays(30)]);
-    expect($growthUser->getPlanMaxStores())->toBe(3);
+    expect($growthUser->getPlanMaxStores())->toBe(1);
     expect($growthUser->getPlanMaxTemplates())->toBe(5);
 
     $bizUser = User::factory()->create(['role' => 'seller', 'plan' => 'business', 'subscription_expires_at' => now()->addDays(30)]);
-    expect($bizUser->getPlanMaxStores())->toBe(5);
+    expect($bizUser->getPlanMaxStores())->toBe(1);
     expect($bizUser->getPlanMaxTemplates())->toBe(10);
 });
 

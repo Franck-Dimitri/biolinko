@@ -162,8 +162,22 @@ export default function StoresIndex({ stores, metrics, filters }) {
                                                 <div className="text-amber-700 font-mono text-[11px]">biolinko.app/{st.slug}</div>
                                             </td>
                                             <td className="py-4 px-6">
-                                                <div className="font-semibold text-slate-900">{st.user?.name || 'N/A'}</div>
-                                                <div className="text-slate-400 text-[11px]">{st.user?.email}</div>
+                                                {st.user_id ? (
+                                                    <Link 
+                                                        href={route('admin.users.show', st.user_id)}
+                                                        className="group block"
+                                                    >
+                                                        <div className="font-semibold text-slate-900 group-hover:text-amber-600 transition flex items-center gap-1">
+                                                            <span>{st.user?.name || 'N/A'}</span>
+                                                        </div>
+                                                        <div className="text-slate-400 text-[11px] group-hover:underline">{st.user?.email}</div>
+                                                    </Link>
+                                                ) : (
+                                                    <div>
+                                                        <div className="font-semibold text-slate-900">{st.user?.name || 'N/A'}</div>
+                                                        <div className="text-slate-400 text-[11px]">{st.user?.email}</div>
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="py-4 px-6">
                                                 <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-extrabold uppercase text-[10px]">

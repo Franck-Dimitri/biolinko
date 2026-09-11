@@ -21,6 +21,7 @@ test('new user registration automatically creates store and wallet and redirects
     $store = Store::where('user_id', $user->id)->first();
     expect($store)->not->toBeNull();
     expect($store->slug)->toBe('boutique-glamour');
+    expect(Store::where('user_id', $user->id)->count())->toBe(1);
 
     $wallet = Wallet::where('store_id', $store->id)->first();
     expect($wallet)->not->toBeNull();

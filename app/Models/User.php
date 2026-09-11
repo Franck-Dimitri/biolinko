@@ -155,12 +155,7 @@ class User extends Authenticatable
 
     public function getPlanMaxStores(): int
     {
-        return match (strtolower($this->plan ?? 'starter')) {
-            'pro' => 2,
-            'growth' => 3,
-            'business' => 5,
-            default => 1,
-        };
+        return 1; // Strict Rule: 1 Compte = 1 Vitrine
     }
 
     public function getPlanMaxTemplates(): int
