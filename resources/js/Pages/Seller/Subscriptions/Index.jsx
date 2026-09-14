@@ -60,8 +60,8 @@ export default function Index({ store, user, plans, cycles, history }) {
         }
 
         let discountRate = 0;
-        if (months === 6) discountRate = 0.14;  // -14%
-        if (months === 12) discountRate = 0.30; // -30%
+        if (months === 6) discountRate = 0.10;  // -10%
+        if (months === 12) discountRate = 0.20; // -20%
 
         const originalTotal = baseMonthlyPrice * months;
         const total = Math.round(originalTotal * (1.0 - discountRate));
@@ -241,7 +241,7 @@ export default function Index({ store, user, plans, cycles, history }) {
                         >
                             <span>Semestriel (6 mois)</span>
                             <span className="px-2 py-0.5 rounded-full bg-slate-950 text-amber-300 text-[10px] font-black uppercase">
-                                -14%
+                                -10%
                             </span>
                         </button>
 
@@ -255,13 +255,13 @@ export default function Index({ store, user, plans, cycles, history }) {
                         >
                             <span>Annuel (1 an)</span>
                             <span className="px-2 py-0.5 rounded-full bg-white text-emerald-950 text-[10px] font-black uppercase shadow-2xs">
-                                -30% 🔥
+                                -20% 🔥
                             </span>
                         </button>
                     </div>
                 </div>
 
-                {/* 4 PLANS COMPARISON GRID */}
+                {/* PLANS COMPARISON GRID (STARTER & PRO) */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-bold text-slate-950">Grille des Offres Tarifs</h2>
@@ -270,7 +270,7 @@ export default function Index({ store, user, plans, cycles, history }) {
                         </span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-8">
                         {plans.map((p) => {
                             const isCurrent = user.plan === p.id && selectedCycle === 1;
                             const pricing = calculatePlanPricing(p.price, selectedCycle);

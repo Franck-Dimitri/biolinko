@@ -41,9 +41,7 @@ class AdminSubscriptionController extends Controller
             'pro_count' => User::where('plan', 'pro')->count(),
             'growth_count' => User::where('plan', 'growth')->count(),
             'business_count' => User::where('plan', 'business')->count(),
-            'estimated_monthly_mrr' => (User::where('plan', 'pro')->count() * 2500) + 
-                                       (User::where('plan', 'growth')->count() * 7000) + 
-                                       (User::where('plan', 'business')->count() * 12000),
+            'estimated_monthly_mrr' => User::whereIn('plan', ['pro', 'growth', 'business'])->count() * 4850,
         ];
 
         return Inertia::render('Admin/Subscriptions/Index', [

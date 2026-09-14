@@ -137,9 +137,7 @@ class User extends Authenticatable
     public function getPlanMaxProducts(): int
     {
         return match (strtolower($this->plan ?? 'starter')) {
-            'pro' => 50,
-            'growth' => 200,
-            'business' => 99999,
+            'pro', 'growth', 'business' => 99999,
             default => 10,
         };
     }
@@ -147,8 +145,7 @@ class User extends Authenticatable
     public function getPlanMaxImagesPerProduct(): int
     {
         return match (strtolower($this->plan ?? 'starter')) {
-            'pro', 'growth' => 5,
-            'business' => 10,
+            'pro', 'growth', 'business' => 8,
             default => 2,
         };
     }
@@ -161,9 +158,7 @@ class User extends Authenticatable
     public function getPlanMaxTemplates(): int
     {
         return match (strtolower($this->plan ?? 'starter')) {
-            'pro' => 2,
-            'growth' => 5,
-            'business' => 10,
+            'pro', 'growth', 'business' => 10,
             default => 1,
         };
     }
@@ -173,9 +168,7 @@ class User extends Authenticatable
         $plan = strtolower($this->plan ?? 'starter');
 
         return match ($plan) {
-            'pro' => ['max_campaigns_per_month' => 4, 'max_recipients_per_campaign' => 20, 'allow_smartlinks' => true, 'max_products' => 10],
-            'growth' => ['max_campaigns_per_month' => 10, 'max_recipients_per_campaign' => 30, 'allow_smartlinks' => true, 'max_products' => 20],
-            'business' => ['max_campaigns_per_month' => 15, 'max_recipients_per_campaign' => 50, 'allow_smartlinks' => true, 'max_products' => 50],
+            'pro', 'growth', 'business' => ['max_campaigns_per_month' => 15, 'max_recipients_per_campaign' => 50, 'allow_smartlinks' => true, 'max_products' => 50],
             default => ['max_campaigns_per_month' => 1, 'max_recipients_per_campaign' => 10, 'allow_smartlinks' => false, 'max_products' => 2],
         };
     }

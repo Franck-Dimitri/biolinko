@@ -56,8 +56,8 @@ export default function Welcome({ auth }) {
             return { total: 0, monthlyEquivalent: 0, discountPercent: 0, savings: 0 };
         }
         let discountRate = 0;
-        if (months === 6) discountRate = 0.15; // -15%
-        if (months === 12) discountRate = 0.30; // -30%
+        if (months === 6) discountRate = 0.10; // -10%
+        if (months === 12) discountRate = 0.20; // -20%
 
         const originalTotal = baseMonthlyPrice * months;
         const total = Math.round(originalTotal * (1.0 - discountRate));
@@ -897,7 +897,7 @@ export default function Welcome({ auth }) {
                                 }`}
                             >
                                 <span>6 Mois</span>
-                                <span className="px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-extrabold border border-amber-300">-15%</span>
+                                <span className="px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-extrabold border border-amber-300">-10%</span>
                             </button>
                             <button
                                 type="button"
@@ -909,132 +909,71 @@ export default function Welcome({ auth }) {
                                 }`}
                             >
                                 <span>1 An</span>
-                                <span className="px-1.5 py-0.5 rounded-full bg-amber-300 text-slate-950 text-[10px] font-extrabold border border-amber-400">-30%</span>
+                                <span className="px-1.5 py-0.5 rounded-full bg-amber-300 text-slate-950 text-[10px] font-extrabold border border-amber-400">-20%</span>
                             </button>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
                         
                         {/* Starter Plan */}
-                        <div className="p-7 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
+                        <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
                             <div className="space-y-4">
                                 <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Starter</div>
-                                <div className="text-2xl font-extrabold text-slate-950">GRATUIT</div>
-                                <p className="text-xs text-slate-500 font-normal">Pour tester la plateforme et publier vos premiers articles.</p>
-                                <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Jusqu'à 10 produits max</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Vitrine sous-domaine BIOLINKO</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Fast Checkout MoMo (MTN & Orange)</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> 1 variante par produit (Taille/Couleur)</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Support client standard</li>
+                                <div className="text-3xl font-black text-slate-950">GRATUIT</div>
+                                <p className="text-xs text-slate-500 font-normal">Pour tester la plateforme et publier vos premiers articles en toute liberté.</p>
+                                <ul className="space-y-3 text-xs font-normal text-slate-700 pt-4 border-t border-slate-100">
+                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Jusqu'à 10 produits au catalogue</li>
+                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Capacité de stock : 30 articles max</li>
+                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> 1-Click WhatsApp manuel (wa.me)</li>
+                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Vitrine sous-domaine BIOLINKO</li>
+                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Fast Checkout MoMo (MTN &amp; Orange)</li>
+                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> 1 variante par produit (Taille/Couleur)</li>
+                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Facturation PDF standard</li>
+                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Support client standard</li>
                                 </ul>
                             </div>
-                            <Link href={route('register')} className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-semibold text-xs text-center transition-colors">
+                            <Link href={route('register')} className="w-full py-3.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-bold text-xs text-center transition-colors">
                                 Commencer Gratuitement
                             </Link>
                         </div>
 
                         {/* Pro Plan */}
                         {(() => {
-                            const pricing = calculatePlanPricing(2500, selectedCycle);
+                            const pricing = calculatePlanPricing(4850, selectedCycle);
                             return (
-                                <div className="p-7 rounded-3xl bg-white border-2 border-amber-300 shadow-lg space-y-6 flex flex-col justify-between relative">
-                                    <div className="absolute -top-3.5 right-4 px-3 py-1 rounded-full bg-[#FFCC00] text-slate-950 font-bold text-[10px] uppercase tracking-wider shadow-2xs flex items-center gap-1 border border-amber-300">
-                                        <Sparkles className="w-3 h-3 text-slate-950" />
-                                        <span>Populaire</span>
+                                <div className="p-8 rounded-3xl bg-white border-2 border-amber-300 shadow-xl space-y-6 flex flex-col justify-between relative">
+                                    <div className="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-[#FFCC00] text-slate-950 font-black text-[10px] uppercase tracking-wider shadow-sm flex items-center gap-1.5 border border-amber-300">
+                                        <Sparkles className="w-3.5 h-3.5 text-slate-950" />
+                                        <span>Recommandé &amp; Populaire</span>
                                     </div>
                                     <div className="space-y-4">
-                                        <div className="text-xs font-bold text-amber-700 uppercase tracking-wider">Pro</div>
+                                        <div className="text-xs font-bold text-amber-700 uppercase tracking-wider">Plan Pro Complet</div>
                                         <div>
-                                            <div className="text-2xl font-extrabold text-slate-950">
+                                            <div className="text-3xl font-black text-slate-950">
                                                 {pricing.monthlyEquivalent.toLocaleString()} FCFA <span className="text-xs font-normal text-slate-500">/mois</span>
                                             </div>
                                             {selectedCycle > 1 && (
                                                 <div className="text-[11px] text-amber-700 font-semibold mt-1">
-                                                    {pricing.total.toLocaleString()} FCFA pour {selectedCycle} mois (Économisez {pricing.savings.toLocaleString()} FCFA)
+                                                    {pricing.total.toLocaleString()} FCFA pour {selectedCycle === 6 ? '6 mois' : '1 an'} (Économisez {pricing.savings.toLocaleString()} FCFA)
                                                 </div>
                                             )}
                                         </div>
-                                        <p className="text-xs text-slate-500 font-normal">Pour les vendeurs qui veulent automatiser et personnaliser leur boutique.</p>
-                                        <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Jusqu'à 50 produits max</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Variantes illimitées & surprix</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Relance WhatsApp 1-Clic paniers</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Factures PDF avec QR Code & Filigrane</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Studio Visuel (Ordre des sections)</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Support Prioritaire WhatsApp 7j/7</li>
+                                        <p className="text-xs text-slate-500 font-normal">Toutes les fonctionnalités avancées sans aucune limite pour exploser vos ventes.</p>
+                                        <ul className="space-y-3 text-xs font-normal text-slate-700 pt-4 border-t border-slate-100">
+                                            <li className="flex items-center gap-2.5 font-semibold text-slate-950"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Catalogue &amp; Stock ILLIMITÉS</li>
+                                            <li className="flex items-center gap-2.5 font-bold text-amber-800"><Sparkles className="w-4 h-4 text-amber-600 shrink-0" /> Notifications WhatsApp Officielles Automatiques</li>
+                                            <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Variantes illimitées (Tailles, Couleurs, Surprix)</li>
+                                            <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Relance WhatsApp automatique des paniers</li>
+                                            <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Factures PDF certifiées avec QR Code &amp; Filigrane</li>
+                                            <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Pixels Marketing (Facebook, TikTok, Google Ads)</li>
+                                            <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Studio Visuel (Ordre des sections de vitrine)</li>
+                                            <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Retraits Mobile Money prioritaires</li>
+                                            <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Support Vendeur VIP WhatsApp 7j/7</li>
                                         </ul>
                                     </div>
-                                    <Link href={route('register')} className="w-full py-3 rounded-full bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs text-center transition-all shadow-md border border-amber-300">
-                                        Choisir le Plan Pro
-                                    </Link>
-                                </div>
-                            );
-                        })()}
-
-                        {/* Growth Plan */}
-                        {(() => {
-                            const pricing = calculatePlanPricing(7000, selectedCycle);
-                            return (
-                                <div className="p-7 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
-                                    <div className="space-y-4">
-                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Growth</div>
-                                        <div>
-                                            <div className="text-2xl font-extrabold text-slate-950">
-                                                {pricing.monthlyEquivalent.toLocaleString()} FCFA <span className="text-xs font-normal text-slate-400">/mois</span>
-                                            </div>
-                                            {selectedCycle > 1 && (
-                                                <div className="text-[11px] text-amber-700 font-semibold mt-1">
-                                                    {pricing.total.toLocaleString()} FCFA pour {selectedCycle} mois (Économisez {pricing.savings.toLocaleString()} FCFA)
-                                                </div>
-                                            )}
-                                        </div>
-                                        <p className="text-xs text-slate-500 font-normal">Pour les boutiques en forte croissance d'activité.</p>
-                                        <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Jusqu'à 200 produits max</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Toutes les fonctionnalités Pro incluses</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Pixels Marketing (Facebook, TikTok, Google Ads)</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Relances WhatsApp illimitées</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Retraits MoMo prioritaires (&lt; 4h)</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Support VIP Dédié 24h/24</li>
-                                        </ul>
-                                    </div>
-                                    <Link href={route('register')} className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-semibold text-xs text-center transition-colors">
-                                        Activer le Plan Growth
-                                    </Link>
-                                </div>
-                            );
-                        })()}
-
-                        {/* Business Plan */}
-                        {(() => {
-                            const pricing = calculatePlanPricing(12000, selectedCycle);
-                            return (
-                                <div className="p-7 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
-                                    <div className="space-y-4">
-                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Business</div>
-                                        <div>
-                                            <div className="text-2xl font-extrabold text-slate-950">
-                                                {pricing.monthlyEquivalent.toLocaleString()} FCFA <span className="text-xs font-normal text-slate-400">/mois</span>
-                                            </div>
-                                            {selectedCycle > 1 && (
-                                                <div className="text-[11px] text-amber-700 font-semibold mt-1">
-                                                    {pricing.total.toLocaleString()} FCFA pour {selectedCycle} mois (Économisez {pricing.savings.toLocaleString()} FCFA)
-                                                </div>
-                                            )}
-                                        </div>
-                                        <p className="text-xs text-slate-500 font-normal">Pour les marques et équipes grands comptes.</p>
-                                        <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Catalogue Produits ILLIMITÉ</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Toutes les fonctionnalités Growth incluses</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Retraits MoMo en Temps Réel</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Exportation comptable (CSV/Excel)</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Account Manager Dédié</li>
-                                        </ul>
-                                    </div>
-                                    <Link href={route('register')} className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-semibold text-xs text-center transition-colors">
-                                        Activer le Plan Business
+                                    <Link href={route('register')} className="w-full py-3.5 rounded-full bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-black text-xs text-center transition-all shadow-md border border-amber-300">
+                                        Choisir le Plan Pro ({pricing.total.toLocaleString()} FCFA)
                                     </Link>
                                 </div>
                             );

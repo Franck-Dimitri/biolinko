@@ -9,12 +9,14 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsappGatewayService
 {
+    protected bool $enabled;
     protected string $baseUrl;
     protected string $apiKey;
     protected string $defaultInstance;
 
     public function __construct()
     {
+        $this->enabled = (bool) config('services.whatsapp_gateway.enabled', false);
         $this->baseUrl = rtrim(config('services.whatsapp_gateway.base_url', 'https://evolutionapi.mrdims.dev'), '/');
         $this->apiKey = config('services.whatsapp_gateway.api_key', 'Biolinko_EvoApi_9f83a7c41d2e5b60e7f8a9c0');
         $this->defaultInstance = config('services.whatsapp_gateway.default_instance', 'test_dims');
@@ -85,6 +87,18 @@ class WhatsappGatewayService
     {
         $formattedPhone = $this->formatPhone($phone);
         $instance = $instanceName ?: $this->defaultInstance;
+
+        if (!$this->enabled) {
+            Log::info('Passerelle WhatsApp désactivée pour protéger le numéro contre les suspensions Meta', [
+                'phone' => $formattedPhone,
+            ]);
+
+            return [
+                'success' => false,
+                'disabled' => true,
+                'message' => 'Passerelle WhatsApp en veille de sécurité pour protéger votre numéro contre les blocages Meta.',
+            ];
+        }
 
         try {
             $url = "{$this->baseUrl}/message/sendText/{$instance}";

@@ -322,19 +322,19 @@ class ProductController extends Controller
         $userPlan = strtolower($user->plan ?? 'starter');
         $maxProductsMap = [
             'starter' => 10,
-            'pro' => 50,
-            'growth' => 200,
+            'pro' => 99999,
+            'growth' => 99999,
             'business' => 99999,
         ];
         $maxStockMap = [
-            'starter' => 25,
-            'pro' => 500,
-            'growth' => 2500,
+            'starter' => 30,
+            'pro' => 999999,
+            'growth' => 999999,
             'business' => 999999,
         ];
 
         $maxProducts = $maxProductsMap[$userPlan] ?? 10;
-        $maxStock = $maxStockMap[$userPlan] ?? 25;
+        $maxStock = $maxStockMap[$userPlan] ?? 30;
 
         // Check product count limit if creating a new product
         if (!$existingProductId && $store->products()->count() >= $maxProducts) {
