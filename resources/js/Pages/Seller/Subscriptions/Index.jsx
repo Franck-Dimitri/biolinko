@@ -261,7 +261,7 @@ export default function Index({ store, user, plans, cycles, history }) {
                     </div>
                 </div>
 
-                {/* PLANS COMPARISON GRID (STARTER & PRO) */}
+                {/* 4 PLANS COMPARISON GRID */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-bold text-slate-950">Grille des Offres Tarifs</h2>
@@ -270,7 +270,7 @@ export default function Index({ store, user, plans, cycles, history }) {
                         </span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {plans.map((p) => {
                             const isCurrent = user.plan === p.id && selectedCycle === 1;
                             const pricing = calculatePlanPricing(p.price, selectedCycle);

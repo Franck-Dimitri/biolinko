@@ -914,43 +914,42 @@ export default function Welcome({ auth }) {
                         </div>
                     </div>
 
-                    <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         
                         {/* Starter Plan */}
-                        <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
+                        <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
                             <div className="space-y-4">
                                 <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Starter</div>
-                                <div className="text-3xl font-black text-slate-950">GRATUIT</div>
-                                <p className="text-xs text-slate-500 font-normal">Pour tester la plateforme et publier vos premiers articles en toute liberté.</p>
-                                <ul className="space-y-3 text-xs font-normal text-slate-700 pt-4 border-t border-slate-100">
-                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Jusqu'à 10 produits au catalogue</li>
-                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Capacité de stock : 30 articles max</li>
-                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> 1-Click WhatsApp manuel (wa.me)</li>
-                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Vitrine sous-domaine BIOLINKO</li>
-                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Fast Checkout MoMo (MTN &amp; Orange)</li>
-                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> 1 variante par produit (Taille/Couleur)</li>
-                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Facturation PDF standard</li>
-                                    <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Support client standard</li>
+                                <div className="text-2xl font-black text-slate-950">GRATUIT</div>
+                                <p className="text-xs text-slate-500 font-normal">Pour tester la plateforme et publier vos premiers articles.</p>
+                                <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
+                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Jusqu'à 10 produits max</li>
+                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Capacité stock : 25 articles</li>
+                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> 1-Click WhatsApp (wa.me)</li>
+                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Vitrine sous-domaine BIOLINKO</li>
+                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Fast Checkout MoMo (MTN &amp; Orange)</li>
+                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> 1 variante par produit</li>
+                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Support client standard</li>
                                 </ul>
                             </div>
-                            <Link href={route('register')} className="w-full py-3.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-bold text-xs text-center transition-colors">
+                            <Link href={route('register')} className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-bold text-xs text-center transition-colors">
                                 Commencer Gratuitement
                             </Link>
                         </div>
 
                         {/* Pro Plan */}
                         {(() => {
-                            const pricing = calculatePlanPricing(4850, selectedCycle);
+                            const pricing = calculatePlanPricing(4350, selectedCycle);
                             return (
-                                <div className="p-8 rounded-3xl bg-white border-2 border-amber-300 shadow-xl space-y-6 flex flex-col justify-between relative">
-                                    <div className="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-[#FFCC00] text-slate-950 font-black text-[10px] uppercase tracking-wider shadow-sm flex items-center gap-1.5 border border-amber-300">
-                                        <Sparkles className="w-3.5 h-3.5 text-slate-950" />
-                                        <span>Recommandé &amp; Populaire</span>
+                                <div className="p-6 rounded-3xl bg-white border-2 border-amber-300 shadow-lg space-y-6 flex flex-col justify-between relative">
+                                    <div className="absolute -top-3 right-4 px-3 py-0.5 rounded-full bg-[#FFCC00] text-slate-950 font-bold text-[10px] uppercase tracking-wider shadow-2xs flex items-center gap-1 border border-amber-300">
+                                        <Sparkles className="w-3 h-3 text-slate-950" />
+                                        <span>Populaire</span>
                                     </div>
                                     <div className="space-y-4">
-                                        <div className="text-xs font-bold text-amber-700 uppercase tracking-wider">Plan Pro Complet</div>
+                                        <div className="text-xs font-bold text-amber-700 uppercase tracking-wider">Pro</div>
                                         <div>
-                                            <div className="text-3xl font-black text-slate-950">
+                                            <div className="text-2xl font-black text-slate-950">
                                                 {pricing.monthlyEquivalent.toLocaleString()} FCFA <span className="text-xs font-normal text-slate-500">/mois</span>
                                             </div>
                                             {selectedCycle > 1 && (
@@ -959,21 +958,92 @@ export default function Welcome({ auth }) {
                                                 </div>
                                             )}
                                         </div>
-                                        <p className="text-xs text-slate-500 font-normal">Toutes les fonctionnalités avancées sans aucune limite pour exploser vos ventes.</p>
-                                        <ul className="space-y-3 text-xs font-normal text-slate-700 pt-4 border-t border-slate-100">
-                                            <li className="flex items-center gap-2.5 font-semibold text-slate-950"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Catalogue &amp; Stock ILLIMITÉS</li>
-                                            <li className="flex items-center gap-2.5 font-bold text-amber-800"><Sparkles className="w-4 h-4 text-amber-600 shrink-0" /> Notifications WhatsApp Officielles Automatiques</li>
-                                            <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Variantes illimitées (Tailles, Couleurs, Surprix)</li>
-                                            <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Relance WhatsApp automatique des paniers</li>
-                                            <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Factures PDF certifiées avec QR Code &amp; Filigrane</li>
-                                            <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Pixels Marketing (Facebook, TikTok, Google Ads)</li>
-                                            <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Studio Visuel (Ordre des sections de vitrine)</li>
-                                            <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Retraits Mobile Money prioritaires</li>
-                                            <li className="flex items-center gap-2.5"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Support Vendeur VIP WhatsApp 7j/7</li>
+                                        <p className="text-xs text-slate-500 font-normal">Pour professionnaliser et automatiser vos commandes.</p>
+                                        <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Jusqu'à 50 produits max</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Stock cumulé : 500 articles</li>
+                                            <li className="flex items-center gap-2 font-bold text-amber-900"><Sparkles className="w-4 h-4 text-amber-600 shrink-0" /> WhatsApp Officiel Automatique</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Variantes illimitées &amp; Surprix</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Relance WhatsApp 1-Clic paniers</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Factures PDF avec QR Code &amp; Filigrane</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Studio Visuel (Ordre des sections)</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Support Prioritaire WhatsApp 7j/7</li>
                                         </ul>
                                     </div>
-                                    <Link href={route('register')} className="w-full py-3.5 rounded-full bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-black text-xs text-center transition-all shadow-md border border-amber-300">
-                                        Choisir le Plan Pro ({pricing.total.toLocaleString()} FCFA)
+                                    <Link href={route('register')} className="w-full py-3 rounded-full bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs text-center transition-all shadow-md border border-amber-300">
+                                        Choisir Pro ({pricing.total.toLocaleString()} FCFA)
+                                    </Link>
+                                </div>
+                            );
+                        })()}
+
+                        {/* Growth Plan */}
+                        {(() => {
+                            const pricing = calculatePlanPricing(8250, selectedCycle);
+                            return (
+                                <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
+                                    <div className="space-y-4">
+                                        <div className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Growth</div>
+                                        <div>
+                                            <div className="text-2xl font-black text-slate-950">
+                                                {pricing.monthlyEquivalent.toLocaleString()} FCFA <span className="text-xs font-normal text-slate-400">/mois</span>
+                                            </div>
+                                            {selectedCycle > 1 && (
+                                                <div className="text-[11px] text-amber-700 font-semibold mt-1">
+                                                    {pricing.total.toLocaleString()} FCFA pour {selectedCycle === 6 ? '6 mois' : '1 an'} (Économisez {pricing.savings.toLocaleString()} FCFA)
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-slate-500 font-normal">Pour les marques actives et campagnes en masse.</p>
+                                        <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Jusqu'à 250 produits max</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Stock cumulé : 3 000 articles</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Toutes les options Pro incluses</li>
+                                            <li className="flex items-center gap-2 font-bold text-indigo-900"><Sparkles className="w-4 h-4 text-indigo-600 shrink-0" /> Relances automatiques WhatsApp</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Pixels Marketing (FB, TikTok, Google)</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Campagnes WhatsApp (SmartLinks)</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Retraits MoMo prioritaires (&lt; 4h)</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Accompagnement Stratégique Vente</li>
+                                        </ul>
+                                    </div>
+                                    <Link href={route('register')} className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-bold text-xs text-center transition-colors">
+                                        Activer Growth ({pricing.total.toLocaleString()} FCFA)
+                                    </Link>
+                                </div>
+                            );
+                        })()}
+
+                        {/* Business Plan */}
+                        {(() => {
+                            const pricing = calculatePlanPricing(14700, selectedCycle);
+                            return (
+                                <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
+                                    <div className="space-y-4">
+                                        <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Business</div>
+                                        <div>
+                                            <div className="text-2xl font-black text-slate-950">
+                                                {pricing.monthlyEquivalent.toLocaleString()} FCFA <span className="text-xs font-normal text-slate-400">/mois</span>
+                                            </div>
+                                            {selectedCycle > 1 && (
+                                                <div className="text-[11px] text-amber-700 font-semibold mt-1">
+                                                    {pricing.total.toLocaleString()} FCFA pour {selectedCycle === 6 ? '6 mois' : '1 an'} (Économisez {pricing.savings.toLocaleString()} FCFA)
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-slate-500 font-normal">Pour les grossistes et marques grands comptes.</p>
+                                        <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
+                                            <li className="flex items-center gap-2 font-bold text-slate-950"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Catalogue Produits ILLIMITÉ</li>
+                                            <li className="flex items-center gap-2 font-bold text-slate-950"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Stock ILLIMITÉ (999 999)</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Toutes les options Growth incluses</li>
+                                            <li className="flex items-center gap-2 font-bold text-emerald-900"><Sparkles className="w-4 h-4 text-emerald-600 shrink-0" /> WhatsApp Haute Priorité VIP</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Retraits MoMo en Temps Réel direct</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Export comptable (CSV/Excel)</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Multi-thèmes vitrines (10 templates)</li>
+                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Account Manager VIP Dédié 24h/24</li>
+                                        </ul>
+                                    </div>
+                                    <Link href={route('register')} className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-bold text-xs text-center transition-colors">
+                                        Activer Business ({pricing.total.toLocaleString()} FCFA)
                                     </Link>
                                 </div>
                             );
