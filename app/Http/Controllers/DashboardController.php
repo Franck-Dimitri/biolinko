@@ -34,25 +34,29 @@ class DashboardController extends Controller
 
         $wallet = $store->wallet;
 
-        // Daily Sales Chart Data (Last 14 Days)
+        // Daily Sales Chart Data (Last 14 Days) - Optimized to 1 grouped query
+        $startDate = Carbon::now()->subDays(13)->startOfDay();
+        $salesAggregates = $store->orders()
+            ->where('status', 'paid')
+            ->where('created_at', '>=', $startDate)
+            ->selectRaw('DATE(created_at) as order_date, SUM(price_vendor) as total_revenue, COUNT(*) as total_orders')
+            ->groupBy('order_date')
+            ->get()
+            ->keyBy(function ($item) {
+                return Carbon::parse($item->order_date)->format('Y-m-d');
+            });
+
         $dailySales = [];
         for ($i = 13; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
             $dateStr = $date->format('Y-m-d');
             $label = $date->format('d M');
-
-            $dayOrders = $store->orders()
-                ->where('status', 'paid')
-                ->whereDate('created_at', $dateStr)
-                ->get();
-
-            $revenue = (float) $dayOrders->sum('price_vendor');
-            $count = $dayOrders->count();
+            $entry = $salesAggregates->get($dateStr);
 
             $dailySales[] = [
                 'date' => $label,
-                'revenue' => $revenue,
-                'orders' => $count,
+                'revenue' => $entry ? (float) $entry->total_revenue : 0.0,
+                'orders' => $entry ? (int) $entry->total_orders : 0,
             ];
         }
 
@@ -104,7 +108,7 @@ class DashboardController extends Controller
                 'conversionRate' => $conversionRate,
                 'pendingFollowupsCount' => $pendingFollowupsCount,
             ],
-            'appUrl' => config('app.url', 'http://localhost:8000'),
+            'appUrl' => $request->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
         ]);
     }
 }

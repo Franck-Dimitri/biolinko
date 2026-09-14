@@ -39,7 +39,7 @@ class ProductController extends Controller
                 'lowStockCount' => $lowStockCount,
                 'topProduct' => $topProduct,
             ],
-            'appUrl' => config('app.url', 'http://localhost:8000'),
+            'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
         ]);
     }
 

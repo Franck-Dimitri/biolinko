@@ -19,7 +19,7 @@ class AppearanceController extends Controller
         return Inertia::render('Appearance/Index', [
             'store' => $store,
             'reviews' => $store ? $store->reviews : [],
-            'appUrl' => config('app.url', 'http://localhost:8000'),
+            'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
         ]);
     }
 

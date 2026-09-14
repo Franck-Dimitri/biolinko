@@ -48,7 +48,7 @@ class WalletController extends Controller
                 'total_withdrawals' => (float) $withdrawals->filter(fn($w) => in_array(strtoupper($w->status), ['APPROVED', 'COMPLETED', 'VALIDE', 'PAYE']))->sum('amount'),
                 'min_withdrawal' => 5000,
             ],
-            'appUrl' => config('app.url', 'http://localhost:8000'),
+            'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
         ]);
     }
 

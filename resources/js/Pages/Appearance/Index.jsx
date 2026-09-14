@@ -9,6 +9,7 @@ import {
     Tag, Star, ShieldCheck, Heart, UserCheck, Trash2, Plus, Mail, Layers, CheckCircle2, Eye, EyeOff, GripVertical, RotateCcw,
     Smartphone, Monitor, Settings, Flame, Truck, ShoppingBag, ShoppingCart, RefreshCw, Headphones, Play, FileText, Upload
 } from 'lucide-react';
+import { compressImage } from '@/Utils/imageCompressor';
 
 function getContrastColor(hexColor) {
     if (!hexColor || typeof hexColor !== 'string' || !hexColor.startsWith('#')) return '#0F172A';
@@ -124,19 +125,21 @@ export default function Index({ store, reviews, appUrl }) {
 
     const storeFullUrl = `${appUrl}/${data.slug || store?.slug || 'ma-boutique'}`;
 
-    const handleLogoFileChange = (e) => {
+    const handleLogoFileChange = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            setData('logo_file', file);
             setLogoPreview(URL.createObjectURL(file));
+            const compressed = await compressImage(file, { maxWidth: 800, maxHeight: 800, quality: 0.88 });
+            setData('logo_file', compressed);
         }
     };
 
-    const handleBannerFileChange = (e) => {
+    const handleBannerFileChange = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            setData('banner_file', file);
             setBannerPreview(URL.createObjectURL(file));
+            const compressed = await compressImage(file, { maxWidth: 1920, maxHeight: 800, quality: 0.82 });
+            setData('banner_file', compressed);
         }
     };
 

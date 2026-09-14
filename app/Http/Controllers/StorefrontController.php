@@ -89,7 +89,7 @@ class StorefrontController extends Controller
             'store' => $store,
             'products' => $products,
             'activeSmartLinks' => $activeSmartLinks,
-            'appUrl' => config('app.url', 'http://localhost:8000'),
+            'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
             'isPreview' => !$store->is_published && $isOwnerOrAdmin,
         ]);
     }
@@ -230,7 +230,7 @@ class StorefrontController extends Controller
         return Inertia::render('Storefront/[slug]', [
             'store' => $store,
             'product' => $product,
-            'appUrl' => config('app.url', 'http://localhost:8000'),
+            'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
             'isPreview' => !$store->is_published && $isOwnerOrAdmin,
         ]);
     }

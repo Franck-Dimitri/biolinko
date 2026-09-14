@@ -7,6 +7,7 @@ import {
     X, Sparkles, AlertCircle, ArrowRight, Package, Image as ImageIcon, 
     Trophy, TrendingUp, Layers2, Tag, Calendar, AlertTriangle, Search, Filter, ShieldCheck, Zap, UploadCloud, Star, Heart, Truck, Shield, Eye
 } from 'lucide-react';
+import { compressImages } from '@/Utils/imageCompressor';
 
 export default function Index({ store, products, metrics, appUrl }) {
     const user = usePage().props.auth.user;
@@ -121,15 +122,19 @@ export default function Index({ store, products, metrics, appUrl }) {
     };
 
     // Create Image Handlers
-    const handleCreateImageChange = (e) => {
+    const handleCreateImageChange = async (e) => {
         const files = Array.from(e.target.files);
         if (!files.length) return;
         const currentFiles = createForm.data.images_files || [];
         const newFilesList = [...currentFiles, ...files].slice(0, 5);
-        createForm.setData('images_files', newFilesList);
 
+        // Immediate visual previews
         const newPreviews = newFilesList.map(f => typeof f === 'string' ? f : URL.createObjectURL(f));
         setCreateImagePreviews(newPreviews);
+
+        // Compress large smartphone photos in the background to ensure fast, failure-free upload
+        const compressedFiles = await compressImages(newFilesList);
+        createForm.setData('images_files', compressedFiles);
     };
 
     const handleRemoveCreateImage = (index) => {
@@ -140,15 +145,18 @@ export default function Index({ store, products, metrics, appUrl }) {
     };
 
     // Edit Image Handlers
-    const handleEditImageChange = (e) => {
+    const handleEditImageChange = async (e) => {
         const files = Array.from(e.target.files);
         if (!files.length) return;
         const currentFiles = editForm.data.images_files || [];
         const newFilesList = [...currentFiles, ...files].slice(0, 5);
-        editForm.setData('images_files', newFilesList);
 
         const newPreviews = files.map(f => URL.createObjectURL(f));
         setEditImagePreviews([...editImagePreviews, ...newPreviews].slice(0, 5));
+
+        // Compress files
+        const compressedFiles = await compressImages(newFilesList);
+        editForm.setData('images_files', compressedFiles);
     };
 
     // Variant Helpers
@@ -202,6 +210,7 @@ export default function Index({ store, products, metrics, appUrl }) {
     const handleCreateSubmit = (e) => {
         e.preventDefault();
         createForm.post(route('products.store'), {
+            forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
                 setIsCreateModalOpen(false);

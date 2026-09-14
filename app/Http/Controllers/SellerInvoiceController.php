@@ -100,7 +100,7 @@ class SellerInvoiceController extends Controller
                 'search' => $request->input('search', ''),
                 'status' => $request->input('status', 'all'),
             ],
-            'appUrl' => config('app.url', 'http://localhost:8000'),
+            'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
         ]);
     }
 
