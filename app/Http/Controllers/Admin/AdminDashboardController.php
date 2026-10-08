@@ -23,7 +23,7 @@ class AdminDashboardController extends Controller
         $totalStores = Store::count();
         $totalProducts = Product::count();
         $totalOrders = Order::count();
-        
+
         $totalGmv = (float) Order::where('status', 'paid')->sum('total_client');
         $totalSaasRevenue = (float) Order::where('status', 'paid')->sum('saas_margin');
         $pendingWithdrawalsCount = Withdrawal::where('status', 'pending')->count();
@@ -40,6 +40,12 @@ class AdminDashboardController extends Controller
                 'totalGmv' => $totalGmv,
                 'totalSaasRevenue' => $totalSaasRevenue,
                 'pendingWithdrawalsCount' => $pendingWithdrawalsCount,
+            ],
+            'planCounts' => [
+                'starter' => User::where('plan', 'starter')->orWhereNull('plan')->count(),
+                'pro' => User::where('plan', 'pro')->count(),
+                'growth' => User::where('plan', 'growth')->count(),
+                'business' => User::where('plan', 'business')->count(),
             ],
             'recentStores' => $recentStores,
             'pendingWithdrawals' => $pendingWithdrawals,
@@ -60,7 +66,7 @@ class AdminDashboardController extends Controller
                 $withdrawal->phone_number,
                 (float) $withdrawal->amount,
                 $withdrawal->operator ?? 'ORANGE',
-                "Virement Portefeuille BIOLINKO #" . $withdrawal->id
+                'Virement Portefeuille BIOLINKO #'.$withdrawal->id
             );
 
             if ($payoutResult['success'] ?? false) {
@@ -82,7 +88,7 @@ class AdminDashboardController extends Controller
             return redirect()->back()->with('message', 'Retrait marqué comme payé avec succès.');
         } catch (\Exception $e) {
             Log::error('Admin withdrawal approval error', ['error' => $e->getMessage()]);
-            
+
             // Mark completed for manual processing
             $withdrawal->update([
                 'status' => 'completed',
@@ -121,10 +127,11 @@ class AdminDashboardController extends Controller
     public function toggleStoreStatus(Request $request, Store $store): RedirectResponse
     {
         $store->update([
-            'is_published' => !$store->is_published,
+            'is_published' => ! $store->is_published,
         ]);
 
         $statusText = $store->is_published ? 'publiée' : 'masquée';
+
         return redirect()->back()->with('message', "Boutique {$store->name} {$statusText} avec succès.");
     }
 
@@ -147,6 +154,6 @@ class AdminDashboardController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('message', "Plan du vendeur {$user->name} mis à jour vers " . strtoupper($validated['plan']) . " !");
+        return redirect()->back()->with('message', "Plan du vendeur {$user->name} mis à jour vers ".strtoupper($validated['plan']).' !');
     }
 }

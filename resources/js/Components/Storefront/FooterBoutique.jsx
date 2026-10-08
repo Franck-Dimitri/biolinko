@@ -1,87 +1,74 @@
-import { Store, MessageSquare } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { MapPin, Store } from 'lucide-react';
+import { FacebookIcon, InstagramIcon, TiktokIcon, WhatsappIcon } from '@/Components/BrandIcons';
+import { contrastColor } from '@/Components/Storefront/theme';
 
-function getContrastColor(hexColor) {
-    if (!hexColor || typeof hexColor !== 'string' || !hexColor.startsWith('#')) return '#0F172A';
-    const hex = hexColor.replace('#', '');
-    if (hex.length < 6) return '#0F172A';
-    const r = parseInt(hex.substring(0, 2), 16) || 0;
-    const g = parseInt(hex.substring(2, 4), 16) || 0;
-    const b = parseInt(hex.substring(4, 6), 16) || 0;
-    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-    return yiq >= 165 ? '#0F172A' : '#FFFFFF';
-}
-
-export default function FooterBoutique({ store, setActiveTab }) {
+export default function FooterBoutique({ store }) {
     const primaryColor = store?.theme_color || '#FFCC00';
-    const primaryTextColor = getContrastColor(primaryColor);
+    const primaryTextColor = contrastColor(primaryColor);
+    const wa = store.phone_whatsapp ? `https://wa.me/${store.phone_whatsapp.replace(/[^0-9]/g, '')}` : null;
+    const socials = [
+        [store.instagram_link, InstagramIcon, 'Instagram'],
+        [store.tiktok_link, TiktokIcon, 'TikTok'],
+        [store.facebook_link, FacebookIcon, 'Facebook'],
+        [wa, WhatsappIcon, 'WhatsApp'],
+    ].filter(([href]) => href);
 
     return (
-        <footer className="bg-white border-t border-slate-200 py-12 px-4 sm:px-8 mt-16 text-slate-600 text-xs font-sans">
-            <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                
-                <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-xl font-semibold flex items-center justify-center text-xs overflow-hidden" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
-                            {store.logo_url ? <img src={store.logo_url} alt="Logo" className="w-full h-full object-cover" /> : <Store className="w-4 h-4" style={{ color: primaryTextColor }} />}
-                        </div>
-                        <span className="font-bold text-slate-950 text-base">{store.name}</span>
+        <footer className="mt-20 border-t border-brand-line bg-brand-sand px-4 pb-8 pt-14 text-brand-muted sm:px-8">
+            <div className="mx-auto grid max-w-7xl gap-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr]">
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                            {store.logo_url ? <img src={store.logo_url} alt="" className="h-full w-full object-cover" /> : <Store className="h-5 w-5" />}
+                        </span>
+                        <span className="text-lg font-bold text-brand-ink">{store.name}</span>
                     </div>
-                    <p className="text-slate-500 leading-relaxed font-medium">
-                        {store.description || "Boutique e-commerce officielle. Tous les produits sont authentiques et expédiés sous 24h-48h avec paiement Mobile Money sécurisé."}
+                    <p className="max-w-sm leading-relaxed">
+                        {store.description || store.about_text || 'Commandez en ligne, payez par Mobile Money et recevez votre commande à domicile.'}
                     </p>
-                </div>
-
-                <div className="space-y-2.5">
-                    <h4 className="font-bold text-slate-950 uppercase text-xs">Navigation Boutique</h4>
-                    <ul className="space-y-2 font-medium">
-                        <li><a href={`/${store.slug}`} className="hover:text-slate-950 transition-colors">Accueil Boutique</a></li>
-                        {setActiveTab && (
-                            <>
-                                <li><button onClick={() => setActiveTab('products')} className="hover:text-slate-950">Catalogue Produits</button></li>
-                                <li><button onClick={() => setActiveTab('promo')} className="hover:text-slate-950">Promotions</button></li>
-                                <li><button onClick={() => setActiveTab('reviews')} className="hover:text-slate-950">Avis Clients</button></li>
-                            </>
-                        )}
-                    </ul>
-                </div>
-
-                <div className="space-y-2.5">
-                    <h4 className="font-bold text-slate-950 uppercase text-xs">Modes de Paiement Acceptés</h4>
-                    <div className="flex flex-wrap gap-2 pt-1 font-medium">
-                        <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 border border-slate-200">MTN Mobile Money</span>
-                        <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 border border-slate-200">Moov Money</span>
-                        <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 border border-slate-200">Orange Money</span>
-                    </div>
-                </div>
-
-                <div className="space-y-2.5">
-                    <h4 className="font-bold text-slate-950 uppercase text-xs">Contact Vendeur Direct</h4>
-                    {store.phone_whatsapp && (
-                        <div className="text-slate-900 font-bold flex items-center gap-1.5">
-                            <MessageSquare className="w-4 h-4 text-emerald-600" />
-                            <span>{store.phone_whatsapp}</span>
+                    {socials.length > 0 && (
+                        <div className="flex gap-2">
+                            {socials.map(([href, Icon, label]) => (
+                                <motion.a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} whileHover={{ y: -3 }} className="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-line bg-white text-brand-ink">
+                                    <Icon className="h-[18px] w-[18px]" />
+                                </motion.a>
+                            ))}
                         </div>
                     )}
-                    <p className="text-slate-400 font-medium">Assistance client disponible 7j/7</p>
+                </div>
 
-                    <div className="flex items-center gap-2 pt-2">
-                        {store.tiktok_url && <a href={store.tiktok_url} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-slate-900 font-bold text-[11px]">TikTok</a>}
-                        {store.instagram_url && <a href={store.instagram_url} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-slate-900 font-bold text-[11px]">Instagram</a>}
-                        {store.facebook_url && <a href={store.facebook_url} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-slate-900 font-bold text-[11px]">Facebook</a>}
+                <div className="space-y-3">
+                    <div className="font-semibold text-brand-ink">Paiement</div>
+                    <p>Payez en toute sécurité depuis votre téléphone.</p>
+                    <div className="flex gap-2">
+                        <span className="rounded bg-[#FFCC00] px-2 py-1 text-xs font-medium text-brand-ink">MTN MoMo</span>
+                        <span className="rounded bg-[#FF7900] px-2 py-1 text-xs font-medium text-white">Orange Money</span>
                     </div>
                 </div>
 
+                <div className="space-y-3">
+                    <div className="font-semibold text-brand-ink">Contact</div>
+                    {store.phone_whatsapp && (
+                        <a href={wa} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-brand-ink hover:underline">
+                            <WhatsappIcon className="h-4 w-4 text-green-700" /> {store.phone_whatsapp}
+                        </a>
+                    )}
+                    {(store.city_location || store.city) && (
+                        <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {store.city_location || store.city}</div>
+                    )}
+                    <a href={`/${store.slug}?tab=cart`} className="block hover:text-brand-ink">Mon panier</a>
+                </div>
             </div>
 
-            <div className="max-w-7xl mx-auto pt-8 mt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400 font-medium text-[11px]">
-                <div>© {new Date().getFullYear()} {store.name}. Tous droits réservés.</div>
-                <div className="text-slate-500 font-semibold flex items-center gap-1.5">
-                    <span>Propulsé avec passion par</span>
-                    <a href="/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-bold px-2 py-0.5 rounded-md bg-slate-900 text-white hover:bg-black transition-colors shadow-2xs">
-                        <img src="/branding/biolinko_black_on_yellow.png" alt="Biolinko" className="w-3.5 h-3.5 rounded-xs" />
-                        <span>BIOLINKO</span>
-                    </a>
-                </div>
+            <div className="mx-auto mt-10 flex max-w-7xl flex-col items-center justify-between gap-3 border-t border-brand-line pt-6 text-sm sm:flex-row">
+                <span>© {new Date().getFullYear()} {store.name}</span>
+                <a href="/" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-brand-ink hover:underline">
+                    <span className="flex h-6 w-6 items-center justify-center rounded bg-brand-yellow">
+                        <img src="/images/brand/logo-noir.png" alt="" className="h-4 w-4" />
+                    </span>
+                    Boutique créée avec Biolinko
+                </a>
             </div>
         </footer>
     );

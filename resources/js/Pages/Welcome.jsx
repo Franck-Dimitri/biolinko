@@ -1,1309 +1,893 @@
-import { Head, Link } from '@inertiajs/react';
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import ApplicationLogo from '@/Components/ApplicationLogo';
-import { 
-    Zap, Sparkles, ShoppingBag, Smartphone, MessageSquare, PackageCheck, 
-    Wallet, ShieldCheck, ArrowRight, ChevronDown, ChevronUp, 
-    CheckCircle2, Globe, Layers, Star, ArrowUpRight, 
-    FileText, Check, Phone, Eye, Heart, MapPin, ExternalLink, Mail, Clock, RefreshCw, Sliders, Play,
-    TrendingUp, CreditCard, Users, BarChart3, HelpCircle, ArrowRightCircle, Award, CheckCircle, Tag, Store, Quote
+import { Head, Link, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+import { AnimatePresence, MotionConfig, motion, useScroll, useSpring, useMotionValueEvent } from 'framer-motion';
+import {
+    ArrowRight, Check, ChevronDown, Menu, Play, X, Truck, Smartphone, FileText,
+    MessageCircle, Link2, Wallet, LayoutDashboard, Store, Plus,
 } from 'lucide-react';
+import { CountUp, EASE_OUT, Marquee, Parallax, Reveal, Stagger, StaggerItem } from '@/Components/Motion';
+import { FacebookIcon, InstagramIcon, TiktokIcon, WhatsappIcon } from '@/Components/BrandIcons';
 
-// Smooth Animated Counter component triggered when scrolled into view
-function AnimatedCounter({ from = 0, to, duration = 2, suffix = "", decimals = 0 }) {
-    const [count, setCount] = useState(from);
-    const [hasAnimated, setHasAnimated] = useState(false);
+const IMG = '/images/landing';
+
+const PRODUCTS = [
+    { title: 'Robe pagne Adjoa', price: 12500, shop: 'Maison Kemi', img: `${IMG}/robe-pagne.webp` },
+    { title: 'Haut kente', price: 15000, shop: 'Kente House', img: `${IMG}/haut-kente.webp` },
+    { title: 'Jupe soleil', price: 11000, shop: 'Belle Awa', img: `${IMG}/jupe-soleil.webp` },
+    { title: 'Robe sirène', price: 22000, shop: 'Maison Kemi', img: `${IMG}/robe-sirene.webp` },
+    { title: 'Pagne wax, 6 yards', price: 9000, shop: 'Wax Market', img: `${IMG}/wax-rouleaux.webp` },
+    { title: 'Tunique boubou', price: 14000, shop: 'Belle Awa', img: `${IMG}/tunique-orange.webp` },
+    { title: 'Sac à chaîne', price: 8000, shop: 'Chic & Co', img: `${IMG}/sac-cuir.webp` },
+    { title: 'Jupe kente', price: 9500, shop: 'Kente House', img: `${IMG}/jupe-kente.webp` },
+    { title: 'Foulard de tête', price: 3500, shop: 'Wax Market', img: `${IMG}/foulard.webp` },
+];
+
+const LIVE_ORDERS = [
+    { who: 'Awa, Douala', what: 'Robe pagne Adjoa, M', amount: 12875, img: `${IMG}/robe-pagne.webp`, op: 'MTN MoMo' },
+    { who: 'Junior, Yaoundé', what: 'Haut kente, L', amount: 15450, img: `${IMG}/haut-kente.webp`, op: 'Orange Money' },
+    { who: 'Clarisse, Bafoussam', what: 'Jupe soleil, S', amount: 11330, img: `${IMG}/jupe-soleil.webp`, op: 'MTN MoMo' },
+    { who: 'Fatou, Garoua', what: 'Sac à chaîne', amount: 8240, img: `${IMG}/sac-cuir.webp`, op: 'Orange Money' },
+];
+
+const STEPS = [
+    { title: 'Ajoutez vos produits', text: 'Une photo, un prix, les tailles et couleurs. Depuis votre téléphone, en quelques minutes.' },
+    { title: 'Partagez votre lien', text: 'Dans votre bio Instagram et TikTok, vos statuts WhatsApp, vos réponses aux clients.' },
+    { title: "Recevez l'argent", text: 'Le client confirme sur son téléphone. Vous êtes notifié, la facture part toute seule.' },
+];
+
+const SELLER_TYPES = ['Mode et pagnes', 'Mèches et beauté', 'Cosmétiques', 'Restauration', 'Électronique', 'Artisanat'];
+
+const CYCLES = [
+    { months: 1, label: 'Mensuel', discount: 0 },
+    { months: 6, label: '6 mois', discount: 0.1 },
+    { months: 12, label: '1 an', discount: 0.2 },
+];
+
+const PLANS = [
+    { id: 'starter', name: 'Starter', sub: 'Pour tester avec vos premiers clients', cta: 'Commencer gratuitement', features: ['10 produits, 25 articles en stock', 'Paiement MTN et Orange Money', 'Factures PDF avec QR code', '1 campagne WhatsApp par mois'] },
+    { id: 'pro', name: 'Pro', sub: 'Pour vendre chaque semaine', cta: 'Choisir Pro', highlight: true, features: ['50 produits, 500 articles en stock', 'Variantes et promotions', 'Factures à votre marque', 'Pixels Facebook, TikTok, Google', '4 campagnes WhatsApp par mois'] },
+    { id: 'growth', name: 'Growth', sub: 'Pour un catalogue qui grandit', cta: 'Choisir Growth', features: ['Tout Pro, plus :', '250 produits, 3 000 en stock', 'Relances automatiques', '10 campagnes WhatsApp par mois', 'Statistiques avancées'] },
+    { id: 'business', name: 'Business', sub: 'Pour les boutiques établies', cta: 'Choisir Business', features: ['Tout Growth, plus :', 'Produits et stock illimités', 'Export comptable CSV', '25 campagnes WhatsApp par mois', 'Conseiller dédié'] },
+];
+
+const FAQ = [
+    { q: 'Quand est-ce que je reçois mon argent ?', a: 'Dès que le client confirme le paiement sur son téléphone, le montant arrive dans votre portefeuille Biolinko. Vous le retirez vers votre numéro MTN MoMo ou Orange Money à partir de 5 000 FCFA.' },
+    { q: 'Combien coûte chaque vente ?', a: 'Des frais de service de 3 % sont ajoutés au panier du client. Le prix que vous fixez est celui que vous recevez.' },
+    { q: 'Mes clients doivent-ils créer un compte ?', a: 'Non. Ils choisissent leurs articles, donnent leur nom et leur numéro, puis valident le paiement avec leur code secret Mobile Money.' },
+    { q: 'Je peux utiliser mon logo et mes couleurs ?', a: "Oui. Logo, bannière, couleur principale et ordre des sections se règlent depuis le studio de votre boutique." },
+    { q: "Je peux changer d'offre à tout moment ?", a: 'Oui. Le passage à une offre supérieure est immédiat, et vous pouvez revenir à Starter quand vous voulez.' },
+];
+
+const PHOTO_CREDITS = [
+    ['Robe pagne', 'ItunuIjila', 'CC BY-SA 4.0', 'A_BEAUTIFUL_Ankara_dress.jpg'],
+    ['Jupe soleil', 'Exclusive by Tola', 'CC BY-SA 4.0', 'Ankara_monostrap_dress.jpg'],
+    ['Robe sirène', 'Jeremyida002', 'CC0', 'The_traditional_Ankara_dress.jpg'],
+    ['Jupe kente', 'Wanjirakinyua', 'CC BY-SA 4.0', 'White_ankara_dress.jpg'],
+    ['Sac à chaîne', 'Vivid Eloquence', 'CC BY-SA 4.0', 'I_Love_Naija_Shoulder_Bag.JPG'],
+    ['Tunique', 'Artista Poetica', 'CC BY-SA 4.0', 'Cameroonian_model.JPG'],
+    ['Foulard', 'Artista Poetica', 'CC BY-SA 4.0', 'Model_in_head_wrap.JPG'],
+    ['Pagnes wax', 'Naa2Darkoa', 'CC BY-SA 4.0', 'Obaa_pa.jpg'],
+    ['Haut kente', 'Nationaal Museum van Wereldculturen', 'CC BY-SA 3.0', 'Shirt_van_Afrikaanse_kente_stof-_Stichting_Nationaal_Museum_van_Wereldculturen_-_R-3633c.jpg'],
+];
+
+const fcfa = (n) => `${Math.round(n).toLocaleString('fr-FR')} FCFA`;
+
+function Logo({ className = '' }) {
+    return (
+        <a href="/" className={`flex items-center gap-2.5 ${className}`}>
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-yellow">
+                <img src="/images/brand/logo-noir.png" alt="" className="h-6 w-6" />
+            </span>
+            <span className="text-xl font-bold tracking-tight text-brand-ink">Biolinko</span>
+        </a>
+    );
+}
+
+function PrimaryButton({ href, children, className = '' }) {
+    return (
+        <motion.a
+            href={href}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className={`inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-brand-yellow px-6 text-[15px] font-semibold text-brand-ink shadow-[0_8px_20px_-10px_rgba(161,98,7,0.7)] hover:bg-brand-yellowHover ${className}`}
+        >
+            {children}
+        </motion.a>
+    );
+}
+
+function GhostButton({ href, children, className = '' }) {
+    return (
+        <motion.a
+            href={href}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className={`inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-brand-ink/15 bg-white px-5 text-[15px] font-semibold text-brand-ink hover:border-brand-ink/30 ${className}`}
+        >
+            {children}
+        </motion.a>
+    );
+}
+
+function SectionTitle({ children, sub, center = false }) {
+    return (
+        <Reveal className={`space-y-3 ${center ? 'mx-auto text-center' : ''} max-w-2xl`}>
+            <h2 className="text-3xl font-bold leading-tight tracking-tight text-brand-ink sm:text-[42px]">{children}</h2>
+            {sub && <p className="text-base leading-relaxed text-brand-muted sm:text-lg">{sub}</p>}
+        </Reveal>
+    );
+}
+
+/* ---------- Header ---------- */
+function Header({ auth }) {
+    const [scrolled, setScrolled] = useState(false);
+    const [open, setOpen] = useState(false);
+    const { scrollY } = useScroll();
+    useMotionValueEvent(scrollY, 'change', (v) => setScrolled(v > 24));
+
+    const links = [
+        ['Comment ça marche', '#comment'],
+        ['Boutiques', '#vitrine'],
+        ['Outils', '#outils'],
+        ['Tarifs', '#tarifs'],
+        ['Questions', '#questions'],
+    ];
 
     return (
-        <motion.span
-            initial={{ opacity: 0.8 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, margin: "-40px" }}
-            onViewportEnter={() => {
-                if (hasAnimated) return;
-                setHasAnimated(true);
-                let startTimestamp = null;
-                const step = (timestamp) => {
-                    if (!startTimestamp) startTimestamp = timestamp;
-                    const progress = Math.min((timestamp - startTimestamp) / (duration * 1000), 1);
-                    const easeProgress = 1 - (1 - progress) * (1 - progress);
-                    const currentVal = from + easeProgress * (to - from);
-                    setCount(currentVal);
-                    if (progress < 1) {
-                        window.requestAnimationFrame(step);
-                    } else {
-                        setCount(to);
-                    }
-                };
-                window.requestAnimationFrame(step);
-            }}
-        >
-            {count.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, " ")}{suffix}
-        </motion.span>
+        <header className="sticky top-0 z-50 px-3 pt-3 sm:px-6">
+            <motion.div
+                animate={{
+                    backgroundColor: scrolled ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.75)',
+                    boxShadow: scrolled ? '0 10px 30px -18px rgba(43,38,32,0.35)' : '0 0 0 rgba(0,0,0,0)',
+                }}
+                transition={{ duration: 0.25 }}
+                className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 rounded-xl border border-white/60 px-4 backdrop-blur-md sm:px-5"
+            >
+                <Logo />
+                <nav className="hidden items-center gap-7 text-[15px] font-medium text-brand-ink/80 lg:flex">
+                    {links.map(([label, href]) => (
+                        <a key={href} href={href} className="relative transition-colors hover:text-brand-ink">
+                            {label}
+                        </a>
+                    ))}
+                </nav>
+                <div className="hidden items-center gap-2 sm:flex">
+                    {auth?.user ? (
+                        <PrimaryButton href={route('dashboard')} className="h-10 px-4 text-sm">
+                            <LayoutDashboard className="h-4 w-4" /> Mon tableau de bord
+                        </PrimaryButton>
+                    ) : (
+                        <>
+                            <Link href={route('login')} className="px-3 text-[15px] font-medium text-brand-ink/80 hover:text-brand-ink">Se connecter</Link>
+                            <PrimaryButton href={route('register')} className="h-10 px-4 text-sm">Créer ma boutique</PrimaryButton>
+                        </>
+                    )}
+                </div>
+                <button type="button" onClick={() => setOpen(!open)} className="flex h-11 w-11 items-center justify-center rounded-lg lg:hidden" aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'} aria-expanded={open}>
+                    {open ? <X className="h-5 w-5 text-brand-ink" /> : <Menu className="h-5 w-5 text-brand-ink" />}
+                </button>
+            </motion.div>
+
+            <AnimatePresence>
+                {open && (
+                    <motion.nav
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2 }}
+                        className="mx-auto mt-2 max-w-6xl rounded-xl border border-brand-line bg-white p-3 shadow-lg lg:hidden"
+                    >
+                        {links.map(([label, href]) => (
+                            <a key={href} href={href} onClick={() => setOpen(false)} className="block rounded-md px-3 py-3 text-base font-medium text-brand-ink hover:bg-brand-cream">{label}</a>
+                        ))}
+                        <div className="mt-2 grid grid-cols-2 gap-2 border-t border-brand-line pt-3">
+                            {auth?.user ? (
+                                <PrimaryButton href={route('dashboard')} className="col-span-2">Mon tableau de bord</PrimaryButton>
+                            ) : (
+                                <>
+                                    <GhostButton href={route('login')}>Se connecter</GhostButton>
+                                    <PrimaryButton href={route('register')}>Créer ma boutique</PrimaryButton>
+                                </>
+                            )}
+                        </div>
+                    </motion.nav>
+                )}
+            </AnimatePresence>
+        </header>
+    );
+}
+
+/* ---------- Hero ---------- */
+function LiveOrderCard() {
+    const [i, setI] = useState(0);
+    useEffect(() => {
+        const t = setInterval(() => setI((v) => (v + 1) % LIVE_ORDERS.length), 2800);
+        return () => clearInterval(t);
+    }, []);
+    const o = LIVE_ORDERS[i];
+    return (
+        <div className="w-[260px] rounded-lg border border-brand-line bg-white p-3.5 shadow-[0_20px_40px_-20px_rgba(43,38,32,0.45)]">
+            <div className="mb-2.5 flex items-center justify-between text-xs font-medium text-brand-muted">
+                <span>Commandes en direct</span>
+                <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-60" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-green-600" />
+                </span>
+            </div>
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.35, ease: EASE_OUT }}
+                    className="flex items-center gap-3"
+                >
+                    <img src={o.img} alt="" className="h-14 w-11 rounded-md object-cover" />
+                    <div className="min-w-0">
+                        <div className="text-sm font-semibold text-brand-ink">{o.who}</div>
+                        <div className="truncate text-xs text-brand-muted">{o.what}</div>
+                        <div className="mt-0.5 text-[15px] font-bold text-brand-ink">{fcfa(o.amount)}</div>
+                    </div>
+                </motion.div>
+            </AnimatePresence>
+        </div>
+    );
+}
+
+function Hero({ auth }) {
+    const words = ['Vendez', 'en', 'ligne.', 'Encaissez', 'par'];
+    return (
+        <section className="relative overflow-hidden bg-brand-yellow pb-20 pt-10 sm:pb-28">
+            <div className="pointer-events-none absolute inset-0 opacity-50 [background-image:radial-gradient(rgba(43,38,32,0.14)_1.2px,transparent_1.3px)] [background-size:22px_22px]" />
+            <motion.img
+                src="/images/brand/logo-noir-hd.png"
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none absolute -right-32 top-24 hidden w-[520px] opacity-[0.06] md:block"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 80, repeat: Infinity, ease: 'linear' }}
+            />
+
+            <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
+                <div className="space-y-7">
+                    <motion.div
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, ease: EASE_OUT }}
+                        className="inline-flex items-center gap-2.5 rounded-md bg-white/80 py-1.5 pl-1.5 pr-3 text-sm font-medium text-brand-ink"
+                    >
+                        <span className="flex">
+                            <span className="h-5 w-5 rounded-full border-2 border-white bg-brand-yellow" />
+                            <span className="-ml-1.5 h-5 w-5 rounded-full border-2 border-white bg-[#FF7900]" />
+                        </span>
+                        MTN MoMo et Orange Money intégrés
+                    </motion.div>
+
+                    <h1 className="text-[42px] font-extrabold leading-[1.02] tracking-tight text-brand-ink sm:text-6xl lg:text-[66px]">
+                        {words.map((w, idx) => (
+                            <motion.span
+                                key={idx}
+                                className="mr-[0.25em] inline-block"
+                                initial={{ opacity: 0, y: 28 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.1 + idx * 0.07 }}
+                            >
+                                {w}
+                            </motion.span>
+                        ))}
+                        <motion.span
+                            className="relative inline-block"
+                            initial={{ opacity: 0, y: 28 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.5 }}
+                        >
+                            <motion.span
+                                className="absolute inset-x-[-6px] bottom-1 top-2 -z-0 rounded-md bg-white"
+                                initial={{ scaleX: 0 }}
+                                animate={{ scaleX: 1 }}
+                                style={{ originX: 0 }}
+                                transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.85 }}
+                            />
+                            <span className="relative">Mobile Money.</span>
+                        </motion.span>
+                    </h1>
+
+                    <motion.p
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.6 }}
+                        className="max-w-lg text-lg leading-relaxed text-brand-ink/80"
+                    >
+                        Votre catalogue dans un lien. Vos clients choisissent, paient avec leur téléphone, et vous recevez l'argent dans votre portefeuille. Fini les captures d'écran et les DM.
+                    </motion.p>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.72 }}
+                        className="flex flex-wrap gap-3"
+                    >
+                        <motion.a
+                            href={auth?.user ? route('dashboard') : route('register')}
+                            whileHover={{ y: -2 }}
+                            whileTap={{ scale: 0.97 }}
+                            className="inline-flex h-12 items-center gap-2 rounded-lg bg-white px-6 text-[15px] font-semibold text-brand-ink shadow-[0_10px_24px_-14px_rgba(43,38,32,0.6)]"
+                        >
+                            {auth?.user ? 'Aller à mon tableau de bord' : 'Créer ma boutique gratuitement'}
+                            <ArrowRight className="h-4 w-4" />
+                        </motion.a>
+                        <motion.a
+                            href="#vitrine"
+                            whileHover={{ y: -2 }}
+                            whileTap={{ scale: 0.97 }}
+                            className="inline-flex h-12 items-center gap-2 rounded-lg border border-brand-ink/20 px-5 text-[15px] font-semibold text-brand-ink hover:bg-white/40"
+                        >
+                            <Play className="h-4 w-4 fill-current" /> Voir une boutique
+                        </motion.a>
+                    </motion.div>
+
+                    <Stagger className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-brand-ink/80" gap={0.08}>
+                        {['Gratuit jusqu’à 10 produits', 'Boutique prête en 5 minutes', 'Sans carte bancaire'].map((t) => (
+                            <StaggerItem key={t} y={8} className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-brand-ink" /> {t}
+                            </StaggerItem>
+                        ))}
+                    </Stagger>
+                </div>
+
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.8, ease: EASE_OUT, delay: 0.3 }}
+                    className="relative mx-auto h-[520px] w-full max-w-[520px] sm:h-[580px]"
+                >
+                    <Parallax strength={24} className="absolute right-0 top-0 h-[480px] w-[86%] overflow-hidden rounded-xl border-[6px] border-white bg-brand-yellowLight shadow-[0_40px_80px_-40px_rgba(43,38,32,0.6)] sm:h-[540px]">
+                        <img src={`${IMG}/hero-vendeuse.webp`} alt="Vendeuse qui montre sa boutique Biolinko sur son téléphone" className="-mt-[6%] h-[112%] w-full object-cover object-top" />
+                    </Parallax>
+
+                    <motion.div
+                        className="absolute left-0 top-12"
+                        animate={{ y: [0, -10, 0] }}
+                        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                        <LiveOrderCard />
+                    </motion.div>
+
+                    <motion.div
+                        className="absolute bottom-6 left-4 w-[230px] rounded-lg border border-brand-line bg-white p-4 shadow-[0_20px_40px_-20px_rgba(43,38,32,0.45)]"
+                        animate={{ y: [0, -8, 0] }}
+                        transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
+                    >
+                        <div className="text-xs font-medium text-brand-muted">Solde disponible</div>
+                        <div className="text-2xl font-bold text-brand-ink">
+                            <CountUp to={184500} /> <span className="text-base font-semibold">FCFA</span>
+                        </div>
+                        <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-green-700">
+                            <Wallet className="h-3.5 w-3.5" /> Retrait vers MoMo en 1 clic
+                        </div>
+                    </motion.div>
+                </motion.div>
+            </div>
+        </section>
+    );
+}
+
+/* ---------- Sections ---------- */
+function ProductsMarquee() {
+    return (
+        <section className="bg-white py-20">
+            <div className="mx-auto mb-10 flex max-w-6xl flex-wrap items-end justify-between gap-6 px-4 sm:px-6">
+                <SectionTitle>Mode, pagnes, beauté : tout se vend avec un lien.</SectionTitle>
+                <Reveal delay={0.1} className="max-w-sm text-base text-brand-muted">
+                    Des produits tels qu'ils apparaissent dans une vitrine Biolinko.
+                </Reveal>
+            </div>
+            <Marquee speed={45}>
+                {PRODUCTS.map((p) => (
+                    <motion.article key={p.title} whileHover={{ y: -6 }} transition={{ duration: 0.25 }} className="w-[210px] shrink-0">
+                        <div className="relative h-[260px] overflow-hidden rounded-lg bg-brand-cream">
+                            <img src={p.img} alt={p.title} loading="lazy" className="h-full w-full object-cover" />
+                            <span className="absolute left-2.5 top-2.5 rounded-md bg-white/90 px-2 py-1 text-xs font-medium text-brand-ink">{p.shop}</span>
+                        </div>
+                        <div className="mt-3 text-[15px] font-semibold text-brand-ink">{p.title}</div>
+                        <div className="text-[15px] text-brand-muted">{fcfa(p.price)}</div>
+                    </motion.article>
+                ))}
+            </Marquee>
+        </section>
+    );
+}
+
+function HowItWorks() {
+    return (
+        <section id="comment" className="bg-brand-cream py-24">
+            <div className="mx-auto max-w-6xl px-4 sm:px-6">
+                <SectionTitle center>Trois étapes entre votre téléphone et votre premier paiement.</SectionTitle>
+                <div className="relative mt-16">
+                    <motion.div
+                        className="absolute left-0 right-0 top-6 hidden h-px bg-brand-ink/20 md:block"
+                        initial={{ scaleX: 0 }}
+                        whileInView={{ scaleX: 1 }}
+                        viewport={{ once: true, margin: '-100px' }}
+                        transition={{ duration: 1.2, ease: EASE_OUT }}
+                        style={{ originX: 0 }}
+                    />
+                    <Stagger gap={0.18} className="grid gap-10 md:grid-cols-3">
+                        {STEPS.map((s, i) => (
+                            <StaggerItem key={s.title} className="relative space-y-4">
+                                <span className="relative z-10 flex h-12 w-12 items-center justify-center rounded-lg bg-brand-yellow text-lg font-bold text-brand-ink">{i + 1}</span>
+                                <h3 className="text-xl font-semibold text-brand-ink">{s.title}</h3>
+                                <p className="leading-relaxed text-brand-muted">{s.text}</p>
+                                {i === 0 && (
+                                    <div className="flex items-center gap-3 rounded-lg border border-brand-line bg-white p-3">
+                                        <img src={`${IMG}/jupe-kente.webp`} alt="" className="h-14 w-11 rounded-md object-cover" />
+                                        <div className="flex-1">
+                                            <div className="text-sm font-semibold text-brand-ink">Jupe kente</div>
+                                            <div className="mt-1 flex gap-1 text-xs">
+                                                {['S', 'M', 'L'].map((t, k) => (
+                                                    <span key={t} className={`rounded px-1.5 py-0.5 ${k === 0 ? 'bg-brand-yellow text-brand-ink' : 'bg-brand-sand text-brand-muted'}`}>{t}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <span className="text-sm font-semibold text-brand-ink">9 500 F</span>
+                                    </div>
+                                )}
+                                {i === 1 && (
+                                    <div className="space-y-2 text-sm">
+                                        <div className="w-fit rounded-lg rounded-bl-sm bg-white px-3 py-2 text-brand-ink">C'est combien la jupe kente ?</div>
+                                        <div className="ml-auto w-fit rounded-lg rounded-br-sm bg-[#DCF8C6] px-3 py-2 text-brand-ink">Tout est ici : <b className="font-semibold">biolinko.link/kemi</b></div>
+                                    </div>
+                                )}
+                                {i === 2 && (
+                                    <div className="flex items-center gap-3 rounded-lg border border-brand-line bg-white p-3">
+                                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100"><Check className="h-5 w-5 text-green-700" /></span>
+                                        <div className="flex-1">
+                                            <div className="text-sm font-semibold text-brand-ink">Paiement reçu</div>
+                                            <div className="text-xs text-brand-muted">Orange Money, il y a 1 min</div>
+                                        </div>
+                                        <span className="text-sm font-semibold text-brand-ink">9 785 F</span>
+                                    </div>
+                                )}
+                            </StaggerItem>
+                        ))}
+                    </Stagger>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+function Showcase() {
+    const features = [
+        ['Ventes flash', 'Prix barrés et minuteur'],
+        ['Vos couleurs', 'Logo, bannière, thème'],
+        ['Avis clients', 'Affichés sur la vitrine'],
+        ['Suivi de commande', 'Lien envoyé au client'],
+    ];
+    return (
+        <section id="vitrine" className="overflow-hidden bg-white py-24">
+            <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[0.85fr_1.15fr]">
+                <div className="space-y-7">
+                    <SectionTitle sub="Bannière, collections, ventes flash avec compte à rebours, avis clients et bouton WhatsApp. Votre boutique prend vos couleurs et reste rapide sur tous les téléphones.">
+                        Une vitrine qui donne envie d'acheter.
+                    </SectionTitle>
+                    <Stagger className="grid grid-cols-2 gap-x-6 gap-y-5">
+                        {features.map(([t, s]) => (
+                            <StaggerItem key={t} className="border-l-2 border-brand-yellow pl-3">
+                                <div className="font-semibold text-brand-ink">{t}</div>
+                                <div className="text-sm text-brand-muted">{s}</div>
+                            </StaggerItem>
+                        ))}
+                    </Stagger>
+                    <Reveal delay={0.2}>
+                        <PrimaryButton href="#tarifs">Ouvrir ma vitrine <ArrowRight className="h-4 w-4" /></PrimaryButton>
+                    </Reveal>
+                </div>
+
+                <Reveal y={40} className="relative pb-10">
+                    <div className="overflow-hidden rounded-xl border border-brand-line bg-white shadow-[0_50px_100px_-50px_rgba(43,38,32,0.55)]">
+                        <div className="flex h-9 items-center gap-1.5 border-b border-brand-line bg-brand-sand px-3">
+                            <span className="h-2.5 w-2.5 rounded-full bg-[#F87171]" />
+                            <span className="h-2.5 w-2.5 rounded-full bg-[#FBBF24]" />
+                            <span className="h-2.5 w-2.5 rounded-full bg-[#4ADE80]" />
+                            <span className="ml-3 flex h-6 flex-1 items-center rounded bg-white px-3 text-xs text-brand-muted">biolinko.link/maison-kemi</span>
+                        </div>
+                        <img src={`${IMG}/app-vitrine.webp`} alt="Capture d'une vitrine Biolinko" loading="lazy" className="block w-full" />
+                    </div>
+                    <motion.div
+                        className="absolute -bottom-1 right-4 flex items-center gap-3 rounded-lg border border-brand-line bg-white px-3.5 py-2.5 shadow-[0_20px_40px_-20px_rgba(43,38,32,0.5)]"
+                        initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.5 }}
+                    >
+                        <img src={`${IMG}/robe-sirene.webp`} alt="" className="h-12 w-10 rounded object-cover" />
+                        <div>
+                            <div className="text-sm font-semibold text-brand-ink">Ajouté au panier</div>
+                            <div className="text-xs text-brand-muted">Robe sirène, taille M</div>
+                        </div>
+                    </motion.div>
+                </Reveal>
+            </div>
+        </section>
+    );
+}
+
+function Tools() {
+    return (
+        <section id="outils" className="bg-brand-cream py-24">
+            <div className="mx-auto max-w-6xl px-4 sm:px-6">
+                <div className="flex flex-wrap items-end justify-between gap-6">
+                    <SectionTitle>Tout ce qu'il faut pour gérer vos ventes.</SectionTitle>
+                    <Reveal delay={0.1} className="max-w-sm text-base text-brand-muted">Un seul tableau de bord pour les commandes, l'argent, les clients et les relances.</Reveal>
+                </div>
+
+                <Stagger className="mt-12 grid gap-5 md:grid-cols-6">
+                    <StaggerItem className="overflow-hidden rounded-xl border border-brand-line bg-white md:col-span-4">
+                        <motion.div whileHover={{ y: -4 }} className="h-full">
+                            <div className="space-y-1.5 p-6">
+                                <h3 className="text-xl font-semibold text-brand-ink">Tableau de bord</h3>
+                                <p className="text-brand-muted">Chiffre d'affaires, commandes à livrer, meilleurs produits.</p>
+                            </div>
+                            <div className="ml-6 overflow-hidden rounded-tl-lg border-l border-t border-brand-line">
+                                <img src={`${IMG}/app-dashboard.webp`} alt="Capture du tableau de bord vendeur" loading="lazy" className="block w-full" />
+                            </div>
+                        </motion.div>
+                    </StaggerItem>
+
+                    <StaggerItem className="flex flex-col rounded-xl bg-brand-yellow p-6 md:col-span-2">
+                        <h3 className="text-xl font-semibold text-brand-ink">Retrait Mobile Money</h3>
+                        <p className="mt-1.5 text-brand-ink/75">Votre argent vers votre numéro, dès 5 000 FCFA.</p>
+                        <div className="mt-auto space-y-3 rounded-lg bg-white p-4 pt-4">
+                            <div className="text-xs font-medium text-brand-muted">Solde disponible</div>
+                            <div className="text-2xl font-bold text-brand-ink"><CountUp to={184500} /> F</div>
+                            <motion.div whileHover={{ scale: 1.02 }} className="flex h-10 items-center justify-center rounded-md bg-brand-yellow text-sm font-semibold text-brand-ink">Retirer vers MoMo</motion.div>
+                        </div>
+                    </StaggerItem>
+
+                    {[
+                        { Icon: FileText, title: 'Factures automatiques', text: 'PDF avec QR code, envoyé au client après chaque paiement.', extra: (
+                            <div className="flex justify-between rounded-md bg-brand-sand p-3 text-sm"><span className="text-brand-ink">Facture BLK-2041</span><span className="font-medium text-green-700">Payée</span></div>
+                        ) },
+                        { Icon: MessageCircle, title: 'Relances WhatsApp', text: "Un message aux clients qui n'ont pas fini de payer.", extra: (
+                            <div className="rounded-lg rounded-br-sm bg-[#DCF8C6] p-3 text-sm text-brand-ink">Bonjour Awa, votre robe vous attend. Finalisez ici : biolinko.link/c/8F2K</div>
+                        ) },
+                        { Icon: Link2, title: 'SmartLinks', text: 'Un lien de paiement pour un produit, à coller dans un statut ou une pub.', extra: (
+                            <div className="flex items-center justify-between rounded-md border border-brand-line p-2 pl-3 text-sm"><span className="truncate text-brand-ink">biolinko.link/p/robe-adjoa</span><span className="rounded bg-brand-yellow px-2 py-1 text-xs font-medium text-brand-ink">Copier</span></div>
+                        ) },
+                    ].map(({ Icon, title, text, extra }) => (
+                        <StaggerItem key={title} className="md:col-span-2">
+                            <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.2 }} className="flex h-full flex-col gap-3 rounded-xl border border-brand-line bg-white p-6">
+                                <Icon className="h-5 w-5 text-brand-ink" />
+                                <h3 className="text-lg font-semibold text-brand-ink">{title}</h3>
+                                <p className="text-[15px] text-brand-muted">{text}</p>
+                                <div className="mt-auto">{extra}</div>
+                            </motion.div>
+                        </StaggerItem>
+                    ))}
+                </Stagger>
+            </div>
+        </section>
+    );
+}
+
+function ForWho() {
+    return (
+        <section className="overflow-hidden bg-white py-24">
+            <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-2">
+                <Reveal y={40} className="relative mx-auto w-full max-w-md">
+                    <motion.div
+                        className="absolute inset-0 translate-x-5 translate-y-5 rounded-xl bg-brand-yellow"
+                        initial={{ opacity: 0, x: 0, y: 0 }}
+                        whileInView={{ opacity: 1, x: 20, y: 20 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, ease: EASE_OUT, delay: 0.2 }}
+                    />
+                    <img src={`${IMG}/portrait-amina.webp`} alt="Vendeuse en ligne avec son téléphone" loading="lazy" className="relative aspect-[4/5] w-full rounded-xl object-cover" />
+                    <motion.div
+                        className="absolute -left-3 bottom-10 flex items-center gap-2 rounded-lg border border-brand-line bg-white px-3.5 py-2.5 text-sm font-medium text-brand-ink shadow-lg"
+                        animate={{ y: [0, -8, 0] }}
+                        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                        <span className="h-2 w-2 rounded-full bg-green-600" /> Boutique ouverte 24 h/24
+                    </motion.div>
+                </Reveal>
+
+                <div className="space-y-7">
+                    <SectionTitle sub="Vous avez des clients, des photos et un téléphone. Biolinko range le reste : catalogue, paiements, commandes et factures.">
+                        Fait pour celles et ceux qui vendent déjà sur WhatsApp.
+                    </SectionTitle>
+                    <Stagger gap={0.05} className="flex flex-wrap gap-2">
+                        {SELLER_TYPES.map((t) => (
+                            <StaggerItem key={t} y={10} className="rounded-md bg-brand-cream px-3 py-2 text-sm font-medium text-brand-ink">{t}</StaggerItem>
+                        ))}
+                    </Stagger>
+                    <Stagger className="divide-y divide-brand-line border-y border-brand-line">
+                        {[
+                            [false, "Plus de captures d'écran de paiement à vérifier"],
+                            [false, 'Plus de prix à répéter dans chaque DM'],
+                            [true, 'Des commandes payées, rangées, prêtes à livrer'],
+                        ].map(([ok, t]) => (
+                            <StaggerItem key={t} className="flex items-center gap-3 py-4">
+                                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${ok ? 'bg-brand-yellow' : 'bg-brand-sand'}`}>
+                                    {ok ? <Check className="h-4 w-4 text-brand-ink" /> : <X className="h-4 w-4 text-brand-muted" />}
+                                </span>
+                                <span className="text-[17px] text-brand-ink">{t}</span>
+                            </StaggerItem>
+                        ))}
+                    </Stagger>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+function Pricing({ auth }) {
+    const prices = usePage().props.planPrices || {};
+    const [cycle, setCycle] = useState(1);
+    const current = CYCLES.find((c) => c.months === cycle);
+
+    return (
+        <section id="tarifs" className="bg-brand-cream py-24">
+            <div className="mx-auto max-w-6xl px-4 sm:px-6">
+                <SectionTitle center>Commencez gratuitement. Passez à la suite quand vous vendez plus.</SectionTitle>
+
+                <Reveal delay={0.1} className="mt-8 flex justify-center">
+                    <div role="tablist" aria-label="Durée d'abonnement" className="relative flex rounded-lg border border-brand-line bg-white p-1">
+                        {CYCLES.map((c) => (
+                            <button
+                                key={c.months}
+                                type="button"
+                                role="tab"
+                                aria-selected={cycle === c.months}
+                                onClick={() => setCycle(c.months)}
+                                className="relative flex h-10 items-center gap-1.5 px-4 text-sm font-medium text-brand-ink"
+                            >
+                                {cycle === c.months && (
+                                    <motion.span layoutId="cycle-pill" className="absolute inset-0 rounded-md bg-brand-yellow" transition={{ type: 'spring', stiffness: 400, damping: 32 }} />
+                                )}
+                                <span className="relative">{c.label}</span>
+                                {c.discount > 0 && <span className="relative rounded bg-green-100 px-1.5 text-xs text-green-800">-{c.discount * 100} %</span>}
+                            </button>
+                        ))}
+                    </div>
+                </Reveal>
+
+                <Stagger className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    {PLANS.map((p) => {
+                        const base = Number(prices[p.id] || 0);
+                        const total = Math.round(base * current.months * (1 - current.discount));
+                        const monthly = Math.round(total / current.months);
+                        return (
+                            <StaggerItem key={p.id} className="h-full">
+                                <motion.div
+                                    whileHover={{ y: -6 }}
+                                    transition={{ duration: 0.25 }}
+                                    className={`flex h-full flex-col gap-4 rounded-xl bg-white p-6 ${p.highlight ? 'border-2 border-brand-yellow shadow-[0_30px_60px_-35px_rgba(161,98,7,0.7)]' : 'border border-brand-line'}`}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-lg font-semibold text-brand-ink">{p.name}</h3>
+                                        {p.highlight && <span className="rounded bg-brand-yellow px-2 py-0.5 text-xs font-medium text-brand-ink">Le plus choisi</span>}
+                                    </div>
+                                    <p className="-mt-2 text-sm text-brand-muted">{p.sub}</p>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <AnimatePresence mode="popLayout">
+                                            <motion.span
+                                                key={monthly}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                                transition={{ duration: 0.25 }}
+                                                className="text-4xl font-bold tracking-tight text-brand-ink"
+                                            >
+                                                {monthly.toLocaleString('fr-FR')}
+                                            </motion.span>
+                                        </AnimatePresence>
+                                        <span className="text-sm text-brand-muted">FCFA / mois</span>
+                                    </div>
+                                    <div className="min-h-[20px] text-sm text-brand-muted">
+                                        {base === 0 ? 'Gratuit, sans limite de durée' : current.months === 1 ? 'Facturé chaque mois' : `${total.toLocaleString('fr-FR')} FCFA pour ${current.months} mois`}
+                                    </div>
+                                    <a
+                                        href={auth?.user ? route('dashboard') : route('register')}
+                                        className={`flex h-11 items-center justify-center rounded-lg text-[15px] font-semibold transition-colors ${p.highlight ? 'bg-brand-yellow text-brand-ink hover:bg-brand-yellowHover' : 'border border-brand-ink/15 text-brand-ink hover:border-brand-ink/35'}`}
+                                    >
+                                        {p.cta}
+                                    </a>
+                                    <ul className="mt-1 space-y-2.5">
+                                        {p.features.map((f) => (
+                                            <li key={f} className="flex gap-2.5 text-[15px] text-brand-ink/90">
+                                                <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#B38F00]" /> {f}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </motion.div>
+                            </StaggerItem>
+                        );
+                    })}
+                </Stagger>
+            </div>
+        </section>
+    );
+}
+
+function Faq() {
+    const [open, setOpen] = useState(0);
+    return (
+        <section id="questions" className="bg-white py-24">
+            <div className="mx-auto max-w-3xl px-4 sm:px-6">
+                <SectionTitle center>Vos questions</SectionTitle>
+                <Stagger className="mt-10 divide-y divide-brand-line border-y border-brand-line">
+                    {FAQ.map((f, i) => {
+                        const isOpen = open === i;
+                        return (
+                            <StaggerItem key={f.q}>
+                                <button
+                                    type="button"
+                                    onClick={() => setOpen(isOpen ? -1 : i)}
+                                    aria-expanded={isOpen}
+                                    className="flex w-full items-center justify-between gap-4 py-5 text-left text-[17px] font-medium text-brand-ink"
+                                >
+                                    {f.q}
+                                    <motion.span animate={{ rotate: isOpen ? 45 : 0 }} transition={{ duration: 0.2 }} className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${isOpen ? 'bg-brand-yellow' : 'bg-brand-sand'}`}>
+                                        <Plus className="h-4 w-4 text-brand-ink" />
+                                    </motion.span>
+                                </button>
+                                <AnimatePresence initial={false}>
+                                    {isOpen && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.3, ease: EASE_OUT }}
+                                            className="overflow-hidden"
+                                        >
+                                            <p className="pb-5 pr-12 leading-relaxed text-brand-muted">{f.a}</p>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </StaggerItem>
+                        );
+                    })}
+                </Stagger>
+            </div>
+        </section>
+    );
+}
+
+function FinalCta({ auth }) {
+    return (
+        <section className="bg-white pb-24">
+            <div className="mx-auto max-w-6xl px-4 sm:px-6">
+                <Reveal className="relative overflow-hidden rounded-xl bg-brand-yellow px-6 py-14 sm:px-14">
+                    <div className="pointer-events-none absolute inset-0 opacity-50 [background-image:radial-gradient(rgba(43,38,32,0.14)_1.2px,transparent_1.3px)] [background-size:22px_22px]" />
+                    <motion.img
+                        src="/images/brand/logo-noir-hd.png"
+                        alt=""
+                        aria-hidden="true"
+                        className="pointer-events-none absolute -right-10 -top-10 w-64 opacity-10"
+                        animate={{ y: [0, 14, 0], rotate: [0, 6, 0] }}
+                        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+                    <div className="relative flex flex-wrap items-center justify-between gap-8">
+                        <div className="max-w-xl space-y-3">
+                            <h2 className="text-3xl font-bold leading-tight tracking-tight text-brand-ink sm:text-[44px]">Ouvrez votre boutique ce soir. Encaissez demain.</h2>
+                            <p className="text-lg text-brand-ink/75">Gratuit pour commencer. Aucune carte bancaire.</p>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                            <motion.a
+                                href={auth?.user ? route('dashboard') : route('register')}
+                                whileHover={{ y: -2 }}
+                                whileTap={{ scale: 0.97 }}
+                                className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white px-7 text-base font-semibold text-brand-ink shadow-[0_12px_28px_-14px_rgba(43,38,32,0.6)]"
+                            >
+                                Créer ma boutique <ArrowRight className="h-4 w-4" />
+                            </motion.a>
+                            <a href="https://wa.me/" className="inline-flex items-center justify-center gap-2 text-sm font-medium text-brand-ink/80 hover:text-brand-ink">
+                                <WhatsappIcon className="h-4 w-4" /> Parler à l'équipe sur WhatsApp
+                            </a>
+                        </div>
+                    </div>
+                </Reveal>
+            </div>
+        </section>
+    );
+}
+
+function Footer() {
+    const [credits, setCredits] = useState(false);
+    const cols = [
+        ['Produit', [['Vitrine en ligne', '#vitrine'], ['Paiement Mobile Money', '#comment'], ['SmartLinks', '#outils'], ['Tarifs', '#tarifs']]],
+        ['Ressources', [['Questions fréquentes', '#questions'], ['Se connecter', route('login')], ['Créer un compte', route('register')]]],
+        ['Légal', [["Conditions d'utilisation", route('legal.terms')], ['Confidentialité', route('legal.privacy')], ['Cookies', route('legal.cookies')]]],
+    ];
+    return (
+        <footer className="border-t border-brand-line bg-brand-sand pb-8 pt-16 text-brand-muted">
+            <div className="mx-auto max-w-6xl space-y-12 px-4 sm:px-6">
+                <div className="grid gap-10 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
+                    <div className="space-y-5">
+                        <Logo />
+                        <p className="max-w-xs leading-relaxed">La boutique en ligne des vendeurs WhatsApp, payée par Mobile Money.</p>
+                        <div className="flex gap-2">
+                            {[[InstagramIcon, 'Instagram'], [TiktokIcon, 'TikTok'], [FacebookIcon, 'Facebook'], [WhatsappIcon, 'WhatsApp']].map(([Icon, label]) => (
+                                <motion.a key={label} href="#" aria-label={label} whileHover={{ y: -3 }} className="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-line bg-white text-brand-ink hover:border-brand-ink/30">
+                                    <Icon className="h-[18px] w-[18px]" />
+                                </motion.a>
+                            ))}
+                        </div>
+                    </div>
+                    {cols.map(([title, links]) => (
+                        <div key={title} className="space-y-3">
+                            <div className="font-semibold text-brand-ink">{title}</div>
+                            {links.map(([label, href]) => (
+                                <a key={label} href={href} className="block hover:text-brand-ink">{label}</a>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-4 border-t border-brand-line pt-6 text-sm">
+                    <span>© {new Date().getFullYear()} Biolinko. Fait au Cameroun, pour l'Afrique.</span>
+                    <div className="flex items-center gap-2">
+                        <span>Paiements acceptés</span>
+                        <span className="rounded bg-brand-yellow px-2 py-1 text-xs font-medium text-brand-ink">MTN MoMo</span>
+                        <span className="rounded bg-[#FF7900] px-2 py-1 text-xs font-medium text-white">Orange Money</span>
+                    </div>
+                    <button type="button" onClick={() => setCredits(!credits)} className="inline-flex items-center gap-1 hover:text-brand-ink" aria-expanded={credits}>
+                        Crédits photos <ChevronDown className={`h-4 w-4 transition-transform ${credits ? 'rotate-180' : ''}`} />
+                    </button>
+                </div>
+                <AnimatePresence initial={false}>
+                    {credits && (
+                        <motion.ul initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="grid gap-1 overflow-hidden text-xs sm:grid-cols-2">
+                            {PHOTO_CREDITS.map(([what, author, licence, file]) => (
+                                <li key={file}>
+                                    {what} : <a className="underline" href={`https://commons.wikimedia.org/wiki/File:${file}`} target="_blank" rel="noreferrer">{author}</a>, {licence}, via Wikimedia Commons
+                                </li>
+                            ))}
+                        </motion.ul>
+                    )}
+                </AnimatePresence>
+            </div>
+        </footer>
     );
 }
 
 export default function Welcome({ auth }) {
-    const [activeFaqCategory, setActiveFaqCategory] = useState('momo');
-    const [activeFaqIndex, setActiveFaqIndex] = useState(0);
-    const [activeTab, setActiveTab] = useState('dash1');
-    const [openDropdown, setOpenDropdown] = useState(null);
-    const [selectedCycle, setSelectedCycle] = useState(1); // 1, 6, or 12 months
-
-    const calculatePlanPricing = (baseMonthlyPrice, months) => {
-        if (baseMonthlyPrice === 0) {
-            return { total: 0, monthlyEquivalent: 0, discountPercent: 0, savings: 0 };
-        }
-        let discountRate = 0;
-        if (months === 6) discountRate = 0.10; // -10%
-        if (months === 12) discountRate = 0.20; // -20%
-
-        const originalTotal = baseMonthlyPrice * months;
-        const total = Math.round(originalTotal * (1.0 - discountRate));
-        const monthlyEquivalent = Math.round(total / months);
-        const savings = originalTotal - total;
-
-        return {
-            total,
-            monthlyEquivalent,
-            discountPercent: Math.round(discountRate * 100),
-            savings
-        };
-    };
-
-    // Marquee items WITHOUT EMOJIS
-    const marqueeItems = [
-        "Fast Checkout USSD MoMo 30s",
-        "Catalogue Mode, Luxe & Beauté",
-        "Factures PDF WhatsApp Certifiées",
-        "Compatible MTN & Orange Money 🇨🇲",
-        "Zero Commission sur vos Ventes",
-        "Variantes Tailles, Couleurs & Surprix",
-        "SmartLinks d'Achat Express",
-        "Analytics & Graphiques de Ventes",
-        "Relance WhatsApp Paniers Abandonnés"
-    ];
-
-    // Vendor Testimonials Data
-    const testimonials = [
-        {
-            name: "Amina K.",
-            role: "Fondatrice Kemet Beauty",
-            city: "Yaoundé",
-            rating: 5,
-            stat: "+180 ventes / mois",
-            text: "Depuis qu'on accepte les paiements MTN et Orange Money en direct avec le Fast Checkout 30s et les relances WhatsApp, nos ventes ont bondi. Nos clientes adorent la simplicité du paiement."
-        },
-        {
-            name: "Yves N.",
-            role: "CEO Douala Streetwear",
-            city: "Douala",
-            rating: 5,
-            stat: "Chiffre d'affaires x2.5",
-            text: "La gestion des variantes (tailles, couleurs) avec les ajustements de prix et l'envoi automatique des factures PDF certifiées BIOLINKO a apporté un vrai professionnalisme à notre boutique."
-        },
-        {
-            name: "Sophie M.",
-            role: "Créatrice d'Accessoires",
-            city: "Bafoussam",
-            rating: 5,
-            stat: "100% retraits fluides",
-            text: "Le portefeuille virtuel BIOLINKO et les retraits instantanés vers mon compte Mobile Money me permettent d'avoir un contrôle parfait de ma trésorerie au quotidien."
-        },
-        {
-            name: "Marc A.",
-            role: "Gérant Kribi High-Tech",
-            city: "Kribi",
-            rating: 5,
-            stat: "+90% paniers validés",
-            text: "Avant BIOLINKO, beaucoup de clients abandonnaient leur panier. Avec la validation Push USSD directement sur le téléphone, le taux de conversion a explosé."
-        },
-        {
-            name: "Carine T.",
-            role: "Mode & Prêt-à-porter",
-            city: "Garoua",
-            rating: 5,
-            stat: "Validation MoMo 30s",
-            text: "Créer ma boutique sur BIOLINKO a pris moins de 10 minutes. La relance 1-clic sur WhatsApp me fait gagner 2 heures de travail par jour !"
-        },
-        {
-            name: "David E.",
-            role: "Cosmétiques & Beauté",
-            city: "Douala",
-            rating: 5,
-            stat: "Factures PDF Certifiées",
-            text: "Mes clients reçoivent automatiquement leur reçu de paiement certifié avec QR Code. C'est le top pour la confiance et la fidélisation !"
-        }
-    ];
-
-    // FAQ categories & data
-    const faqCategories = [
-        { id: 'momo', name: 'Paiements & MoMo', icon: CreditCard },
-        { id: 'features', name: 'Fonctionnalités Vendeur', icon: Layers },
-        { id: 'payouts', name: 'Retraits & Wallet', icon: Wallet },
-        { id: 'whatsapp', name: 'Factures & WhatsApp', icon: MessageSquare },
-    ];
-
-    const faqItems = {
-        momo: [
-            {
-                q: "Comment s'effectue le paiement par Mobile Money ?",
-                a: "L'acheteur saisit son numéro lors de la commande. BIOLINKO déclenche automatiquement une alerte Push USSD sur son mobile pour saisir son code secret MTN ou Orange. La validation est effectuée en moins de 30 secondes."
-            },
-            {
-                q: "Y a-t-il des commissions sur mes prix de vente ?",
-                a: "Aucune commission. Vous touchez 100% de votre prix fixe. Les frais de service plateforme (3%) sont payés par le client lors du checkout."
-            }
-        ],
-        features: [
-            {
-                q: "Comment fonctionnent les variantes de produits ?",
-                a: "Chaque produit peut posséder plusieurs variantes (ex: Taille S/M/L, Couleur Rouge/Bleu) avec des ajustements de prix et une gestion autonome des stocks."
-            },
-            {
-                q: "Puis-je suivre mes statistiques de vente ?",
-                a: "Oui, un tableau de bord analytique complet vous donne le chiffre d'affaires, les ventes sur 14 jours et le top 5 des produits vendus."
-            },
-            {
-                q: "Comment la personnalisation du Studio Visuel fonctionne-t-elle ?",
-                a: "Dans votre studio, vous pouvez ordonner, afficher ou masquer vos blocs (Bannière Héro, Catalogue Produits, Avis Clients, Engagements Vendeur) par simple clic."
-            },
-            {
-                q: "Comment s'effectue la relance des paniers abandonnés sur WhatsApp ?",
-                a: "Depuis votre espace commandes, un bouton de relance génère un message WhatsApp pré-rempli incluant le lien direct vers le paiement Push MoMo du client."
-            },
-            {
-                q: "Les factures PDF sont-elles certifiées avec QR Code ?",
-                a: "Oui, chaque commande génère automatiquement un reçu PDF officiel avec un QR Code de vérification et le filigrane certifié BIOLINKO."
-            }
-        ],
-        payouts: [
-            {
-                q: "Comment puis-je retirer mes revenus d'encaissement ?",
-                a: "Vos ventes créditeront votre portefeuille virtuel BIOLINKO. Demandez un virement vers votre compte MTN ou Orange Money à tout moment depuis votre dashboard."
-            },
-            {
-                q: "Quel est le délai de virement vers mon compte MoMo ?",
-                a: "Les demandes de retrait sont validées sous 1h à 24h maximum selon votre niveau de plan."
-            }
-        ],
-        whatsapp: [
-            {
-                q: "Puis-je relancer les paniers abandonnés sur WhatsApp ?",
-                a: "Oui, un bouton de relance génère un message WhatsApp prêt à être envoyé avec le lien direct de finalisation de la commande."
-            },
-            {
-                q: "Les factures PDF contiennent-elles le filigrane BIOLINKO ?",
-                a: "Oui, un reçu d'achat au format PDF avec QR Code et filigrane certifié BIOLINKO est généré pour certifier le paiement."
-            }
-        ]
-    };
-
-    const showcaseTabs = [
-        { 
-            id: 'dash1', 
-            title: 'Tableau de bord Vendeur', 
-            icon: BarChart3,
-            img: '/cap_dash.png',
-            desc: 'Suivez vos revenus, vos commandes et la performance de votre catalogue en temps réel.'
-        },
-        { 
-            id: 'dash2', 
-            title: 'Gestion des Commandes', 
-            icon: PackageCheck,
-            img: '/cap_dash2.png',
-            desc: 'Consultez le détail des commandes et relancez les acheteurs en attente sur WhatsApp d\'un clic.'
-        },
-        { 
-            id: 'store1', 
-            title: 'Vitrine Client Responsive', 
-            icon: ShoppingBag,
-            img: '/btq1.png',
-            desc: 'Une vitrine fluide optimisée pour vos abonnés Instagram, TikTok et WhatsApp.'
-        },
-        { 
-            id: 'store2', 
-            title: 'Checkout USSD Mobile Money', 
-            icon: CreditCard,
-            img: '/btq2.png',
-            desc: 'Choix des variantes (taille, couleur) et paiement Push USSD sur téléphone MTN ou Orange.'
-        },
-    ];
-
-    const sectionVariants = {
-        hidden: { opacity: 0, y: 25 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }
-    };
+    const { scrollYProgress } = useScroll();
+    const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
 
     return (
-        <>
-            <Head title="BIOLINKO — Solution E-Commerce Entreprise par Mobile Money 🇨🇲" />
+        <MotionConfig reducedMotion="user">
+            <Head title="Biolinko, la boutique en ligne payée par Mobile Money">
+                <meta name="description" content="Créez votre boutique en ligne en 5 minutes, partagez votre lien sur WhatsApp et encaissez par MTN MoMo et Orange Money." />
+            </Head>
+            <motion.div style={{ scaleX: progress, originX: 0 }} className="fixed inset-x-0 top-0 z-[60] h-[3px] bg-brand-ink/70" />
 
-            <div className="min-h-screen bg-[#FAFAFC] text-slate-900 font-sans selection:bg-amber-300 selection:text-slate-950 antialiased overflow-x-hidden relative">
-                
-                {/* SUBTLE E-COMMERCE BOUTIQUE BACKGROUND PATTERN */}
-                <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
-                    <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-amber-100/40 via-amber-50/20 to-transparent blur-3xl rounded-full"></div>
-                    <div className="absolute top-[800px] left-[-200px] w-96 h-96 bg-amber-200/20 blur-3xl rounded-full"></div>
-                    <div className="absolute top-[1600px] right-[-200px] w-96 h-96 bg-amber-200/20 blur-3xl rounded-full"></div>
-                    {/* Floating Boutique Grid Icons */}
-                    <div className="absolute top-36 left-12 opacity-10 text-amber-600 hidden lg:block">
-                        <ShoppingBag className="w-24 h-24" />
-                    </div>
-                    <div className="absolute top-64 right-16 opacity-10 text-amber-600 hidden lg:block">
-                        <Store className="w-28 h-28" />
-                    </div>
-                    <div className="absolute top-[1100px] left-20 opacity-10 text-amber-600 hidden lg:block">
-                        <Tag className="w-20 h-20" />
+            <div className="min-h-screen bg-brand-yellow font-sans text-brand-ink antialiased">
+                <div className="border-b border-brand-ink/10 bg-brand-yellowLight text-center text-sm text-brand-ink">
+                    <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-2 px-4 py-2">
+                        <span className="rounded bg-brand-yellow px-1.5 py-0.5 text-xs font-semibold">Nouveau</span>
+                        <span className="hidden sm:inline">L'export comptable CSV de vos ventes est disponible sur l'offre Business.</span>
+                        <span className="sm:hidden">Export CSV de vos ventes</span>
+                        <a href="#tarifs" className="font-semibold underline underline-offset-2">Voir les offres</a>
                     </div>
                 </div>
-
-                {/* 1. HEADER & NAVIGATION BAR WITH DROPDOWNS */}
-                <motion.header 
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
-                    className="relative z-50 bg-white border-b border-slate-200/70 shadow-xs"
-                >
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-                        
-                        {/* Logo */}
-                        <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-                            <ApplicationLogo className="w-10 h-10 shadow-xs group-hover:scale-105 transition-transform" />
-                            <span className="text-2xl font-black tracking-tight text-slate-950 font-display">
-                                biolinko<span className="text-[#FFCC00]">.</span>
-                            </span>
-                        </Link>
-
-                        {/* Navigation Links with Interactive Dropdowns */}
-                        <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-slate-700">
-                            
-                            {/* Dropdown 1: Plateforme & Outils */}
-                            <div 
-                                className="relative"
-                                onMouseEnter={() => setOpenDropdown('plateforme')}
-                                onMouseLeave={() => setOpenDropdown(null)}
-                            >
-                                <button type="button" className="flex items-center gap-1 hover:text-amber-600 transition-colors py-2">
-                                    <span>Plateforme & Outils</span>
-                                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                                </button>
-
-                                <AnimatePresence>
-                                    {openDropdown === 'plateforme' && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 8 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: 8 }}
-                                            transition={{ duration: 0.2 }}
-                                            className="absolute top-full left-0 w-64 bg-white rounded-2xl border border-slate-200 shadow-xl p-3 space-y-1 z-50"
-                                        >
-                                            <a href="#features" className="p-2.5 rounded-xl hover:bg-amber-50 flex items-center gap-3 transition-colors group">
-                                                <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
-                                                    <Smartphone className="w-4 h-4 text-amber-600" />
-                                                </div>
-                                                <div>
-                                                    <div className="text-xs font-bold text-slate-900 group-hover:text-amber-700">Fast Checkout USSD</div>
-                                                    <div className="text-[10px] text-slate-500 font-normal">Paiement Push MoMo 30s</div>
-                                                </div>
-                                            </a>
-                                            <a href="#features" className="p-2.5 rounded-xl hover:bg-amber-50 flex items-center gap-3 transition-colors group">
-                                                <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
-                                                    <Layers className="w-4 h-4 text-amber-600" />
-                                                </div>
-                                                <div>
-                                                    <div className="text-xs font-bold text-slate-900 group-hover:text-amber-700">Variantes & Stocks</div>
-                                                    <div className="text-[10px] text-slate-500 font-normal">Tailles, couleurs & prix</div>
-                                                </div>
-                                            </a>
-                                            <a href="#features" className="p-2.5 rounded-xl hover:bg-amber-50 flex items-center gap-3 transition-colors group">
-                                                <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
-                                                    <FileText className="w-4 h-4 text-amber-600" />
-                                                </div>
-                                                <div>
-                                                    <div className="text-xs font-bold text-slate-900 group-hover:text-amber-700">Factures PDF Certifiées</div>
-                                                    <div className="text-[10px] text-slate-500 font-normal">Reçus officiels WhatsApp</div>
-                                                </div>
-                                            </a>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-
-                            {/* Dropdown 2: Formules & Tarifs */}
-                            <div 
-                                className="relative"
-                                onMouseEnter={() => setOpenDropdown('tarifs')}
-                                onMouseLeave={() => setOpenDropdown(null)}
-                            >
-                                <button type="button" className="flex items-center gap-1 hover:text-amber-600 transition-colors py-2">
-                                    <span>Formules & Tarifs</span>
-                                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                                </button>
-
-                                <AnimatePresence>
-                                    {openDropdown === 'tarifs' && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 8 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: 8 }}
-                                            transition={{ duration: 0.2 }}
-                                            className="absolute top-full left-0 w-60 bg-white rounded-2xl border border-slate-200 shadow-xl p-3 space-y-1 z-50"
-                                        >
-                                            <a href="#pricing" className="p-2 rounded-xl hover:bg-amber-50 flex items-center justify-between text-xs font-semibold text-slate-900">
-                                                <span>Starter (Gratuit)</span>
-                                                <span className="text-[10px] text-slate-500 font-normal">0 FCFA</span>
-                                            </a>
-                                            <a href="#pricing" className="p-2 rounded-xl hover:bg-amber-50 flex items-center justify-between text-xs font-bold text-amber-700">
-                                                <span className="flex items-center gap-1.5">
-                                                    <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Plan Pro
-                                                </span>
-                                                <span className="text-[10px] font-bold">2 500 FCFA</span>
-                                            </a>
-                                            <a href="#pricing" className="p-2 rounded-xl hover:bg-amber-50 flex items-center justify-between text-xs font-semibold text-slate-900">
-                                                <span>Plan Growth</span>
-                                                <span className="text-[10px] text-slate-500 font-normal">7 000 FCFA</span>
-                                            </a>
-                                            <a href="#pricing" className="p-2 rounded-xl hover:bg-amber-50 flex items-center justify-between text-xs font-semibold text-slate-900">
-                                                <span>Plan Business</span>
-                                                <span className="text-[10px] text-slate-500 font-normal">12 000 FCFA</span>
-                                            </a>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-
-                            {/* Dropdown 3: Ressources & Support */}
-                            <div 
-                                className="relative"
-                                onMouseEnter={() => setOpenDropdown('ressources')}
-                                onMouseLeave={() => setOpenDropdown(null)}
-                            >
-                                <button type="button" className="flex items-center gap-1 hover:text-amber-600 transition-colors py-2">
-                                    <span>Ressources</span>
-                                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                                </button>
-
-                                <AnimatePresence>
-                                    {openDropdown === 'ressources' && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 8 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: 8 }}
-                                            transition={{ duration: 0.2 }}
-                                            className="absolute top-full left-0 w-56 bg-white rounded-2xl border border-slate-200 shadow-xl p-3 space-y-1 z-50"
-                                        >
-                                            <a href="#showcase" className="p-2 rounded-xl hover:bg-amber-50 flex items-center gap-2 text-xs font-semibold text-slate-900">
-                                                <Eye className="w-4 h-4 text-amber-600" />
-                                                <span>Démo Visuelle Live</span>
-                                            </a>
-                                            <a href="#testimonials" className="p-2 rounded-xl hover:bg-amber-50 flex items-center gap-2 text-xs font-semibold text-slate-900">
-                                                <Quote className="w-4 h-4 text-amber-600" />
-                                                <span>Avis Vendeurs</span>
-                                            </a>
-                                            <a href="#stats" className="p-2 rounded-xl hover:bg-amber-50 flex items-center gap-2 text-xs font-semibold text-slate-900">
-                                                <BarChart3 className="w-4 h-4 text-amber-600" />
-                                                <span>Statistiques Vendeurs</span>
-                                            </a>
-                                            <a href="#faq" className="p-2 rounded-xl hover:bg-amber-50 flex items-center gap-2 text-xs font-semibold text-slate-900">
-                                                <HelpCircle className="w-4 h-4 text-amber-600" />
-                                                <span>Support & FAQ Hub</span>
-                                            </a>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-
-                            <a href="#stats" className="hover:text-amber-600 transition-colors">Statistiques</a>
-                            <a href="#testimonials" className="hover:text-amber-600 transition-colors">Avis Vendeurs</a>
-                        </nav>
-
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-3 shrink-0">
-                            {auth.user ? (
-                                <Link
-                                    href={route('dashboard')}
-                                    className="px-5 py-2.5 rounded-full bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-semibold text-xs transition-all duration-200 hover:scale-105 border border-amber-300 flex items-center gap-1.5 shadow-2xs"
-                                >
-                                    <span>Mon Dashboard Vendeur</span>
-                                    <ArrowUpRight className="w-4 h-4" />
-                                </Link>
-                            ) : (
-                                <>
-                                    <Link
-                                        href={route('login')}
-                                        className="text-xs font-semibold text-slate-700 hover:text-slate-950 px-3 py-2 transition-colors"
-                                    >
-                                        Connexion
-                                    </Link>
-                                    <Link
-                                        href={route('register')}
-                                        className="px-5 py-2.5 rounded-full bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-semibold text-xs transition-all duration-200 hover:scale-105 border border-amber-300 flex items-center gap-1.5 shadow-2xs"
-                                    >
-                                        <span>Lancer ma boutique</span>
-                                        <ArrowUpRight className="w-4 h-4" />
-                                    </Link>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </motion.header>
-
-                {/* 2. HERO SECTION WITH 3 ILLUSTRATION SHOWCASE IMAGES */}
-                <section id="hero" className="pt-14 pb-12 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-center relative">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="space-y-6 max-w-4xl mx-auto"
-                    >
-                        {/* Tag Pill */}
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-950 text-xs font-semibold border border-amber-300 shadow-2xs">
-                            <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-600" />
-                            <span>Plateforme e-commerce & liens d'achat express par Mobile Money</span>
-                        </div>
-
-                        {/* Title */}
-                        <h1 className="text-4xl sm:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.12]">
-                            Vendez vos produits en ligne et <br className="hidden sm:inline" />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700">encaissez par Mobile Money</span>.
-                        </h1>
-
-                        {/* Subtitle */}
-                        <p className="text-base sm:text-xl text-slate-600 max-w-2xl mx-auto font-normal leading-relaxed">
-                            Transformez vos abonnés en clients fidèles. Créez votre catalogue en 5 minutes, configurez vos variantes et recevez vos paiements MTN & Orange Money en toute sécurité.
-                        </p>
-
-                        {/* CTAs */}
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-                            <Link
-                                href={route('register')}
-                                className="w-full sm:w-auto px-8 py-4 rounded-full bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-sm shadow-sm transition-all duration-200 hover:scale-105 border border-amber-300 flex items-center justify-center gap-2"
-                            >
-                                <span>Créer ma boutique gratuitement</span>
-                                <ArrowRight className="w-4 h-4 text-slate-950" />
-                            </Link>
-                            <a
-                                href="#showcase"
-                                className="w-full sm:w-auto px-8 py-4 rounded-full bg-white hover:bg-slate-50 text-slate-900 font-semibold text-sm border border-slate-200 shadow-2xs transition-all duration-200 flex items-center justify-center gap-2"
-                            >
-                                <span>Explorer la démo</span>
-                                <Eye className="w-4 h-4 text-slate-500" />
-                            </a>
-                        </div>
-                    </motion.div>
-
-                    {/* 3 HERO ILLUSTRATION IMAGES SHOWCASE (LEFT, CENTER, RIGHT) */}
-                    <motion.div 
-                        initial={{ opacity: 0, y: 35 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.2 }}
-                        className="mt-12 grid grid-cols-1 md:grid-cols-12 gap-6 items-center max-w-5xl mx-auto"
-                    >
-                        {/* Illustration 1: Left - Vitrine Mobile Client */}
-                        <div className="md:col-span-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-md hover:shadow-lg transition-all space-y-2 text-left group">
-                            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 pb-1 border-b border-slate-100">
-                                <span className="flex items-center gap-1 text-slate-900 font-bold">
-                                    <ShoppingBag className="w-3.5 h-3.5 text-amber-500" /> Vitrine Mobile
-                                </span>
-                                <span className="text-[10px] text-emerald-600 font-mono">Client</span>
-                            </div>
-                            <div className="rounded-xl overflow-hidden bg-slate-100 border border-slate-200/60 max-h-64 flex items-center justify-center">
-                                <img src="/btq1.png" alt="Vitrine Client" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300" />
-                            </div>
-                        </div>
-
-                        {/* Illustration 2: Center (Main) - Dashboard Vendeur */}
-                        <div className="md:col-span-6 bg-white p-4 rounded-3xl border-2 border-amber-300 shadow-xl space-y-3 text-left relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 px-3 py-1 bg-[#FFCC00] text-slate-950 font-bold text-[10px] uppercase rounded-bl-xl border-l border-b border-amber-300 shadow-2xs">
-                                Tableau de Bord Vendeur
-                            </div>
-                            <div className="flex items-center justify-between text-xs font-semibold text-slate-600 pb-1 border-b border-slate-100">
-                                <span className="flex items-center gap-1.5 text-slate-950 font-bold">
-                                    <BarChart3 className="w-4 h-4 text-amber-600" /> Vue Globale Ventes & Graphiques
-                                </span>
-                            </div>
-                            <div className="rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 max-h-80 flex items-center justify-center">
-                                <img src="/cap_dash.png" alt="Dashboard Vendeur" className="w-full h-auto object-cover group-hover:scale-102 transition-transform duration-300" />
-                            </div>
-                        </div>
-
-                        {/* Illustration 3: Right - Panier & USSD MoMo */}
-                        <div className="md:col-span-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-md hover:shadow-lg transition-all space-y-2 text-left group">
-                            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 pb-1 border-b border-slate-100">
-                                <span className="flex items-center gap-1 text-slate-900 font-bold">
-                                    <CreditCard className="w-3.5 h-3.5 text-amber-500" /> Checkout USSD
-                                </span>
-                                <span className="text-[10px] text-amber-600 font-mono">30s MoMo</span>
-                            </div>
-                            <div className="rounded-xl overflow-hidden bg-slate-100 border border-slate-200/60 max-h-64 flex items-center justify-center">
-                                <img src="/btq2.png" alt="Checkout Mobile Money" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300" />
-                            </div>
-                        </div>
-                    </motion.div>
-                </section>
-
-                {/* 3. INFINITE SCROLL / MARQUEE LOOP BAND */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
-                    <div className="relative rounded-2xl bg-amber-50/60 border border-amber-200/70 py-4 overflow-hidden shadow-2xs">
-                        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-amber-50 via-amber-50/80 to-transparent z-10"></div>
-                        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-amber-50 via-amber-50/80 to-transparent z-10"></div>
-
-                        <div className="flex whitespace-nowrap overflow-hidden">
-                            <motion.div 
-                                animate={{ x: ['0%', '-50%'] }}
-                                transition={{ repeat: Infinity, ease: 'linear', duration: 25 }}
-                                className="flex items-center gap-6 text-xs font-semibold text-slate-800"
-                            >
-                                {[...marqueeItems, ...marqueeItems].map((item, index) => (
-                                    <span key={index} className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-amber-200 text-slate-800 shadow-2xs">
-                                        <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
-                                        <span>{item}</span>
-                                    </span>
-                                ))}
-                            </motion.div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 4. STATS & PERFORMANCE SECTION WITH ANIMATED INCREMENT COUNTERS */}
-                <motion.section 
-                    id="stats"
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, margin: "-60px" }}
-                    variants={sectionVariants}
-                    className="py-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-10"
-                >
-                    <div className="text-center space-y-2 max-w-xl mx-auto">
-                        <span className="px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-semibold uppercase tracking-wider border border-amber-300">
-                            Performances & Chiffres Clés
-                        </span>
-                        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
-                            Des résultats concrets pour nos vendeurs
-                        </h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        
-                        <div className="p-7 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-2 text-center hover:border-amber-300 transition-all">
-                            <div className="text-3xl sm:text-4xl font-extrabold text-slate-950">
-                                +<AnimatedCounter to={500} duration={1.8} />
-                            </div>
-                            <div className="text-xs font-bold text-amber-600 uppercase tracking-wider">Boutiques Actives</div>
-                            <p className="text-xs text-slate-500 font-normal">Créateurs et commerçants vendent quotidiennement sur BIOLINKO.</p>
-                        </div>
-
-                        <div className="p-7 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-2 text-center hover:border-amber-300 transition-all">
-                            <div className="text-3xl sm:text-4xl font-extrabold text-slate-950">
-                                <AnimatedCounter to={30} duration={1.5} suffix=" sec" />
-                            </div>
-                            <div className="text-xs font-bold text-amber-600 uppercase tracking-wider">Temps de Paiement</div>
-                            <p className="text-xs text-slate-500 font-normal">Alerte Push USSD automatique sur téléphone MTN et Orange.</p>
-                        </div>
-
-                        <div className="p-7 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-2 text-center hover:border-amber-300 transition-all">
-                            <div className="text-3xl sm:text-4xl font-extrabold text-slate-950">
-                                <AnimatedCounter to={100} duration={1.6} suffix=" %" />
-                            </div>
-                            <div className="text-xs font-bold text-amber-600 uppercase tracking-wider">Revenus Préservés</div>
-                            <p className="text-xs text-slate-500 font-normal">Vous touchez l'intégralité de vos prix vendeurs affichés sans prélèvement.</p>
-                        </div>
-
-                        <div className="p-7 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-2 text-center hover:border-amber-300 transition-all">
-                            <div className="text-3xl sm:text-4xl font-extrabold text-slate-950">
-                                <AnimatedCounter to={99.9} duration={2} suffix=" %" decimals={1} />
-                            </div>
-                            <div className="text-xs font-bold text-amber-600 uppercase tracking-wider">Uptime Réseau MoMo</div>
-                            <p className="text-xs text-slate-500 font-normal">Infrastructure d'encaissement stable et disponible 24h/24.</p>
-                        </div>
-                    </div>
-                </motion.section>
-
-                {/* 5. FEATURE CARDS GRID */}
-                <motion.section 
-                    id="features"
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, margin: "-60px" }}
-                    variants={sectionVariants}
-                    className="py-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-12"
-                >
-                    <div className="text-center space-y-2 max-w-2xl mx-auto">
-                        <span className="px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-semibold uppercase tracking-wider border border-amber-300">
-                            Suite Fonctionnelle Entreprise
-                        </span>
-                        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
-                            Des outils puissants pour développer vos ventes
-                        </h2>
-                        <p className="text-xs sm:text-sm text-slate-600 font-normal">
-                            Une infrastructure moderne pensée pour automatiser vos commandes et maximiser vos profits.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        
-                        <motion.div 
-                            whileHover={{ y: -6 }}
-                            transition={{ duration: 0.2 }}
-                            className="p-7 rounded-3xl bg-white border border-slate-200/80 shadow-2xs space-y-4 hover:border-amber-300 transition-all"
-                        >
-                            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
-                                <BarChart3 className="w-5 h-5 text-amber-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-slate-950">Analytics & Chiffre d'Affaires</h3>
-                            <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                                Suivez l'évolution de vos ventes quotidiennes, le classement de vos meilleurs produits et vos revenus en temps réel.
-                            </p>
-                        </motion.div>
-
-                        <motion.div 
-                            whileHover={{ y: -6 }}
-                            transition={{ duration: 0.2 }}
-                            className="p-7 rounded-3xl bg-white border border-slate-200/80 shadow-2xs space-y-4 hover:border-amber-300 transition-all"
-                        >
-                            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
-                                <Layers className="w-5 h-5 text-amber-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-slate-950">Gestion des Variantes & Stock</h3>
-                            <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                                Proposez des variantes (taille, couleur) avec surprix et gestion autonome du stock disponible.
-                            </p>
-                        </motion.div>
-
-                        <motion.div 
-                            whileHover={{ y: -6 }}
-                            transition={{ duration: 0.2 }}
-                            className="p-7 rounded-3xl bg-white border border-slate-200/80 shadow-2xs space-y-4 hover:border-amber-300 transition-all"
-                        >
-                            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
-                                <Smartphone className="w-5 h-5 text-amber-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-slate-950">Fast Checkout USSD MoMo</h3>
-                            <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                                Déclenchez l'alerte Push USSD pour permettre au client de saisir son code secret MTN ou Orange en 30 secondes.
-                            </p>
-                        </motion.div>
-
-                        <motion.div 
-                            whileHover={{ y: -6 }}
-                            transition={{ duration: 0.2 }}
-                            className="p-7 rounded-3xl bg-white border border-slate-200/80 shadow-2xs space-y-4 hover:border-amber-300 transition-all"
-                        >
-                            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
-                                <FileText className="w-5 h-5 text-amber-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-slate-950">Factures PDF & Filigrane</h3>
-                            <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                                Reçus d'achat officiels générés automatiquement avec QR Code et filigrane certifié BIOLINKO.
-                            </p>
-                        </motion.div>
-
-                        <motion.div 
-                            whileHover={{ y: -6 }}
-                            transition={{ duration: 0.2 }}
-                            className="p-7 rounded-3xl bg-white border border-slate-200/80 shadow-2xs space-y-4 hover:border-amber-300 transition-all md:col-span-2"
-                        >
-                            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
-                                <MessageSquare className="w-5 h-5 text-amber-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-slate-950">Relance WhatsApp des Paniers Abandonnés</h3>
-                            <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                                Relancez les acheteurs en attente de paiement par un message personnalisé WhatsApp incluant leur lien direct de finalisation.
-                            </p>
-                        </motion.div>
-
-                    </div>
-                </motion.section>
-
-                {/* 6. REAL SCREENSHOTS SHOWCASE */}
-                <motion.section 
-                    id="showcase" 
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, margin: "-60px" }}
-                    variants={sectionVariants}
-                    className="py-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-8"
-                >
-                    <div className="text-center space-y-2 max-w-2xl mx-auto">
-                        <span className="px-3.5 py-1 rounded-full bg-slate-100 text-slate-800 text-xs font-semibold uppercase tracking-wider">
-                            Démo Visuelle Haute Définition
-                        </span>
-                        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
-                            Explorez l'Interface Vendeur et Vitrine
-                        </h2>
-                    </div>
-
-                    <div className="flex items-center justify-center gap-2 flex-wrap pb-2">
-                        {showcaseTabs.map(tab => {
-                            const Icon = tab.icon;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    type="button"
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`px-4 py-2.5 rounded-full text-xs font-semibold transition-all border flex items-center gap-2 ${
-                                        activeTab === tab.id
-                                            ? 'bg-slate-950 text-white border-slate-950 shadow-2xs'
-                                            : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200'
-                                    }`}
-                                >
-                                    <Icon className="w-3.5 h-3.5 text-amber-400" />
-                                    <span>{tab.title}</span>
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    <div className="bg-white rounded-3xl border border-slate-200 shadow-lg overflow-hidden p-4 sm:p-6 space-y-4">
-                        <div className="flex items-center justify-between text-xs text-slate-500 font-medium pb-2 border-b border-slate-100">
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-rose-400"></div>
-                                <div className="w-3 h-3 rounded-full bg-amber-400"></div>
-                                <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
-                                <span className="ml-2 font-mono text-[11px] text-slate-400">biolinko.app/preview</span>
-                            </div>
-                            <span className="font-semibold text-slate-900">
-                                {showcaseTabs.find(t => t.id === activeTab)?.desc}
-                            </span>
-                        </div>
-
-                        <div className="relative rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center min-h-[350px]">
-                            {showcaseTabs.map(tab => (
-                                tab.id === activeTab && (
-                                    <motion.img
-                                        key={tab.id}
-                                        initial={{ opacity: 0, scale: 0.98 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        transition={{ duration: 0.3 }}
-                                        src={tab.img}
-                                        alt={tab.title}
-                                        className="w-full h-auto object-contain rounded-xl max-h-[600px]"
-                                    />
-                                )
-                            ))}
-                        </div>
-                    </div>
-                </motion.section>
-
-                {/* 7. VENDOR TESTIMONIALS SECTION ("CE QUE DISENT NOS VENDEURS") IN CONTINUOUS INFINITE LOOP */}
-                <motion.section 
-                    id="testimonials"
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, margin: "-60px" }}
-                    variants={sectionVariants}
-                    className="py-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8"
-                >
-                    <div className="text-center space-y-2 max-w-xl mx-auto">
-                        <span className="px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-semibold uppercase tracking-wider border border-amber-300">
-                            Témoignages Vendeurs
-                        </span>
-                        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
-                            Ce que disent nos vendeurs
-                        </h2>
-                        <p className="text-xs sm:text-sm text-slate-600 font-normal">
-                            Découvrez l'expérience réelle des commerçants qui ont propulsé leurs ventes grâce à BIOLINKO.
-                        </p>
-                    </div>
-
-                    {/* Infinite Marquee Scroll Loop for Testimonials Cards */}
-                    <div className="relative overflow-hidden py-4 rounded-3xl">
-                        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[#FAFAFC] via-[#FAFAFC]/80 to-transparent z-10"></div>
-                        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#FAFAFC] via-[#FAFAFC]/80 to-transparent z-10"></div>
-
-                        <div className="flex whitespace-nowrap overflow-hidden">
-                            <motion.div 
-                                animate={{ x: ['0%', '-50%'] }}
-                                transition={{ repeat: Infinity, ease: 'linear', duration: 32 }}
-                                className="flex items-center gap-6"
-                            >
-                                {[...testimonials, ...testimonials].map((t, idx) => (
-                                    <div
-                                        key={idx}
-                                        className="w-[340px] sm:w-[380px] shrink-0 p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm space-y-4 text-left whitespace-normal flex flex-col justify-between hover:border-amber-300 transition-all"
-                                    >
-                                        <div className="space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-1 text-amber-500">
-                                                    {[...Array(t.rating)].map((_, i) => (
-                                                        <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                                                    ))}
-                                                </div>
-                                                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-950 text-[10px] font-bold border border-amber-200">
-                                                    {t.stat}
-                                                </span>
-                                            </div>
-                                            <p className="text-xs text-slate-600 leading-relaxed italic font-normal">
-                                                "{t.text}"
-                                            </p>
-                                        </div>
-
-                                        <div className="pt-3 border-t border-slate-100 flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-full bg-[#FFCC00] text-slate-950 font-extrabold text-xs flex items-center justify-center border border-amber-300 shrink-0 shadow-2xs">
-                                                {t.name.substring(0, 2)}
-                                            </div>
-                                            <div>
-                                                <div className="text-xs font-bold text-slate-950">{t.name}</div>
-                                                <div className="text-[11px] text-slate-500 font-normal">{t.role} • {t.city}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </motion.div>
-                        </div>
-                    </div>
-                </motion.section>
-
-                {/* 8. PRICING PLANS SECTION WITH BILLING CYCLES SELECTOR (-15% 6 Mois, -30% 1 An) */}
-                <motion.section 
-                    id="pricing" 
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, margin: "-60px" }}
-                    variants={sectionVariants}
-                    className="py-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-10"
-                >
-                    <div className="text-center space-y-4 max-w-xl mx-auto">
-                        <span className="px-3.5 py-1 rounded-full bg-slate-100 text-slate-800 text-xs font-semibold uppercase tracking-wider">
-                            Formules & Tarifs Officiels
-                        </span>
-                        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
-                            Des offres claires et sans surprise
-                        </h2>
-                        <p className="text-xs text-slate-600">Choisissez la durée d'engagement qui convient à votre activité et bénéficiez de réductions exclusives.</p>
-
-                        {/* Billing Duration Cycle Selector */}
-                        <div className="flex items-center justify-center gap-1.5 max-w-md mx-auto p-1.5 rounded-full bg-slate-100 border border-slate-200 shadow-2xs">
-                            <button
-                                type="button"
-                                onClick={() => setSelectedCycle(1)}
-                                className={`flex-1 py-2 px-3 rounded-full text-xs font-bold transition-all ${
-                                    selectedCycle === 1 
-                                        ? 'bg-slate-900 text-white shadow-2xs' 
-                                        : 'text-slate-700 hover:text-slate-950'
-                                }`}
-                            >
-                                Mensuel (1 mois)
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setSelectedCycle(6)}
-                                className={`flex-1 py-2 px-3 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-                                    selectedCycle === 6 
-                                        ? 'bg-amber-500 text-slate-950 shadow-2xs' 
-                                        : 'text-slate-700 hover:text-amber-800'
-                                }`}
-                            >
-                                <span>6 Mois</span>
-                                <span className="px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-extrabold border border-amber-300">-10%</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setSelectedCycle(12)}
-                                className={`flex-1 py-2 px-3 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-                                    selectedCycle === 12 
-                                        ? 'bg-[#FFCC00] text-slate-950 shadow-2xs border border-amber-300' 
-                                        : 'text-slate-700 hover:text-amber-800'
-                                }`}
-                            >
-                                <span>1 An</span>
-                                <span className="px-1.5 py-0.5 rounded-full bg-amber-300 text-slate-950 text-[10px] font-extrabold border border-amber-400">-20%</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        
-                        {/* Starter Plan */}
-                        <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
-                            <div className="space-y-4">
-                                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Starter</div>
-                                <div className="text-2xl font-black text-slate-950">GRATUIT</div>
-                                <p className="text-xs text-slate-500 font-normal">Pour tester la plateforme et publier vos premiers articles.</p>
-                                <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Jusqu'à 10 produits max</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Capacité stock : 25 articles</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> 1-Click WhatsApp (wa.me)</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Vitrine sous-domaine BIOLINKO</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Fast Checkout MoMo (MTN &amp; Orange)</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> 1 variante par produit</li>
-                                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Support client standard</li>
-                                </ul>
-                            </div>
-                            <Link href={route('register')} className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-bold text-xs text-center transition-colors">
-                                Commencer Gratuitement
-                            </Link>
-                        </div>
-
-                        {/* Pro Plan */}
-                        {(() => {
-                            const pricing = calculatePlanPricing(4350, selectedCycle);
-                            return (
-                                <div className="p-6 rounded-3xl bg-white border-2 border-amber-300 shadow-lg space-y-6 flex flex-col justify-between relative">
-                                    <div className="absolute -top-3 right-4 px-3 py-0.5 rounded-full bg-[#FFCC00] text-slate-950 font-bold text-[10px] uppercase tracking-wider shadow-2xs flex items-center gap-1 border border-amber-300">
-                                        <Sparkles className="w-3 h-3 text-slate-950" />
-                                        <span>Populaire</span>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <div className="text-xs font-bold text-amber-700 uppercase tracking-wider">Pro</div>
-                                        <div>
-                                            <div className="text-2xl font-black text-slate-950">
-                                                {pricing.monthlyEquivalent.toLocaleString()} FCFA <span className="text-xs font-normal text-slate-500">/mois</span>
-                                            </div>
-                                            {selectedCycle > 1 && (
-                                                <div className="text-[11px] text-amber-700 font-semibold mt-1">
-                                                    {pricing.total.toLocaleString()} FCFA pour {selectedCycle === 6 ? '6 mois' : '1 an'} (Économisez {pricing.savings.toLocaleString()} FCFA)
-                                                </div>
-                                            )}
-                                        </div>
-                                        <p className="text-xs text-slate-500 font-normal">Pour professionnaliser et automatiser vos commandes.</p>
-                                        <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Jusqu'à 50 produits max</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Stock cumulé : 500 articles</li>
-                                            <li className="flex items-center gap-2 font-bold text-amber-900"><Sparkles className="w-4 h-4 text-amber-600 shrink-0" /> WhatsApp Officiel Automatique</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Variantes illimitées &amp; Surprix</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Relance WhatsApp 1-Clic paniers</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Factures PDF avec QR Code &amp; Filigrane</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Studio Visuel (Ordre des sections)</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-amber-600 shrink-0" /> Support Prioritaire WhatsApp 7j/7</li>
-                                        </ul>
-                                    </div>
-                                    <Link href={route('register')} className="w-full py-3 rounded-full bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs text-center transition-all shadow-md border border-amber-300">
-                                        Choisir Pro ({pricing.total.toLocaleString()} FCFA)
-                                    </Link>
-                                </div>
-                            );
-                        })()}
-
-                        {/* Growth Plan */}
-                        {(() => {
-                            const pricing = calculatePlanPricing(8250, selectedCycle);
-                            return (
-                                <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
-                                    <div className="space-y-4">
-                                        <div className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Growth</div>
-                                        <div>
-                                            <div className="text-2xl font-black text-slate-950">
-                                                {pricing.monthlyEquivalent.toLocaleString()} FCFA <span className="text-xs font-normal text-slate-400">/mois</span>
-                                            </div>
-                                            {selectedCycle > 1 && (
-                                                <div className="text-[11px] text-amber-700 font-semibold mt-1">
-                                                    {pricing.total.toLocaleString()} FCFA pour {selectedCycle === 6 ? '6 mois' : '1 an'} (Économisez {pricing.savings.toLocaleString()} FCFA)
-                                                </div>
-                                            )}
-                                        </div>
-                                        <p className="text-xs text-slate-500 font-normal">Pour les marques actives et campagnes en masse.</p>
-                                        <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Jusqu'à 250 produits max</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Stock cumulé : 3 000 articles</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Toutes les options Pro incluses</li>
-                                            <li className="flex items-center gap-2 font-bold text-indigo-900"><Sparkles className="w-4 h-4 text-indigo-600 shrink-0" /> Relances automatiques WhatsApp</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Pixels Marketing (FB, TikTok, Google)</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Campagnes WhatsApp (SmartLinks)</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Retraits MoMo prioritaires (&lt; 4h)</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Accompagnement Stratégique Vente</li>
-                                        </ul>
-                                    </div>
-                                    <Link href={route('register')} className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-bold text-xs text-center transition-colors">
-                                        Activer Growth ({pricing.total.toLocaleString()} FCFA)
-                                    </Link>
-                                </div>
-                            );
-                        })()}
-
-                        {/* Business Plan */}
-                        {(() => {
-                            const pricing = calculatePlanPricing(14700, selectedCycle);
-                            return (
-                                <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-2xs space-y-6 flex flex-col justify-between">
-                                    <div className="space-y-4">
-                                        <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Business</div>
-                                        <div>
-                                            <div className="text-2xl font-black text-slate-950">
-                                                {pricing.monthlyEquivalent.toLocaleString()} FCFA <span className="text-xs font-normal text-slate-400">/mois</span>
-                                            </div>
-                                            {selectedCycle > 1 && (
-                                                <div className="text-[11px] text-amber-700 font-semibold mt-1">
-                                                    {pricing.total.toLocaleString()} FCFA pour {selectedCycle === 6 ? '6 mois' : '1 an'} (Économisez {pricing.savings.toLocaleString()} FCFA)
-                                                </div>
-                                            )}
-                                        </div>
-                                        <p className="text-xs text-slate-500 font-normal">Pour les grossistes et marques grands comptes.</p>
-                                        <ul className="space-y-2.5 text-xs font-normal text-slate-700 pt-3 border-t border-slate-100">
-                                            <li className="flex items-center gap-2 font-bold text-slate-950"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Catalogue Produits ILLIMITÉ</li>
-                                            <li className="flex items-center gap-2 font-bold text-slate-950"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Stock ILLIMITÉ (999 999)</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Toutes les options Growth incluses</li>
-                                            <li className="flex items-center gap-2 font-bold text-emerald-900"><Sparkles className="w-4 h-4 text-emerald-600 shrink-0" /> WhatsApp Haute Priorité VIP</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Retraits MoMo en Temps Réel direct</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Export comptable (CSV/Excel)</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Multi-thèmes vitrines (10 templates)</li>
-                                            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-600 shrink-0" /> Account Manager VIP Dédié 24h/24</li>
-                                        </ul>
-                                    </div>
-                                    <Link href={route('register')} className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-950 font-bold text-xs text-center transition-colors">
-                                        Activer Business ({pricing.total.toLocaleString()} FCFA)
-                                    </Link>
-                                </div>
-                            );
-                        })()}
-
-                    </div>
-                </motion.section>
-
-                {/* 9. FAQ HUB SECTION (2 COLUMNS) WITH ENRICHED VENDOR FEATURES & + ET BIEN D'AUTRES */}
-                <motion.section 
-                    id="faq" 
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, margin: "-60px" }}
-                    variants={sectionVariants}
-                    className="py-14 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-10"
-                >
-                    <div className="text-center space-y-2 max-w-xl mx-auto">
-                        <span className="px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-semibold uppercase tracking-wider border border-amber-300">
-                            Support & FAQ Hub
-                        </span>
-                        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
-                            Toutes les réponses à vos questions
-                        </h2>
-                        <p className="text-xs sm:text-sm text-slate-600 font-normal">
-                            Sélectionnez une thématique ci-dessous pour consulter nos réponses détaillées.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                        
-                        <div className="lg:col-span-4 space-y-3">
-                            <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 px-1">
-                                Thématiques Populaires :
-                            </div>
-
-                            <div className="space-y-2">
-                                {faqCategories.map(cat => {
-                                    const Icon = cat.icon;
-                                    const isActive = activeFaqCategory === cat.id;
-                                    return (
-                                        <button
-                                            key={cat.id}
-                                            type="button"
-                                            onClick={() => {
-                                                setActiveFaqCategory(cat.id);
-                                                setActiveFaqIndex(0);
-                                            }}
-                                            className={`w-full p-4 rounded-2xl border text-left flex items-center justify-between transition-all ${
-                                                isActive
-                                                    ? 'bg-slate-900 text-white border-slate-900 shadow-md font-semibold'
-                                                    : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200 font-medium'
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isActive ? 'bg-[#FFCC00] text-slate-950' : 'bg-slate-100 text-slate-700'}`}>
-                                                    <Icon className="w-4 h-4" />
-                                                </div>
-                                                <span className="text-xs">{cat.name}</span>
-                                            </div>
-                                            <ArrowRight className={`w-4 h-4 transition-transform ${isActive ? 'text-[#FFCC00] translate-x-1' : 'text-slate-400'}`} />
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            <div className="p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 space-y-3 pt-4">
-                                <div className="text-xs font-bold flex items-center gap-2">
-                                    <MessageSquare className="w-4 h-4 text-amber-600" />
-                                    <span>Une question spécifique ?</span>
-                                </div>
-                                <p className="text-[11px] text-amber-900 font-normal leading-relaxed">
-                                    Notre équipe répond directement sur WhatsApp pour vous accompagner dans le lancement de votre boutique.
-                                </p>
-                                <a
-                                    href="https://wa.me/237600000000"
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition-colors shadow-2xs"
-                                >
-                                    <span>Discuter sur WhatsApp</span>
-                                    <ExternalLink className="w-3.5 h-3.5" />
-                                </a>
-                            </div>
-                        </div>
-
-                        <div className="lg:col-span-8 space-y-3">
-                            {faqItems[activeFaqCategory]?.map((item, idx) => {
-                                const isOpen = activeFaqIndex === idx;
-                                return (
-                                    <motion.div
-                                        key={idx}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.3, delay: idx * 0.08 }}
-                                        className={`rounded-2xl border transition-all overflow-hidden ${
-                                            isOpen
-                                                ? 'bg-white border-amber-400 shadow-sm'
-                                                : 'bg-white border-slate-200 hover:border-slate-300'
-                                        }`}
-                                    >
-                                        <button
-                                            type="button"
-                                            onClick={() => setActiveFaqIndex(isOpen ? null : idx)}
-                                            className="w-full p-5 text-left font-semibold text-slate-950 text-xs sm:text-sm flex items-center justify-between gap-4"
-                                        >
-                                            <span className="flex items-center gap-2">
-                                                <span className="w-6 h-6 rounded-lg bg-amber-100 text-amber-900 flex items-center justify-center font-bold text-[11px] shrink-0">
-                                                    ?
-                                                </span>
-                                                <span>{item.q}</span>
-                                            </span>
-                                            {isOpen ? (
-                                                <ChevronUp className="w-4 h-4 text-amber-600 shrink-0" />
-                                            ) : (
-                                                <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
-                                            )}
-                                        </button>
-                                        {isOpen && (
-                                            <div className="px-5 pb-5 pt-0 text-xs text-slate-600 font-normal leading-relaxed border-t border-slate-100">
-                                                {item.a}
-                                            </div>
-                                        )}
-                                    </motion.div>
-                                );
-                            })}
-
-                            {/* Additional Badge for Features Category */}
-                            {activeFaqCategory === 'features' && (
-                                <motion.div 
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="p-4 rounded-2xl bg-amber-100/70 border border-amber-300 text-amber-950 text-xs font-bold text-center flex items-center justify-center gap-2 mt-4"
-                                >
-                                    <Sparkles className="w-4 h-4 text-amber-700 shrink-0" />
-                                    <span>+ et bien d'autres fonctionnalités conçues pour développer vos ventes !</span>
-                                </motion.div>
-                            )}
-                        </div>
-
-                    </div>
-                </motion.section>
-
-                {/* 10. PRE-FOOTER CONVERSION CTA BANNER */}
-                <motion.section 
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, margin: "-60px" }}
-                    variants={sectionVariants}
-                    className="py-12 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto"
-                >
-                    <div className="p-8 sm:p-12 rounded-3xl bg-gradient-to-r from-amber-100 via-amber-50 to-white border-2 border-amber-300 shadow-md flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden">
-                        
-                        <div className="space-y-3 text-center lg:text-left max-w-xl">
-                            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#FFCC00] text-slate-950 text-xs font-bold uppercase tracking-wider border border-amber-300">
-                                <Zap className="w-3.5 h-3.5 fill-slate-950" /> Lancez votre Boutique
-                            </span>
-                            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-950 tracking-tight leading-tight">
-                                Transformez vos réseaux sociaux en entreprise e-commerce automatisée
-                            </h2>
-                            <p className="text-xs sm:text-sm text-slate-600 font-normal">
-                                Rejoignez des centaines de commerçants qui simplifient leurs encaissements et augmentent leurs ventes avec BIOLINKO.
-                            </p>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
-                            <Link
-                                href={route('register')}
-                                className="w-full sm:w-auto px-8 py-4 rounded-full bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-sm shadow-md transition-all border border-amber-300 flex items-center justify-center gap-2"
-                            >
-                                <span>Lancer ma boutique gratuitement</span>
-                                <ArrowRight className="w-4 h-4" />
-                            </Link>
-                        </div>
-                    </div>
-                </motion.section>
-
-                {/* 11. STRUCTURED FOOTER */}
-                <footer className="bg-white border-t border-slate-200 pt-16 pb-8 text-slate-700">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-                            
-                            <div className="lg:col-span-2 space-y-4">
-                                <div className="flex items-center gap-2.5">
-                                    <ApplicationLogo className="w-9 h-9 shadow-xs" />
-                                    <span className="text-2xl font-black tracking-tight text-slate-950 font-display">
-                                        biolinko<span className="text-[#FFCC00]">.</span>
-                                    </span>
-                                </div>
-                                <p className="text-xs text-slate-500 leading-relaxed font-normal max-w-sm">
-                                    BIOLINKO est la solution e-commerce entreprise pour créer votre boutique, vendre sur vos réseaux sociaux et encaisser par Mobile Money.
-                                </p>
-                                
-                                <div className="space-y-1.5 text-xs text-slate-600 font-normal pt-1">
-                                    <div className="flex items-center gap-2">
-                                        <Phone className="w-3.5 h-3.5 text-amber-600" />
-                                        <span>+237 600 000 000 (Support WhatsApp)</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Mail className="w-3.5 h-3.5 text-amber-600" />
-                                        <span>contact@biolinko.app</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <MapPin className="w-3.5 h-3.5 text-amber-600" />
-                                        <span>Yaoundé / Douala, Cameroun 🇨🇲</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-3 text-xs">
-                                <div className="font-bold text-slate-950 uppercase tracking-wider">Produits</div>
-                                <ul className="space-y-2 text-slate-600 font-normal">
-                                    <li><a href="#features" className="hover:text-amber-600 transition-colors">Fast Checkout USSD MoMo</a></li>
-                                    <li><a href="#showcase" className="hover:text-amber-600 transition-colors">SmartLinks d'Achat Express</a></li>
-                                    <li><a href="#showcase" className="hover:text-amber-600 transition-colors">Factures PDF & Filigrane</a></li>
-                                </ul>
-                            </div>
-
-                            <div className="space-y-3 text-xs">
-                                <div className="font-bold text-slate-950 uppercase tracking-wider">Ressources</div>
-                                <ul className="space-y-2 text-slate-600 font-normal">
-                                    <li><a href="#testimonials" className="hover:text-amber-600 transition-colors">Avis Vendeurs</a></li>
-                                    <li><a href="#faq" className="hover:text-amber-600 transition-colors">Support & FAQ Hub</a></li>
-                                    <li><a href="#showcase" className="hover:text-amber-600 transition-colors">Captures & Démo Live</a></li>
-                                    <li><a href="#stats" className="hover:text-amber-600 transition-colors">Performances Vendeurs</a></li>
-                                </ul>
-                            </div>
-
-                            <div className="space-y-3 text-xs">
-                                <div className="font-bold text-slate-950 uppercase tracking-wider">Légal</div>
-                                <ul className="space-y-2 text-slate-600 font-normal">
-                                    <li><Link href={route('legal.terms')} className="hover:text-amber-600 transition-colors">Conditions Générales (CGU)</Link></li>
-                                    <li><Link href={route('legal.privacy')} className="hover:text-amber-600 transition-colors">Politique de Confidentialité</Link></li>
-                                    <li><Link href={route('legal.cookies')} className="hover:text-amber-600 transition-colors">Politique des Cookies</Link></li>
-                                </ul>
-                            </div>
-
-                        </div>
-
-                        <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-normal gap-4">
-                            <div>
-                                © 2026 BIOLINKO. Tous droits réservés.
-                            </div>
-                            <div className="flex items-center gap-4 text-[11px]">
-                                <span>Paiement Sécurisé via HR-Skills Pay 🇨🇲</span>
-                            </div>
-                        </div>
-
-                        {/* LARGE WATERMARK BRAND TEXT */}
-                        <div className="pt-4 text-center overflow-hidden select-none pointer-events-none">
-                            <span className="text-6xl sm:text-9xl font-black text-slate-200/50 uppercase tracking-widest block leading-none font-sans">
-                                BIOLINKO
-                            </span>
-                        </div>
-
-                    </div>
-                </footer>
-
+                <Header auth={auth} />
+                <Hero auth={auth} />
+                <ProductsMarquee />
+                <HowItWorks />
+                <Showcase />
+                <Tools />
+                <ForWho />
+                <Pricing auth={auth} />
+                <Faq />
+                <FinalCta auth={auth} />
+                <Footer />
             </div>
-        </>
+        </MotionConfig>
     );
 }

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { compressImages } from '@/Utils/imageCompressor';
 
-export default function Index({ store, products, metrics, appUrl }) {
+export default function Index({ store, products, metrics, planLimits = {}, appUrl }) {
     const user = usePage().props.auth.user;
     const userPlan = user?.plan || 'starter';
 
@@ -397,7 +397,7 @@ export default function Index({ store, products, metrics, appUrl }) {
                                 )}
                             </div>
                             <p className="text-xs text-slate-300 font-medium">
-                                Limites du plan : <strong className="text-white">{products ? products.length : 0} / {userPlan === 'starter' ? 10 : userPlan === 'pro' ? 50 : userPlan === 'growth' ? 200 : 'Illimité'}</strong> produits • Stock cumulé total : <strong className="text-white">{(products || []).reduce((acc, p) => acc + Number(p.stock || 0), 0)} / {userPlan === 'starter' ? 25 : userPlan === 'pro' ? 500 : userPlan === 'growth' ? 2500 : 'Illimité'}</strong> articles.
+                                Limites du plan : <strong className="text-white">{products ? products.length : 0} / {planLimits.max_products >= 9999 ? 'Illimité' : planLimits.max_products}</strong> produits • Stock cumulé total : <strong className="text-white">{(products || []).reduce((acc, p) => acc + Number(p.stock || 0), 0)} / {planLimits.max_stock >= 99999 ? 'Illimité' : Number(planLimits.max_stock || 0).toLocaleString('fr-FR')}</strong> articles.
                             </p>
                         </div>
                     </div>

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Megaphone, Sparkles, BarChart3, ShieldCheck, Check, Save, Lock, ArrowRight } from 'lucide-react';
 
 export default function Index({ store, user, marketing }) {
+    const planPrices = usePage().props.planPrices || {};
     const { data, setData, post, processing, errors } = useForm({
         facebook_pixel_id: marketing.facebook_pixel_id || '',
         tiktok_pixel_id: marketing.tiktok_pixel_id || '',
@@ -38,10 +39,10 @@ export default function Index({ store, user, marketing }) {
                         <div className="space-y-1">
                             <div className="flex items-center gap-2 font-bold text-amber-300">
                                 <Lock className="w-4 h-4 text-amber-400" />
-                                <span>Fonctionnalités Marketing Réservez au Plan Pro et Supérieur</span>
+                                <span>Fonctionnalités Marketing Réservées au Plan Pro et Supérieur</span>
                             </div>
                             <p className="text-xs text-amber-300/80">
-                                Le suivi par Pixels Facebook/TikTok et le ciblage des paniers abandonnés nécessitent le Plan Pro (7 000 FCFA/mois).
+                                Le suivi par Pixels Facebook/TikTok et le ciblage des paniers abandonnés nécessitent le Plan Pro ({Number(planPrices.pro || 0).toLocaleString('fr-FR')} FCFA/mois).
                             </p>
                         </div>
                         <a

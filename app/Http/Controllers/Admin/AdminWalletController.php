@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\Withdrawal;
 use App\Models\User;
+use App\Models\Withdrawal;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -21,10 +21,10 @@ class AdminWalletController extends Controller
         $completedWithdrawalsSum = (float) Withdrawal::where('status', 'completed')->sum('amount');
         $totalWithdrawalFees = $completedWithdrawalsSum * 0.015;
 
-        // 3. Gain Abonnements SaaS (Pro: 4 350, Growth: 8 250, Business: 14 700 FCFA/mois)
-        $proRevenue = User::where('plan', 'pro')->count() * 4350;
-        $growthRevenue = User::where('plan', 'growth')->count() * 8250;
-        $businessRevenue = User::where('plan', 'business')->count() * 14700;
+        // 3. Gain Abonnements SaaS (prix mensuels définis dans User::PLAN_PRICES)
+        $proRevenue = User::where('plan', 'pro')->count() * User::planPrice('pro');
+        $growthRevenue = User::where('plan', 'growth')->count() * User::planPrice('growth');
+        $businessRevenue = User::where('plan', 'business')->count() * User::planPrice('business');
         $totalSubscriptionRevenue = (float) ($proRevenue + $growthRevenue + $businessRevenue);
 
         // 4. SOLDE TOTAL CUMULÉ DU PORTEFEUILLE ADMIN

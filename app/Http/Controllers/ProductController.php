@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -38,6 +39,10 @@ class ProductController extends Controller
                 'totalStockValue' => $totalStockValue,
                 'lowStockCount' => $lowStockCount,
                 'topProduct' => $topProduct,
+            ],
+            'planLimits' => [
+                'max_products' => $request->user()->getPlanMaxProducts(),
+                'max_stock' => $request->user()->getPlanMaxStock(),
             ],
             'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
         ]);
@@ -86,7 +91,7 @@ class ProductController extends Controller
 
         if ($request->boolean('is_promo') && $userPlan === 'starter') {
             return redirect()->back()->withErrors([
-                'title' => "La mise en promotion des produits est réservée aux abonnements PRO, GROWTH et BUSINESS. Passez au plan Pro pour activer les promotions.",
+                'title' => 'La mise en promotion des produits est réservée aux abonnements PRO, GROWTH et BUSINESS. Passez au plan Pro pour activer les promotions.',
             ]);
         }
 
@@ -96,15 +101,15 @@ class ProductController extends Controller
             foreach ($request->file('images_files') as $file) {
                 if ($file && count($imagePaths) < 5) {
                     $path = $file->store('products', 'public');
-                    $imagePaths[] = '/storage/' . $path;
+                    $imagePaths[] = '/storage/'.$path;
                 }
             }
         } elseif ($request->hasFile('image_file')) {
             $path = $request->file('image_file')->store('products', 'public');
-            $imagePaths[] = '/storage/' . $path;
+            $imagePaths[] = '/storage/'.$path;
         }
 
-        if (!empty($validated['image_url_input'])) {
+        if (! empty($validated['image_url_input'])) {
             $imagePaths[] = $validated['image_url_input'];
         }
 
@@ -113,7 +118,7 @@ class ProductController extends Controller
             $imagePaths[] = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600';
         }
 
-        $slug = \Illuminate\Support\Str::slug($validated['title']) . '-' . \Illuminate\Support\Str::random(4);
+        $slug = Str::slug($validated['title']).'-'.Str::random(4);
 
         $product = $store->products()->create([
             'title' => $validated['title'],
@@ -131,14 +136,14 @@ class ProductController extends Controller
             'images' => $imagePaths,
         ]);
 
-        if (!empty($validated['variants'])) {
-            $validVariants = array_filter($validated['variants'], function($v) {
-                return !empty($v['name']) || !empty($v['size']) || !empty($v['color']);
+        if (! empty($validated['variants'])) {
+            $validVariants = array_filter($validated['variants'], function ($v) {
+                return ! empty($v['name']) || ! empty($v['size']) || ! empty($v['color']);
             });
 
             if ($userPlan === 'starter' && count($validVariants) > 1) {
                 return redirect()->back()->withErrors([
-                    'title' => "La formule STARTER est limitée à 1 seule variante par produit. Passez au plan PRO pour ajouter des variantes illimitées.",
+                    'title' => 'La formule STARTER est limitée à 1 seule variante par produit. Passez au plan PRO pour ajouter des variantes illimitées.',
                 ]);
             }
 
@@ -147,7 +152,7 @@ class ProductController extends Controller
                     'name' => $v['name'] ?? null,
                     'size' => $v['size'] ?? null,
                     'color' => $v['color'] ?? null,
-                    'price' => !empty($v['price']) ? (float) $v['price'] : null,
+                    'price' => ! empty($v['price']) ? (float) $v['price'] : null,
                     'stock_quantity' => isset($v['stock_quantity']) ? (int) $v['stock_quantity'] : 10,
                 ]);
             }
@@ -194,7 +199,7 @@ class ProductController extends Controller
         $userPlan = $request->user()->plan ?? 'starter';
         if ($request->boolean('is_promo') && $userPlan === 'starter') {
             return redirect()->back()->withErrors([
-                'title' => "La mise en promotion des produits est réservée aux abonnements PRO, GROWTH et BUSINESS. Passez au plan Pro pour activer les promotions.",
+                'title' => 'La mise en promotion des produits est réservée aux abonnements PRO, GROWTH et BUSINESS. Passez au plan Pro pour activer les promotions.',
             ]);
         }
 
@@ -205,7 +210,7 @@ class ProductController extends Controller
             foreach ($request->file('images_files') as $file) {
                 if ($file && count($uploaded) < 5) {
                     $path = $file->store('products', 'public');
-                    $uploaded[] = '/storage/' . $path;
+                    $uploaded[] = '/storage/'.$path;
                 }
             }
             if (count($uploaded) > 0) {
@@ -213,7 +218,7 @@ class ProductController extends Controller
             }
         } elseif ($request->hasFile('image_file')) {
             $path = $request->file('image_file')->store('products', 'public');
-            $imagePaths = ['/storage/' . $path];
+            $imagePaths = ['/storage/'.$path];
         }
 
         $updateData = [];
@@ -257,7 +262,7 @@ class ProductController extends Controller
             $updateData['is_active'] = (bool) $validated['is_active'];
         }
 
-        if (!empty($imagePaths)) {
+        if (! empty($imagePaths)) {
             $updateData['image_url'] = $imagePaths[0];
             $updateData['images'] = $imagePaths;
         }
@@ -273,14 +278,14 @@ class ProductController extends Controller
                     if (empty($v['name']) && empty($v['size']) && empty($v['color'])) {
                         continue;
                     }
-                    if (!empty($v['id'])) {
+                    if (! empty($v['id'])) {
                         $variant = $product->variants()->find($v['id']);
                         if ($variant) {
                             $variant->update([
                                 'name' => $v['name'] ?? null,
                                 'size' => $v['size'] ?? null,
                                 'color' => $v['color'] ?? null,
-                                'price' => !empty($v['price']) ? (float) $v['price'] : null,
+                                'price' => ! empty($v['price']) ? (float) $v['price'] : null,
                                 'stock_quantity' => isset($v['stock_quantity']) ? (int) $v['stock_quantity'] : 10,
                             ]);
                             $existingIds[] = $variant->id;
@@ -290,7 +295,7 @@ class ProductController extends Controller
                             'name' => $v['name'] ?? null,
                             'size' => $v['size'] ?? null,
                             'color' => $v['color'] ?? null,
-                            'price' => !empty($v['price']) ? (float) $v['price'] : null,
+                            'price' => ! empty($v['price']) ? (float) $v['price'] : null,
                             'stock_quantity' => isset($v['stock_quantity']) ? (int) $v['stock_quantity'] : 10,
                         ]);
                         $existingIds[] = $newVar->id;
@@ -311,6 +316,7 @@ class ProductController extends Controller
         }
 
         $product->delete();
+
         return redirect()->back()->with('message', 'Produit supprimé !');
     }
 
@@ -320,25 +326,12 @@ class ProductController extends Controller
     protected function checkStockAndProductQuotas($user, $store, int $addedStock, ?int $existingProductId = null): ?string
     {
         $userPlan = strtolower($user->plan ?? 'starter');
-        $maxProductsMap = [
-            'starter' => 10,
-            'pro' => 50,
-            'growth' => 250,
-            'business' => 99999,
-        ];
-        $maxStockMap = [
-            'starter' => 25,
-            'pro' => 500,
-            'growth' => 3000,
-            'business' => 999999,
-        ];
-
-        $maxProducts = $maxProductsMap[$userPlan] ?? 10;
-        $maxStock = $maxStockMap[$userPlan] ?? 25;
+        $maxProducts = $user->getPlanMaxProducts();
+        $maxStock = $user->getPlanMaxStock();
 
         // Check product count limit if creating a new product
-        if (!$existingProductId && $store->products()->count() >= $maxProducts) {
-            return "Limite de {$maxProducts} produits atteinte pour le plan " . strtoupper($userPlan) . ". Passez au plan supérieur pour ajouter plus de produits.";
+        if (! $existingProductId && $store->products()->count() >= $maxProducts) {
+            return "Limite de {$maxProducts} produits atteinte pour le plan ".strtoupper($userPlan).'. Passez au plan supérieur pour ajouter plus de produits.';
         }
 
         // Calculate current total stock across all store products
@@ -350,7 +343,7 @@ class ProductController extends Controller
         $projectedTotalStock = $currentTotalStock + $addedStock;
 
         if ($projectedTotalStock > $maxStock) {
-            return "Capacité de stock maximale atteinte pour le plan " . strtoupper($userPlan) . ". Votre limite de stock cumulé est de {$maxStock} articles (Stock actuel : {$currentTotalStock}/{$maxStock}). Veuillez ajuster le stock ou passer au plan supérieur.";
+            return 'Capacité de stock maximale atteinte pour le plan '.strtoupper($userPlan).". Votre limite de stock cumulé est de {$maxStock} articles (Stock actuel : {$currentTotalStock}/{$maxStock}). Veuillez ajuster le stock ou passer au plan supérieur.";
         }
 
         return null;

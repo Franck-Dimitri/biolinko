@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import HeaderBoutique from '@/Components/Storefront/HeaderBoutique';
 import FooterBoutique from '@/Components/Storefront/FooterBoutique';
 import { Toaster, toast } from 'sonner';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ShoppingCart, CheckCircle2, Trash2, ArrowLeft, ShieldCheck, Lock, X } from 'lucide-react';
-import { useForm, router } from '@inertiajs/react';
+import { MotionConfig } from 'framer-motion';
+import { Lock } from 'lucide-react';
+import { router } from '@inertiajs/react';
 
 export default function StorefrontLayout({ 
     store, 
@@ -15,7 +15,8 @@ export default function StorefrontLayout({
     setSearchQuery,
     isOwner = false,
     hasPromos = false,
-    hasSmartLinks = false
+    hasSmartLinks = false,
+    cartCount = null,
 }) {
     const primaryColor = store?.theme_color || '#FFCC00';
 
@@ -59,7 +60,8 @@ export default function StorefrontLayout({
         toast.info('Article retiré du panier');
     };
 
-    const totalCartCount = cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
+    // La page parente (ex. Boutique) passe son compteur à jour ; sinon on lit le panier enregistré.
+    const totalCartCount = cartCount ?? cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
 
     const handleProceedToCheckout = () => {
         if (setActiveTab) {
@@ -70,13 +72,14 @@ export default function StorefrontLayout({
     };
 
     return (
-        <div className="min-h-screen bg-[#FAFAFA] text-slate-800 font-sans antialiased flex flex-col justify-between selection:bg-slate-900 selection:text-white">
+        <MotionConfig reducedMotion="user">
+        <div className="min-h-screen bg-white text-brand-ink font-sans antialiased flex flex-col justify-between selection:bg-brand-honey selection:text-brand-ink">
             {/* Sonner Toast Provider */}
             <Toaster position="top-center" richColors closeButton />
 
             <style>{`
                 ${store?.border_radius_style === 'square' ? `
-                    .rounded-2xl, .rounded-3xl, .rounded-full, .rounded-xl {
+                    .rounded, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl {
                         border-radius: 4px !important;
                     }
                 ` : ''}
@@ -89,12 +92,12 @@ export default function StorefrontLayout({
             
             {/* UNPUBLISHED BANNER / VENDOR PREVIEW MODE */}
             {!store.is_published && (
-                <div className="bg-amber-500 text-slate-950 text-xs font-bold py-2.5 px-4 text-center border-b border-amber-600/30 flex items-center justify-center gap-2">
+                <div className="bg-brand-honey text-brand-ink text-sm py-2.5 px-4 text-center border-b border-brand-line flex items-center justify-center gap-2">
                     <Lock className="w-4 h-4" />
                     <span>
                         {isOwner 
-                            ? "MODE APERÇU VENDEUR : Votre boutique n'est pas encore publiée en ligne. Cliquez sur « Publier » dans votre tableau de bord pour l'activer." 
-                            : "BOUTIQUE EN COURS DE PRÉPARATION : Le vendeur prépare actuellement sa vitrine officielle."}
+                            ? "Aperçu vendeur : votre boutique n'est pas encore publiée. Publiez-la depuis votre tableau de bord." 
+                            : "Boutique en préparation : le vendeur finalise sa vitrine."}
                     </span>
                 </div>
             )}
@@ -125,13 +128,14 @@ export default function StorefrontLayout({
             />
 
             {/* MAIN CONTENT AREA */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-8 py-8 flex-1 w-full space-y-12">
+            <main className="max-w-7xl mx-auto px-4 sm:px-8 py-6 sm:py-8 flex-1 w-full space-y-12">
                 {children}
             </main>
 
             {/* UNIFIED FOOTER BOUTIQUE */}
             <FooterBoutique store={store} />
         </div>
+        </MotionConfig>
     );
 }
 

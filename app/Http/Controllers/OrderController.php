@@ -6,8 +6,10 @@ use App\Models\Order;
 use App\Models\Wallet;
 use App\Models\Withdrawal;
 use App\Services\HrSkillsPayService;
+use App\Services\WhatsappGatewayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,7 +27,7 @@ class OrderController extends Controller
     {
         $store = $request->user()->store;
 
-        if (!$store) {
+        if (! $store) {
             abort(404, 'Boutique introuvable pour cet utilisateur.');
         }
 
@@ -77,6 +79,7 @@ class OrderController extends Controller
             'filters' => [
                 'status' => $statusFilter,
             ],
+            'canExportSales' => $request->user()->hasPlan('business'),
             'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
         ]);
     }
@@ -99,9 +102,9 @@ class OrderController extends Controller
 
         // Send real-time WhatsApp shipping / delivery notification to customer
         try {
-            app(\App\Services\WhatsappGatewayService::class)->notifyOrderShippingUpdate($order, $validated['status']);
+            app(WhatsappGatewayService::class)->notifyOrderShippingUpdate($order, $validated['status']);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning('WhatsApp notifyOrderShippingUpdate failed', ['order_id' => $order->id, 'err' => $e->getMessage()]);
+            Log::warning('WhatsApp notifyOrderShippingUpdate failed', ['order_id' => $order->id, 'err' => $e->getMessage()]);
         }
 
         return back()->with('message', 'Statut de la commande mis à jour et notification WhatsApp envoyée !');
@@ -113,7 +116,7 @@ class OrderController extends Controller
         $store = $request->user()->store;
         $wallet = $store->wallet;
 
-        if (!$wallet) {
+        if (! $wallet) {
             return back()->withErrors(['amount' => 'Portefeuille introuvable.']);
         }
 
@@ -134,7 +137,7 @@ class OrderController extends Controller
         $operatorChoice = $validated['operator'] ?? $this->hrSkillsPay->detectOperator($formattedPhone);
 
         try {
-            return \Illuminate\Support\Facades\DB::transaction(function () use ($wallet, $amount, $formattedPhone, $operatorChoice) {
+            return DB::transaction(function () use ($wallet, $amount, $formattedPhone, $operatorChoice) {
                 $lockedWallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
 
                 if ($amount > (float) $lockedWallet->balance_available) {
@@ -161,7 +164,7 @@ class OrderController extends Controller
                         'hrskills_transaction_id' => $payoutData['transaction_id'],
                     ]);
 
-                    return back()->with('message', 'Demande de virement Mobile Money de ' . number_format($amount) . ' FCFA soumise vers ' . $formattedPhone . ' (' . $operatorChoice . ').');
+                    return back()->with('message', 'Demande de virement Mobile Money de '.number_format($amount).' FCFA soumise vers '.$formattedPhone.' ('.$operatorChoice.').');
                 } catch (\Exception $e) {
                     Log::error('Withdrawal HR-Skills Payout Error', ['withdrawal_id' => $withdrawal->id, 'err' => $e->getMessage()]);
 
@@ -169,11 +172,12 @@ class OrderController extends Controller
                     $lockedWallet->increment('balance_available', $amount);
                     $withdrawal->update(['status' => 'rejected']);
 
-                    return back()->withErrors(['phone_momo' => 'Échec de l\'envoi du virement Mobile Money : ' . $e->getMessage()]);
+                    return back()->withErrors(['phone_momo' => 'Échec de l\'envoi du virement Mobile Money : '.$e->getMessage()]);
                 }
             });
         } catch (\Exception $e) {
             Log::error('Transaction withdrawal error', ['err' => $e->getMessage()]);
+
             return back()->withErrors(['amount' => 'Une erreur est survenue lors de la demande de retrait.']);
         }
     }

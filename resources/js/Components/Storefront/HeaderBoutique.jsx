@@ -1,186 +1,138 @@
 import { useState } from 'react';
-import { Store, ShoppingCart, Search, Share2, Check, Tag, Star, Heart, User, ChevronDown } from 'lucide-react';
+import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion';
+import { Search, ShoppingBag, Store } from 'lucide-react';
+import { contrastColor } from '@/Components/Storefront/theme';
 
-function getContrastColor(hexColor) {
-    if (!hexColor || typeof hexColor !== 'string' || !hexColor.startsWith('#')) return '#0F172A';
-    const hex = hexColor.replace('#', '');
-    if (hex.length < 6) return '#0F172A';
-    const r = parseInt(hex.substring(0, 2), 16) || 0;
-    const g = parseInt(hex.substring(2, 4), 16) || 0;
-    const b = parseInt(hex.substring(4, 6), 16) || 0;
-    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-    return yiq >= 165 ? '#0F172A' : '#FFFFFF';
-}
-
-export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, showBackToStore = false, searchQuery = '', setSearchQuery, activeTab = 'all', setActiveTab, hasPromos = false, hasSmartLinks = false }) {
+export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, searchQuery = '', setSearchQuery, setActiveTab, hasPromos = false, hasSmartLinks = false }) {
     const primaryColor = store?.theme_color || '#FFCC00';
-    const primaryTextColor = getContrastColor(primaryColor);
+    const primaryTextColor = contrastColor(primaryColor);
+    const [compact, setCompact] = useState(false);
+    const { scrollY } = useScroll();
+    useMotionValueEvent(scrollY, 'change', (v) => setCompact(v > 40));
 
     const scrollToSection = (sectionId) => {
-        const el = document.getElementById(sectionId);
-        if (el) {
-            if (setActiveTab) {
-                setActiveTab('all');
-            }
-            setTimeout(() => {
-                const target = document.getElementById(sectionId);
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            }, 100);
-        } else {
-            window.location.href = `/${store.slug}#${sectionId}`;
-        }
+        if (setActiveTab) setActiveTab('all');
+        setTimeout(() => {
+            const target = document.getElementById(sectionId);
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            else window.location.href = `/${store.slug}#${sectionId}`;
+        }, 80);
     };
 
-    const storeSections = store?.sections_json;
-    const isBannerEnabled = Array.isArray(storeSections) 
-        ? storeSections.some(s => s.id === 'banner' && s.enabled !== false && s.enabled !== 'false' && s.enabled !== 0 && s.enabled !== '0')
+    const sections = store?.sections_json;
+    const isBannerEnabled = Array.isArray(sections)
+        ? sections.some((s) => s.id === 'banner' && ![false, 'false', 0, '0'].includes(s.enabled))
         : true;
 
+    const links = [
+        ['Accueil', 'hero'],
+        ['Catalogue', 'catalog-grid'],
+        ['Meilleures ventes', 'best-sellers'],
+        ...(hasPromos ? [['Promotions', 'promotions']] : []),
+        ...(hasSmartLinks ? [['Packs', 'smartlinks']] : []),
+        ['Avis', 'reviews'],
+        ['À propos', 'about'],
+    ];
+
     return (
-        <header className="sticky top-0 z-40 font-sans shadow-2xs">
-            {/* 0. ANNOUNCEMENT HEADER BANNER */}
+        <header className="sticky top-0 z-40">
             {isBannerEnabled && store?.announcement_header && (
-                <div 
-                    className="text-xs font-extrabold py-2 px-4 text-center transition-all flex items-center justify-center gap-2 shadow-2xs border-b border-slate-950/10"
-                    style={{ backgroundColor: primaryColor, color: primaryTextColor }}
-                >
-                    <span className="truncate max-w-5xl">{store.announcement_header}</span>
+                <div className="overflow-hidden py-2 text-center text-[13px] font-medium" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                    <motion.span
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="inline-block px-4"
+                    >
+                        {store.announcement_header}
+                    </motion.span>
                 </div>
             )}
 
-            {/* MAIN NAVBAR */}
-            <div className="bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5">
-                <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-                    
-                    {/* LOGO & STORE BRAND NAME */}
-                    <a 
-                        href={`/${store.slug}`} 
+            <motion.div
+                animate={{ boxShadow: compact ? '0 8px 24px -16px rgba(43,38,32,0.35)' : '0 0 0 rgba(0,0,0,0)' }}
+                className="border-b border-brand-line bg-white/95 backdrop-blur-md"
+            >
+                <motion.div
+                    animate={{ height: compact ? 60 : 72 }}
+                    transition={{ duration: 0.25 }}
+                    className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 sm:px-8"
+                >
+                    <a
+                        href={`/${store.slug}`}
                         onClick={(e) => {
-                            const el = document.getElementById('hero');
-                            if (el) {
+                            if (document.getElementById('hero')) {
                                 e.preventDefault();
                                 scrollToSection('hero');
                             }
                         }}
-                        className="flex items-center gap-3 cursor-pointer shrink-0 group"
+                        className="flex min-w-0 items-center gap-3"
                     >
-                        <div 
-                            className="w-10 h-10 rounded-2xl font-black flex items-center justify-center text-base shadow-2xs overflow-hidden shrink-0 border border-slate-200 group-hover:scale-105 transition-transform"
-                            style={{ backgroundColor: primaryColor, color: primaryTextColor }}
-                        >
-                            {store.logo_url ? (
-                                <img src={store.logo_url} alt="Logo" className="w-full h-full object-cover" />
-                            ) : (
-                                <Store className="w-5 h-5" style={{ color: primaryTextColor }} />
-                            )}
-                        </div>
-                        <div>
-                            <h1 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight leading-none group-hover:text-amber-600 transition-colors font-sans">{store.name}</h1>
-                            <p className="text-[11px] text-slate-500 font-semibold tracking-wide uppercase mt-0.5">{store.category || 'Boutique Officielle'}</p>
-                        </div>
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                            {store.logo_url ? <img src={store.logo_url} alt="" className="h-full w-full object-cover" /> : <Store className="h-5 w-5" />}
+                        </span>
+                        <span className="min-w-0">
+                            <span className="block truncate text-lg font-bold leading-tight tracking-tight text-brand-ink">{store.name}</span>
+                            <span className="block truncate text-xs text-brand-muted">{store.category || 'Boutique officielle'}</span>
+                        </span>
                     </a>
 
-                    {/* CENTERED NAVIGATION LINKS */}
-                    <nav className="hidden lg:flex items-center gap-6 text-xs font-bold text-slate-700">
-                        <button
-                            type="button"
-                            onClick={() => scrollToSection('hero')}
-                            className="transition-colors hover:text-slate-950 cursor-pointer text-slate-700 hover:border-b-2 hover:border-slate-950 pb-0.5"
-                        >
-                            Accueil
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => scrollToSection('categories')}
-                            className="transition-colors hover:text-slate-950 cursor-pointer text-slate-700 hover:border-b-2 hover:border-slate-950 pb-0.5"
-                        >
-                            Catégories
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => scrollToSection('catalog-grid')}
-                            className="transition-colors hover:text-slate-950 cursor-pointer text-slate-700 hover:border-b-2 hover:border-slate-950 pb-0.5"
-                        >
-                            Catalogue
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => scrollToSection('best-sellers')}
-                            className="transition-colors hover:text-slate-950 cursor-pointer text-slate-700 hover:border-b-2 hover:border-slate-950 pb-0.5"
-                        >
-                            Meilleures Ventes
-                        </button>
-                        {hasPromos && (
-                            <button
-                                type="button"
-                                onClick={() => scrollToSection('promotions')}
-                                className="transition-colors hover:text-slate-950 flex items-center gap-1 cursor-pointer text-rose-600 hover:border-b-2 hover:border-rose-600 pb-0.5"
-                            >
-                                <Tag className="w-3.5 h-3.5 text-rose-500" />
-                                <span>Promotions</span>
+                    <nav className="hidden items-center gap-6 text-sm font-medium text-brand-ink/75 lg:flex">
+                        {links.map(([label, id]) => (
+                            <button key={id} type="button" onClick={() => scrollToSection(id)} className="relative py-1 transition-colors hover:text-brand-ink">
+                                {label}
                             </button>
-                        )}
-                        {hasSmartLinks && (
-                            <button
-                                type="button"
-                                onClick={() => scrollToSection('smartlinks')}
-                                className="transition-colors hover:text-slate-950 flex items-center gap-1 cursor-pointer text-amber-700 hover:border-b-2 hover:border-amber-600 pb-0.5"
-                            >
-                                <span>Packs SmartLinks</span>
-                            </button>
-                        )}
-                        <button
-                            type="button"
-                            onClick={() => scrollToSection('reviews')}
-                            className="transition-colors hover:text-slate-950 flex items-center gap-1 cursor-pointer text-slate-700 hover:border-b-2 hover:border-slate-950 pb-0.5"
-                        >
-                            <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
-                            <span>Avis</span>
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => scrollToSection('about')}
-                            className="transition-colors hover:text-slate-950 cursor-pointer text-slate-700 hover:border-b-2 hover:border-slate-950 pb-0.5"
-                        >
-                            À Propos &amp; Support
-                        </button>
+                        ))}
                     </nav>
 
-                    {/* RIGHT UTILITY ICONS (SEARCH & CART) */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
                         {setSearchQuery && (
-                            <div className="relative hidden sm:block">
-                                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                            <label className="relative hidden sm:block">
+                                <span className="sr-only">Rechercher un produit</span>
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" />
                                 <input
-                                    type="text"
+                                    type="search"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="Rechercher..."
-                                    className="pl-9 pr-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-medium text-slate-800 outline-none w-36 focus:w-48 transition-all"
+                                    className="h-10 w-40 rounded-md border-brand-line bg-brand-sand pl-9 pr-3 text-sm text-brand-ink transition-all focus:w-56 focus:border-brand-ink/30 focus:ring-0"
                                 />
-                            </div>
+                            </label>
                         )}
-
-                        <button
-                            onClick={onOpenCart}
-                            className="px-5 py-2.5 rounded-full text-xs font-extrabold shadow-sm transition-all active:scale-95 flex items-center gap-2 border cursor-pointer"
-                            style={{ backgroundColor: primaryColor, color: primaryTextColor, borderColor: primaryColor }}
-                            title="Mon Panier"
+                        <motion.button
+                            type="button"
+                            onClick={onOpenCart || (() => { window.location.href = `/${store.slug}?tab=cart`; })}
+                            whileTap={{ scale: 0.95 }}
+                            className="relative flex h-10 items-center gap-2 rounded-md px-3.5 text-sm font-semibold sm:px-4"
+                            style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+                            aria-label={`Panier, ${cartCount} article${cartCount > 1 ? 's' : ''}`}
                         >
-                            <ShoppingCart className="w-4 h-4" style={{ color: primaryTextColor }} />
+                            <ShoppingBag className="h-4 w-4" />
                             <span className="hidden sm:inline">Panier</span>
-                            {cartCount > 0 && (
-                                <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black shadow-xs">
-                                    {cartCount}
-                                </span>
-                            )}
-                        </button>
+                            <AnimatePresence mode="popLayout">
+                                {cartCount > 0 && (
+                                    <motion.span
+                                        key={cartCount}
+                                        initial={{ scale: 0.4, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 1 }}
+                                        exit={{ scale: 0.4, opacity: 0 }}
+                                        transition={{ type: 'spring', stiffness: 500, damping: 18 }}
+                                        className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-white px-1 text-[11px] font-semibold text-brand-ink"
+                                    >
+                                        {cartCount}
+                                    </motion.span>
+                                )}
+                            </AnimatePresence>
+                        </motion.button>
                     </div>
+                </motion.div>
 
-                </div>
-            </div>
+                <nav className="flex gap-5 overflow-x-auto px-4 pb-2.5 text-sm font-medium text-brand-ink/75 [scrollbar-width:none] lg:hidden">
+                    {links.map(([label, id]) => (
+                        <button key={id} type="button" onClick={() => scrollToSection(id)} className="shrink-0 py-1">{label}</button>
+                    ))}
+                </nav>
+            </motion.div>
         </header>
     );
 }

@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 
 export default function SubscriptionsIndex({ vendors, metrics, filters }) {
+    const planPrices = usePage().props.planPrices || {};
+    const formatK = (plan) => `${(Number(planPrices[plan] || 0) / 1000).toLocaleString('fr-FR')}k`;
     const [search, setSearch] = useState(filters?.search || '');
     const [plan, setPlan] = useState(filters?.plan || 'all');
 
@@ -83,7 +85,7 @@ export default function SubscriptionsIndex({ vendors, metrics, filters }) {
                             {(metrics?.pro_count || 0) + (metrics?.growth_count || 0)} abonné(s)
                         </div>
                         <div className="text-[11px] text-blue-600 font-semibold">
-                            Pro (2.5k) &amp; Growth (7k)
+                            Pro ({formatK('pro')}) &amp; Growth ({formatK('growth')})
                         </div>
                     </div>
 
@@ -98,7 +100,7 @@ export default function SubscriptionsIndex({ vendors, metrics, filters }) {
                             {metrics?.business_count || 0} abonné(s)
                         </div>
                         <div className="text-[11px] text-purple-700 font-semibold">
-                            Business (12 000 FCFA/mo)
+                            Business ({Number(planPrices.business || 0).toLocaleString('fr-FR')} FCFA/mois)
                         </div>
                     </div>
                 </div>

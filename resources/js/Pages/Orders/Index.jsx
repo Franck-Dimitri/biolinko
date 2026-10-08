@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, usePage, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ExportSalesModal from '@/Components/ExportSalesModal';
 import { 
     PackageCheck, TrendingUp, Clock, 
     CheckCircle2, AlertCircle, Phone, MapPin, Search, Filter, 
@@ -21,7 +22,8 @@ function getContrastColor(hexColor) {
     return yiq >= 165 ? '#0F172A' : '#FFFFFF';
 }
 
-export default function Index({ store, orders, metrics, filters, appUrl }) {
+export default function Index({ store, orders, metrics, filters, canExportSales = false, appUrl }) {
+    const [showExport, setShowExport] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -151,7 +153,17 @@ export default function Index({ store, orders, metrics, filters, appUrl }) {
                             Gérez vos expéditions, passez les commandes payées à livrées et visualisez les factures intégrées.
                         </p>
                     </div>
+                    <button
+                        type="button"
+                        onClick={() => setShowExport(true)}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-900 text-xs font-bold shadow-2xs hover:border-slate-300 hover:shadow-xs transition-all active:scale-95"
+                    >
+                        <Download className="w-4 h-4 stroke-[2.5]" /> Exporter les ventes
+                        {!canExportSales && <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">Business</span>}
+                    </button>
                 </div>
+
+                <ExportSalesModal show={showExport} onClose={() => setShowExport(false)} canExport={canExportSales} />
 
                 {/* METRICS CARDS */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

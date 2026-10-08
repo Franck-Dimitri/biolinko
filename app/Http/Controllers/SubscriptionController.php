@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Subscription;
+use App\Models\User;
 use App\Services\HrSkillsPayService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -44,24 +44,25 @@ class SubscriptionController extends Controller
                     'Jusqu\'à 10 produits au catalogue',
                     'Capacité de stock : 25 articles max',
                     '1-Click WhatsApp manuel (wa.me)',
+                    '1 campagne WhatsApp / mois (10 clients max)',
                     'Vitrine e-commerce sous-domaine BIOLINKO',
                     'Fast Checkout Mobile Money (MTN & Orange 🇨🇲)',
                     '1 variante par produit (Taille ou Couleur)',
-                    'Facturation PDF standard',
+                    'Factures PDF avec QR Code (mention BIOLINKO)',
                     'Support client standard',
                 ],
             ],
             [
                 'id' => 'pro',
                 'name' => 'Pro',
-                'price' => 4350,
+                'price' => User::planPrice('pro'),
                 'period' => 'FCFA / mois',
                 'badge' => 'Populaire',
                 'color' => 'amber',
                 'max_products' => 50,
                 'max_stock' => 500,
                 'whatsapp_recovery' => true,
-                'marketing_pixels' => false,
+                'marketing_pixels' => true,
                 'priority_support' => true,
                 'features' => [
                     'Jusqu\'à 50 produits au catalogue',
@@ -69,7 +70,9 @@ class SubscriptionController extends Controller
                     '🚀 Notifications WhatsApp Officielles Automatiques',
                     'Variantes illimitées (Tailles, Couleurs & Surprix)',
                     'Relance WhatsApp 1-Clic des paniers réservés',
-                    'Factures PDF certifiées avec QR Code & Filigrane',
+                    'Factures PDF avec QR Code à votre marque (sans mention BIOLINKO)',
+                    'Pixels Marketing (Facebook, TikTok, Google Ads)',
+                    'Campagnes WhatsApp + SmartLinks : 4 / mois (25 clients max)',
                     'Studio Visuel (Ordre des sections de vitrine)',
                     'Promotions & prix barrés activables',
                     'Support Prioritaire WhatsApp 7j/7',
@@ -78,7 +81,7 @@ class SubscriptionController extends Controller
             [
                 'id' => 'growth',
                 'name' => 'Growth',
-                'price' => 8250,
+                'price' => User::planPrice('growth'),
                 'period' => 'FCFA / mois',
                 'badge' => 'Croissance',
                 'color' => 'indigo',
@@ -92,8 +95,7 @@ class SubscriptionController extends Controller
                     'Capacité de stock cumulé : 3 000 articles',
                     'Toutes les fonctionnalités Pro incluses',
                     '⚡ Relances automatiques WhatsApp des paniers',
-                    'Pixels Marketing (Facebook, TikTok, Google Ads)',
-                    'Campagnes WhatsApp promotionnelles (SmartLinks)',
+                    'Campagnes WhatsApp + SmartLinks : 10 / mois (40 clients max)',
                     'Module Statistiques & Ventes avancées',
                     'Retraits Mobile Money prioritaires (< 4h)',
                     'Accompagnement Stratégique Vente',
@@ -102,7 +104,7 @@ class SubscriptionController extends Controller
             [
                 'id' => 'business',
                 'name' => 'Business',
-                'price' => 14700,
+                'price' => User::planPrice('business'),
                 'period' => 'FCFA / mois',
                 'badge' => 'Illimité VIP',
                 'color' => 'emerald',
@@ -115,6 +117,7 @@ class SubscriptionController extends Controller
                     'Catalogue Produits ILLIMITÉ (99 999)',
                     'Capacité de stock ILLIMITÉE',
                     'Toutes les fonctionnalités Growth incluses',
+                    'Campagnes WhatsApp + SmartLinks : 25 / mois (100 clients max)',
                     'Flux Notifications WhatsApp haute priorité',
                     'Retraits Mobile Money en Temps Réel instantanés',
                     'Exportation comptable des commandes (CSV / Excel)',
@@ -185,14 +188,7 @@ class SubscriptionController extends Controller
         $targetPlan = strtolower($validated['plan']);
         $cycleMonths = (int) ($validated['cycle'] ?? 1);
 
-        $planPrices = [
-            'starter' => 0,
-            'pro' => 4350,
-            'growth' => 8250,
-            'business' => 14700,
-        ];
-
-        $monthlyPrice = $planPrices[$targetPlan] ?? 0;
+        $monthlyPrice = User::planPrice($targetPlan);
 
         // Downgrade / Switch to Starter plan is free & instant
         if ($monthlyPrice === 0) {
@@ -240,7 +236,7 @@ class SubscriptionController extends Controller
 
         // Initiate HR-Skills Pay Mobile Money Cash-In
         try {
-            $url = config('services.hrskills_pay.base_url') . '/api/v1/payin/mobile-money';
+            $url = config('services.hrskills_pay.base_url').'/api/v1/payin/mobile-money';
             $token = $this->hrSkillsPay->getTransactionToken();
             $idempotencyKey = (string) Str::uuid();
 
@@ -256,7 +252,7 @@ class SubscriptionController extends Controller
                 'phone_number' => $formattedPhone,
                 'amount' => (int) $totalPrice,
                 'currency' => 'XAF',
-                'description' => 'Abonnement BIOLINKO Plan ' . ucfirst($targetPlan) . ' (' . $cycleLabel . ')',
+                'description' => 'Abonnement BIOLINKO Plan '.ucfirst($targetPlan).' ('.$cycleLabel.')',
                 'metadata' => [
                     'subscription_id' => $subscription->id,
                     'user_id' => $user->id,
@@ -266,7 +262,7 @@ class SubscriptionController extends Controller
             ];
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . config('services.hrskills_pay.public_key'),
+                'Authorization' => 'Bearer '.config('services.hrskills_pay.public_key'),
                 'X-Transaction-Token' => $token,
                 'Idempotency-Key' => $idempotencyKey,
                 'Content-Type' => 'application/json',
@@ -303,7 +299,7 @@ class SubscriptionController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'Échec du paiement Mobile Money : ' . $e->getMessage(),
+                'error' => 'Échec du paiement Mobile Money : '.$e->getMessage(),
             ], 422);
         }
     }
@@ -312,7 +308,7 @@ class SubscriptionController extends Controller
     {
         $subscription = Subscription::where('hrskills_reference', $reference)->first();
 
-        if (!$subscription) {
+        if (! $subscription) {
             return response()->json(['status' => 'NOT_FOUND', 'paid' => false], 404);
         }
 
@@ -352,12 +348,13 @@ class SubscriptionController extends Controller
                 return response()->json([
                     'status' => 'SUCCESS',
                     'paid' => true,
-                    'message' => 'Abonnement ' . ucfirst($subscription->plan) . ' activé avec succès pour ' . $months . ' mois !',
+                    'message' => 'Abonnement '.ucfirst($subscription->plan).' activé avec succès pour '.$months.' mois !',
                 ]);
             }
 
             if ($liveStatus === 'FAILED') {
                 $subscription->update(['payment_status' => 'failed']);
+
                 return response()->json([
                     'status' => 'FAILED',
                     'paid' => false,

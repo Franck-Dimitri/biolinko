@@ -1,32 +1,33 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Admin\AdminStoreController;
-use App\Http\Controllers\Admin\AdminUserController;
-use App\Http\Controllers\Admin\AdminWithdrawalController;
-use App\Http\Controllers\Admin\AdminTransactionController;
-use App\Http\Controllers\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminSettingController;
+use App\Http\Controllers\Admin\AdminStoreController;
+use App\Http\Controllers\Admin\AdminSubscriptionController;
+use App\Http\Controllers\Admin\AdminTransactionController;
+use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminWalletController;
+use App\Http\Controllers\Admin\AdminWithdrawalController;
 use App\Http\Controllers\AppearanceController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HrSkillsPayWebhookController;
-use App\Http\Controllers\WhatsappWebhookController;
 use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderTrackingController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SalesReportController;
+use App\Http\Controllers\SellerInvoiceController;
+use App\Http\Controllers\SmartLinkController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\ToolPluginController;
-use App\Http\Controllers\SellerInvoiceController;
-use App\Http\Controllers\SmartLinkController;
 use App\Http\Controllers\WalletController;
+use App\Http\Controllers\WhatsappWebhookController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -47,6 +48,7 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function (Request $re
     if ($user->isAdmin()) {
         return redirect()->route('admin.dashboard');
     }
+
     return redirect()->route('seller.dashboard');
 })->name('dashboard');
 
@@ -54,7 +56,7 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function (Request $re
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(function () {
     // 1. Dashboard Super-Admin
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
-    
+
     // 2. Boutiques Réseau
     Route::get('/stores', [AdminStoreController::class, 'index'])->name('admin.stores.index');
     Route::post('/stores/{store}/toggle-status', [AdminStoreController::class, 'toggleStatus'])->name('admin.stores.toggleStatus');
@@ -97,7 +99,6 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
     Route::post('/settings/whatsapp-test', [AdminSettingController::class, 'testWhatsappMessage'])->name('admin.settings.whatsapp.test');
 });
 
-
 // 2. SELLER / VENDOR ROUTES (Prefix: /seller, Middleware: role:seller)
 Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('seller.dashboard');
@@ -120,6 +121,7 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
 
     // Orders Management
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/export', [SalesReportController::class, 'export'])->middleware('plan:business')->name('orders.export');
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
 
     // Wallet & Cashout Management

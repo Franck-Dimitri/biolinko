@@ -14,6 +14,21 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    /**
+     * Single source of truth for monthly plan prices (FCFA).
+     */
+    public const PLAN_PRICES = [
+        'starter' => 0,
+        'pro' => 2500,
+        'growth' => 7000,
+        'business' => 12000,
+    ];
+
+    public static function planPrice(string $plan): int
+    {
+        return self::PLAN_PRICES[strtolower($plan)] ?? 0;
+    }
+
     protected $fillable = [
         'name',
         'email',
@@ -81,7 +96,7 @@ class User extends Authenticatable
             return false;
         }
 
-        if (!$this->email_otp_expires_at || $this->email_otp_expires_at->isPast()) {
+        if (! $this->email_otp_expires_at || $this->email_otp_expires_at->isPast()) {
             return false;
         }
 
@@ -105,7 +120,7 @@ class User extends Authenticatable
 
     public function getDaysRemaining(): int
     {
-        if (!$this->subscription_expires_at) {
+        if (! $this->subscription_expires_at) {
             return 30;
         }
 
@@ -141,6 +156,16 @@ class User extends Authenticatable
             'growth' => 250,
             'business' => 99999,
             default => 10,
+        };
+    }
+
+    public function getPlanMaxStock(): int
+    {
+        return match (strtolower($this->plan ?? 'starter')) {
+            'pro' => 500,
+            'growth' => 3000,
+            'business' => 999999,
+            default => 25,
         };
     }
 

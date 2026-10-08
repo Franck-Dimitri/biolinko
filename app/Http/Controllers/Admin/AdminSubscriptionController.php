@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\Store;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -23,13 +22,13 @@ class AdminSubscriptionController extends Controller
             $query->where('plan', $planFilter);
         }
 
-        if (!empty($search)) {
+        if (! empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhereHas('store', function ($sq) use ($search) {
-                      $sq->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhereHas('store', function ($sq) use ($search) {
+                        $sq->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -41,9 +40,9 @@ class AdminSubscriptionController extends Controller
             'pro_count' => User::where('plan', 'pro')->count(),
             'growth_count' => User::where('plan', 'growth')->count(),
             'business_count' => User::where('plan', 'business')->count(),
-            'estimated_monthly_mrr' => (User::where('plan', 'pro')->count() * 4350) + 
-                                       (User::where('plan', 'growth')->count() * 8250) + 
-                                       (User::where('plan', 'business')->count() * 14700),
+            'estimated_monthly_mrr' => (User::where('plan', 'pro')->count() * User::planPrice('pro')) +
+                                       (User::where('plan', 'growth')->count() * User::planPrice('growth')) +
+                                       (User::where('plan', 'business')->count() * User::planPrice('business')),
         ];
 
         return Inertia::render('Admin/Subscriptions/Index', [
@@ -72,6 +71,6 @@ class AdminSubscriptionController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('message', "Abonnement de {$user->name} mis à jour vers " . strtoupper($validated['plan']) . " avec succès !");
+        return redirect()->back()->with('message', "Abonnement de {$user->name} mis à jour vers ".strtoupper($validated['plan']).' avec succès !');
     }
 }

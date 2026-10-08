@@ -24,8 +24,24 @@ export default {
                     yellowHover: '#E6B800',
                     yellowLight: '#FFF8D6',
                     dark: '#18181B',
-                }
-            }
+                    // Refonte vitrine & landing : encre chaude plutôt que noir pur
+                    ink: '#2B2620',
+                    muted: '#6F6757',
+                    cream: '#FFFBEB',
+                    sand: '#FBF6E9',
+                    line: '#EDE5CF',
+                    honey: '#FFE58A',
+                },
+            },
+            keyframes: {
+                marquee: {
+                    from: { transform: 'translateX(0)' },
+                    to: { transform: 'translateX(-50%)' },
+                },
+            },
+            animation: {
+                marquee: 'marquee 40s linear infinite',
+            },
         },
     },
 

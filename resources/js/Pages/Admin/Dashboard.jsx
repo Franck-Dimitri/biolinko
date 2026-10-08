@@ -8,8 +8,11 @@ import {
     Sparkles, ArrowRight, ExternalLink, Filter, Search, ChevronRight, BarChart3, Activity
 } from 'lucide-react';
 
-export default function Dashboard({ metrics, recentStores, pendingWithdrawals }) {
+export default function Dashboard({ metrics, planCounts = {}, recentStores, pendingWithdrawals }) {
     const user = usePage().props.auth.user;
+    const planPrices = usePage().props.planPrices || {};
+    const formatPrice = (plan) => `${Number(planPrices[plan] || 0).toLocaleString('fr-FR')} FCFA/mois`;
+    const vendorLabel = (plan) => `${planCounts[plan] || 0} Vendeur${(planCounts[plan] || 0) > 1 ? 's' : ''}`;
 
     const gmvChartData = [
         { day: 'Lun', val: 140000 },
@@ -190,19 +193,19 @@ export default function Dashboard({ metrics, recentStores, pendingWithdrawals })
                             <div className="space-y-3 text-xs font-medium">
                                 <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
                                     <span className="text-slate-600">Plan Starter (Gratuit)</span>
-                                    <span className="font-extrabold text-slate-950">9 Vendeurs</span>
+                                    <span className="font-extrabold text-slate-950">{vendorLabel('starter')}</span>
                                 </div>
                                 <div className="p-3 rounded-2xl bg-amber-50/60 border border-amber-100 flex items-center justify-between">
-                                    <span className="text-amber-900 font-bold">Plan Pro (2 500 FCFA/mois)</span>
-                                    <span className="font-extrabold text-amber-900">1 Vendeur</span>
+                                    <span className="text-amber-900 font-bold">Plan Pro ({formatPrice('pro')})</span>
+                                    <span className="font-extrabold text-amber-900">{vendorLabel('pro')}</span>
                                 </div>
                                 <div className="p-3 rounded-2xl bg-blue-50/60 border border-blue-100 flex items-center justify-between">
-                                    <span className="text-blue-900 font-bold">Plan Growth (7 000 FCFA/mois)</span>
-                                    <span className="font-extrabold text-blue-900">1 Vendeur</span>
+                                    <span className="text-blue-900 font-bold">Plan Growth ({formatPrice('growth')})</span>
+                                    <span className="font-extrabold text-blue-900">{vendorLabel('growth')}</span>
                                 </div>
                                 <div className="p-3 rounded-2xl bg-purple-50/60 border border-purple-100 flex items-center justify-between">
-                                    <span className="text-purple-900 font-bold">Plan Business (12 000 FCFA/mois)</span>
-                                    <span className="font-extrabold text-purple-900">0 Vendeur</span>
+                                    <span className="text-purple-900 font-bold">Plan Business ({formatPrice('business')})</span>
+                                    <span className="font-extrabold text-purple-900">{vendorLabel('business')}</span>
                                 </div>
                             </div>
                         </div>
