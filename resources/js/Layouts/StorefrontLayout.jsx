@@ -93,8 +93,8 @@ export default function StorefrontLayout({
             {/* UNPUBLISHED BANNER / VENDOR PREVIEW MODE */}
             {!store.is_published && (
                 <div className="bg-brand-honey text-brand-ink text-sm py-2.5 px-4 text-center border-b border-brand-line flex items-center justify-center gap-2">
-                    <Lock className="w-4 h-4" />
-                    <span>
+                    <Lock className="w-4 h-4 shrink-0" />
+                    <span className="break-words">
                         {isOwner 
                             ? "Aperçu vendeur : votre boutique n'est pas encore publiée. Publiez-la depuis votre tableau de bord." 
                             : "Boutique en préparation : le vendeur finalise sa vitrine."}

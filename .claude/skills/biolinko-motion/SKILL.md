@@ -45,3 +45,7 @@ Landing and storefront pages use `resources/js/Components/Motion.jsx` — reuse 
 ## Verify
 
 Run `npm run dev`, check the page on a 375 px viewport, test the open/close path twice quickly (no stuck exit states), and with OS "reduce motion" enabled.
+
+## Landing components
+
+`resources/js/Components/Landing/OrbitHero.jsx` (rotating orbit rings with counter-rotating chips, gliding yellow arcs, rotating channel word, stacked notification feed with glow, « Fonctionne avec » strip) and `Components/Landing/FeatureTabs.jsx` (`FeatureTabs`: auto-advancing tabs with progress bar that pause on hover; `StatsBand`: CountUp facts). Keep facts real (no invented ratings or user counts).

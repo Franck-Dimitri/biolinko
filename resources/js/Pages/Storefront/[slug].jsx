@@ -150,9 +150,9 @@ export default function ProductSlugShow({ store, product, isPreview = false }) {
                         </motion.div>
 
                         {/* Infos & achat */}
-                        <Stagger gap={0.07} className="space-y-6">
-                            <StaggerItem className="space-y-3">
-                                <h1 className="text-3xl font-bold leading-tight tracking-tight text-brand-ink sm:text-4xl">{product.title}</h1>
+                        <Stagger gap={0.07} className="space-y-6 min-w-0">
+                            <StaggerItem className="space-y-3 min-w-0">
+                                <h1 className="break-words text-3xl font-bold leading-tight tracking-tight text-brand-ink sm:text-4xl">{product.title}</h1>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                                     {avgRating && (
                                         <span className="flex items-center gap-1 text-brand-ink"><Star className="h-4 w-4 fill-[#F5B800] text-[#F5B800]" /> {avgRating} ({reviewsList.length} avis)</span>
@@ -230,20 +230,20 @@ export default function ProductSlugShow({ store, product, isPreview = false }) {
                             {product.description && (
                                 <StaggerItem className="space-y-2">
                                     <h2 className="text-lg font-semibold text-brand-ink">Description</h2>
-                                    <p className="whitespace-pre-line leading-relaxed text-brand-muted">{product.description}</p>
+                                    <p className="break-words whitespace-pre-line leading-relaxed text-brand-muted">{product.description}</p>
                                 </StaggerItem>
                             )}
 
                             <StaggerItem>
                                 <a href={`/${store.slug}`} className="flex items-center gap-3 rounded-lg bg-brand-sand p-4 hover:bg-brand-cream">
-                                    <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                                    <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full shadow-xs" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
                                         {store.logo_url ? <img src={store.logo_url} alt="" className="h-full w-full object-cover" /> : <Store className="h-5 w-5" />}
                                     </span>
-                                    <span className="flex-1">
-                                        <span className="block font-medium text-brand-ink">{store.name}</span>
-                                        <span className="text-sm text-brand-muted">{store.category || 'Voir la boutique'}</span>
+                                    <span className="flex-1 min-w-0">
+                                        <span className="block truncate font-medium text-brand-ink" title={store.name}>{store.name}</span>
+                                        <span className="block truncate text-sm text-brand-muted">{store.category || 'Voir la boutique'}</span>
                                     </span>
-                                    <ArrowRight className="h-4 w-4 text-brand-muted" />
+                                    <ArrowRight className="h-4 w-4 shrink-0 text-brand-muted" />
                                 </a>
                             </StaggerItem>
                         </Stagger>
@@ -254,16 +254,16 @@ export default function ProductSlugShow({ store, product, isPreview = false }) {
                     <section className="space-y-6">
                         <Reveal className="flex items-end justify-between">
                             <h2 className="text-2xl font-bold tracking-tight text-brand-ink">Avis clients</h2>
-                            <a href={`/${store.slug}#reviews`} className="text-[15px] font-medium text-brand-ink hover:underline">Donner mon avis</a>
+                            <a href={`/${store.slug}#reviews`} className="text-[15px] font-medium text-brand-ink hover:underline shrink-0">Donner mon avis</a>
                         </Reveal>
                         <Stagger className="grid gap-5 md:grid-cols-3">
                             {reviewsList.slice(0, 3).map((rev, idx) => (
-                                <StaggerItem key={rev.id || idx} className="space-y-3 rounded-lg border border-brand-line p-5">
+                                <StaggerItem key={rev.id || idx} className="space-y-3 rounded-lg border border-brand-line p-5 overflow-hidden">
                                     <div className="flex gap-0.5">
-                                        {Array.from({ length: 5 }).map((_, s) => <Star key={s} className={`h-4 w-4 ${s < (rev.rating || 5) ? 'fill-[#F5B800] text-[#F5B800]' : 'text-brand-line'}`} />)}
+                                        {Array.from({ length: 5 }).map((_, s) => <Star key={s} className={`h-4 w-4 shrink-0 ${s < (rev.rating || 5) ? 'fill-[#F5B800] text-[#F5B800]' : 'text-brand-line'}`} />)}
                                     </div>
-                                    <p className="leading-relaxed text-brand-ink">{rev.comment}</p>
-                                    <div className="text-sm text-brand-muted">{rev.customer_name || rev.name}{(rev.customer_city || rev.city) ? `, ${rev.customer_city || rev.city}` : ''}</div>
+                                    <p className="break-words leading-relaxed text-brand-ink line-clamp-4">{rev.comment}</p>
+                                    <div className="truncate text-sm text-brand-muted" title={rev.customer_name || rev.name}>{rev.customer_name || rev.name}{(rev.customer_city || rev.city) ? `, ${rev.customer_city || rev.city}` : ''}</div>
                                 </StaggerItem>
                             ))}
                         </Stagger>
@@ -274,7 +274,7 @@ export default function ProductSlugShow({ store, product, isPreview = false }) {
                     <section className="space-y-6">
                         <Reveal className="flex items-end justify-between">
                             <h2 className="text-2xl font-bold tracking-tight text-brand-ink">Vous aimerez aussi</h2>
-                            <a href={`/${store.slug}`} className="inline-flex items-center gap-1.5 text-[15px] font-medium text-brand-ink hover:underline">Toute la boutique <ArrowRight className="h-4 w-4" /></a>
+                            <a href={`/${store.slug}`} className="inline-flex items-center gap-1.5 text-[15px] font-medium text-brand-ink hover:underline shrink-0">Toute la boutique <ArrowRight className="h-4 w-4" /></a>
                         </Reveal>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-4">
                             {relatedProducts.map((p) => (
@@ -295,11 +295,11 @@ export default function ProductSlugShow({ store, product, isPreview = false }) {
             {/* Barre d'achat mobile */}
             <motion.div initial={{ y: 100 }} animate={{ y: 0 }} transition={{ type: 'spring', stiffness: 280, damping: 30, delay: 0.4 }}
                 className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-brand-line bg-white/95 p-3 backdrop-blur-md sm:hidden">
-                <button type="button" disabled={soldOut} onClick={() => handleAddToCart(false)} aria-label="Ajouter au panier" className="flex h-12 w-12 items-center justify-center rounded-md border border-brand-ink/15 text-brand-ink disabled:opacity-50">
+                <button type="button" disabled={soldOut} onClick={() => handleAddToCart(false)} aria-label="Ajouter au panier" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-brand-ink/15 text-brand-ink disabled:opacity-50">
                     <ShoppingBag className="h-5 w-5" />
                 </button>
-                <button type="button" disabled={soldOut} onClick={() => handleAddToCart(true)} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-md font-semibold disabled:opacity-50" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
-                    {soldOut ? 'Épuisé' : `Acheter, ${Math.ceil(unitPrice * quantity).toLocaleString('fr-FR')} FCFA`}
+                <button type="button" disabled={soldOut} onClick={() => handleAddToCart(true)} className="flex h-12 flex-1 items-center justify-center gap-2 rounded-md font-semibold disabled:opacity-50 min-w-0 px-2" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                    <span className="truncate">{soldOut ? 'Épuisé' : `Acheter • ${Math.ceil(unitPrice * quantity).toLocaleString('fr-FR')} FCFA`}</span>
                 </button>
             </motion.div>
         </StorefrontLayout>

@@ -651,11 +651,11 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                             <ul className="max-h-80 space-y-3 overflow-y-auto pr-1">
                                                 <AnimatePresence initial={false}>
                                                     {cartItems.map((item, idx) => (
-                                                        <motion.li key={`${item.product_id}-${item.variant_id}`} layout initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12, height: 0 }} className="flex items-center gap-3">
-                                                            <ProductImage src={item.image_url} alt={item.title} className="h-16 w-14 shrink-0 rounded-md" />
+                                                        <motion.li key={`${item.product_id}-${item.variant_id}`} layout initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12, height: 0 }} className="flex items-center gap-3 min-w-0">
+                                                            <ProductImage src={item.image_url} alt={item.title} className="h-16 w-14 shrink-0 rounded-md object-cover" />
                                                             <div className="min-w-0 flex-1">
-                                                                <div className="truncate text-[15px] font-medium text-brand-ink">{item.title}</div>
-                                                                {item.variant_label && <div className="truncate text-sm text-brand-muted">{item.variant_label}</div>}
+                                                                <div className="truncate text-[15px] font-medium text-brand-ink" title={item.title}>{item.title}</div>
+                                                                {item.variant_label && <div className="truncate text-sm text-brand-muted" title={item.variant_label}>{item.variant_label}</div>}
                                                                 <div className="mt-1 flex items-center gap-2">
                                                                     <div className="flex items-center rounded-md border border-brand-line bg-white">
                                                                         <button type="button" aria-label="Retirer un" onClick={() => handleUpdateCartQuantity(idx, item.quantity - 1)} className="flex h-8 w-8 items-center justify-center text-brand-ink"><Minus className="h-3.5 w-3.5" /></button>
@@ -665,7 +665,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                                     <button type="button" aria-label="Supprimer l'article" onClick={() => handleRemoveFromCart(idx)} className="flex h-8 w-8 items-center justify-center text-brand-muted hover:text-[#B91C1C]"><Trash2 className="h-4 w-4" /></button>
                                                                 </div>
                                                             </div>
-                                                            <span className="shrink-0 text-[15px] font-medium text-brand-ink">{(item.price_display * item.quantity).toLocaleString('fr-FR')} F</span>
+                                                            <span className="shrink-0 text-[15px] font-medium text-brand-ink whitespace-nowrap tabular-nums">{(item.price_display * item.quantity).toLocaleString('fr-FR')} F</span>
                                                         </motion.li>
                                                     ))}
                                                 </AnimatePresence>
@@ -754,14 +754,14 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                     return (
                                         <section key="hero" id="hero" className="relative overflow-hidden rounded-xl" style={{ backgroundColor: `${primaryColor}22` }}>
                                             <div className="grid items-center gap-8 p-6 sm:p-10 lg:grid-cols-12 lg:p-14">
-                                                <div className="space-y-6 lg:col-span-6">
-                                                    <motion.span initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="inline-block rounded-md bg-white px-3 py-1 text-sm font-medium text-brand-ink">
+                                                <div className="space-y-6 lg:col-span-6 min-w-0">
+                                                    <motion.span initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="inline-block max-w-full truncate rounded-md bg-white px-3 py-1 text-sm font-medium text-brand-ink">
                                                         {store.hero_badge_text || store.category || 'Boutique officielle'}
                                                     </motion.span>
                                                     <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.08 }} className="break-words text-4xl font-bold leading-[1.05] tracking-tight text-brand-ink sm:text-5xl">
                                                         {store.hero_title || `Bienvenue chez ${store.name}`}
                                                     </motion.h1>
-                                                    <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.16 }} className="max-w-lg text-lg leading-relaxed text-brand-ink/75">
+                                                    <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.16 }} className="max-w-lg text-lg leading-relaxed text-brand-ink/75 break-words">
                                                         {store.hero_subtitle || store.description || 'Commandez en ligne, payez par Mobile Money, recevez chez vous.'}
                                                     </motion.p>
                                                     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.24 }} className="flex flex-wrap gap-3">
@@ -776,12 +776,12 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                     </motion.div>
                                                     <Stagger className="flex flex-wrap gap-x-5 gap-y-2 pt-2 text-sm text-brand-ink/75">
                                                         {[[Truck, 'Livraison 24 à 48 h'], [Smartphone, 'Paiement MTN et Orange Money'], [MessageSquare, 'Suivi sur WhatsApp']].map(([Icon, t]) => (
-                                                            <StaggerItem key={t} y={8} className="flex items-center gap-2"><Icon className="h-4 w-4" /> {t}</StaggerItem>
+                                                            <StaggerItem key={t} y={8} className="flex items-center gap-2"><Icon className="h-4 w-4 shrink-0" /> <span className="truncate">{t}</span></StaggerItem>
                                                         ))}
                                                     </Stagger>
                                                 </div>
 
-                                                <div className="relative lg:col-span-6">
+                                                <div className="relative lg:col-span-6 min-w-0">
                                                     <div className="relative aspect-[4/5] w-full overflow-hidden rounded-lg bg-white sm:aspect-[5/5] lg:aspect-[4/5]">
                                                         <AnimatePresence mode="sync">
                                                             <motion.div key={activeHeroProduct?.id || 'banner'} className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }}>
@@ -794,12 +794,12 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                         {activeHeroProduct && (
                                                             <AnimatePresence mode="wait">
                                                                 <motion.a key={activeHeroProduct.id} href={`/${store.slug}/p/${activeHeroProduct.slug}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.4, delay: 0.2 }}
-                                                                    className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-3 rounded-md bg-white/95 p-3 backdrop-blur-sm">
-                                                                    <span className="min-w-0">
-                                                                        <span className="block truncate text-[15px] font-medium text-brand-ink">{activeHeroProduct.title}</span>
-                                                                        <span className="text-sm text-brand-muted">{Math.ceil(activeHeroPromoPct ? activeHeroProduct.promo_price : activeHeroProduct.price_vendor).toLocaleString('fr-FR')} FCFA</span>
+                                                                    className="absolute inset-x-3 bottom-3 flex items-center justify-between gap-3 rounded-md bg-white/95 p-3 backdrop-blur-sm min-w-0">
+                                                                    <span className="min-w-0 flex-1">
+                                                                        <span className="block truncate text-[15px] font-medium text-brand-ink" title={activeHeroProduct.title}>{activeHeroProduct.title}</span>
+                                                                        <span className="text-sm text-brand-muted whitespace-nowrap tabular-nums">{Math.ceil(activeHeroPromoPct ? activeHeroProduct.promo_price : activeHeroProduct.price_vendor).toLocaleString('fr-FR')} FCFA</span>
                                                                     </span>
-                                                                    {activeHeroPromoPct && <span className="shrink-0 rounded bg-[#DC2626] px-2 py-0.5 text-xs font-semibold text-white">-{activeHeroPromoPct} %</span>}
+                                                                    {activeHeroPromoPct && <span className="shrink-0 rounded bg-[#DC2626] px-2 py-0.5 text-xs font-semibold text-white whitespace-nowrap">-{activeHeroPromoPct} %</span>}
                                                                 </motion.a>
                                                             </AnimatePresence>
                                                         )}
@@ -833,11 +833,11 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                     const on = selectedCategory === cat.id;
                                                     return (
                                                         <StaggerItem key={cat.id} y={12}>
-                                                            <motion.button type="button" whileHover={{ y: -4 }} whileTap={{ scale: 0.95 }} onClick={() => { setSelectedCategory(cat.id); scrollToCatalog(); }} className="flex w-20 shrink-0 flex-col items-center gap-2 sm:w-24">
-                                                                <span className="block rounded-full p-[3px] transition-colors" style={{ backgroundColor: on ? primaryColor : '#EDE5CF' }}>
+                                                            <motion.button type="button" whileHover={{ y: -4 }} whileTap={{ scale: 0.95 }} onClick={() => { setSelectedCategory(cat.id); scrollToCatalog(); }} className="flex w-20 shrink-0 flex-col items-center gap-2 sm:w-24 min-w-0">
+                                                                <span className="block rounded-full p-[3px] transition-colors shrink-0" style={{ backgroundColor: on ? primaryColor : '#EDE5CF' }}>
                                                                     <ProductImage src={cat.img} alt="" className="h-[68px] w-[68px] rounded-full border-[3px] border-white sm:h-20 sm:w-20" />
                                                                 </span>
-                                                                <span className={`truncate text-sm ${on ? 'font-semibold text-brand-ink' : 'text-brand-muted'}`}>{cat.label}</span>
+                                                                <span className={`block w-full truncate text-center text-sm ${on ? 'font-semibold text-brand-ink' : 'text-brand-muted'}`} title={cat.label}>{cat.label}</span>
                                                             </motion.button>
                                                         </StaggerItem>
                                                     );
@@ -920,21 +920,22 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                             <Stagger className="grid gap-5 md:grid-cols-2">
                                                 {activeSmartLinks.map((sl) => (
                                                     <StaggerItem key={sl.id}>
-                                                        <motion.div whileHover={{ y: -4 }} className="flex h-full flex-col gap-4 rounded-lg border border-brand-line bg-white p-5">
-                                                            <div className="flex items-center justify-between text-sm text-brand-muted">
-                                                                <span className="rounded bg-brand-yellowLight px-2 py-0.5 text-brand-ink">Pack</span>#{sl.code}
+                                                        <motion.div whileHover={{ y: -4 }} className="flex h-full flex-col gap-4 rounded-lg border border-brand-line bg-white p-5 min-w-0">
+                                                            <div className="flex items-center justify-between text-sm text-brand-muted gap-2">
+                                                                <span className="rounded bg-brand-yellowLight px-2 py-0.5 text-brand-ink shrink-0">Pack</span>
+                                                                <span className="truncate">#{sl.code}</span>
                                                             </div>
-                                                            <h4 className="text-lg font-semibold text-brand-ink">{sl.title}</h4>
+                                                            <h4 className="text-lg font-semibold text-brand-ink break-words line-clamp-2" title={sl.title}>{sl.title}</h4>
                                                             {sl.items?.length > 0 && (
-                                                                <div className="flex -space-x-2">
+                                                                <div className="flex -space-x-2 overflow-hidden py-1">
                                                                     {sl.items.slice(0, 5).map((item, idx) => (
-                                                                        <ProductImage key={idx} src={item.image_url} alt={item.product_name} className="h-12 w-12 rounded-full border-2 border-white" />
+                                                                        <ProductImage key={idx} src={item.image_url} alt={item.product_name} className="h-12 w-12 rounded-full border-2 border-white shrink-0 object-cover" />
                                                                     ))}
                                                                 </div>
                                                             )}
-                                                            <div className="mt-auto flex items-center justify-between gap-3 border-t border-brand-line pt-4">
-                                                                <span className="text-lg font-semibold text-brand-ink">{Math.ceil(sl.total_amount || sl.price_total || 0).toLocaleString('fr-FR')} FCFA</span>
-                                                                <a href={`/smartlink/${sl.code}`} className="inline-flex h-10 items-center gap-1.5 rounded-md px-4 text-sm font-semibold" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                                                            <div className="mt-auto flex items-center justify-between gap-3 border-t border-brand-line pt-4 min-w-0">
+                                                                <span className="text-lg font-semibold text-brand-ink whitespace-nowrap tabular-nums">{Math.ceil(sl.total_amount || sl.price_total || 0).toLocaleString('fr-FR')} FCFA</span>
+                                                                <a href={`/smartlink/${sl.code}`} className="inline-flex h-10 items-center gap-1.5 rounded-md px-4 text-sm font-semibold shrink-0" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
                                                                     Acheter le pack <ArrowRight className="h-4 w-4" />
                                                                 </a>
                                                             </div>
@@ -953,13 +954,13 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                                 {activeBenefitsList.map((item, idx) => {
                                                     const Icon = benefitsIcons[idx % benefitsIcons.length] || ShieldCheck;
                                                     return (
-                                                        <StaggerItem key={idx} className="flex items-start gap-3">
+                                                        <StaggerItem key={idx} className="flex items-start gap-3 min-w-0">
                                                             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md" style={{ backgroundColor: `${primaryColor}33` }}>
                                                                 <Icon className="h-5 w-5 text-brand-ink" />
                                                             </span>
-                                                            <div>
-                                                                <div className="font-medium text-brand-ink">{item.title}</div>
-                                                                <div className="text-sm text-brand-muted">{item.subtitle}</div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <div className="font-medium text-brand-ink truncate" title={item.title}>{item.title}</div>
+                                                                <div className="text-sm text-brand-muted break-words line-clamp-2">{item.subtitle}</div>
                                                             </div>
                                                         </StaggerItem>
                                                     );
@@ -971,16 +972,16 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
 
                                 if (sectionId === 'reviews') {
                                     const reviewCard = (rev, i) => (
-                                        <figure key={rev.id || i} className="flex w-[300px] shrink-0 flex-col gap-3 rounded-lg border border-brand-line bg-white p-5 sm:w-auto">
+                                        <figure key={rev.id || i} className="flex w-[300px] shrink-0 flex-col gap-3 rounded-lg border border-brand-line bg-white p-5 sm:w-auto overflow-hidden">
                                             <div className="flex items-center gap-0.5">
                                                 {Array.from({ length: 5 }).map((_, s) => (
-                                                    <Star key={s} className={`h-4 w-4 ${s < (rev.rating || 5) ? 'fill-[#F5B800] text-[#F5B800]' : 'text-brand-line'}`} />
+                                                    <Star key={s} className={`h-4 w-4 shrink-0 ${s < (rev.rating || 5) ? 'fill-[#F5B800] text-[#F5B800]' : 'text-brand-line'}`} />
                                                 ))}
                                             </div>
-                                            <blockquote className="break-words leading-relaxed text-brand-ink">{rev.comment}</blockquote>
-                                            <figcaption className="mt-auto flex justify-between text-sm text-brand-muted">
-                                                <span className="font-medium text-brand-ink">{rev.customer_name || rev.name}</span>
-                                                <span>{rev.customer_city || rev.city || ''}</span>
+                                            <blockquote className="break-words leading-relaxed text-brand-ink line-clamp-4 text-sm">{rev.comment}</blockquote>
+                                            <figcaption className="mt-auto flex justify-between gap-2 text-sm text-brand-muted pt-2 border-t border-brand-line/50 min-w-0">
+                                                <span className="font-medium text-brand-ink truncate max-w-[150px]" title={rev.customer_name || rev.name}>{rev.customer_name || rev.name}</span>
+                                                <span className="truncate max-w-[120px] text-right">{rev.customer_city || rev.city || ''}</span>
                                             </figcaption>
                                         </figure>
                                     );
@@ -989,7 +990,7 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                             <SectionHeading
                                                 title="Avis clients"
                                                 action={
-                                                    <button type="button" onClick={() => setIsReviewModalOpen(true)} className="inline-flex h-10 items-center gap-2 rounded-md border border-brand-ink/15 px-4 text-sm font-medium text-brand-ink hover:border-brand-ink/35">
+                                                    <button type="button" onClick={() => setIsReviewModalOpen(true)} className="inline-flex h-10 items-center gap-2 rounded-md border border-brand-ink/15 px-4 text-sm font-medium text-brand-ink hover:border-brand-ink/35 shrink-0">
                                                         <Star className="h-4 w-4" /> Donner mon avis
                                                     </button>
                                                 }
@@ -1012,19 +1013,25 @@ export default function Boutique({ store, products, activeSmartLinks = [], appUr
                                 if (sectionId === 'about') {
                                     return (
                                         <Reveal key="about" as="section" id="about" className="grid gap-6 rounded-xl bg-brand-sand p-6 sm:p-10 md:grid-cols-[1.4fr_1fr]">
-                                            <div className="space-y-3">
-                                                <h3 className="text-2xl font-bold tracking-tight text-brand-ink">À propos de {store.name}</h3>
-                                                <p className="leading-relaxed text-brand-muted">
+                                            <div className="space-y-3 min-w-0">
+                                                <h3 className="text-2xl font-bold tracking-tight text-brand-ink break-words">À propos de {store.name}</h3>
+                                                <p className="leading-relaxed text-brand-muted break-words">
                                                     {store.description || store.about_text || `Bienvenue sur la boutique de ${store.name}. Nous sélectionnons nos articles avec soin et les livrons rapidement.`}
                                                 </p>
                                             </div>
-                                            <div className="space-y-3 text-[15px]">
+                                            <div className="space-y-3 text-[15px] min-w-0">
                                                 {store.phone_whatsapp && (
-                                                    <a href={`https://wa.me/${store.phone_whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-brand-ink hover:underline">
-                                                        <MessageSquare className="h-4 w-4 text-green-700" /> {store.phone_whatsapp}
+                                                    <a href={`https://wa.me/${store.phone_whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-brand-ink hover:underline truncate max-w-full">
+                                                        <MessageSquare className="h-4 w-4 shrink-0 text-green-700" />
+                                                        <span className="truncate">{store.phone_whatsapp}</span>
                                                     </a>
                                                 )}
-                                                {(store.city_location || store.city) && <div className="flex items-center gap-2 text-brand-ink"><MapPin className="h-4 w-4" /> {store.city_location || store.city}</div>}
+                                                {(store.city_location || store.city) && (
+                                                    <div className="flex items-center gap-2 text-brand-ink truncate max-w-full">
+                                                        <MapPin className="h-4 w-4 shrink-0" />
+                                                        <span className="truncate">{store.city_location || store.city}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </Reveal>
                                     );

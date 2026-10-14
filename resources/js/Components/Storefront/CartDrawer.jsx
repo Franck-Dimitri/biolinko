@@ -62,21 +62,21 @@ export default function CartDrawer({
                                     >
                                         <ShoppingCart className="w-5 h-5 stroke-[2.5]" />
                                     </div>
-                                    <div>
+                                    <div className="min-w-0">
                                         <div className="flex items-center gap-2">
-                                            <h2 className="text-base font-extrabold text-slate-950 tracking-tight">Mon Panier</h2>
-                                            <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-900 text-xs font-bold font-mono">
+                                            <h2 className="text-base font-extrabold text-slate-950 tracking-tight shrink-0">Mon Panier</h2>
+                                            <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-900 text-xs font-bold font-mono shrink-0">
                                                 {totalCartCount} {totalCartCount > 1 ? 'articles' : 'article'}
                                             </span>
                                         </div>
-                                        <p className="text-[11px] text-slate-500 font-medium">{store?.name || 'Vitrine Officielle'}</p>
+                                        <p className="text-[11px] text-slate-500 font-medium truncate max-w-[200px]" title={store?.name}>{store?.name || 'Vitrine Officielle'}</p>
                                     </div>
                                 </div>
 
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="p-2 rounded-2xl text-slate-400 hover:text-slate-900 hover:bg-slate-200/60 transition-all cursor-pointer active:scale-95"
+                                    className="p-2 rounded-2xl text-slate-400 hover:text-slate-900 hover:bg-slate-200/60 transition-all cursor-pointer active:scale-95 shrink-0"
                                     aria-label="Fermer le panier"
                                 >
                                     <X className="w-5 h-5" />
@@ -107,7 +107,7 @@ export default function CartDrawer({
                                                 exit={{ opacity: 0, height: 0 }}
                                                 className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/90 flex items-center justify-between gap-3 shadow-2xs group hover:border-slate-300 transition-all"
                                             >
-                                                <div className="flex items-center gap-3 min-w-0">
+                                                <div className="flex items-center gap-3 min-w-0 flex-1">
                                                     <div className="w-14 h-14 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
                                                         {item.image_url ? (
                                                             <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
@@ -115,14 +115,14 @@ export default function CartDrawer({
                                                             <ShoppingBag className="w-6 h-6 text-slate-300" />
                                                         )}
                                                     </div>
-                                                    <div className="min-w-0">
-                                                        <h4 className="text-xs font-bold text-slate-950 truncate leading-snug">{item.title}</h4>
+                                                    <div className="min-w-0 flex-1">
+                                                        <h4 className="text-xs font-bold text-slate-950 truncate leading-snug" title={item.title}>{item.title}</h4>
                                                         {item.variant_label && (
-                                                            <span className="inline-block text-[10px] text-slate-500 font-medium bg-slate-200/60 px-1.5 py-0.5 rounded-md mt-0.5 truncate">
+                                                            <span className="inline-block max-w-full text-[10px] text-slate-500 font-medium bg-slate-200/60 px-1.5 py-0.5 rounded-md mt-0.5 truncate" title={item.variant_label}>
                                                                 {item.variant_label}
                                                             </span>
                                                         )}
-                                                        <div className="text-xs font-extrabold text-slate-950 mt-1">
+                                                        <div className="text-xs font-extrabold text-slate-950 mt-1 whitespace-nowrap tabular-nums">
                                                             {Number(item.price_display || item.price_vendor || 0).toLocaleString()} FCFA
                                                         </div>
                                                     </div>
@@ -216,11 +216,11 @@ export default function CartDrawer({
                                             <ArrowRight className="w-4 h-4" />
                                         </button>
 
-                                        <div className="flex items-center justify-center gap-4 text-[10px] text-slate-500 font-medium pt-1">
-                                            <span className="flex items-center gap-1">
-                                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Paiement USSD MoMo 100% Sécurisé
+                                        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[10px] text-slate-500 font-medium pt-1">
+                                            <span className="flex items-center gap-1 shrink-0">
+                                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> MoMo 100% Sécurisé
                                             </span>
-                                            <span className="flex items-center gap-1">
+                                            <span className="flex items-center gap-1 shrink-0">
                                                 <Truck className="w-3.5 h-3.5 text-slate-600" /> Livraison 24h-48h
                                             </span>
                                         </div>

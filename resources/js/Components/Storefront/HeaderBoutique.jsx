@@ -42,7 +42,8 @@ export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, searc
                         initial={{ opacity: 0, y: -6 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4 }}
-                        className="inline-block px-4"
+                        className="mx-auto block max-w-4xl truncate px-4"
+                        title={store.announcement_header}
                     >
                         {store.announcement_header}
                     </motion.span>
@@ -68,18 +69,18 @@ export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, searc
                         }}
                         className="flex min-w-0 items-center gap-3"
                     >
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full shadow-xs" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
                             {store.logo_url ? <img src={store.logo_url} alt="" className="h-full w-full object-cover" /> : <Store className="h-5 w-5" />}
                         </span>
-                        <span className="min-w-0">
-                            <span className="block truncate text-lg font-bold leading-tight tracking-tight text-brand-ink">{store.name}</span>
+                        <span className="min-w-0 max-w-[140px] xs:max-w-[200px] sm:max-w-xs md:max-w-sm">
+                            <span className="block truncate text-lg font-bold leading-tight tracking-tight text-brand-ink" title={store.name}>{store.name}</span>
                             <span className="block truncate text-xs text-brand-muted">{store.category || 'Boutique officielle'}</span>
                         </span>
                     </a>
 
                     <nav className="hidden items-center gap-6 text-sm font-medium text-brand-ink/75 lg:flex">
                         {links.map(([label, id]) => (
-                            <button key={id} type="button" onClick={() => scrollToSection(id)} className="relative py-1 transition-colors hover:text-brand-ink">
+                            <button key={id} type="button" onClick={() => scrollToSection(id)} className="relative shrink-0 py-1 transition-colors hover:text-brand-ink">
                                 {label}
                             </button>
                         ))}

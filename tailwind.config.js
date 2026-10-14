@@ -13,10 +13,12 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['"Nunito"', ...defaultTheme.fontFamily.sans],
-                display: ['"Montserrat"', '"Nunito"', ...defaultTheme.fontFamily.sans],
-                secondary: ['"Montserrat"', ...defaultTheme.fontFamily.sans],
-                heading: ['"Montserrat"', ...defaultTheme.fontFamily.sans],
+                sans: ['"Poppins"', '"Inter"', ...defaultTheme.fontFamily.sans],
+                display: ['"Poppins"', ...defaultTheme.fontFamily.sans],
+                heading: ['"Poppins"', ...defaultTheme.fontFamily.sans],
+                secondary: ['"Poppins"', ...defaultTheme.fontFamily.sans],
+                poppins: ['"Poppins"', ...defaultTheme.fontFamily.sans],
+                inter: ['"Inter"', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 brand: {

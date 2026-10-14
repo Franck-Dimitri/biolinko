@@ -1,112 +1,71 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, MotionConfig, motion, useScroll, useSpring, useMotionValueEvent } from 'framer-motion';
 import {
     ArrowRight, Check, ChevronDown, Menu, Play, X, Truck, Smartphone, FileText,
     MessageCircle, Link2, Wallet, LayoutDashboard, Store, Plus,
+    ShieldCheck, Star, Copy, ExternalLink, TrendingUp, Zap, ShoppingBag,
+    Laptop, Box, CreditCard, Users, HelpCircle, Maximize2, Lock
 } from 'lucide-react';
-import { CountUp, EASE_OUT, Marquee, Parallax, Reveal, Stagger, StaggerItem } from '@/Components/Motion';
+import { CountUp, EASE_OUT, Marquee, Reveal, Stagger, StaggerItem } from '@/Components/Motion';
+import OrbitHero from '@/Components/Landing/OrbitHero';
+import { FeatureTabs } from '@/Components/Landing/FeatureTabs';
+import StoresMarquee from '@/Components/Landing/StoresMarquee';
+import TestimonialsAccordion from '@/Components/Landing/TestimonialsAccordion';
+import PricingSection from '@/Components/Landing/PricingSection';
+import FaqSection from '@/Components/Landing/FaqSection';
+import CardHandGallery from '@/Components/Landing/CardHandGallery';
+import Footer from '@/Components/Landing/Footer';
 import { FacebookIcon, InstagramIcon, TiktokIcon, WhatsappIcon } from '@/Components/BrandIcons';
 
 const IMG = '/images/landing';
 
-const PRODUCTS = [
-    { title: 'Robe pagne Adjoa', price: 12500, shop: 'Maison Kemi', img: `${IMG}/robe-pagne.webp` },
-    { title: 'Haut kente', price: 15000, shop: 'Kente House', img: `${IMG}/haut-kente.webp` },
-    { title: 'Jupe soleil', price: 11000, shop: 'Belle Awa', img: `${IMG}/jupe-soleil.webp` },
-    { title: 'Robe sirène', price: 22000, shop: 'Maison Kemi', img: `${IMG}/robe-sirene.webp` },
-    { title: 'Pagne wax, 6 yards', price: 9000, shop: 'Wax Market', img: `${IMG}/wax-rouleaux.webp` },
-    { title: 'Tunique boubou', price: 14000, shop: 'Belle Awa', img: `${IMG}/tunique-orange.webp` },
-    { title: 'Sac à chaîne', price: 8000, shop: 'Chic & Co', img: `${IMG}/sac-cuir.webp` },
-    { title: 'Jupe kente', price: 9500, shop: 'Kente House', img: `${IMG}/jupe-kente.webp` },
-    { title: 'Foulard de tête', price: 3500, shop: 'Wax Market', img: `${IMG}/foulard.webp` },
-];
 
-const LIVE_ORDERS = [
-    { who: 'Awa, Douala', what: 'Robe pagne Adjoa, M', amount: 12875, img: `${IMG}/robe-pagne.webp`, op: 'MTN MoMo' },
-    { who: 'Junior, Yaoundé', what: 'Haut kente, L', amount: 15450, img: `${IMG}/haut-kente.webp`, op: 'Orange Money' },
-    { who: 'Clarisse, Bafoussam', what: 'Jupe soleil, S', amount: 11330, img: `${IMG}/jupe-soleil.webp`, op: 'MTN MoMo' },
-    { who: 'Fatou, Garoua', what: 'Sac à chaîne', amount: 8240, img: `${IMG}/sac-cuir.webp`, op: 'Orange Money' },
-];
 
-const STEPS = [
-    { title: 'Ajoutez vos produits', text: 'Une photo, un prix, les tailles et couleurs. Depuis votre téléphone, en quelques minutes.' },
-    { title: 'Partagez votre lien', text: 'Dans votre bio Instagram et TikTok, vos statuts WhatsApp, vos réponses aux clients.' },
-    { title: "Recevez l'argent", text: 'Le client confirme sur son téléphone. Vous êtes notifié, la facture part toute seule.' },
-];
-
-const SELLER_TYPES = ['Mode et pagnes', 'Mèches et beauté', 'Cosmétiques', 'Restauration', 'Électronique', 'Artisanat'];
-
-const CYCLES = [
-    { months: 1, label: 'Mensuel', discount: 0 },
-    { months: 6, label: '6 mois', discount: 0.1 },
-    { months: 12, label: '1 an', discount: 0.2 },
-];
-
-const PLANS = [
-    { id: 'starter', name: 'Starter', sub: 'Pour tester avec vos premiers clients', cta: 'Commencer gratuitement', features: ['10 produits, 25 articles en stock', 'Paiement MTN et Orange Money', 'Factures PDF avec QR code', '1 campagne WhatsApp par mois'] },
-    { id: 'pro', name: 'Pro', sub: 'Pour vendre chaque semaine', cta: 'Choisir Pro', highlight: true, features: ['50 produits, 500 articles en stock', 'Variantes et promotions', 'Factures à votre marque', 'Pixels Facebook, TikTok, Google', '4 campagnes WhatsApp par mois'] },
-    { id: 'growth', name: 'Growth', sub: 'Pour un catalogue qui grandit', cta: 'Choisir Growth', features: ['Tout Pro, plus :', '250 produits, 3 000 en stock', 'Relances automatiques', '10 campagnes WhatsApp par mois', 'Statistiques avancées'] },
-    { id: 'business', name: 'Business', sub: 'Pour les boutiques établies', cta: 'Choisir Business', features: ['Tout Growth, plus :', 'Produits et stock illimités', 'Export comptable CSV', '25 campagnes WhatsApp par mois', 'Conseiller dédié'] },
-];
-
-const FAQ = [
-    { q: 'Quand est-ce que je reçois mon argent ?', a: 'Dès que le client confirme le paiement sur son téléphone, le montant arrive dans votre portefeuille Biolinko. Vous le retirez vers votre numéro MTN MoMo ou Orange Money à partir de 5 000 FCFA.' },
-    { q: 'Combien coûte chaque vente ?', a: 'Des frais de service de 3 % sont ajoutés au panier du client. Le prix que vous fixez est celui que vous recevez.' },
-    { q: 'Mes clients doivent-ils créer un compte ?', a: 'Non. Ils choisissent leurs articles, donnent leur nom et leur numéro, puis valident le paiement avec leur code secret Mobile Money.' },
-    { q: 'Je peux utiliser mon logo et mes couleurs ?', a: "Oui. Logo, bannière, couleur principale et ordre des sections se règlent depuis le studio de votre boutique." },
-    { q: "Je peux changer d'offre à tout moment ?", a: 'Oui. Le passage à une offre supérieure est immédiat, et vous pouvez revenir à Starter quand vous voulez.' },
-];
-
-const PHOTO_CREDITS = [
-    ['Robe pagne', 'ItunuIjila', 'CC BY-SA 4.0', 'A_BEAUTIFUL_Ankara_dress.jpg'],
-    ['Jupe soleil', 'Exclusive by Tola', 'CC BY-SA 4.0', 'Ankara_monostrap_dress.jpg'],
-    ['Robe sirène', 'Jeremyida002', 'CC0', 'The_traditional_Ankara_dress.jpg'],
-    ['Jupe kente', 'Wanjirakinyua', 'CC BY-SA 4.0', 'White_ankara_dress.jpg'],
-    ['Sac à chaîne', 'Vivid Eloquence', 'CC BY-SA 4.0', 'I_Love_Naija_Shoulder_Bag.JPG'],
-    ['Tunique', 'Artista Poetica', 'CC BY-SA 4.0', 'Cameroonian_model.JPG'],
-    ['Foulard', 'Artista Poetica', 'CC BY-SA 4.0', 'Model_in_head_wrap.JPG'],
-    ['Pagnes wax', 'Naa2Darkoa', 'CC BY-SA 4.0', 'Obaa_pa.jpg'],
-    ['Haut kente', 'Nationaal Museum van Wereldculturen', 'CC BY-SA 3.0', 'Shirt_van_Afrikaanse_kente_stof-_Stichting_Nationaal_Museum_van_Wereldculturen_-_R-3633c.jpg'],
+const SELLER_TYPES = [
+    { name: 'Mode & Habillement', emoji: '👗' },
+    { name: 'High-Tech & Smartphones', emoji: '📱' },
+    { name: 'Cosmétiques & Parfums', emoji: '💄' },
+    { name: 'Chaussures & Baskets', emoji: '👟' },
+    { name: 'Alimentation & Traiteur', emoji: '🍲' },
+    { name: 'Bijoux & Accessoires', emoji: '⌚' },
+    { name: 'Maison & Décoration', emoji: '🛋️' },
+    { name: 'Services & Formations', emoji: '🎓' },
 ];
 
 const fcfa = (n) => `${Math.round(n).toLocaleString('fr-FR')} FCFA`;
 
-function Logo({ className = '' }) {
+function Logo({ className = '', inverted = false }) {
     return (
         <a href="/" className={`flex items-center gap-2.5 ${className}`}>
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-yellow">
-                <img src="/images/brand/logo-noir.png" alt="" className="h-6 w-6" />
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FFCC00] shadow-xs">
+                <img src="/images/brand/logo-noir.png" alt="" className="h-5 w-5" />
             </span>
-            <span className="text-xl font-bold tracking-tight text-brand-ink">Biolinko</span>
+            <span className={`text-xl font-bold tracking-tight ${inverted ? 'text-white' : 'text-[#2B2620]'}`}>
+                Biolinko
+            </span>
         </a>
     );
 }
 
-function PrimaryButton({ href, children, className = '' }) {
+/**
+ * Bouton CTA avec animation fluide de brillance / shimmer
+ */
+function AnimatedCtaButton({ href, children, className = '' }) {
     return (
         <motion.a
             href={href}
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ duration: 0.15 }}
-            className={`inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-brand-yellow px-6 text-[15px] font-semibold text-brand-ink shadow-[0_8px_20px_-10px_rgba(161,98,7,0.7)] hover:bg-brand-yellowHover ${className}`}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
+            className={`relative overflow-hidden inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#FFCC00] px-5 text-sm font-semibold text-[#2B2620] shadow-sm shadow-yellow-500/20 hover:bg-[#E6B800] transition-colors ${className}`}
         >
-            {children}
-        </motion.a>
-    );
-}
-
-function GhostButton({ href, children, className = '' }) {
-    return (
-        <motion.a
-            href={href}
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ duration: 0.15 }}
-            className={`inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-brand-ink/15 bg-white px-5 text-[15px] font-semibold text-brand-ink hover:border-brand-ink/30 ${className}`}
-        >
-            {children}
+            {/* Effet shimmer lumineux */}
+            <motion.span
+                className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                animate={{ translateX: ['-100%', '200%'] }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', repeatDelay: 1.5 }}
+            />
+            <span className="relative z-10 flex items-center gap-2">{children}</span>
         </motion.a>
     );
 }
@@ -114,81 +73,238 @@ function GhostButton({ href, children, className = '' }) {
 function SectionTitle({ children, sub, center = false }) {
     return (
         <Reveal className={`space-y-3 ${center ? 'mx-auto text-center' : ''} max-w-2xl`}>
-            <h2 className="text-3xl font-bold leading-tight tracking-tight text-brand-ink sm:text-[42px]">{children}</h2>
-            {sub && <p className="text-base leading-relaxed text-brand-muted sm:text-lg">{sub}</p>}
+            <h2 className="text-3xl sm:text-4xl font-bold leading-tight tracking-tight text-[#2B2620]">
+                {children}
+            </h2>
+            {sub && <p className="text-base sm:text-lg font-normal leading-relaxed text-slate-600">{sub}</p>}
         </Reveal>
     );
 }
 
-/* ---------- Header ---------- */
+/* ---------- Header Style Shopify avec Dropdowns Dynamiques ---------- */
 function Header({ auth }) {
     const [scrolled, setScrolled] = useState(false);
-    const [open, setOpen] = useState(false);
+    const [openMobile, setOpenMobile] = useState(false);
+    const [activeMenu, setActiveMenu] = useState(null);
     const { scrollY } = useScroll();
-    useMotionValueEvent(scrollY, 'change', (v) => setScrolled(v > 24));
+    useMotionValueEvent(scrollY, 'change', (v) => setScrolled(v > 15));
 
-    const links = [
-        ['Comment ça marche', '#comment'],
-        ['Boutiques', '#vitrine'],
-        ['Outils', '#outils'],
-        ['Tarifs', '#tarifs'],
-        ['Questions', '#questions'],
-    ];
+    const dropdownMenus = {
+        why: {
+            title: 'Choisir Biolinko',
+            items: [
+                { title: 'Vendre sans site complexe', desc: 'Créez votre boutique complète en 3 minutes depuis votre smartphone', href: '#vitrine', icon: Store },
+                { title: 'Paiements Mobile Money', desc: 'Paiements directs sécurisés par MTN MoMo et Orange Money', href: '#comment', icon: CreditCard },
+                { title: 'Vidéo de démonstration', desc: 'Découvrez le fonctionnement de Biolinko en vidéo', href: '#demo', icon: Play },
+            ],
+        },
+        products: {
+            title: 'Produits & Outils',
+            items: [
+                { title: 'Vitrine en ligne personnalisée', desc: 'Votre catalogue avec photos, tailles, couleurs et votre identité', href: '#vitrine', icon: Laptop },
+                { title: 'SmartLinks de paiement express', desc: 'Vendez un article précis en 1 clic dans vos bios et statuts', href: '#outils', icon: Link2 },
+                { title: 'Facturation automatique', desc: 'Reçus officiels PDF avec QR code envoyés après chaque paiement', href: '#outils', icon: FileText },
+                { title: 'Relances automatiques', desc: 'Récupérez les paniers abandonnés sur WhatsApp en un clic', href: '#outils', icon: MessageCircle },
+            ],
+        },
+    };
 
     return (
-        <header className="sticky top-0 z-50 px-3 pt-3 sm:px-6">
-            <motion.div
-                animate={{
-                    backgroundColor: scrolled ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.75)',
-                    boxShadow: scrolled ? '0 10px 30px -18px rgba(43,38,32,0.35)' : '0 0 0 rgba(0,0,0,0)',
-                }}
-                transition={{ duration: 0.25 }}
-                className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 rounded-xl border border-white/60 px-4 backdrop-blur-md sm:px-5"
-            >
-                <Logo />
-                <nav className="hidden items-center gap-7 text-[15px] font-medium text-brand-ink/80 lg:flex">
-                    {links.map(([label, href]) => (
-                        <a key={href} href={href} className="relative transition-colors hover:text-brand-ink">
-                            {label}
+        <header
+            className={`sticky top-0 z-50 w-full transition-all duration-200 ${
+                scrolled
+                    ? 'border-b border-slate-200/90 bg-white/95 shadow-xs backdrop-blur-md'
+                    : 'border-b border-slate-200/60 bg-white/90 backdrop-blur-md'
+            }`}
+            onMouseLeave={() => setActiveMenu(null)}
+        >
+            <div className="flex h-20 w-full items-center justify-between gap-4 px-4 sm:px-8 lg:px-12">
+                {/* Logo */}
+                <div className="flex items-center gap-8">
+                    <Logo />
+
+                    {/* Navigation Desktop avec Dropdowns */}
+                    <nav className="hidden items-center gap-6 text-[14px] font-medium text-slate-700 lg:flex">
+                        {/* Dropdown 1 : Choisir Biolinko */}
+                        <div
+                            className="relative py-4"
+                            onMouseEnter={() => setActiveMenu('why')}
+                        >
+                            <button
+                                type="button"
+                                className="flex items-center gap-1.5 transition-colors hover:text-[#2B2620]"
+                            >
+                                <span>Choisir Biolinko</span>
+                                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${activeMenu === 'why' ? 'rotate-180 text-[#2B2620]' : 'text-slate-400'}`} />
+                            </button>
+
+                            <AnimatePresence>
+                                {activeMenu === 'why' && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 8 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 4 }}
+                                        transition={{ duration: 0.18 }}
+                                        className="absolute left-0 top-full w-80 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl"
+                                    >
+                                        <div className="space-y-1">
+                                            {dropdownMenus.why.items.map((item) => (
+                                                <a
+                                                    key={item.title}
+                                                    href={item.href}
+                                                    onClick={() => setActiveMenu(null)}
+                                                    className="flex items-start gap-3 rounded-xl p-2.5 transition-colors hover:bg-slate-50"
+                                                >
+                                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FFCC00]/20 text-[#2B2620] mt-0.5">
+                                                        <item.icon className="h-4 w-4" />
+                                                    </span>
+                                                    <div>
+                                                        <div className="text-xs font-semibold text-[#2B2620]">{item.title}</div>
+                                                        <div className="text-[11px] text-slate-500 leading-snug">{item.desc}</div>
+                                                    </div>
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
+                        {/* Dropdown 2 : Produits */}
+                        <div
+                            className="relative py-4"
+                            onMouseEnter={() => setActiveMenu('products')}
+                        >
+                            <button
+                                type="button"
+                                className="flex items-center gap-1.5 transition-colors hover:text-[#2B2620]"
+                            >
+                                <span>Produits</span>
+                                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${activeMenu === 'products' ? 'rotate-180 text-[#2B2620]' : 'text-slate-400'}`} />
+                            </button>
+
+                            <AnimatePresence>
+                                {activeMenu === 'products' && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 8 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 4 }}
+                                        transition={{ duration: 0.18 }}
+                                        className="absolute left-0 top-full w-96 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl"
+                                    >
+                                        <div className="space-y-1">
+                                            {dropdownMenus.products.items.map((item) => (
+                                                <a
+                                                    key={item.title}
+                                                    href={item.href}
+                                                    onClick={() => setActiveMenu(null)}
+                                                    className="flex items-start gap-3 rounded-xl p-2.5 transition-colors hover:bg-slate-50"
+                                                >
+                                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FFCC00]/20 text-[#2B2620] mt-0.5">
+                                                        <item.icon className="h-4 w-4" />
+                                                    </span>
+                                                    <div>
+                                                        <div className="text-xs font-semibold text-[#2B2620]">{item.title}</div>
+                                                        <div className="text-[11px] text-slate-500 leading-snug">{item.desc}</div>
+                                                    </div>
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
+                        <a href="#temoignages" className="transition-colors hover:text-[#2B2620]">
+                            Témoignages
                         </a>
-                    ))}
-                </nav>
-                <div className="hidden items-center gap-2 sm:flex">
+                        <a href="#tarifs" className="transition-colors hover:text-[#2B2620]">
+                            Tarification
+                        </a>
+                        <a href="#questions" className="transition-colors hover:text-[#2B2620]">
+                            FAQ
+                        </a>
+                        <a href="#demo" className="transition-colors hover:text-[#2B2620]">
+                            Vidéo Démo
+                        </a>
+                    </nav>
+                </div>
+
+                {/* Droite : Se connecter + CTA animé Démarrer */}
+                <div className="hidden items-center gap-4 sm:flex">
                     {auth?.user ? (
-                        <PrimaryButton href={route('dashboard')} className="h-10 px-4 text-sm">
+                        <AnimatedCtaButton href={route('dashboard')}>
                             <LayoutDashboard className="h-4 w-4" /> Mon tableau de bord
-                        </PrimaryButton>
+                        </AnimatedCtaButton>
                     ) : (
                         <>
-                            <Link href={route('login')} className="px-3 text-[15px] font-medium text-brand-ink/80 hover:text-brand-ink">Se connecter</Link>
-                            <PrimaryButton href={route('register')} className="h-10 px-4 text-sm">Créer ma boutique</PrimaryButton>
+                            <Link
+                                href={route('login')}
+                                className="text-sm font-medium text-slate-700 hover:text-[#2B2620] transition-colors"
+                            >
+                                Se connecter
+                            </Link>
+                            <AnimatedCtaButton href={route('register')}>
+                                Démarrer gratuitement
+                            </AnimatedCtaButton>
                         </>
                     )}
                 </div>
-                <button type="button" onClick={() => setOpen(!open)} className="flex h-11 w-11 items-center justify-center rounded-lg lg:hidden" aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'} aria-expanded={open}>
-                    {open ? <X className="h-5 w-5 text-brand-ink" /> : <Menu className="h-5 w-5 text-brand-ink" />}
-                </button>
-            </motion.div>
 
+                {/* Bouton Menu Mobile */}
+                <button
+                    type="button"
+                    onClick={() => setOpenMobile(!openMobile)}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white lg:hidden text-slate-700"
+                    aria-label={openMobile ? 'Fermer le menu' : 'Ouvrir le menu'}
+                >
+                    {openMobile ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </button>
+            </div>
+
+            {/* Menu Mobile */}
             <AnimatePresence>
-                {open && (
+                {openMobile && (
                     <motion.nav
-                        initial={{ opacity: 0, y: -8 }}
+                        initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
+                        exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.2 }}
-                        className="mx-auto mt-2 max-w-6xl rounded-xl border border-brand-line bg-white p-3 shadow-lg lg:hidden"
+                        className="w-full border-t border-slate-200 bg-white px-4 py-5 shadow-xl sm:px-8 lg:hidden"
                     >
-                        {links.map(([label, href]) => (
-                            <a key={href} href={href} onClick={() => setOpen(false)} className="block rounded-md px-3 py-3 text-base font-medium text-brand-ink hover:bg-brand-cream">{label}</a>
-                        ))}
-                        <div className="mt-2 grid grid-cols-2 gap-2 border-t border-brand-line pt-3">
+                        <div className="space-y-1">
+                            <a href="#vitrine" onClick={() => setOpenMobile(false)} className="block rounded-xl px-4 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50">
+                                Choisir Biolinko
+                            </a>
+                            <a href="#outils" onClick={() => setOpenMobile(false)} className="block rounded-xl px-4 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50">
+                                Produits & Outils
+                            </a>
+                            <a href="#temoignages" onClick={() => setOpenMobile(false)} className="block rounded-xl px-4 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50">
+                                Témoignages
+                            </a>
+                            <a href="#tarifs" onClick={() => setOpenMobile(false)} className="block rounded-xl px-4 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50">
+                                Tarification
+                            </a>
+                            <a href="#questions" onClick={() => setOpenMobile(false)} className="block rounded-xl px-4 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50">
+                                FAQ
+                            </a>
+                            <a href="#demo" onClick={() => setOpenMobile(false)} className="block rounded-xl px-4 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50">
+                                Vidéo Démo
+                            </a>
+                        </div>
+                        <div className="mt-4 border-t border-slate-100 pt-3 flex flex-col gap-2">
                             {auth?.user ? (
-                                <PrimaryButton href={route('dashboard')} className="col-span-2">Mon tableau de bord</PrimaryButton>
+                                <AnimatedCtaButton href={route('dashboard')} className="w-full">
+                                    Mon tableau de bord
+                                </AnimatedCtaButton>
                             ) : (
                                 <>
-                                    <GhostButton href={route('login')}>Se connecter</GhostButton>
-                                    <PrimaryButton href={route('register')}>Créer ma boutique</PrimaryButton>
+                                    <Link href={route('login')} className="flex h-11 items-center justify-center rounded-xl border border-slate-200 text-sm font-semibold text-slate-800">
+                                        Se connecter
+                                    </Link>
+                                    <AnimatedCtaButton href={route('register')} className="w-full">
+                                        Démarrer gratuitement
+                                    </AnimatedCtaButton>
                                 </>
                             )}
                         </div>
@@ -199,660 +315,741 @@ function Header({ auth }) {
     );
 }
 
-/* ---------- Hero ---------- */
-function LiveOrderCard() {
-    const [i, setI] = useState(0);
-    useEffect(() => {
-        const t = setInterval(() => setI((v) => (v + 1) % LIVE_ORDERS.length), 2800);
-        return () => clearInterval(t);
-    }, []);
-    const o = LIVE_ORDERS[i];
-    return (
-        <div className="w-[260px] rounded-lg border border-brand-line bg-white p-3.5 shadow-[0_20px_40px_-20px_rgba(43,38,32,0.45)]">
-            <div className="mb-2.5 flex items-center justify-between text-xs font-medium text-brand-muted">
-                <span>Commandes en direct</span>
-                <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-60" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-green-600" />
-                </span>
-            </div>
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -12 }}
-                    transition={{ duration: 0.35, ease: EASE_OUT }}
-                    className="flex items-center gap-3"
-                >
-                    <img src={o.img} alt="" className="h-14 w-11 rounded-md object-cover" />
-                    <div className="min-w-0">
-                        <div className="text-sm font-semibold text-brand-ink">{o.who}</div>
-                        <div className="truncate text-xs text-brand-muted">{o.what}</div>
-                        <div className="mt-0.5 text-[15px] font-bold text-brand-ink">{fcfa(o.amount)}</div>
-                    </div>
-                </motion.div>
-            </AnimatePresence>
-        </div>
-    );
-}
 
-function Hero({ auth }) {
-    const words = ['Vendez', 'en', 'ligne.', 'Encaissez', 'par'];
-    return (
-        <section className="relative overflow-hidden bg-brand-yellow pb-20 pt-10 sm:pb-28">
-            <div className="pointer-events-none absolute inset-0 opacity-50 [background-image:radial-gradient(rgba(43,38,32,0.14)_1.2px,transparent_1.3px)] [background-size:22px_22px]" />
-            <motion.img
-                src="/images/brand/logo-noir-hd.png"
-                alt=""
-                aria-hidden="true"
-                className="pointer-events-none absolute -right-32 top-24 hidden w-[520px] opacity-[0.06] md:block"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 80, repeat: Infinity, ease: 'linear' }}
-            />
-
-            <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2">
-                <div className="space-y-7">
-                    <motion.div
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, ease: EASE_OUT }}
-                        className="inline-flex items-center gap-2.5 rounded-md bg-white/80 py-1.5 pl-1.5 pr-3 text-sm font-medium text-brand-ink"
-                    >
-                        <span className="flex">
-                            <span className="h-5 w-5 rounded-full border-2 border-white bg-brand-yellow" />
-                            <span className="-ml-1.5 h-5 w-5 rounded-full border-2 border-white bg-[#FF7900]" />
-                        </span>
-                        MTN MoMo et Orange Money intégrés
-                    </motion.div>
-
-                    <h1 className="text-[42px] font-extrabold leading-[1.02] tracking-tight text-brand-ink sm:text-6xl lg:text-[66px]">
-                        {words.map((w, idx) => (
-                            <motion.span
-                                key={idx}
-                                className="mr-[0.25em] inline-block"
-                                initial={{ opacity: 0, y: 28 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.1 + idx * 0.07 }}
-                            >
-                                {w}
-                            </motion.span>
-                        ))}
-                        <motion.span
-                            className="relative inline-block"
-                            initial={{ opacity: 0, y: 28 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.5 }}
-                        >
-                            <motion.span
-                                className="absolute inset-x-[-6px] bottom-1 top-2 -z-0 rounded-md bg-white"
-                                initial={{ scaleX: 0 }}
-                                animate={{ scaleX: 1 }}
-                                style={{ originX: 0 }}
-                                transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.85 }}
-                            />
-                            <span className="relative">Mobile Money.</span>
-                        </motion.span>
-                    </h1>
-
-                    <motion.p
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.6 }}
-                        className="max-w-lg text-lg leading-relaxed text-brand-ink/80"
-                    >
-                        Votre catalogue dans un lien. Vos clients choisissent, paient avec leur téléphone, et vous recevez l'argent dans votre portefeuille. Fini les captures d'écran et les DM.
-                    </motion.p>
-
-                    <motion.div
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, ease: EASE_OUT, delay: 0.72 }}
-                        className="flex flex-wrap gap-3"
-                    >
-                        <motion.a
-                            href={auth?.user ? route('dashboard') : route('register')}
-                            whileHover={{ y: -2 }}
-                            whileTap={{ scale: 0.97 }}
-                            className="inline-flex h-12 items-center gap-2 rounded-lg bg-white px-6 text-[15px] font-semibold text-brand-ink shadow-[0_10px_24px_-14px_rgba(43,38,32,0.6)]"
-                        >
-                            {auth?.user ? 'Aller à mon tableau de bord' : 'Créer ma boutique gratuitement'}
-                            <ArrowRight className="h-4 w-4" />
-                        </motion.a>
-                        <motion.a
-                            href="#vitrine"
-                            whileHover={{ y: -2 }}
-                            whileTap={{ scale: 0.97 }}
-                            className="inline-flex h-12 items-center gap-2 rounded-lg border border-brand-ink/20 px-5 text-[15px] font-semibold text-brand-ink hover:bg-white/40"
-                        >
-                            <Play className="h-4 w-4 fill-current" /> Voir une boutique
-                        </motion.a>
-                    </motion.div>
-
-                    <Stagger className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-brand-ink/80" gap={0.08}>
-                        {['Gratuit jusqu’à 10 produits', 'Boutique prête en 5 minutes', 'Sans carte bancaire'].map((t) => (
-                            <StaggerItem key={t} y={8} className="flex items-center gap-2">
-                                <Check className="h-4 w-4 text-brand-ink" /> {t}
-                            </StaggerItem>
-                        ))}
-                    </Stagger>
-                </div>
-
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.96 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.8, ease: EASE_OUT, delay: 0.3 }}
-                    className="relative mx-auto h-[520px] w-full max-w-[520px] sm:h-[580px]"
-                >
-                    <Parallax strength={24} className="absolute right-0 top-0 h-[480px] w-[86%] overflow-hidden rounded-xl border-[6px] border-white bg-brand-yellowLight shadow-[0_40px_80px_-40px_rgba(43,38,32,0.6)] sm:h-[540px]">
-                        <img src={`${IMG}/hero-vendeuse.webp`} alt="Vendeuse qui montre sa boutique Biolinko sur son téléphone" className="-mt-[6%] h-[112%] w-full object-cover object-top" />
-                    </Parallax>
-
-                    <motion.div
-                        className="absolute left-0 top-12"
-                        animate={{ y: [0, -10, 0] }}
-                        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                    >
-                        <LiveOrderCard />
-                    </motion.div>
-
-                    <motion.div
-                        className="absolute bottom-6 left-4 w-[230px] rounded-lg border border-brand-line bg-white p-4 shadow-[0_20px_40px_-20px_rgba(43,38,32,0.45)]"
-                        animate={{ y: [0, -8, 0] }}
-                        transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
-                    >
-                        <div className="text-xs font-medium text-brand-muted">Solde disponible</div>
-                        <div className="text-2xl font-bold text-brand-ink">
-                            <CountUp to={184500} /> <span className="text-base font-semibold">FCFA</span>
-                        </div>
-                        <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-green-700">
-                            <Wallet className="h-3.5 w-3.5" /> Retrait vers MoMo en 1 clic
-                        </div>
-                    </motion.div>
-                </motion.div>
-            </div>
-        </section>
-    );
-}
-
-/* ---------- Sections ---------- */
-function ProductsMarquee() {
-    return (
-        <section className="bg-white py-20">
-            <div className="mx-auto mb-10 flex max-w-6xl flex-wrap items-end justify-between gap-6 px-4 sm:px-6">
-                <SectionTitle>Mode, pagnes, beauté : tout se vend avec un lien.</SectionTitle>
-                <Reveal delay={0.1} className="max-w-sm text-base text-brand-muted">
-                    Des produits tels qu'ils apparaissent dans une vitrine Biolinko.
-                </Reveal>
-            </div>
-            <Marquee speed={45}>
-                {PRODUCTS.map((p) => (
-                    <motion.article key={p.title} whileHover={{ y: -6 }} transition={{ duration: 0.25 }} className="w-[210px] shrink-0">
-                        <div className="relative h-[260px] overflow-hidden rounded-lg bg-brand-cream">
-                            <img src={p.img} alt={p.title} loading="lazy" className="h-full w-full object-cover" />
-                            <span className="absolute left-2.5 top-2.5 rounded-md bg-white/90 px-2 py-1 text-xs font-medium text-brand-ink">{p.shop}</span>
-                        </div>
-                        <div className="mt-3 text-[15px] font-semibold text-brand-ink">{p.title}</div>
-                        <div className="text-[15px] text-brand-muted">{fcfa(p.price)}</div>
-                    </motion.article>
-                ))}
-            </Marquee>
-        </section>
-    );
-}
-
+/* ---------- How It Works (Expérience Concrète & Immersive en 3 Étapes) ---------- */
 function HowItWorks() {
-    return (
-        <section id="comment" className="bg-brand-cream py-24">
-            <div className="mx-auto max-w-6xl px-4 sm:px-6">
-                <SectionTitle center>Trois étapes entre votre téléphone et votre premier paiement.</SectionTitle>
-                <div className="relative mt-16">
-                    <motion.div
-                        className="absolute left-0 right-0 top-6 hidden h-px bg-brand-ink/20 md:block"
-                        initial={{ scaleX: 0 }}
-                        whileInView={{ scaleX: 1 }}
-                        viewport={{ once: true, margin: '-100px' }}
-                        transition={{ duration: 1.2, ease: EASE_OUT }}
-                        style={{ originX: 0 }}
-                    />
-                    <Stagger gap={0.18} className="grid gap-10 md:grid-cols-3">
-                        {STEPS.map((s, i) => (
-                            <StaggerItem key={s.title} className="relative space-y-4">
-                                <span className="relative z-10 flex h-12 w-12 items-center justify-center rounded-lg bg-brand-yellow text-lg font-bold text-brand-ink">{i + 1}</span>
-                                <h3 className="text-xl font-semibold text-brand-ink">{s.title}</h3>
-                                <p className="leading-relaxed text-brand-muted">{s.text}</p>
-                                {i === 0 && (
-                                    <div className="flex items-center gap-3 rounded-lg border border-brand-line bg-white p-3">
-                                        <img src={`${IMG}/jupe-kente.webp`} alt="" className="h-14 w-11 rounded-md object-cover" />
-                                        <div className="flex-1">
-                                            <div className="text-sm font-semibold text-brand-ink">Jupe kente</div>
-                                            <div className="mt-1 flex gap-1 text-xs">
-                                                {['S', 'M', 'L'].map((t, k) => (
-                                                    <span key={t} className={`rounded px-1.5 py-0.5 ${k === 0 ? 'bg-brand-yellow text-brand-ink' : 'bg-brand-sand text-brand-muted'}`}>{t}</span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <span className="text-sm font-semibold text-brand-ink">9 500 F</span>
-                                    </div>
-                                )}
-                                {i === 1 && (
-                                    <div className="space-y-2 text-sm">
-                                        <div className="w-fit rounded-lg rounded-bl-sm bg-white px-3 py-2 text-brand-ink">C'est combien la jupe kente ?</div>
-                                        <div className="ml-auto w-fit rounded-lg rounded-br-sm bg-[#DCF8C6] px-3 py-2 text-brand-ink">Tout est ici : <b className="font-semibold">biolinko.link/kemi</b></div>
-                                    </div>
-                                )}
-                                {i === 2 && (
-                                    <div className="flex items-center gap-3 rounded-lg border border-brand-line bg-white p-3">
-                                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100"><Check className="h-5 w-5 text-green-700" /></span>
-                                        <div className="flex-1">
-                                            <div className="text-sm font-semibold text-brand-ink">Paiement reçu</div>
-                                            <div className="text-xs text-brand-muted">Orange Money, il y a 1 min</div>
-                                        </div>
-                                        <span className="text-sm font-semibold text-brand-ink">9 785 F</span>
-                                    </div>
-                                )}
-                            </StaggerItem>
-                        ))}
-                    </Stagger>
-                </div>
-            </div>
-        </section>
-    );
-}
+    const [activeStep, setActiveStep] = useState(0);
 
-function Showcase() {
-    const features = [
-        ['Ventes flash', 'Prix barrés et minuteur'],
-        ['Vos couleurs', 'Logo, bannière, thème'],
-        ['Avis clients', 'Affichés sur la vitrine'],
-        ['Suivi de commande', 'Lien envoyé au client'],
+    const steps = [
+        {
+            num: '01',
+            badge: 'Création Express',
+            title: 'Configurez vos articles depuis votre smartphone',
+            summary: 'Prenez vos photos, fixez vos prix en FCFA et vos variantes en 3 minutes.',
+            desc: 'Pas besoin d’ordinateur ni de compétences techniques. Vous personnalisez votre lien biolinko.link, téléchargez vos photos depuis votre galerie, ajoutez vos tailles et gérez vos stocks en temps réel.',
+            highlights: [
+                'Photos & prix configurés en 3 minutes directement sur mobile',
+                'Gestion automatique des variantes (tailles, couleurs, stocks)',
+                'Votre lien unique biolinko.link prêt immédiatement sans hébergement',
+            ],
+            metric: '⏱️ Prêt en 3 min chrono',
+            preview: (
+                <div className="space-y-4">
+                    {/* En-tête de l'interface mobile */}
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-amber-900">
+                                <Store className="h-4 w-4" />
+                            </span>
+                            <div>
+                                <div className="text-xs font-bold text-[#2B2620]">Kicks Zone • Douala</div>
+                                <div className="text-[10px] text-slate-500">Ajout d'un nouvel article</div>
+                            </div>
+                        </div>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 border border-emerald-200">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            En direct
+                        </span>
+                    </div>
+
+                    {/* Carte d'édition du produit avec photo réelle */}
+                    <div className="flex gap-3.5 rounded-xl border border-slate-200/90 bg-slate-50/70 p-3">
+                        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-white border border-slate-200">
+                            <img src={`${IMG}/prod-sneakers.jpg`} alt="Sneakers" className="h-full w-full object-cover" />
+                            <span className="absolute bottom-1 right-1 rounded bg-[#2B2620]/80 px-1 py-0.5 text-[9px] font-medium text-white">
+                                3 photos
+                            </span>
+                        </div>
+                        <div className="flex-1 space-y-1.5">
+                            <div className="text-xs font-bold text-[#2B2620] line-clamp-1">Sneakers Street Édition Beige</div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-extrabold text-[#2B2620]">32 000 FCFA</span>
+                                <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800">-10% Promo</span>
+                            </div>
+                            <div className="text-[11px] text-slate-500 font-medium">Catégorie : Chaussures & Streetwear</div>
+                        </div>
+                    </div>
+
+                    {/* Sélecteur de variantes & stocks */}
+                    <div className="space-y-2 rounded-xl border border-slate-200/90 bg-white p-3 text-xs">
+                        <div className="flex items-center justify-between text-[11px]">
+                            <span className="font-semibold text-slate-700">Pointures disponibles :</span>
+                            <span className="text-emerald-700 font-semibold">18 paires en stock</span>
+                        </div>
+                        <div className="flex gap-1.5">
+                            {['39', '40', '41', '42', '43'].map((sz) => (
+                                <span
+                                    key={sz}
+                                    className={`flex h-7 w-8 items-center justify-center rounded-md text-[11px] font-semibold border ${
+                                        sz === '41'
+                                            ? 'bg-[#FFCC00] text-[#2B2620] border-amber-400 shadow-xs'
+                                            : 'bg-slate-50 text-slate-600 border-slate-200'
+                                    }`}
+                                >
+                                    {sz}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Bouton d'action et notification */}
+                    <div className="space-y-2 pt-1">
+                        <div className="flex w-full h-10 items-center justify-center gap-2 rounded-xl bg-[#FFCC00] text-xs font-bold text-[#2B2620] shadow-xs">
+                            <Check className="h-4 w-4" /> Publier sur biolinko.link/kicks-zone
+                        </div>
+                        <div className="flex items-center justify-center gap-1.5 text-[10px] text-emerald-800 bg-emerald-50 py-1 px-2.5 rounded-lg border border-emerald-100 font-medium">
+                            <Zap className="h-3 w-3 text-emerald-600" />
+                            Article visible instantanément sur mobile sans coder
+                        </div>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            num: '02',
+            badge: 'Diffusion Sociale',
+            title: 'Partagez votre lien biolinko.link sur tous vos réseaux',
+            summary: 'Fini de répéter les prix 50 fois en privé sur WhatsApp, Instagram et TikTok.',
+            desc: 'Placez votre lien unique dans votre bio Instagram, TikTok, vos publications et vos statuts WhatsApp. Vos clients explorent votre catalogue complet et commandent en autonomie 24h/24 sans créer de compte.',
+            highlights: [
+                'Un lien universel pour Instagram, TikTok et WhatsApp',
+                'Vos clients commandent directement sans créer de compte',
+                'Chargement instantané ultra-fluide sur réseau mobile 3G/4G',
+            ],
+            metric: '🚀 +300% de rapidité de commande',
+            preview: (
+                <div className="space-y-3.5">
+                    {/* En-tête de chat WhatsApp */}
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div className="flex items-center gap-2.5">
+                            <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-white font-bold text-xs">
+                                AK
+                                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-400" />
+                            </div>
+                            <div>
+                                <div className="text-xs font-bold text-[#2B2620]">Amina K. (Cliente WhatsApp)</div>
+                                <div className="text-[10px] text-emerald-600 font-medium">En ligne • Commande en cours</div>
+                            </div>
+                        </div>
+                        <WhatsappIcon className="h-5 w-5 text-emerald-500" />
+                    </div>
+
+                    {/* Conversation WhatsApp réaliste */}
+                    <div className="space-y-2 rounded-xl bg-slate-50 p-3 text-xs">
+                        {/* Message du client */}
+                        <div className="max-w-[85%] rounded-2xl rounded-tl-xs bg-white p-2.5 shadow-xs border border-slate-200/70 text-slate-700">
+                            <p className="text-[11px] leading-relaxed">
+                                Bonjour ! La paire beige en pointure 41 est encore disponible ? Vous livrez aujourd'hui à Bonanjo ?
+                            </p>
+                            <span className="mt-1 block text-right text-[9px] text-slate-400">14:32</span>
+                        </div>
+
+                        {/* Réponse automatique / vendeur avec le lien enrichi */}
+                        <div className="ml-auto max-w-[90%] rounded-2xl rounded-tr-xs bg-amber-50/90 border border-amber-200/80 p-2.5 text-[#2B2620]">
+                            <p className="text-[11px] font-medium leading-relaxed">
+                                Bonjour Amina ! Oui, disponible. Réservez votre paire et payez en 30s ici 👇
+                            </p>
+
+                            {/* Carte de lien enrichi */}
+                            <div className="mt-2 overflow-hidden rounded-xl border border-amber-300 bg-white p-2 shadow-xs">
+                                <div className="flex items-center gap-2.5">
+                                    <img src={`${IMG}/prod-sneakers.jpg`} alt="" className="h-12 w-12 rounded-lg object-cover" />
+                                    <div className="min-w-0 flex-1">
+                                        <div className="text-xs font-bold text-[#2B2620] truncate">Sneakers Street Beige (P. 41)</div>
+                                        <div className="text-xs font-bold text-emerald-600">32 000 FCFA</div>
+                                    </div>
+                                </div>
+                                <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-1.5 text-[10px]">
+                                    <span className="font-semibold text-slate-500">biolinko.link/kicks-zone</span>
+                                    <span className="rounded bg-[#FFCC00] px-2 py-0.5 font-bold text-[#2B2620]">
+                                        Commander
+                                    </span>
+                                </div>
+                            </div>
+                            <span className="mt-1 block text-right text-[9px] text-amber-700">14:33 ✓✓</span>
+                        </div>
+                    </div>
+
+                    {/* Métrique d'impact commercial */}
+                    <div className="rounded-xl border border-amber-200/60 bg-gradient-to-r from-amber-50 to-yellow-50/60 p-2.5 text-[11px] text-[#2B2620] flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-amber-600 shrink-0" />
+                        <span><b>+142 commandes</b> passées directement via le lien sans friction cette semaine.</span>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            num: '03',
+            badge: 'Encaissement & Livraison',
+            title: 'Encaissez par Mobile Money & livrez en toute sérénité',
+            summary: 'Paiement direct sécurisé par MTN MoMo, Orange Money ou Wave avec reçu officiel.',
+            desc: 'Le client valide par son code secret USSD sur son téléphone. Vos fonds sont immédiatement crédités sur votre solde vendeur, une facture officielle PDF avec QR code est générée et vous préparez l’envoi.',
+            highlights: [
+                'Paiements MTN MoMo & Orange Money 100% sécurisés',
+                'Zéro faux virement : la commande est payée avant expédition',
+                'Facture PDF avec QR code et retrait instantané vers votre numéro',
+            ],
+            metric: '🔒 100% garanti sans faux reçu',
+            preview: (
+                <div className="space-y-3.5">
+                    {/* En-tête de validation sécurisée */}
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-emerald-800">
+                                <ShieldCheck className="h-4 w-4" />
+                            </span>
+                            <div>
+                                <div className="text-xs font-bold text-[#2B2620]">Paiement Mobile Money Confirmé</div>
+                                <div className="text-[10px] text-slate-500">Transaction #OM-94821 • Validée par USSD</div>
+                            </div>
+                        </div>
+                        <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">
+                            Garanti 100%
+                        </span>
+                    </div>
+
+                    {/* Grande carte du montant reçu */}
+                    <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50/90 to-emerald-100/40 p-4 text-center">
+                        <div className="text-[11px] font-medium text-emerald-900">Montant crédité sur votre solde vendeur :</div>
+                        <div className="mt-1 text-2xl sm:text-3xl font-extrabold text-emerald-950 tracking-tight">
+                            + 32 000 FCFA
+                        </div>
+                        <div className="mt-2 flex items-center justify-center gap-2 text-[10px] font-semibold text-emerald-800">
+                            <span className="rounded bg-white px-2 py-0.5 shadow-xs border border-emerald-200">Orange Money</span>
+                            <span className="rounded bg-white px-2 py-0.5 shadow-xs border border-emerald-200">MTN MoMo</span>
+                            <span>• Frais client : 0 FCFA</span>
+                        </div>
+                    </div>
+
+                    {/* Facture PDF générée automatiquement avec QR code */}
+                    <div className="flex items-center justify-between rounded-xl border border-slate-200/90 bg-white p-3 shadow-xs">
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+                                <FileText className="h-5 w-5" />
+                            </span>
+                            <div>
+                                <div className="text-xs font-bold text-[#2B2620]">Facture #BLK-2024-089.pdf</div>
+                                <div className="text-[10px] text-slate-500">Avec QR Code officiel de livraison • Téléchargeable</div>
+                            </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">
+                            Générée ✓
+                        </span>
+                    </div>
+
+                    {/* Solde vendeur & Retrait direct */}
+                    <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+                        <div>
+                            <div className="text-[10px] text-slate-600 font-medium">Solde total disponible :</div>
+                            <div className="text-sm font-bold text-[#2B2620]">216 500 FCFA</div>
+                        </div>
+                        <div className="flex items-center gap-1.5 rounded-lg bg-[#FFCC00] px-3 py-1.5 text-xs font-bold text-[#2B2620] shadow-xs">
+                            <Wallet className="h-3.5 w-3.5" /> Retirer mes fonds
+                        </div>
+                    </div>
+                </div>
+            ),
+        },
     ];
+
     return (
-        <section id="vitrine" className="overflow-hidden bg-white py-24">
-            <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[0.85fr_1.15fr]">
-                <div className="space-y-7">
-                    <SectionTitle sub="Bannière, collections, ventes flash avec compte à rebours, avis clients et bouton WhatsApp. Votre boutique prend vos couleurs et reste rapide sur tous les téléphones.">
-                        Une vitrine qui donne envie d'acheter.
-                    </SectionTitle>
-                    <Stagger className="grid grid-cols-2 gap-x-6 gap-y-5">
-                        {features.map(([t, s]) => (
-                            <StaggerItem key={t} className="border-l-2 border-brand-yellow pl-3">
-                                <div className="font-semibold text-brand-ink">{t}</div>
-                                <div className="text-sm text-brand-muted">{s}</div>
-                            </StaggerItem>
-                        ))}
-                    </Stagger>
-                    <Reveal delay={0.2}>
-                        <PrimaryButton href="#tarifs">Ouvrir ma vitrine <ArrowRight className="h-4 w-4" /></PrimaryButton>
+        <section id="comment" className="relative bg-[#FAF9F5] py-20 sm:py-28 border-t border-slate-200/80">
+            <div className="mx-auto max-w-6xl px-4 sm:px-6">
+                {/* En-tête de section riche et valorisant */}
+                <Reveal className="mx-auto max-w-2xl text-center space-y-3">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100/80 border border-amber-300/60 px-3.5 py-1 text-xs font-semibold text-amber-900 shadow-xs">
+                        <Zap className="h-3.5 w-3.5 text-amber-600" /> Processus fluide en 3 étapes simples
+                    </span>
+                    <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#2B2620]">
+                        Comment fonctionne Biolinko ?
+                    </h2>
+                    <p className="text-base sm:text-lg text-slate-600 font-normal leading-relaxed">
+                        De la mise en ligne de vos articles à l'encaissement Mobile Money, tout est optimisé pour votre confort et celui de vos clients.
+                    </p>
+                </Reveal>
+
+                {/* Progression Stepper interactive & dense */}
+                <div className="mt-14 grid gap-8 lg:grid-cols-12 items-start">
+                    {/* Colonne gauche : 3 grandes étapes explicatives */}
+                    <Reveal y={24} className="lg:col-span-6 space-y-3.5">
+                        {steps.map((s, i) => {
+                            const isSelected = i === activeStep;
+                            return (
+                                <div
+                                    key={s.num}
+                                    onClick={() => setActiveStep(i)}
+                                    className={`group cursor-pointer rounded-2xl p-5 sm:p-6 transition-all border ${
+                                        isSelected
+                                            ? 'border-amber-400 bg-white shadow-md ring-2 ring-amber-400/20'
+                                            : 'border-slate-200/80 bg-white/70 hover:bg-white hover:border-slate-300 shadow-xs'
+                                    }`}
+                                >
+                                    <div className="flex items-start gap-4">
+                                        <span
+                                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold transition-all ${
+                                                isSelected
+                                                    ? 'bg-[#FFCC00] text-[#2B2620] shadow-sm scale-105'
+                                                    : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
+                                            }`}
+                                        >
+                                            {s.num}
+                                        </span>
+                                        <div className="flex-1 space-y-2">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <h3 className={`text-base font-bold transition-colors ${isSelected ? 'text-[#2B2620]' : 'text-slate-800'}`}>
+                                                    {s.title}
+                                                </h3>
+                                            </div>
+
+                                            <p className="text-xs sm:text-sm text-slate-600 font-normal leading-relaxed">
+                                                {isSelected ? s.desc : s.summary}
+                                            </p>
+
+                                            {/* Puces concrètes visibles sur l'étape active */}
+                                            {isSelected && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, height: 0 }}
+                                                    animate={{ opacity: 1, height: 'auto' }}
+                                                    transition={{ duration: 0.25 }}
+                                                    className="pt-2 space-y-1.5 border-t border-slate-100"
+                                                >
+                                                    {s.highlights.map((h, hi) => (
+                                                        <div key={hi} className="flex items-center gap-2 text-xs text-slate-700 font-medium">
+                                                            <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0 stroke-[2.5]" />
+                                                            <span>{h}</span>
+                                                        </div>
+                                                    ))}
+                                                    <div className="pt-2">
+                                                        <span className="inline-block text-[11px] font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-md">
+                                                            {s.metric}
+                                                        </span>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </Reveal>
+
+                    {/* Colonne droite : Mockup d'interface réaliste & immersif */}
+                    <Reveal y={30} delay={0.15} className="lg:col-span-6 sticky top-28">
+                        <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xl shadow-slate-200/50">
+                            {/* Barre de fenêtre d'appareil */}
+                            <div className="flex h-11 items-center justify-between border-b border-slate-200 bg-slate-50/90 px-4">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+                                    <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+                                    <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+                                </div>
+                                <div className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-600 shadow-xs">
+                                    <Lock className="h-3 w-3 text-amber-500" />
+                                    <span>biolinko.link/kicks-zone</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <span className="text-[10px] font-semibold text-slate-500">Aperçu Réel</span>
+                                </div>
+                            </div>
+
+                            {/* Contenu dynamique de l'étape active */}
+                            <div className="p-5 sm:p-6 bg-white min-h-[380px] flex flex-col justify-center">
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={activeStep}
+                                        initial={{ opacity: 0, y: 14 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -14 }}
+                                        transition={{ duration: 0.25 }}
+                                    >
+                                        {steps[activeStep].preview}
+                                    </motion.div>
+                                </AnimatePresence>
+                            </div>
+                        </div>
                     </Reveal>
                 </div>
-
-                <Reveal y={40} className="relative pb-10">
-                    <div className="overflow-hidden rounded-xl border border-brand-line bg-white shadow-[0_50px_100px_-50px_rgba(43,38,32,0.55)]">
-                        <div className="flex h-9 items-center gap-1.5 border-b border-brand-line bg-brand-sand px-3">
-                            <span className="h-2.5 w-2.5 rounded-full bg-[#F87171]" />
-                            <span className="h-2.5 w-2.5 rounded-full bg-[#FBBF24]" />
-                            <span className="h-2.5 w-2.5 rounded-full bg-[#4ADE80]" />
-                            <span className="ml-3 flex h-6 flex-1 items-center rounded bg-white px-3 text-xs text-brand-muted">biolinko.link/maison-kemi</span>
-                        </div>
-                        <img src={`${IMG}/app-vitrine.webp`} alt="Capture d'une vitrine Biolinko" loading="lazy" className="block w-full" />
-                    </div>
-                    <motion.div
-                        className="absolute -bottom-1 right-4 flex items-center gap-3 rounded-lg border border-brand-line bg-white px-3.5 py-2.5 shadow-[0_20px_40px_-20px_rgba(43,38,32,0.5)]"
-                        initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                        whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.5 }}
-                    >
-                        <img src={`${IMG}/robe-sirene.webp`} alt="" className="h-12 w-10 rounded object-cover" />
-                        <div>
-                            <div className="text-sm font-semibold text-brand-ink">Ajouté au panier</div>
-                            <div className="text-xs text-brand-muted">Robe sirène, taille M</div>
-                        </div>
-                    </motion.div>
-                </Reveal>
             </div>
         </section>
     );
 }
 
+/* ---------- Bento Grid Tools Repensé & Dynamique ---------- */
+/* ---------- Bento Grid Tools Épuré & Aéré ---------- */
 function Tools() {
     return (
-        <section id="outils" className="bg-brand-cream py-24">
+        <section id="outils" className="relative bg-white py-20 sm:py-28 border-t border-slate-200/80">
             <div className="mx-auto max-w-6xl px-4 sm:px-6">
-                <div className="flex flex-wrap items-end justify-between gap-6">
-                    <SectionTitle>Tout ce qu'il faut pour gérer vos ventes.</SectionTitle>
-                    <Reveal delay={0.1} className="max-w-sm text-base text-brand-muted">Un seul tableau de bord pour les commandes, l'argent, les clients et les relances.</Reveal>
-                </div>
+                <SectionTitle center sub="Gérez vos commandes, votre argent, vos clients et vos relances en toute simplicité.">
+                    Tout ce qu’il faut pour piloter vos ventes.
+                </SectionTitle>
 
-                <Stagger className="mt-12 grid gap-5 md:grid-cols-6">
-                    <StaggerItem className="overflow-hidden rounded-xl border border-brand-line bg-white md:col-span-4">
-                        <motion.div whileHover={{ y: -4 }} className="h-full">
-                            <div className="space-y-1.5 p-6">
-                                <h3 className="text-xl font-semibold text-brand-ink">Tableau de bord</h3>
-                                <p className="text-brand-muted">Chiffre d'affaires, commandes à livrer, meilleurs produits.</p>
-                            </div>
-                            <div className="ml-6 overflow-hidden rounded-tl-lg border-l border-t border-brand-line">
-                                <img src={`${IMG}/app-dashboard.webp`} alt="Capture du tableau de bord vendeur" loading="lazy" className="block w-full" />
-                            </div>
-                        </motion.div>
-                    </StaggerItem>
-
-                    <StaggerItem className="flex flex-col rounded-xl bg-brand-yellow p-6 md:col-span-2">
-                        <h3 className="text-xl font-semibold text-brand-ink">Retrait Mobile Money</h3>
-                        <p className="mt-1.5 text-brand-ink/75">Votre argent vers votre numéro, dès 5 000 FCFA.</p>
-                        <div className="mt-auto space-y-3 rounded-lg bg-white p-4 pt-4">
-                            <div className="text-xs font-medium text-brand-muted">Solde disponible</div>
-                            <div className="text-2xl font-bold text-brand-ink"><CountUp to={184500} /> F</div>
-                            <motion.div whileHover={{ scale: 1.02 }} className="flex h-10 items-center justify-center rounded-md bg-brand-yellow text-sm font-semibold text-brand-ink">Retirer vers MoMo</motion.div>
+                <div className="mt-12 grid gap-6 md:grid-cols-6">
+                    {/* Carte 1 : Dashboard */}
+                    <Reveal delay={0.05} className="overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50/60 p-6 sm:p-7 md:col-span-4 shadow-xs flex flex-col justify-between">
+                        <div className="space-y-1.5 mb-6">
+                            <h3 className="text-xl sm:text-2xl font-bold text-[#2B2620]">
+                                Tableau de bord des ventes
+                            </h3>
+                            <p className="text-sm font-normal text-slate-600 max-w-md">
+                                Suivez votre chiffre d'affaires, les commandes à livrer, le niveau de stock et vos clients réguliers.
+                            </p>
                         </div>
-                    </StaggerItem>
+                        <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-xs">
+                            <img
+                                src={`${IMG}/app-dashboard.webp`}
+                                alt="Tableau de bord vendeur"
+                                loading="lazy"
+                                className="block w-full object-cover"
+                            />
+                        </div>
+                    </Reveal>
 
-                    {[
-                        { Icon: FileText, title: 'Factures automatiques', text: 'PDF avec QR code, envoyé au client après chaque paiement.', extra: (
-                            <div className="flex justify-between rounded-md bg-brand-sand p-3 text-sm"><span className="text-brand-ink">Facture BLK-2041</span><span className="font-medium text-green-700">Payée</span></div>
-                        ) },
-                        { Icon: MessageCircle, title: 'Relances WhatsApp', text: "Un message aux clients qui n'ont pas fini de payer.", extra: (
-                            <div className="rounded-lg rounded-br-sm bg-[#DCF8C6] p-3 text-sm text-brand-ink">Bonjour Awa, votre robe vous attend. Finalisez ici : biolinko.link/c/8F2K</div>
-                        ) },
-                        { Icon: Link2, title: 'SmartLinks', text: 'Un lien de paiement pour un produit, à coller dans un statut ou une pub.', extra: (
-                            <div className="flex items-center justify-between rounded-md border border-brand-line p-2 pl-3 text-sm"><span className="truncate text-brand-ink">biolinko.link/p/robe-adjoa</span><span className="rounded bg-brand-yellow px-2 py-1 text-xs font-medium text-brand-ink">Copier</span></div>
-                        ) },
-                    ].map(({ Icon, title, text, extra }) => (
-                        <StaggerItem key={title} className="md:col-span-2">
-                            <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.2 }} className="flex h-full flex-col gap-3 rounded-xl border border-brand-line bg-white p-6">
-                                <Icon className="h-5 w-5 text-brand-ink" />
-                                <h3 className="text-lg font-semibold text-brand-ink">{title}</h3>
-                                <p className="text-[15px] text-brand-muted">{text}</p>
-                                <div className="mt-auto">{extra}</div>
-                            </motion.div>
-                        </StaggerItem>
-                    ))}
-                </Stagger>
-            </div>
-        </section>
-    );
-}
+                    {/* Carte 2 : Retrait Mobile Money */}
+                    <Reveal delay={0.12} className="flex flex-col justify-between rounded-2xl border border-amber-300/80 bg-gradient-to-br from-amber-50/80 to-yellow-50/30 p-6 sm:p-7 md:col-span-2 shadow-xs">
+                        <div className="space-y-1.5">
+                            <h3 className="text-xl sm:text-2xl font-bold text-[#2B2620]">
+                                Retrait Mobile Money
+                            </h3>
+                            <p className="text-xs font-normal text-slate-600 leading-relaxed">
+                                Transférez votre argent vers votre numéro MTN MoMo ou Orange Money dès 5 000 FCFA.
+                            </p>
+                        </div>
 
-function ForWho() {
-    return (
-        <section className="overflow-hidden bg-white py-24">
-            <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-2">
-                <Reveal y={40} className="relative mx-auto w-full max-w-md">
-                    <motion.div
-                        className="absolute inset-0 translate-x-5 translate-y-5 rounded-xl bg-brand-yellow"
-                        initial={{ opacity: 0, x: 0, y: 0 }}
-                        whileInView={{ opacity: 1, x: 20, y: 20 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.8, ease: EASE_OUT, delay: 0.2 }}
-                    />
-                    <img src={`${IMG}/portrait-amina.webp`} alt="Vendeuse en ligne avec son téléphone" loading="lazy" className="relative aspect-[4/5] w-full rounded-xl object-cover" />
-                    <motion.div
-                        className="absolute -left-3 bottom-10 flex items-center gap-2 rounded-lg border border-brand-line bg-white px-3.5 py-2.5 text-sm font-medium text-brand-ink shadow-lg"
-                        animate={{ y: [0, -8, 0] }}
-                        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                    >
-                        <span className="h-2 w-2 rounded-full bg-green-600" /> Boutique ouverte 24 h/24
-                    </motion.div>
-                </Reveal>
-
-                <div className="space-y-7">
-                    <SectionTitle sub="Vous avez des clients, des photos et un téléphone. Biolinko range le reste : catalogue, paiements, commandes et factures.">
-                        Fait pour celles et ceux qui vendent déjà sur WhatsApp.
-                    </SectionTitle>
-                    <Stagger gap={0.05} className="flex flex-wrap gap-2">
-                        {SELLER_TYPES.map((t) => (
-                            <StaggerItem key={t} y={10} className="rounded-md bg-brand-cream px-3 py-2 text-sm font-medium text-brand-ink">{t}</StaggerItem>
-                        ))}
-                    </Stagger>
-                    <Stagger className="divide-y divide-brand-line border-y border-brand-line">
-                        {[
-                            [false, "Plus de captures d'écran de paiement à vérifier"],
-                            [false, 'Plus de prix à répéter dans chaque DM'],
-                            [true, 'Des commandes payées, rangées, prêtes à livrer'],
-                        ].map(([ok, t]) => (
-                            <StaggerItem key={t} className="flex items-center gap-3 py-4">
-                                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${ok ? 'bg-brand-yellow' : 'bg-brand-sand'}`}>
-                                    {ok ? <Check className="h-4 w-4 text-brand-ink" /> : <X className="h-4 w-4 text-brand-muted" />}
+                        <div className="mt-6 space-y-3.5 rounded-xl bg-white p-5 shadow-xs border border-slate-200/80">
+                            <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                                <span>Solde disponible</span>
+                                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                            </div>
+                            <div className="text-2xl sm:text-3xl font-bold text-[#2B2620]">
+                                <CountUp to={184500} /> FCFA
+                            </div>
+                            <div className="flex gap-2 pt-1">
+                                <span className="rounded-md bg-[#FFCC00]/30 px-2 py-0.5 text-[10px] font-semibold text-[#2B2620]">
+                                    MTN MoMo
                                 </span>
-                                <span className="text-[17px] text-brand-ink">{t}</span>
-                            </StaggerItem>
-                        ))}
-                    </Stagger>
+                                <span className="rounded-md bg-[#FF7900]/20 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+                                    Orange Money
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                className="w-full flex h-10 items-center justify-center rounded-xl bg-[#FFCC00] text-xs font-semibold text-[#2B2620] shadow-xs hover:bg-[#E6B800] transition-colors"
+                            >
+                                Retirer vers mon numéro
+                            </button>
+                        </div>
+                    </Reveal>
+
+                    {/* Carte 3 : Factures PDF */}
+                    <Reveal delay={0.18} className="rounded-2xl border border-slate-200/80 bg-white p-6 md:col-span-2 shadow-xs flex flex-col justify-between">
+                        <div className="space-y-1.5">
+                            <h3 className="text-base font-semibold text-[#2B2620]">Factures automatiques</h3>
+                            <p className="text-xs font-normal text-slate-600 leading-relaxed">
+                                Reçu PDF horodaté avec QR code de vérification, généré après chaque paiement validé.
+                            </p>
+                        </div>
+                        <div className="mt-6 flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200/80 p-3 text-xs">
+                            <div className="font-medium text-slate-800">Facture BLK-2041.pdf</div>
+                            <span className="font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md text-[10px]">
+                                Payée
+                            </span>
+                        </div>
+                    </Reveal>
+
+                    {/* Carte 4 : Relances */}
+                    <Reveal delay={0.24} className="rounded-2xl border border-slate-200/80 bg-white p-6 md:col-span-2 shadow-xs flex flex-col justify-between">
+                        <div className="space-y-1.5">
+                            <h3 className="text-base font-semibold text-[#2B2620]">Relances automatiques</h3>
+                            <p className="text-xs font-normal text-slate-600 leading-relaxed">
+                                Récupérez les clients hésitants avec un rappel et un lien direct vers leur commande.
+                            </p>
+                        </div>
+                        <div className="mt-6 rounded-xl rounded-br-sm bg-amber-50/80 border border-amber-200/80 p-3 text-xs text-slate-800 shadow-xs">
+                            <p className="font-medium">Votre article vous attend :</p>
+                            <span className="font-semibold text-amber-900 underline block mt-0.5">biolinko.link/c/8F2K</span>
+                        </div>
+                    </Reveal>
+
+                    {/* Carte 5 : SmartLinks */}
+                    <Reveal delay={0.30} className="rounded-2xl border border-slate-200/80 bg-white p-6 md:col-span-2 shadow-xs flex flex-col justify-between">
+                        <div className="space-y-1.5">
+                            <h3 className="text-base font-semibold text-[#2B2620]">SmartLinks Produits</h3>
+                            <p className="text-xs font-normal text-slate-600 leading-relaxed">
+                                Un lien direct pour vendre un article précis dans une story ou une publication.
+                            </p>
+                        </div>
+                        <div className="mt-6 flex items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50 p-2.5 pl-3 text-xs">
+                            <span className="font-mono text-[11px] text-slate-700 truncate">biolinko.link/p/produit</span>
+                            <span className="rounded-lg bg-[#FFCC00] px-2.5 py-1 text-[10px] font-semibold text-[#2B2620] shadow-xs">
+                                Copier
+                            </span>
+                        </div>
+                    </Reveal>
                 </div>
             </div>
         </section>
     );
 }
 
-function Pricing({ auth }) {
-    const prices = usePage().props.planPrices || {};
-    const [cycle, setCycle] = useState(1);
-    const current = CYCLES.find((c) => c.months === cycle);
+/* ---------- Section Grandir (Inspirée du layout Genuka avec Cadre Vidéo) ---------- */
+function GrowBusinessSection({ youtubeId = '5N1moUCsVhI' }) {
+    const [activeTab, setActiveTab] = useState(0);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const videoContainerRef = useRef(null);
+
+    const getCleanYoutubeId = (idOrUrl) => {
+        if (!idOrUrl) return '5N1moUCsVhI';
+        const match = idOrUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+        return match ? match[1] : idOrUrl;
+    };
+
+    const cleanId = getCleanYoutubeId(youtubeId);
+
+    const toggleFullScreen = () => {
+        if (!isPlaying) {
+            setIsPlaying(true);
+        }
+        if (videoContainerRef.current) {
+            if (!document.fullscreenElement) {
+                videoContainerRef.current.requestFullscreen?.().catch(() => {});
+            } else {
+                document.exitFullscreen?.().catch(() => {});
+            }
+        }
+    };
+
+    const tabs = [
+        {
+            icon: Store,
+            title: 'Vendez plus, gérez moins',
+            desc: 'Vos clients choisissent leurs articles et commandent directement en 1 minute, sans discussions interminables.',
+        },
+        {
+            icon: CreditCard,
+            title: 'Gagnez un temps précieux',
+            desc: 'Paiements vérifiés instantanément par MTN MoMo et Orange Money. Fini les fausses captures d’écran.',
+        },
+        {
+            icon: ShieldCheck,
+            title: 'Déléguez avec confiance',
+            desc: 'Factures PDF avec QR code, gestion des stocks et relances automatisées directement sur votre téléphone.',
+        },
+    ];
 
     return (
-        <section id="tarifs" className="bg-brand-cream py-24">
-            <div className="mx-auto max-w-6xl px-4 sm:px-6">
-                <SectionTitle center>Commencez gratuitement. Passez à la suite quand vous vendez plus.</SectionTitle>
-
-                <Reveal delay={0.1} className="mt-8 flex justify-center">
-                    <div role="tablist" aria-label="Durée d'abonnement" className="relative flex rounded-lg border border-brand-line bg-white p-1">
-                        {CYCLES.map((c) => (
-                            <button
-                                key={c.months}
-                                type="button"
-                                role="tab"
-                                aria-selected={cycle === c.months}
-                                onClick={() => setCycle(c.months)}
-                                className="relative flex h-10 items-center gap-1.5 px-4 text-sm font-medium text-brand-ink"
-                            >
-                                {cycle === c.months && (
-                                    <motion.span layoutId="cycle-pill" className="absolute inset-0 rounded-md bg-brand-yellow" transition={{ type: 'spring', stiffness: 400, damping: 32 }} />
-                                )}
-                                <span className="relative">{c.label}</span>
-                                {c.discount > 0 && <span className="relative rounded bg-green-100 px-1.5 text-xs text-green-800">-{c.discount * 100} %</span>}
-                            </button>
-                        ))}
-                    </div>
+        <section id="demo" className="relative bg-[#FAF9F5] py-20 sm:py-28 border-t border-slate-200/80">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                {/* En-tête centré façon Genuka */}
+                <Reveal className="mx-auto max-w-3xl text-center mb-14 sm:mb-16">
+                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#2B2620]">
+                        Les outils qui font <span className="text-amber-500">grandir votre business</span>
+                    </h2>
+                    <p className="mt-3.5 text-base sm:text-lg text-slate-600 font-normal leading-relaxed">
+                        Dites adieu aux barrières techniques et concentrez-vous sur ce qui fait véritablement grandir votre activité.
+                    </p>
                 </Reveal>
 
-                <Stagger className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    {PLANS.map((p) => {
-                        const base = Number(prices[p.id] || 0);
-                        const total = Math.round(base * current.months * (1 - current.discount));
-                        const monthly = Math.round(total / current.months);
-                        return (
-                            <StaggerItem key={p.id} className="h-full">
-                                <motion.div
-                                    whileHover={{ y: -6 }}
-                                    transition={{ duration: 0.25 }}
-                                    className={`flex h-full flex-col gap-4 rounded-xl bg-white p-6 ${p.highlight ? 'border-2 border-brand-yellow shadow-[0_30px_60px_-35px_rgba(161,98,7,0.7)]' : 'border border-brand-line'}`}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-lg font-semibold text-brand-ink">{p.name}</h3>
-                                        {p.highlight && <span className="rounded bg-brand-yellow px-2 py-0.5 text-xs font-medium text-brand-ink">Le plus choisi</span>}
-                                    </div>
-                                    <p className="-mt-2 text-sm text-brand-muted">{p.sub}</p>
-                                    <div className="flex items-baseline gap-1.5">
-                                        <AnimatePresence mode="popLayout">
-                                            <motion.span
-                                                key={monthly}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -10 }}
-                                                transition={{ duration: 0.25 }}
-                                                className="text-4xl font-bold tracking-tight text-brand-ink"
-                                            >
-                                                {monthly.toLocaleString('fr-FR')}
-                                            </motion.span>
-                                        </AnimatePresence>
-                                        <span className="text-sm text-brand-muted">FCFA / mois</span>
-                                    </div>
-                                    <div className="min-h-[20px] text-sm text-brand-muted">
-                                        {base === 0 ? 'Gratuit, sans limite de durée' : current.months === 1 ? 'Facturé chaque mois' : `${total.toLocaleString('fr-FR')} FCFA pour ${current.months} mois`}
-                                    </div>
-                                    <a
-                                        href={auth?.user ? route('dashboard') : route('register')}
-                                        className={`flex h-11 items-center justify-center rounded-lg text-[15px] font-semibold transition-colors ${p.highlight ? 'bg-brand-yellow text-brand-ink hover:bg-brand-yellowHover' : 'border border-brand-ink/15 text-brand-ink hover:border-brand-ink/35'}`}
-                                    >
-                                        {p.cta}
-                                    </a>
-                                    <ul className="mt-1 space-y-2.5">
-                                        {p.features.map((f) => (
-                                            <li key={f} className="flex gap-2.5 text-[15px] text-brand-ink/90">
-                                                <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#B38F00]" /> {f}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </motion.div>
-                            </StaggerItem>
-                        );
-                    })}
-                </Stagger>
-            </div>
-        </section>
-    );
-}
+                {/* Grille 2 colonnes : Onglets à gauche, Cadre Vidéo stylisé à droite */}
+                <div className="grid gap-10 lg:grid-cols-12 lg:items-center">
+                    {/* Colonne gauche (5 cols) */}
+                    <Reveal y={24} className="lg:col-span-5 space-y-7">
+                        <h3 className="text-2xl sm:text-3xl font-bold leading-tight tracking-tight text-[#2B2620]">
+                            Dépassez les <span className="text-amber-500">frontières</span> et concentrez-vous sur ce qui fait vraiment grandir votre activité
+                        </h3>
 
-function Faq() {
-    const [open, setOpen] = useState(0);
-    return (
-        <section id="questions" className="bg-white py-24">
-            <div className="mx-auto max-w-3xl px-4 sm:px-6">
-                <SectionTitle center>Vos questions</SectionTitle>
-                <Stagger className="mt-10 divide-y divide-brand-line border-y border-brand-line">
-                    {FAQ.map((f, i) => {
-                        const isOpen = open === i;
-                        return (
-                            <StaggerItem key={f.q}>
+                        {/* 3 Onglets interactifs */}
+                        <div className="space-y-3.5">
+                            {tabs.map((tab, idx) => {
+                                const isActive = activeTab === idx;
+                                const Icon = tab.icon;
+                                return (
+                                    <div
+                                        key={tab.title}
+                                        onClick={() => setActiveTab(idx)}
+                                        className={`cursor-pointer rounded-xl p-5 transition-all border ${
+                                            isActive
+                                                ? 'border-slate-200 bg-white shadow-sm ring-1 ring-amber-400/20'
+                                                : 'border-slate-200/80 bg-white/70 hover:bg-white hover:border-slate-300'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3">
+                                                <span className={`flex h-6 w-6 items-center justify-center transition-colors ${
+                                                    isActive ? 'text-amber-500' : 'text-slate-400'
+                                                }`}>
+                                                    <Icon className="h-5 w-5" />
+                                                </span>
+                                                <span className={`text-base font-bold ${
+                                                    isActive ? 'text-[#2B2620]' : 'text-slate-700'
+                                                }`}>
+                                                    {tab.title}
+                                                </span>
+                                            </div>
+                                            <span className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
+                                                isActive
+                                                    ? 'bg-amber-500 text-white shadow-xs'
+                                                    : 'bg-slate-100 text-slate-400'
+                                            }`}>
+                                                <ArrowRight className="h-3.5 w-3.5" />
+                                            </span>
+                                        </div>
+
+                                        <AnimatePresence initial={false}>
+                                            {isActive && (
+                                                <motion.div
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: 'auto', opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    transition={{ duration: 0.22 }}
+                                                    className="overflow-hidden"
+                                                >
+                                                    <p className="mt-3 text-xs sm:text-sm font-normal text-slate-600 leading-relaxed pl-9">
+                                                        {tab.desc}
+                                                    </p>
+                                                    {/* Barre de soulignement orange comme sur la maquette */}
+                                                    <div className="mt-4 h-0.5 w-full bg-amber-500 rounded-full" />
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </Reveal>
+
+                    {/* Colonne droite (7 cols) : Cadre stylisé de la vidéo */}
+                    <Reveal y={30} delay={0.15} className="lg:col-span-7">
+                        <div
+                            ref={videoContainerRef}
+                            className="relative overflow-hidden rounded-2xl border-2 border-amber-400/90 bg-white p-2.5 sm:p-3.5 shadow-xl shadow-amber-500/10"
+                        >
+                            {/* Barre supérieure du cadre style Genuka */}
+                            <div className="mb-2.5 flex items-center justify-between rounded-xl bg-slate-50 px-3.5 py-2 border border-slate-200/70 text-xs">
+                                <div className="flex items-center gap-2">
+                                    <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span className="font-semibold text-[#2B2620]">Biolinko en direct</span>
+                                    <span className="hidden sm:inline text-slate-400">•</span>
+                                    <span className="hidden sm:inline text-slate-500 font-normal">Démonstration vidéo</span>
+                                </div>
                                 <button
                                     type="button"
-                                    onClick={() => setOpen(isOpen ? -1 : i)}
-                                    aria-expanded={isOpen}
-                                    className="flex w-full items-center justify-between gap-4 py-5 text-left text-[17px] font-medium text-brand-ink"
+                                    onClick={toggleFullScreen}
+                                    className="flex items-center gap-1.5 rounded-md bg-white border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 transition-colors shadow-xs"
                                 >
-                                    {f.q}
-                                    <motion.span animate={{ rotate: isOpen ? 45 : 0 }} transition={{ duration: 0.2 }} className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${isOpen ? 'bg-brand-yellow' : 'bg-brand-sand'}`}>
-                                        <Plus className="h-4 w-4 text-brand-ink" />
-                                    </motion.span>
+                                    <Maximize2 className="h-3 w-3 text-amber-600" />
+                                    <span>PLEIN ÉCRAN</span>
                                 </button>
-                                <AnimatePresence initial={false}>
-                                    {isOpen && (
+                            </div>
+
+                            {/* Zone vidéo 16:9 */}
+                            <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-stone-900 shadow-inner">
+                                <AnimatePresence mode="wait">
+                                    {!isPlaying ? (
                                         <motion.div
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: 'auto', opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            transition={{ duration: 0.3, ease: EASE_OUT }}
-                                            className="overflow-hidden"
+                                            key="poster"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            onClick={() => setIsPlaying(true)}
+                                            className="group relative flex h-full w-full cursor-pointer items-center justify-center overflow-hidden bg-gradient-to-br from-[#2B2620] via-stone-800 to-amber-950 text-white"
                                         >
-                                            <p className="pb-5 pr-12 leading-relaxed text-brand-muted">{f.a}</p>
+                                            {/* Arrière-plan visuel avec grille discrète */}
+                                            <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]" />
+
+                                            {/* Mockup de fond estompé */}
+                                            <div className="absolute inset-0 opacity-30 blur-[1px] scale-105 pointer-events-none">
+                                                <img
+                                                    src={`${IMG}/app-dashboard.webp`}
+                                                    alt=""
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+
+                                            {/* Bouton Play lumineux au centre */}
+                                            <div className="relative z-10 flex flex-col items-center gap-3 text-center px-4">
+                                                <motion.div
+                                                    whileHover={{ scale: 1.08 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                    className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-[#FFCC00] text-[#2B2620] shadow-xl shadow-yellow-500/30 transition-transform"
+                                                >
+                                                    <Play className="h-7 w-7 sm:h-8 sm:w-8 fill-current translate-x-0.5" />
+                                                </motion.div>
+                                                <div className="space-y-0.5">
+                                                    <p className="text-xs sm:text-sm font-semibold text-white group-hover:text-amber-200 transition-colors">
+                                                        Lancer la démonstration vidéo (1 min)
+                                                    </p>
+                                                    <p className="text-[11px] text-white/70">
+                                                        Découvrez comment fonctionne Biolinko de A à Z
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            key="iframe"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="h-full w-full"
+                                        >
+                                            <iframe
+                                                className="h-full w-full border-0"
+                                                src={`https://www.youtube-nocookie.com/embed/${cleanId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`}
+                                                title="Vidéo explicative Biolinko"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                allowFullScreen
+                                            />
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
-                            </StaggerItem>
-                        );
-                    })}
-                </Stagger>
+                            </div>
+                        </div>
+                    </Reveal>
+                </div>
             </div>
         </section>
     );
 }
 
+/* ---------- Final CTA avec animation ---------- */
 function FinalCta({ auth }) {
     return (
-        <section className="bg-white pb-24">
+        <section className="relative bg-white py-16 sm:py-20">
             <div className="mx-auto max-w-6xl px-4 sm:px-6">
-                <Reveal className="relative overflow-hidden rounded-xl bg-brand-yellow px-6 py-14 sm:px-14">
-                    <div className="pointer-events-none absolute inset-0 opacity-50 [background-image:radial-gradient(rgba(43,38,32,0.14)_1.2px,transparent_1.3px)] [background-size:22px_22px]" />
-                    <motion.img
-                        src="/images/brand/logo-noir-hd.png"
-                        alt=""
-                        aria-hidden="true"
-                        className="pointer-events-none absolute -right-10 -top-10 w-64 opacity-10"
-                        animate={{ y: [0, 14, 0], rotate: [0, 6, 0] }}
-                        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-                    />
-                    <div className="relative flex flex-wrap items-center justify-between gap-8">
+                <Reveal className="relative overflow-hidden rounded-2xl bg-[#FFCC00] px-6 py-12 sm:px-12 text-[#2B2620] shadow-md border border-amber-300">
+                    <div className="relative z-10 flex flex-wrap items-center justify-between gap-8">
                         <div className="max-w-xl space-y-3">
-                            <h2 className="text-3xl font-bold leading-tight tracking-tight text-brand-ink sm:text-[44px]">Ouvrez votre boutique ce soir. Encaissez demain.</h2>
-                            <p className="text-lg text-brand-ink/75">Gratuit pour commencer. Aucune carte bancaire.</p>
+                            <h2 className="text-3xl sm:text-4xl font-bold leading-tight tracking-tight text-[#2B2620]">
+                                Ouvrez votre boutique ce soir. Encaissez demain.
+                            </h2>
+                            <p className="text-base text-[#2B2620]/85 font-normal">
+                                100% gratuit pour démarrer. Aucune carte bancaire requise. Retraits directs vers MTN MoMo et Orange Money.
+                            </p>
                         </div>
-                        <div className="flex flex-col gap-3">
+
+                        <div>
                             <motion.a
                                 href={auth?.user ? route('dashboard') : route('register')}
-                                whileHover={{ y: -2 }}
-                                whileTap={{ scale: 0.97 }}
-                                className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white px-7 text-base font-semibold text-brand-ink shadow-[0_12px_28px_-14px_rgba(43,38,32,0.6)]"
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="relative overflow-hidden inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2B2620] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#3D362E] transition-colors"
                             >
-                                Créer ma boutique <ArrowRight className="h-4 w-4" />
+                                <motion.span
+                                    className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                                    animate={{ translateX: ['-100%', '200%'] }}
+                                    transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut', repeatDelay: 1 }}
+                                />
+                                <span className="relative z-10 flex items-center gap-2">
+                                    Démarrer ma boutique <ArrowRight className="h-4 w-4" />
+                                </span>
                             </motion.a>
-                            <a href="https://wa.me/" className="inline-flex items-center justify-center gap-2 text-sm font-medium text-brand-ink/80 hover:text-brand-ink">
-                                <WhatsappIcon className="h-4 w-4" /> Parler à l'équipe sur WhatsApp
-                            </a>
                         </div>
                     </div>
                 </Reveal>
             </div>
         </section>
-    );
-}
-
-function Footer() {
-    const [credits, setCredits] = useState(false);
-    const cols = [
-        ['Produit', [['Vitrine en ligne', '#vitrine'], ['Paiement Mobile Money', '#comment'], ['SmartLinks', '#outils'], ['Tarifs', '#tarifs']]],
-        ['Ressources', [['Questions fréquentes', '#questions'], ['Se connecter', route('login')], ['Créer un compte', route('register')]]],
-        ['Légal', [["Conditions d'utilisation", route('legal.terms')], ['Confidentialité', route('legal.privacy')], ['Cookies', route('legal.cookies')]]],
-    ];
-    return (
-        <footer className="border-t border-brand-line bg-brand-sand pb-8 pt-16 text-brand-muted">
-            <div className="mx-auto max-w-6xl space-y-12 px-4 sm:px-6">
-                <div className="grid gap-10 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
-                    <div className="space-y-5">
-                        <Logo />
-                        <p className="max-w-xs leading-relaxed">La boutique en ligne des vendeurs WhatsApp, payée par Mobile Money.</p>
-                        <div className="flex gap-2">
-                            {[[InstagramIcon, 'Instagram'], [TiktokIcon, 'TikTok'], [FacebookIcon, 'Facebook'], [WhatsappIcon, 'WhatsApp']].map(([Icon, label]) => (
-                                <motion.a key={label} href="#" aria-label={label} whileHover={{ y: -3 }} className="flex h-10 w-10 items-center justify-center rounded-lg border border-brand-line bg-white text-brand-ink hover:border-brand-ink/30">
-                                    <Icon className="h-[18px] w-[18px]" />
-                                </motion.a>
-                            ))}
-                        </div>
-                    </div>
-                    {cols.map(([title, links]) => (
-                        <div key={title} className="space-y-3">
-                            <div className="font-semibold text-brand-ink">{title}</div>
-                            {links.map(([label, href]) => (
-                                <a key={label} href={href} className="block hover:text-brand-ink">{label}</a>
-                            ))}
-                        </div>
-                    ))}
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-4 border-t border-brand-line pt-6 text-sm">
-                    <span>© {new Date().getFullYear()} Biolinko. Fait au Cameroun, pour l'Afrique.</span>
-                    <div className="flex items-center gap-2">
-                        <span>Paiements acceptés</span>
-                        <span className="rounded bg-brand-yellow px-2 py-1 text-xs font-medium text-brand-ink">MTN MoMo</span>
-                        <span className="rounded bg-[#FF7900] px-2 py-1 text-xs font-medium text-white">Orange Money</span>
-                    </div>
-                    <button type="button" onClick={() => setCredits(!credits)} className="inline-flex items-center gap-1 hover:text-brand-ink" aria-expanded={credits}>
-                        Crédits photos <ChevronDown className={`h-4 w-4 transition-transform ${credits ? 'rotate-180' : ''}`} />
-                    </button>
-                </div>
-                <AnimatePresence initial={false}>
-                    {credits && (
-                        <motion.ul initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="grid gap-1 overflow-hidden text-xs sm:grid-cols-2">
-                            {PHOTO_CREDITS.map(([what, author, licence, file]) => (
-                                <li key={file}>
-                                    {what} : <a className="underline" href={`https://commons.wikimedia.org/wiki/File:${file}`} target="_blank" rel="noreferrer">{author}</a>, {licence}, via Wikimedia Commons
-                                </li>
-                            ))}
-                        </motion.ul>
-                    )}
-                </AnimatePresence>
-            </div>
-        </footer>
     );
 }
 
@@ -862,30 +1059,62 @@ export default function Welcome({ auth }) {
 
     return (
         <MotionConfig reducedMotion="user">
-            <Head title="Biolinko, la boutique en ligne payée par Mobile Money">
-                <meta name="description" content="Créez votre boutique en ligne en 5 minutes, partagez votre lien sur WhatsApp et encaissez par MTN MoMo et Orange Money." />
+            <Head title="Biolinko — La boutique en ligne payée par Mobile Money">
+                <meta
+                    name="description"
+                    content="Créez votre boutique en ligne en 3 minutes, partagez votre lien et encaissez par MTN MoMo et Orange Money."
+                />
             </Head>
-            <motion.div style={{ scaleX: progress, originX: 0 }} className="fixed inset-x-0 top-0 z-[60] h-[3px] bg-brand-ink/70" />
 
-            <div className="min-h-screen bg-brand-yellow font-sans text-brand-ink antialiased">
-                <div className="border-b border-brand-ink/10 bg-brand-yellowLight text-center text-sm text-brand-ink">
-                    <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-2 px-4 py-2">
-                        <span className="rounded bg-brand-yellow px-1.5 py-0.5 text-xs font-semibold">Nouveau</span>
-                        <span className="hidden sm:inline">L'export comptable CSV de vos ventes est disponible sur l'offre Business.</span>
-                        <span className="sm:hidden">Export CSV de vos ventes</span>
-                        <a href="#tarifs" className="font-semibold underline underline-offset-2">Voir les offres</a>
-                    </div>
-                </div>
+            {/* Barre de défilement jaune */}
+            <motion.div
+                style={{ scaleX: progress, originX: 0 }}
+                className="fixed inset-x-0 top-0 z-[60] h-[3px] bg-[#FFCC00]"
+            />
+
+            <div className="min-h-screen bg-white font-sans text-slate-900 antialiased selection:bg-amber-100 selection:text-slate-900">
+                {/* Header style Shopify avec Dropdowns et CTA animé */}
                 <Header auth={auth} />
-                <Hero auth={auth} />
-                <ProductsMarquee />
+
+                {/* Hero section (Conservée intacte) */}
+                <OrbitHero
+                    primaryHref={auth?.user ? route('dashboard') : route('register')}
+                    primaryLabel={auth?.user ? 'Aller à mon tableau de bord' : 'Créer ma boutique gratuitement'}
+                />
+
+                {/* Bandeau défilant des Boutiques & Marques (de droite à gauche) */}
+                <Reveal y={16}>
+                    <StoresMarquee />
+                </Reveal>
+
+                {/* Présentation Interactive des Fonctionnalités */}
+                <FeatureTabs />
+
+                {/* Vitrine des Produits en Éventail Interactif (Card Hand Gallery) */}
+                <CardHandGallery />
+
+                {/* Comment ça marche : Stepper dynamique sans accumulation de cartes */}
                 <HowItWorks />
-                <Showcase />
+
+                {/* Boîte à Outils Bento Grid Revisitée */}
                 <Tools />
-                <ForWho />
-                <Pricing auth={auth} />
-                <Faq />
+
+                {/* Les outils qui font grandir votre business avec Cadre Vidéo stylisé */}
+                <GrowBusinessSection youtubeId="5N1moUCsVhI" />
+
+                {/* Témoignages Vendeurs : Carrousel Accordéon Déroulant (Images 3 & 4) */}
+                <TestimonialsAccordion />
+
+                {/* Tarifs (Image 2) */}
+                <PricingSection auth={auth} />
+
+                {/* FAQ (Image 1) */}
+                <FaqSection />
+
+                {/* CTA Final avec animation de brillance */}
                 <FinalCta auth={auth} />
+
+                {/* Footer style Image 2 avec grand filigrane Biolinko */}
                 <Footer />
             </div>
         </MotionConfig>

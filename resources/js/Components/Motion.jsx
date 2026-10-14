@@ -71,16 +71,23 @@ export function Parallax({ strength = 40, className = '', children }) {
 }
 
 /** Bandeau défilant infini ; le contenu est dupliqué pour une boucle sans à-coup. */
-export function Marquee({ className = '', speed = 40, children }) {
+export function Marquee({ className = '', speed = 35, pauseOnHover = true, children }) {
     const reduce = useReducedMotion();
     return (
         <div className={`group overflow-hidden ${className}`}>
             <div
-                className="flex w-max group-hover:[animation-play-state:paused]"
-                style={reduce ? undefined : { animation: `marquee ${speed}s linear infinite` }}
+                className={`flex w-max ${pauseOnHover ? 'group-hover:[animation-play-state:paused]' : ''}`}
+                style={
+                    reduce
+                        ? undefined
+                        : {
+                              animation: `marquee ${speed}s linear infinite`,
+                              willChange: 'transform',
+                          }
+                }
             >
-                <div className="flex gap-5 pr-5">{children}</div>
-                <div aria-hidden="true" className="flex gap-5 pr-5">{children}</div>
+                <div className="flex shrink-0 items-center gap-5 pr-5">{children}</div>
+                <div aria-hidden="true" className="flex shrink-0 items-center gap-5 pr-5">{children}</div>
             </div>
         </div>
     );

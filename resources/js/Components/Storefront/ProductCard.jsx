@@ -42,13 +42,13 @@ export default function ProductCard({ product, storeSlug, primaryColor, primaryT
                     />
                 </a>
 
-                <div className="pointer-events-none absolute left-2.5 top-2.5 flex flex-col gap-1.5">
+                <div className="pointer-events-none absolute left-2.5 top-2.5 flex max-w-[70%] flex-col gap-1.5">
                     {soldOut ? (
-                        <span className="rounded bg-white px-2 py-0.5 text-xs font-medium text-brand-ink">Épuisé</span>
+                        <span className="shrink-0 rounded bg-white px-2 py-0.5 text-xs font-medium text-brand-ink whitespace-nowrap">Épuisé</span>
                     ) : isPromo ? (
-                        <span className="rounded bg-[#DC2626] px-2 py-0.5 text-xs font-semibold text-white">-{discount} %</span>
+                        <span className="shrink-0 rounded bg-[#DC2626] px-2 py-0.5 text-xs font-semibold text-white whitespace-nowrap">-{discount} %</span>
                     ) : badge ? (
-                        <span className="rounded bg-white px-2 py-0.5 text-xs font-medium text-brand-ink">{badge}</span>
+                        <span className="truncate rounded bg-white px-2 py-0.5 text-xs font-medium text-brand-ink max-w-full">{badge}</span>
                     ) : null}
                 </div>
 
@@ -58,7 +58,7 @@ export default function ProductCard({ product, storeSlug, primaryColor, primaryT
                         whileTap={{ scale: 0.85 }}
                         onClick={() => onWishlist(product.id)}
                         aria-label={isWished ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-                        className="absolute right-2.5 top-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-brand-ink backdrop-blur-sm"
+                        className="absolute right-2.5 top-2.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-brand-ink backdrop-blur-sm shadow-xs"
                     >
                         <Heart className={`h-4 w-4 ${isWished ? 'fill-[#E11D48] text-[#E11D48]' : ''}`} />
                     </motion.button>
@@ -77,11 +77,13 @@ export default function ProductCard({ product, storeSlug, primaryColor, primaryT
                 )}
             </div>
 
-            <a href={url} className="mt-3 space-y-0.5">
-                <h4 className="line-clamp-2 text-[15px] font-medium leading-snug text-brand-ink">{product.title}</h4>
-                <div className="flex items-baseline gap-2">
-                    <span className="text-[15px] font-semibold text-brand-ink">{price.toLocaleString('fr-FR')} FCFA</span>
-                    {isPromo && <span className="text-sm text-brand-muted line-through">{Math.ceil(product.price_vendor).toLocaleString('fr-FR')}</span>}
+            <a href={url} className="mt-3 space-y-1 block min-w-0">
+                <h4 className="line-clamp-2 break-words text-[15px] font-medium leading-snug text-brand-ink min-h-[38px]" title={product.title}>
+                    {product.title}
+                </h4>
+                <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+                    <span className="text-[15px] font-semibold text-brand-ink whitespace-nowrap tabular-nums">{price.toLocaleString('fr-FR')} FCFA</span>
+                    {isPromo && <span className="text-xs sm:text-sm text-brand-muted line-through whitespace-nowrap tabular-nums">{Math.ceil(product.price_vendor).toLocaleString('fr-FR')} FCFA</span>}
                 </div>
             </a>
         </motion.article>
