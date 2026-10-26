@@ -15,7 +15,7 @@ export default function SettingsIndex({ settings }) {
     // Form for general platform settings
     const { data, setData, post, processing, errors } = useForm({
         platform_fee_percent: settings?.platform_fee_percent || 2.0,
-        support_email: settings?.support_email || 'support@biolinko.app',
+        support_email: settings?.support_email || 'support@biolinko.link',
     });
 
     // WhatsApp Bot Interactive States
@@ -214,26 +214,26 @@ export default function SettingsIndex({ settings }) {
         <AuthenticatedLayout>
             <Head title="Paramètres Plateforme & WhatsApp Bot — Administration BIOLINKO" />
 
-            <div className="space-y-8 font-sans pb-16 mx-auto">
+            <div className="space-y-8 pb-16 mx-auto">
                 {/* HERO BANNER */}
-                <div className="p-6 sm:p-8 rounded-3xl bg-linear-to-r from-[#FFCC00] via-amber-300 to-[#FFD700] text-slate-950 shadow-sm border border-amber-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div className="p-6 sm:p-8 rounded-3xl bg-linear-to-r from-[#FFCC00] via-amber-300 to-[#FFD700] text-[#141412] shadow-sm border border-amber-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                     <div className="space-y-1.5">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950 text-white text-[11px] font-bold uppercase tracking-wider">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#141412] text-white text-[11px] font-semibold">
                             <Settings className="w-3.5 h-3.5 text-[#FFCC00]" /> SUPER-ADMINISTRATION BIOLINKO
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                        <h1 className="text-2xl sm:text-3xl font-medium tracking-[-0.03em]">
                             Centre de Contrôle &amp; Passerelle WhatsApp
                         </h1>
-                        <p className="text-xs sm:text-sm text-slate-900 font-medium max-w-2xl">
+                        <p className="text-xs sm:text-sm text-[#141412] font-medium max-w-2xl">
                             Gérez le bot officiel de dispatching des notifications, configurez le Bouclier Anti-Ban et supervisez les commissions réseau.
                         </p>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <div className={`px-4 py-2.5 rounded-2xl border flex items-center gap-2.5 text-xs font-bold shadow-xs ${
+                        <div className={`px-4 py-2.5 rounded-2xl border flex items-center gap-2.5 text-xs font-semibold shadow-xs ${
                             isBotConnected 
                                 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-950' 
-                                : 'bg-slate-950/10 border-slate-950/20 text-slate-950'
+                                : 'bg-[#141412]/10 border-[#2B2A26]/20 text-[#141412]'
                         }`}>
                             <span className={`w-3 h-3 rounded-full ${isBotConnected ? 'bg-emerald-600 animate-pulse' : 'bg-rose-500'}`} />
                             <span>Bot : {isBotConnected ? 'OPÉRATIONNEL' : 'DÉCONNECTÉ'}</span>
@@ -243,29 +243,29 @@ export default function SettingsIndex({ settings }) {
 
                 {/* 4 ALIGNED METRICS CARDS */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-2.5">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-2.5">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>Frais Plateforme Ventes</span>
                             <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center">
                                 <DollarSign className="w-4 h-4" />
                             </div>
                         </div>
-                        <div className="text-2xl sm:text-3xl font-bold text-slate-950">
+                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
                             {settings?.platform_fee_percent || 2.0}%
                         </div>
-                        <div className="text-[11px] text-slate-400 font-medium">
+                        <div className="text-[11px] text-[#8B8A83] font-medium">
                             Commission Fast Checkout
                         </div>
                     </div>
 
-                    <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-2.5">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-2.5">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>Frais Virement Payout</span>
                             <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
                                 <ShieldCheck className="w-4 h-4" />
                             </div>
                         </div>
-                        <div className="text-2xl sm:text-3xl font-bold text-emerald-600">
+                        <div className="text-2xl sm:text-3xl font-semibold text-emerald-600">
                             1.0% MoMo
                         </div>
                         <div className="text-[11px] text-emerald-600 font-semibold">
@@ -273,14 +273,14 @@ export default function SettingsIndex({ settings }) {
                         </div>
                     </div>
 
-                    <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-2.5">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-2.5">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>Passerelle Mobile Money</span>
                             <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center">
                                 <Zap className="w-4 h-4" />
                             </div>
                         </div>
-                        <div className="text-2xl sm:text-3xl font-bold text-slate-950">
+                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
                             HR-Skills Pay
                         </div>
                         <div className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
@@ -288,44 +288,44 @@ export default function SettingsIndex({ settings }) {
                         </div>
                     </div>
 
-                    <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-2.5">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-2.5">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>Passerelle WhatsApp</span>
-                            <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-xl bg-[#F6F5F1] text-[#141412] flex items-center justify-center">
                                 <Radio className="w-4 h-4" />
                             </div>
                         </div>
-                        <div className="text-2xl sm:text-3xl font-bold text-purple-700">
+                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
                             Evolution API v2
                         </div>
-                        <div className="text-[11px] text-purple-700 font-semibold">
+                        <div className="text-[11px] text-[#141412] font-semibold">
                             Instance : {instanceName}
                         </div>
                     </div>
                 </div>
 
                 {/* WHATSAPP BOT MANAGEMENT & ANTI-BAN SECTION */}
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-3xl border border-black/[0.08] shadow-sm overflow-hidden">
                     {/* Header with WhatsApp Branding */}
-                    <div className="p-6 sm:p-8 bg-slate-950 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div className="p-6 sm:p-8 bg-[#141412] text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                             <div className="w-14 h-14 rounded-2xl bg-[#25D366] text-white flex items-center justify-center shadow-lg shadow-[#25D366]/20">
                                 <MessageSquare className="w-7 h-7" />
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <h2 className="text-lg sm:text-xl font-bold">Bot WhatsApp Officiel Biolinko</h2>
-                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                                    <h2 className="text-lg sm:text-xl font-semibold">Bot WhatsApp Officiel Biolinko</h2>
+                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
                                         isBotConnected 
                                             ? 'bg-emerald-500 text-white' 
                                             : botState === 'connecting'
-                                                ? 'bg-amber-400 text-slate-950 animate-pulse'
+                                                ? 'bg-amber-400 text-[#141412] animate-pulse'
                                                 : 'bg-rose-500 text-white'
                                     }`}>
                                         {isBotConnected ? 'CONNECTÉ' : botState === 'connecting' ? 'SCAN EN COURS' : 'DÉCONNECTÉ'}
                                     </span>
                                 </div>
-                                <p className="text-xs text-slate-400 mt-1">
+                                <p className="text-xs text-[#8B8A83] mt-1">
                                     Instance : <code className="text-amber-300 font-mono">{instanceName}</code> • Distribue automatiquement les devis, factures PDF, relances 1-clic et suivis de commande.
                                 </p>
                             </div>
@@ -336,7 +336,7 @@ export default function SettingsIndex({ settings }) {
                             <button
                                 onClick={() => fetchStatus(false)}
                                 disabled={isRefreshing}
-                                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold flex items-center gap-2 transition cursor-pointer"
+                                className="px-4 py-2 rounded-xl bg-[#2B2A26] hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-2 transition cursor-pointer"
                                 title="Actualiser le statut de connexion"
                             >
                                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -346,7 +346,7 @@ export default function SettingsIndex({ settings }) {
                             {isBotConnected ? (
                                 <button
                                     onClick={handleDisconnect}
-                                    className="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                                    className="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
                                 >
                                     <X className="w-3.5 h-3.5" /> Déconnecter
                                 </button>
@@ -354,7 +354,7 @@ export default function SettingsIndex({ settings }) {
                                 <button
                                     onClick={handleConnectQR}
                                     disabled={isConnecting}
-                                    className="px-5 py-2 rounded-xl bg-[#25D366] hover:bg-emerald-500 text-slate-950 text-xs font-extrabold flex items-center gap-1.5 shadow-md transition cursor-pointer"
+                                    className="px-5 py-2 rounded-xl bg-[#25D366] hover:bg-emerald-500 text-[#141412] text-xs font-semibold flex items-center gap-1.5 shadow-md transition cursor-pointer"
                                 >
                                     <QrCode className="w-3.5 h-3.5" />
                                     {isConnecting ? 'Connexion...' : 'Scanner le QR Code'}
@@ -372,7 +372,7 @@ export default function SettingsIndex({ settings }) {
                                     <CheckCircle2 className="w-5 h-5" />
                                 </div>
                                 <div className="text-xs space-y-1">
-                                    <h4 className="font-bold text-emerald-950 text-sm">Passerelle WhatsApp Actuellement Connectée &amp; Opérationnelle</h4>
+                                    <h4 className="font-semibold text-emerald-950 text-sm">Passerelle WhatsApp Actuellement Connectée &amp; Opérationnelle</h4>
                                     <p className="text-emerald-800 leading-relaxed">
                                         Toutes les notifications de commande (paniers réservés, paiements validés, mise à jour de livraison et factures PDF) sont automatiquement transmises aux acheteurs et aux commerçants avec le <strong>Bouclier Anti-Ban</strong>.
                                     </p>
@@ -384,7 +384,7 @@ export default function SettingsIndex({ settings }) {
                                     <AlertTriangle className="w-5 h-5" />
                                 </div>
                                 <div className="text-xs space-y-1">
-                                    <h4 className="font-bold text-amber-950 text-sm">Le Bot WhatsApp n'est pas synchronisé</h4>
+                                    <h4 className="font-semibold text-amber-950 text-sm">Le Bot WhatsApp n'est pas synchronisé</h4>
                                     <p className="text-amber-800 leading-relaxed">
                                         Pour activer les notifications en direct et l'envoi de factures, connectez votre numéro WhatsApp officiel Biolinko ci-dessous en scannant le QR code ou via le code d'association à 8 chiffres.
                                     </p>
@@ -394,13 +394,13 @@ export default function SettingsIndex({ settings }) {
 
                         {/* Interactive Tabs: QR Code / Code d'association / Sandbox Test */}
                         <div>
-                            <div className="flex border-b border-slate-200 text-xs font-bold">
+                            <div className="flex border-b border-black/[0.08] text-xs font-semibold">
                                 <button
                                     onClick={() => setActiveTab('qr')}
                                     className={`pb-3 px-4 flex items-center gap-2 border-b-2 transition cursor-pointer ${
                                         activeTab === 'qr'
-                                            ? 'border-slate-950 text-slate-950'
-                                            : 'border-transparent text-slate-400 hover:text-slate-700'
+                                            ? 'border-[#2B2A26] text-[#141412]'
+                                            : 'border-transparent text-[#8B8A83] hover:text-[#3D3C37]'
                                     }`}
                                 >
                                     <QrCode className="w-4 h-4" /> 1. Connexion par QR Code
@@ -410,8 +410,8 @@ export default function SettingsIndex({ settings }) {
                                     onClick={() => setActiveTab('pairing')}
                                     className={`pb-3 px-4 flex items-center gap-2 border-b-2 transition cursor-pointer ${
                                         activeTab === 'pairing'
-                                            ? 'border-slate-950 text-slate-950'
-                                            : 'border-transparent text-slate-400 hover:text-slate-700'
+                                            ? 'border-[#2B2A26] text-[#141412]'
+                                            : 'border-transparent text-[#8B8A83] hover:text-[#3D3C37]'
                                     }`}
                                 >
                                     <Smartphone className="w-4 h-4" /> 2. Code d'Association (Sans Caméra)
@@ -421,8 +421,8 @@ export default function SettingsIndex({ settings }) {
                                     onClick={() => setActiveTab('test')}
                                     className={`pb-3 px-4 flex items-center gap-2 border-b-2 transition cursor-pointer ${
                                         activeTab === 'test'
-                                            ? 'border-slate-950 text-slate-950'
-                                            : 'border-transparent text-slate-400 hover:text-slate-700'
+                                            ? 'border-[#2B2A26] text-[#141412]'
+                                            : 'border-transparent text-[#8B8A83] hover:text-[#3D3C37]'
                                     }`}
                                 >
                                     <Send className="w-4 h-4" /> 3. Bac à Sable d'Envoi Test
@@ -434,13 +434,13 @@ export default function SettingsIndex({ settings }) {
                                 {activeTab === 'qr' && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                                         <div className="space-y-4 text-xs">
-                                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-bold uppercase text-[10px]">
+                                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F2F1EC] text-[#3D3C37] font-semibold uppercase text-[10px]">
                                                 Instructions de synchronisation
                                             </div>
-                                            <h3 className="text-base font-extrabold text-slate-950">
+                                            <h3 className="text-base font-semibold text-[#141412]">
                                                 Comment connecter le numéro officiel Biolinko :
                                             </h3>
-                                            <ol className="space-y-3 text-slate-600 font-medium list-decimal list-inside leading-relaxed">
+                                            <ol className="space-y-3 text-[#5F5E58] font-medium list-decimal list-inside leading-relaxed">
                                                 <li>Ouvrez l'application <strong>WhatsApp</strong> ou <strong>WhatsApp Business</strong> sur votre smartphone.</li>
                                                 <li>Accédez au menu <strong>Options (⋮ sur Android)</strong> ou <strong>Réglages (sur iPhone)</strong>.</li>
                                                 <li>Sélectionnez <strong>Appareils connectés</strong> puis cliquez sur <strong>Connecter un appareil</strong>.</li>
@@ -451,7 +451,7 @@ export default function SettingsIndex({ settings }) {
                                                 <button
                                                     onClick={handleConnectQR}
                                                     disabled={isConnecting}
-                                                    className="px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-extrabold text-xs shadow-md transition cursor-pointer flex items-center gap-2"
+                                                    className="px-5 py-2.5 rounded-xl bg-[#141412] hover:bg-[#2B2A26] text-white font-semibold text-xs shadow-md transition cursor-pointer flex items-center gap-2"
                                                 >
                                                     <QrCode className="w-4 h-4 text-[#FFCC00]" />
                                                     {isConnecting ? 'Génération en cours...' : 'Générer / Rafraîchir le QR Code'}
@@ -466,18 +466,18 @@ export default function SettingsIndex({ settings }) {
                                         </div>
 
                                         {/* QR Code Container */}
-                                        <div className="flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-200 rounded-3xl min-h-[300px]">
+                                        <div className="flex flex-col items-center justify-center p-6 bg-[#F6F5F1] border border-black/[0.08] rounded-3xl min-h-[300px]">
                                             {qrCodeData ? (
                                                 <div className="text-center space-y-3">
-                                                    <div className="p-4 bg-white rounded-2xl shadow-md border border-slate-200 inline-block">
+                                                    <div className="p-4 bg-white rounded-2xl shadow-md border border-black/[0.08] inline-block">
                                                         <img
                                                             src={qrCodeData.startsWith('data:') ? qrCodeData : `data:image/png;base64,${qrCodeData}`}
                                                             alt="WhatsApp QR Code"
                                                             className="w-56 h-56 object-contain"
                                                         />
                                                     </div>
-                                                    <div className="text-xs text-slate-500 font-medium">
-                                                        Scannez avant expiration. Statut : <span className="font-bold text-amber-600 uppercase">{botState}</span>
+                                                    <div className="text-xs text-[#5F5E58] font-medium">
+                                                        Scannez avant expiration. Statut : <span className="font-semibold text-amber-600 uppercase">{botState}</span>
                                                     </div>
                                                 </div>
                                             ) : isBotConnected ? (
@@ -485,16 +485,16 @@ export default function SettingsIndex({ settings }) {
                                                     <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
                                                         <Check className="w-8 h-8" />
                                                     </div>
-                                                    <h4 className="font-bold text-slate-950 text-sm">Session WhatsApp Active</h4>
-                                                    <p className="text-xs text-slate-500 max-w-xs">
+                                                    <h4 className="font-semibold text-[#141412] text-sm">Session WhatsApp Active</h4>
+                                                    <p className="text-xs text-[#5F5E58] max-w-xs">
                                                         Votre numéro est déjà relié et prêt à fonctionner. Aucun scan nécessaire.
                                                     </p>
                                                 </div>
                                             ) : (
                                                 <div className="text-center space-y-3 p-6">
-                                                    <QrCode className="w-12 h-12 text-slate-300 mx-auto" />
-                                                    <div className="text-xs font-semibold text-slate-700">Aucun QR Code affiché</div>
-                                                    <p className="text-[11px] text-slate-400 max-w-xs">
+                                                    <QrCode className="w-12 h-12 text-[#8B8A83] mx-auto" />
+                                                    <div className="text-xs font-semibold text-[#3D3C37]">Aucun QR Code affiché</div>
+                                                    <p className="text-[11px] text-[#8B8A83] max-w-xs">
                                                         Cliquez sur « Générer / Rafraîchir le QR Code » pour charger la session active.
                                                     </p>
                                                 </div>
@@ -507,16 +507,16 @@ export default function SettingsIndex({ settings }) {
                                 {activeTab === 'pairing' && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                                         <div className="space-y-4 text-xs">
-                                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-bold uppercase text-[10px]">
+                                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F2F1EC] text-[#3D3C37] font-semibold uppercase text-[10px]">
                                                 Association par numéro (Sans caméra)
                                             </div>
-                                            <h3 className="text-base font-extrabold text-slate-950">
+                                            <h3 className="text-base font-semibold text-[#141412]">
                                                 Associer via un Code à 8 Chiffres :
                                             </h3>
-                                            <p className="text-slate-600 leading-relaxed font-medium">
+                                            <p className="text-[#5F5E58] leading-relaxed font-medium">
                                                 Si vous n'avez pas de caméra ou préférez saisir un code directement dans WhatsApp :
                                             </p>
-                                            <ol className="space-y-2 text-slate-600 font-medium list-decimal list-inside">
+                                            <ol className="space-y-2 text-[#5F5E58] font-medium list-decimal list-inside">
                                                 <li>Indiquez votre numéro WhatsApp avec indicatif (ex: 237676383986).</li>
                                                 <li>Cliquez sur <strong>Obtenir le code d'association</strong>.</li>
                                                 <li>Dans WhatsApp, appuyez sur <em>Appareils connectés &gt; Associer avec un numéro de téléphone</em>.</li>
@@ -529,38 +529,38 @@ export default function SettingsIndex({ settings }) {
                                                     value={pairingPhone}
                                                     onChange={(e) => setPairingPhone(e.target.value)}
                                                     placeholder="237699123456"
-                                                    className="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:border-amber-400 outline-none w-full sm:w-56"
+                                                    className="px-3.5 py-2.5 rounded-xl bg-[#F6F5F1] border border-black/[0.08] text-xs font-mono font-semibold focus:border-amber-400 outline-none w-full sm:w-56"
                                                 />
                                                 <button
                                                     type="submit"
                                                     disabled={isConnecting}
-                                                    className="px-4 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-extrabold text-xs shadow-md transition cursor-pointer shrink-0"
+                                                    className="px-4 py-2.5 rounded-xl bg-[#141412] hover:bg-[#2B2A26] text-white font-semibold text-xs shadow-md transition cursor-pointer shrink-0"
                                                 >
                                                     {isConnecting ? 'Génération...' : 'Obtenir le code'}
                                                 </button>
                                             </form>
                                         </div>
 
-                                        <div className="flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-200 rounded-3xl min-h-[260px]">
+                                        <div className="flex flex-col items-center justify-center p-6 bg-[#F6F5F1] border border-black/[0.08] rounded-3xl min-h-[260px]">
                                             {pairingCode ? (
                                                 <div className="text-center space-y-4">
-                                                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                                    <span className="text-[11px] font-semibold text-[#5F5E58]">
                                                         Votre Code d'Association :
                                                     </span>
                                                     <div className="px-6 py-3 rounded-2xl bg-white border-2 border-amber-400 shadow-md">
-                                                        <span className="text-2xl sm:text-3xl font-mono font-black text-slate-950 tracking-widest">
+                                                        <span className="text-2xl sm:text-3xl font-mono font-semibold text-[#141412] tracking-widest">
                                                             {pairingCode}
                                                         </span>
                                                     </div>
-                                                    <p className="text-[11px] text-slate-500">
+                                                    <p className="text-[11px] text-[#5F5E58]">
                                                         Saisissez ce code dans WhatsApp sur votre téléphone.
                                                     </p>
                                                 </div>
                                             ) : (
                                                 <div className="text-center space-y-2 p-6">
-                                                    <Smartphone className="w-12 h-12 text-slate-300 mx-auto" />
-                                                    <div className="text-xs font-semibold text-slate-700">Aucun code généré</div>
-                                                    <p className="text-[11px] text-slate-400 max-w-xs">
+                                                    <Smartphone className="w-12 h-12 text-[#8B8A83] mx-auto" />
+                                                    <div className="text-xs font-semibold text-[#3D3C37]">Aucun code généré</div>
+                                                    <p className="text-[11px] text-[#8B8A83] max-w-xs">
                                                         Renseignez le numéro et cliquez sur Obtenir le code.
                                                     </p>
                                                 </div>
@@ -573,17 +573,17 @@ export default function SettingsIndex({ settings }) {
                                 {activeTab === 'test' && (
                                     <div className="max-w-2xl space-y-5 text-xs">
                                         <div className="space-y-1">
-                                            <h3 className="text-sm font-extrabold text-slate-950">
+                                            <h3 className="text-sm font-semibold text-[#141412]">
                                                 Tester l'envoi direct depuis le Bot Officiel Biolinko
                                             </h3>
-                                            <p className="text-slate-500">
+                                            <p className="text-[#5F5E58]">
                                                 Vérifiez que les messages sont instantanément reçus sur votre téléphone avec le délai de frappe humaine.
                                             </p>
                                         </div>
 
                                         <form onSubmit={handleSendTest} className="space-y-4">
                                             <div>
-                                                <label className="block font-bold text-slate-950 mb-1">
+                                                <label className="block font-semibold text-[#141412] mb-1">
                                                     Numéro de téléphone destinataire (avec indicatif pays)
                                                 </label>
                                                 <input
@@ -591,26 +591,26 @@ export default function SettingsIndex({ settings }) {
                                                     value={testPhone}
                                                     onChange={(e) => setTestPhone(e.target.value)}
                                                     placeholder="Ex: 237676383986 ou 237699123456"
-                                                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono font-bold focus:border-amber-400 outline-none"
+                                                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F5F1] border border-black/[0.08] text-xs font-mono font-semibold focus:border-amber-400 outline-none"
                                                 />
                                             </div>
 
                                             <div>
-                                                <label className="block font-bold text-slate-950 mb-1">
+                                                <label className="block font-semibold text-[#141412] mb-1">
                                                     Message de test à envoyer
                                                 </label>
                                                 <textarea
                                                     rows={4}
                                                     value={testMessage}
                                                     onChange={(e) => setTestMessage(e.target.value)}
-                                                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F5F1] border border-black/[0.08] text-xs font-medium focus:border-amber-400 outline-none"
                                                 />
                                             </div>
 
                                             <button
                                                 type="submit"
                                                 disabled={isSendingTest}
-                                                className="px-5 py-2.5 rounded-xl bg-[#25D366] hover:bg-emerald-600 text-slate-950 font-black text-xs shadow-md transition cursor-pointer flex items-center gap-2"
+                                                className="px-5 py-2.5 rounded-xl bg-[#25D366] hover:bg-emerald-600 text-[#141412] font-semibold text-xs shadow-md transition cursor-pointer flex items-center gap-2"
                                             >
                                                 <Send className="w-3.5 h-3.5" />
                                                 {isSendingTest ? 'Envoi en cours (simulation frappe)...' : 'Envoyer le message test'}
@@ -637,68 +637,68 @@ export default function SettingsIndex({ settings }) {
                         </div>
 
                         {/* BOUCLIER ANTI-BAN VISUAL DASHBOARD */}
-                        <div className="pt-6 border-t border-slate-100 space-y-4">
+                        <div className="pt-6 border-t border-black/[0.05] space-y-4">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div className="space-y-0.5">
-                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase tracking-wider">
+                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-semibold">
                                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> SYSTÈME DE PROTECTION ACTIF
                                     </div>
-                                    <h3 className="font-extrabold text-slate-950 text-base">
+                                    <h3 className="font-semibold text-[#141412] text-base">
                                         Le Bouclier Anti-Ban Biolinko (5 Niveaux de Sécurité)
                                     </h3>
-                                    <p className="text-xs text-slate-500 font-medium">
+                                    <p className="text-xs text-[#5F5E58] font-medium">
                                         Comment nous garantissons que le numéro officiel de Biolinko ne sera jamais banni par WhatsApp :
                                     </p>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                                <div className="p-4 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <span className="font-bold text-slate-950">1. Moteur Polymorphe Spintax</span>
-                                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">Actif</span>
+                                        <span className="font-semibold text-[#141412]">1. Moteur Polymorphe Spintax</span>
+                                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-semibold">Actif</span>
                                     </div>
-                                    <p className="text-slate-500 leading-relaxed text-[11px]">
+                                    <p className="text-[#5F5E58] leading-relaxed text-[11px]">
                                         Chaque message sortant possède une salutation variée (Hello, Bonjour, Salutations) et une empreinte cryptographique horodatée unique. <strong>Aucun message n'a un hash SHA-256 identique</strong>.
                                     </p>
                                 </div>
 
-                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                                <div className="p-4 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <span className="font-bold text-slate-950">2. Frappe Humaine Simulée</span>
-                                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">2.5s - 4.8s</span>
+                                        <span className="font-semibold text-[#141412]">2. Frappe Humaine Simulée</span>
+                                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-semibold">2.5s - 4.8s</span>
                                     </div>
-                                    <p className="text-slate-500 leading-relaxed text-[11px]">
+                                    <p className="text-[#5F5E58] leading-relaxed text-[11px]">
                                         Avant chaque envoi, le bot active l'état WhatsApp <code>presence: 'composing'</code> pour simuler un être humain tapant au clavier, éliminant la détection heuristique de bots instantanés.
                                     </p>
                                 </div>
 
-                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                                <div className="p-4 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <span className="font-bold text-slate-950">3. Régulation Anti-Burst &amp; Jitter</span>
-                                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">Régulé</span>
+                                        <span className="font-semibold text-[#141412]">3. Régulation Anti-Burst &amp; Jitter</span>
+                                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-semibold">Régulé</span>
                                     </div>
-                                    <p className="text-slate-500 leading-relaxed text-[11px]">
+                                    <p className="text-[#5F5E58] leading-relaxed text-[11px]">
                                         Les envois simultanés massifs sont étalés dans le temps avec une variation aléatoire (jitter) pour respecter les seuils de débit autorisés par Meta.
                                     </p>
                                 </div>
 
-                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                                <div className="p-4 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <span className="font-bold text-slate-950">4. Répondeur 2-Way Conversational</span>
-                                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">Webhook</span>
+                                        <span className="font-semibold text-[#141412]">4. Répondeur 2-Way Conversational</span>
+                                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-semibold">Webhook</span>
                                     </div>
-                                    <p className="text-slate-500 leading-relaxed text-[11px]">
+                                    <p className="text-[#5F5E58] leading-relaxed text-[11px]">
                                         Dès qu'un acheteur répond au message, notre webhook intercepte et répond chaleureusement en le guidant vers sa commande. Ce trafic bidirectionnel booste le score de confiance du numéro.
                                     </p>
                                 </div>
 
-                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 md:col-span-2">
+                                <div className="p-4 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] space-y-2 md:col-span-2">
                                     <div className="flex items-center justify-between">
-                                        <span className="font-bold text-slate-950">5. Contexte Transactionnel &amp; Anti-Signalement</span>
-                                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">0% Spam</span>
+                                        <span className="font-semibold text-[#141412]">5. Contexte Transactionnel &amp; Anti-Signalement</span>
+                                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-semibold">0% Spam</span>
                                     </div>
-                                    <p className="text-slate-500 leading-relaxed text-[11px]">
+                                    <p className="text-[#5F5E58] leading-relaxed text-[11px]">
                                         90% des bannissements surviennent quand un utilisateur clique sur « Signaler comme spam ». Nos messages rappellent toujours le nom de la boutique et incluent le contact direct du vendeur, rassurant immédiatement le client.
                                     </p>
                                 </div>
@@ -706,12 +706,12 @@ export default function SettingsIndex({ settings }) {
                         </div>
 
                         {/* RECOMMANDATIONS OFFICIELLES WARM-UP */}
-                        <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-300 text-slate-900 space-y-2 text-xs">
-                            <div className="flex items-center gap-2 font-bold text-amber-950 text-sm">
+                        <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-300 text-[#141412] space-y-2 text-xs">
+                            <div className="flex items-center gap-2 font-semibold text-amber-950 text-sm">
                                 <Flame className="w-4 h-4 text-amber-600" />
                                 Recommandations de Rodage (Warm-up) pour le Numéro Officiel :
                             </div>
-                            <ul className="list-disc list-inside space-y-1 text-slate-700 leading-relaxed">
+                            <ul className="list-disc list-inside space-y-1 text-[#3D3C37] leading-relaxed">
                                 <li><strong>Utilisez une carte SIM dédiée WhatsApp Business :</strong> Renseignez une photo de profil officielle (logo Biolinko), le nom d'entreprise « Biolinko Notifications » et l'adresse du site web.</li>
                                 <li><strong>Rodage initial progressif :</strong> Durant les 3 premiers jours, limitez à 20-35 messages/jour, puis montez à 50-80/jour dès le 4e jour.</li>
                                 <li><strong>Ne jamais faire de publicité froide non sollicitée :</strong> Le bot doit uniquement envoyer des messages suite à une action du client (commande, paiement, relance panier réservé).</li>
@@ -723,20 +723,20 @@ export default function SettingsIndex({ settings }) {
                 {/* PLATFORM CONFIGURATION & MICROSERVICES SETTINGS */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* COMMISSION FORM */}
-                    <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-6 shadow-xs">
-                        <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-                            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
+                    <div className="bg-white rounded-3xl border border-black/[0.08] p-6 sm:p-8 space-y-6 shadow-xs">
+                        <div className="flex items-center gap-3 border-b border-black/[0.05] pb-4">
+                            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-semibold">
                                 <DollarSign className="w-5 h-5 text-amber-700" />
                             </div>
                             <div>
-                                <h3 className="font-extrabold text-slate-950 text-sm">Frais &amp; Commissions Vendeurs</h3>
-                                <p className="text-xs text-slate-500 font-medium">Taux prélevé sur les commandes Fast Checkout</p>
+                                <h3 className="font-semibold text-[#141412] text-sm">Frais &amp; Commissions Vendeurs</h3>
+                                <p className="text-xs text-[#5F5E58] font-medium">Taux prélevé sur les commandes Fast Checkout</p>
                             </div>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-4 text-xs font-sans">
+                        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
                             <div>
-                                <label className="block font-bold text-slate-950 mb-1">
+                                <label className="block font-semibold text-[#141412] mb-1">
                                     Commission BIOLINKO Plateforme (%)
                                 </label>
                                 <input
@@ -744,21 +744,21 @@ export default function SettingsIndex({ settings }) {
                                     step="0.1"
                                     value={data.platform_fee_percent}
                                     onChange={(e) => setData('platform_fee_percent', e.target.value)}
-                                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none font-mono"
+                                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F5F1] border border-black/[0.08] text-xs font-medium focus:border-amber-400 outline-none font-mono"
                                 />
                                 {errors.platform_fee_percent && <div className="text-rose-600 text-[11px] mt-1">{errors.platform_fee_percent}</div>}
-                                <p className="text-[10px] text-slate-400 mt-1">Actuellement fixé à 2.0% (Calculé sur les prix d'affichage client).</p>
+                                <p className="text-[10px] text-[#8B8A83] mt-1">Actuellement fixé à 2.0% (Calculé sur les prix d'affichage client).</p>
                             </div>
 
                             <div>
-                                <label className="block font-bold text-slate-950 mb-1">
+                                <label className="block font-semibold text-[#141412] mb-1">
                                     Email du Support Officiel
                                 </label>
                                 <input
                                     type="email"
                                     value={data.support_email}
                                     onChange={(e) => setData('support_email', e.target.value)}
-                                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#F6F5F1] border border-black/[0.08] text-xs font-medium focus:border-amber-400 outline-none"
                                 />
                                 {errors.support_email && <div className="text-rose-600 text-[11px] mt-1">{errors.support_email}</div>}
                             </div>
@@ -766,7 +766,7 @@ export default function SettingsIndex({ settings }) {
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="px-5 py-3 rounded-xl bg-slate-950 hover:bg-slate-900 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer"
+                                className="px-5 py-3 rounded-xl bg-[#141412] hover:bg-[#141412] text-white font-semibold text-xs shadow-md transition-all cursor-pointer"
                             >
                                 Enregistrer les modifications
                             </button>
@@ -774,56 +774,56 @@ export default function SettingsIndex({ settings }) {
                     </div>
 
                     {/* MICROSERVICES STATUS */}
-                    <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-6 shadow-xs">
-                        <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-                            <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-900 flex items-center justify-center font-bold">
+                    <div className="bg-white rounded-3xl border border-black/[0.08] p-6 sm:p-8 space-y-6 shadow-xs">
+                        <div className="flex items-center gap-3 border-b border-black/[0.05] pb-4">
+                            <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-900 flex items-center justify-center font-semibold">
                                 <Zap className="w-5 h-5 text-emerald-600" />
                             </div>
                             <div>
-                                <h3 className="font-extrabold text-slate-950 text-sm">État des Microservices &amp; Passerelles</h3>
-                                <p className="text-xs text-slate-500 font-medium">Statut d'intégration en temps réel</p>
+                                <h3 className="font-semibold text-[#141412] text-sm">État des Microservices &amp; Passerelles</h3>
+                                <p className="text-xs text-[#5F5E58] font-medium">Statut d'intégration en temps réel</p>
                             </div>
                         </div>
 
                         <div className="space-y-3 text-xs">
-                            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                            <div className="p-4 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] flex items-center justify-between">
                                 <div className="space-y-0.5">
-                                    <div className="font-bold text-slate-950">Passerelle Mobile Money (HR-Skills Pay)</div>
-                                    <div className="text-slate-400 font-mono text-[11px]">{settings?.hrskills_pay_url}</div>
+                                    <div className="font-semibold text-[#141412]">Passerelle Mobile Money (HR-Skills Pay)</div>
+                                    <div className="text-[#8B8A83] font-mono text-[11px]">{settings?.hrskills_pay_url}</div>
                                 </div>
-                                <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase flex items-center gap-1">
+                                <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-semibold uppercase flex items-center gap-1">
                                     <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Opérationnelle
                                 </span>
                             </div>
 
-                            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                            <div className="p-4 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] flex items-center justify-between">
                                 <div className="space-y-0.5">
-                                    <div className="font-bold text-slate-950">Passerelle WhatsApp (Evolution API Node.js)</div>
-                                    <div className="text-slate-400 font-mono text-[11px]">{settings?.whatsapp_gateway_url}</div>
+                                    <div className="font-semibold text-[#141412]">Passerelle WhatsApp (Evolution API Node.js)</div>
+                                    <div className="text-[#8B8A83] font-mono text-[11px]">{settings?.whatsapp_gateway_url}</div>
                                 </div>
-                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase flex items-center gap-1 ${
+                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase flex items-center gap-1 ${
                                     isBotConnected ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
                                 }`}>
                                     <CheckCircle2 className="w-3 h-3" /> {isBotConnected ? 'Connectée' : 'En veille'}
                                 </span>
                             </div>
 
-                            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                            <div className="p-4 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] flex items-center justify-between">
                                 <div className="space-y-0.5">
-                                    <div className="font-bold text-slate-950">Moteur de Facturation PDF Certifiée</div>
-                                    <div className="text-slate-400 text-[11px]">QR Code &amp; Filigrane Officiel</div>
+                                    <div className="font-semibold text-[#141412]">Moteur de Facturation PDF Certifiée</div>
+                                    <div className="text-[#8B8A83] text-[11px]">QR Code &amp; Filigrane Officiel</div>
                                 </div>
-                                <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase flex items-center gap-1">
+                                <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-semibold uppercase flex items-center gap-1">
                                     <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Actif
                                 </span>
                             </div>
 
-                            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                            <div className="p-4 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] flex items-center justify-between">
                                 <div className="space-y-0.5">
-                                    <div className="font-bold text-slate-950">Webhook Répondeur 2-Way Anti-Ban</div>
-                                    <div className="text-slate-400 font-mono text-[11px]">/api/webhooks/whatsapp</div>
+                                    <div className="font-semibold text-[#141412]">Webhook Répondeur 2-Way Anti-Ban</div>
+                                    <div className="text-[#8B8A83] font-mono text-[11px]">/api/webhooks/whatsapp</div>
                                 </div>
-                                <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase flex items-center gap-1">
+                                <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-semibold uppercase flex items-center gap-1">
                                     <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Prêt
                                 </span>
                             </div>

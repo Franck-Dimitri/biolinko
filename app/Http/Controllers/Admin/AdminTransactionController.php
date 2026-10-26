@@ -26,7 +26,7 @@ class AdminTransactionController extends Controller
                 $q->where('tracking_code', 'like', "%{$search}%")
                   ->orWhere('customer_name', 'like', "%{$search}%")
                   ->orWhere('customer_phone', 'like', "%{$search}%")
-                  ->orWhere('hrskills_reference', 'like', "%{$search}%")
+                  ->orWhere('payment_reference', 'like', "%{$search}%")
                   ->orWhereHas('store', function ($sq) use ($search) {
                       $sq->where('name', 'like', "%{$search}%");
                   });

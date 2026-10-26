@@ -93,11 +93,57 @@ test('vendor can request mobile money withdrawal via hrskills pay', function () 
         'wallet_id' => $wallet->id,
         'amount' => 50100,
         'phone_number' => '237680216505',
-        'status' => 'PENDING',
+        'status' => 'pending',
     ]);
 
     $this->assertDatabaseHas('wallets', [
         'id' => $wallet->id,
         'balance_available' => 49900,
     ]);
+});
+
+test('an unpaid online order cannot be marked as paid by the seller', function () {
+    $user = User::factory()->create();
+    $store = Store::create(['user_id' => $user->id, 'name' => 'Boutique Garde', 'slug' => 'boutique-garde']);
+    $order = Order::create([
+        'store_id' => $store->id, 'customer_name' => 'Awa', 'customer_phone' => '237677123456', 'city' => 'Douala',
+        'price_vendor' => 5000, 'saas_margin' => 150, 'api_fee' => 0, 'total_client' => 5150, 'status' => 'pending',
+    ]);
+
+    $this->actingAs($user)->patch(route('orders.updateStatus', $order->id), ['status' => 'paid']);
+
+    expect($order->fresh()->status)->toBe('pending');
+});
+
+test('admin rejecting a withdrawal puts the money back on the seller balance', function () {
+    $seller = User::factory()->create();
+    $store = Store::create(['user_id' => $seller->id, 'name' => 'Boutique Retrait', 'slug' => 'boutique-retrait']);
+    $wallet = Wallet::create(['store_id' => $store->id, 'balance_available' => 20000, 'balance_pending' => 0]);
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    $this->actingAs($seller)->post(route('wallet.withdraw'), ['amount' => 15000, 'phone' => '677123456', 'payment_operator' => 'MTN']);
+    $withdrawal = \App\Models\Withdrawal::first();
+    expect((float) $wallet->fresh()->balance_pending)->toBe(15000.0);
+
+    $this->actingAs($admin)->post(route('admin.withdrawals.reject', $withdrawal));
+
+    $wallet->refresh();
+    expect((float) $wallet->balance_available)->toBe(20000.0);
+    expect((float) $wallet->balance_pending)->toBe(0.0);
+    expect($withdrawal->fresh()->status)->toBe('rejected');
+});
+
+test('a failed payout never marks the withdrawal as paid', function () {
+    Http::fake(['*' => Http::response(['message' => 'Service indisponible'], 500)]);
+    $seller = User::factory()->create();
+    $store = Store::create(['user_id' => $seller->id, 'name' => 'Boutique Echec', 'slug' => 'boutique-echec']);
+    Wallet::create(['store_id' => $store->id, 'balance_available' => 20000, 'balance_pending' => 0]);
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    $this->actingAs($seller)->post(route('wallet.withdraw'), ['amount' => 10000, 'phone' => '677123456', 'payment_operator' => 'MTN']);
+    $withdrawal = \App\Models\Withdrawal::first();
+
+    $this->actingAs($admin)->post(route('admin.withdrawals.approve', $withdrawal));
+
+    expect($withdrawal->fresh()->status)->toBe('pending');
 });

@@ -56,7 +56,7 @@ class CustomerController extends Controller
 
         // Products & SmartLinks for WhatsApp Broadcast Attachment
         $products = Product::where('store_id', $store->id)
-            ->get(['id', 'title', 'price_vendor', 'image_url']);
+            ->get(['id', 'title', 'slug', 'price_vendor', 'image_url']);
 
         $smartLinks = SmartLink::where('store_id', $store->id)
             ->where('is_active', true)
@@ -154,6 +154,21 @@ class CustomerController extends Controller
         $gatewayService = app(\App\Services\WhatsappGatewayService::class);
         $instanceName = 'store_' . $store->id;
 
+        // Lien joint au message : produit, pack ou boutique
+        $baseUrl = rtrim($request->getSchemeAndHttpHost(), '/');
+        $link = $baseUrl.'/'.$store->slug;
+        if (! empty($validated['attached_products'][0])) {
+            $product = Product::where('store_id', $store->id)->find($validated['attached_products'][0]);
+            if ($product) {
+                $link = $baseUrl.'/'.$store->slug.'/p/'.$product->slug;
+            }
+        } elseif (! empty($validated['smart_link_id'])) {
+            $smartLink = SmartLink::find($validated['smart_link_id']);
+            if ($smartLink) {
+                $link = $baseUrl.'/pay/'.$smartLink->code;
+            }
+        }
+
         foreach ($validated['recipients'] as $recipient) {
             $phone = $recipient['phone'] ?? null;
             if ($phone) {
@@ -162,12 +177,17 @@ class CustomerController extends Controller
                 $nom = count($nameParts) > 1 ? implode(' ', array_slice($nameParts, 1)) : ($recipient['name'] ?? '');
 
                 $text = str_replace(
-                    ['{prenom}', '{nom}', '{nom_boutique}'],
-                    [$prenom, $nom, $store->name],
+                    ['{prenom}', '{nom}', '{nom_boutique}', '{ville}', '{lien_produit}'],
+                    [$prenom, $nom, $store->name, $recipient['city'] ?? 'votre ville', $link],
                     $validated['message_template']
                 );
 
-                $gatewayService->sendMessage($phone, $text, $instanceName);
+                // API officielle : une campagne est un message marketing, il passe par un modèle approuvé
+                if ($cloud = $gatewayService->cloud()) {
+                    $cloud->sendTemplate($gatewayService->formatPhone($phone), 'biolinko_campagne', [$prenom, $store->name, $text]);
+                } else {
+                    $gatewayService->sendMessage($phone, $text, $instanceName);
+                }
             }
         }
 

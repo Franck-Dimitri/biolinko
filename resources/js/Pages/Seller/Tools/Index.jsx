@@ -1,94 +1,73 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Layers2, CheckCircle2, Lock, ArrowRight, Zap, Smartphone, MessageSquare, FileText, Table, ExternalLink } from 'lucide-react';
+import { BadgeCheck, BarChart3, FileText, Globe, Lock, Repeat, Table, Truck, Wrench } from 'lucide-react';
+import { OperatorLogo } from '@/Components/Landing/Illustrations';
+import { Badge, Button, PageHeader, Tabs, reveal } from '@/Components/Dashboard/UI';
 
-export default function Index({ store, user, plugins }) {
-    const getIconComponent = (name) => {
-        switch (name) {
-            case 'Smartphone': return <Smartphone className="w-6 h-6 text-amber-500" />;
-            case 'MessageSquare': return <MessageSquare className="w-6 h-6 text-emerald-500" />;
-            case 'FileText': return <FileText className="w-6 h-6 text-indigo-500" />;
-            case 'Table': return <Table className="w-6 h-6 text-sky-500" />;
-            default: return <Zap className="w-6 h-6 text-amber-500" />;
-        }
-    };
+const ICONS = { FileText, BadgeCheck, BarChart3, Repeat, Table, Globe, Truck };
+const PLAN_LABEL = { starter: 'Starter', pro: 'Pro', growth: 'Growth', business: 'Business' };
+
+const STATUS = {
+    included: ['Inclus', 'success'],
+    connected: ['Connecté', 'success'],
+    available: ['À configurer', 'warning'],
+    locked: ['Plan supérieur', 'neutral'],
+    soon: ['Bientôt', 'neutral'],
+};
+
+function ToolCard({ tool, index }) {
+    const Icon = ICONS[tool.icon] || Wrench;
+    const [label, tone] = STATUS[tool.status];
+    const dim = tool.status === 'soon';
+
+    return (
+        <motion.article {...reveal(Math.min(index, 8) * 0.03)}
+            className={`flex flex-col rounded-3xl border bg-white p-5 ${tool.status === 'available' ? 'border-[#FFCC00]/60' : 'border-black/[0.06]'}`}>
+            <div className="flex items-start justify-between gap-3">
+                <span className={dim ? 'opacity-50' : ''}>
+                    {tool.logo
+                        ? <OperatorLogo op={tool.logo} className="h-11 w-11" />
+                        : <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F6F5F1]"><Icon className="h-5 w-5 text-[#141412]" /></span>}
+                </span>
+                <Badge tone={tone}>{tool.status === 'locked' && <Lock className="h-3 w-3" />}{label}</Badge>
+            </div>
+            <h3 className={`mt-4 text-[16px] font-medium ${dim ? 'text-[#5F5E58]' : 'text-[#141412]'}`}>{tool.name}</h3>
+            <p className="mt-1 flex-1 text-[14px] leading-relaxed text-[#5F5E58]">{tool.description}</p>
+            <div className="mt-4 flex items-center justify-between gap-2 border-t border-black/[0.05] pt-4">
+                <span className="text-[13px] text-[#8B8A83]">{tool.category} · {PLAN_LABEL[tool.plan]}{tool.plan !== 'starter' ? ' et plus' : ''}</span>
+                {tool.status === 'locked' && <Button size="sm" variant="primary" href={route('seller.subscriptions.index', { plan: tool.plan })}>Débloquer</Button>}
+                {tool.status === 'available' && tool.route && <Button size="sm" variant="primary" href={route(tool.route)}>Configurer</Button>}
+                {['connected', 'included'].includes(tool.status) && tool.route && <Button size="sm" href={route(tool.route)}>Ouvrir</Button>}
+            </div>
+        </motion.article>
+    );
+}
+
+export default function Index({ plan, tools = [] }) {
+    const [filter, setFilter] = useState('all');
+    const active = tools.filter((t) => ['included', 'connected'].includes(t.status)).length;
+    const shown = tools.filter((t) => {
+        if (filter === 'active') return ['included', 'connected'].includes(t.status);
+        if (filter === 'available') return ['available', 'locked'].includes(t.status);
+        if (filter === 'soon') return t.status === 'soon';
+        return true;
+    });
 
     return (
         <AuthenticatedLayout>
-            <Head title="Outils & Plugins — BIOLINKO" />
-
-            <div className="w-full space-y-8 font-sans">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight flex items-center gap-2">
-                            <span>Outils & Extensions Plugins</span>
-                            <Layers2 className="w-6 h-6 text-amber-500" />
-                        </h1>
-                        <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1">
-                            Découvrez le catalogue d'extensions connectées pour automatiser votre boutique et booster vos ventes.
-                        </p>
-                    </div>
-                </div>
-
-                {/* PLUGINS GRID */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {plugins.map((p) => {
-                        const isLocked = p.status === 'locked';
-
-                        return (
-                            <motion.div
-                                key={p.id}
-                                whileHover={{ y: -3 }}
-                                className={`bg-white rounded-3xl border p-6 flex flex-col justify-between space-y-6 relative overflow-hidden shadow-2xs ${
-                                    isLocked ? 'border-slate-200/60 opacity-90' : 'border-slate-200 hover:border-amber-300'
-                                }`}
-                            >
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center">
-                                            {getIconComponent(p.icon)}
-                                        </div>
-
-                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
-                                            !isLocked
-                                                ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                                                : 'bg-slate-100 text-slate-600 border border-slate-200'
-                                        }`}>
-                                            {!isLocked ? 'Actif' : `Requis Plan ${p.required_plan}`}
-                                        </span>
-                                    </div>
-
-                                    <div>
-                                        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                            {p.category}
-                                        </div>
-                                        <h3 className="text-lg font-bold text-slate-950 mt-0.5">{p.name}</h3>
-                                        <p className="text-xs text-slate-600 font-medium leading-relaxed mt-2">
-                                            {p.description}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                                    {!isLocked ? (
-                                        <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                                            <CheckCircle2 className="w-4 h-4" /> Plugin Intégré
-                                        </span>
-                                    ) : (
-                                        <a
-                                            href={route('seller.subscriptions.index')}
-                                            className="w-full py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
-                                        >
-                                            <Lock className="w-3.5 h-3.5 text-amber-400" />
-                                            <span>Débloquer avec le Plan {p.required_plan}</span>
-                                        </a>
-                                    )}
-                                </div>
-                            </motion.div>
-                        );
-                    })}
+            <Head title="Outils, Biolinko" />
+            <div className="space-y-6 pb-12">
+                <PageHeader title="Outils" sub={`Connectez des services à votre boutique. ${active} outil${active > 1 ? 's' : ''} actif${active > 1 ? 's' : ''} avec votre plan ${PLAN_LABEL[plan] || 'Starter'}.`} />
+                <Tabs id="tools" value={filter} onChange={setFilter} tabs={[
+                    ['all', 'Tous', tools.length],
+                    ['active', 'Actifs', active],
+                    ['available', 'À activer', tools.filter((t) => ['available', 'locked'].includes(t.status)).length],
+                    ['soon', 'Bientôt', tools.filter((t) => t.status === 'soon').length],
+                ]} />
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                    {shown.map((t, i) => <ToolCard key={t.id} tool={t} index={i} />)}
                 </div>
             </div>
         </AuthenticatedLayout>

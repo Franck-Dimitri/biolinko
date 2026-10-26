@@ -17,9 +17,20 @@ class WhatsappGatewayService
     public function __construct()
     {
         $this->enabled = (bool) config('services.whatsapp_gateway.enabled', false);
-        $this->baseUrl = rtrim(config('services.whatsapp_gateway.base_url', 'https://evolutionapi.mrdims.dev'), '/');
-        $this->apiKey = config('services.whatsapp_gateway.api_key', 'Biolinko_EvoApi_9f83a7c41d2e5b60e7f8a9c0');
+        $this->baseUrl = rtrim((string) config('services.whatsapp_gateway.base_url'), '/');
+        $this->apiKey = (string) config('services.whatsapp_gateway.api_key');
         $this->defaultInstance = config('services.whatsapp_gateway.default_instance', 'test_dims');
+    }
+
+    /** API officielle Meta si elle est choisie (WHATSAPP_DRIVER=cloud), sinon null → passerelle Evolution. */
+    public function cloud(): ?WhatsappCloudService
+    {
+        return config('services.whatsapp_driver') === 'cloud' ? app(WhatsappCloudService::class) : null;
+    }
+
+    private function money($amount): string
+    {
+        return number_format((float) $amount, 0, ',', ' ');
     }
 
     /**
@@ -87,6 +98,10 @@ class WhatsappGatewayService
     {
         $formattedPhone = $this->formatPhone($phone);
         $instance = $instanceName ?: $this->defaultInstance;
+
+        if ($cloud = $this->cloud()) {
+            return $cloud->sendText($formattedPhone, $message);
+        }
 
         if (!$this->enabled) {
             Log::info('Passerelle WhatsApp désactivée pour protéger le numéro contre les suspensions Meta', [
@@ -303,6 +318,16 @@ class WhatsappGatewayService
         $trackingUrl = route('order.track', $order->tracking_code);
         $totalFormatted = number_format($order->total_client, 0, ',', ' ');
 
+        // API officielle : le client seulement (le vendeur est prévenu au paiement, chaque message est facturé)
+        if ($cloud = $this->cloud()) {
+            if ($order->customer_phone) {
+                $cloud->sendTemplate($this->formatPhone($order->customer_phone), 'biolinko_commande_enregistree',
+                    [$order->customer_name, $order->tracking_code, $totalFormatted, $store->name], $order->tracking_code);
+            }
+
+            return;
+        }
+
         // 1. Notification au Client (Polymorphe Anti-Ban)
         if ($order->customer_phone) {
             $greeting = $this->getPolymorphicGreeting($order->customer_name);
@@ -345,9 +370,22 @@ class WhatsappGatewayService
         $order->loadMissing(['store.user', 'items']);
         $store = $order->store;
         $trackingUrl = route('order.track', $order->tracking_code);
-        $invoiceUrl = route('seller.invoices.download', $order->id);
         $totalFormatted = number_format($order->total_client, 0, ',', ' ');
         $vendorGain = number_format($order->price_vendor, 0, ',', ' ');
+        $vendorPhone = $store->phone_whatsapp ?: ($store->user->phone_whatsapp ?? null);
+
+        if ($cloud = $this->cloud()) {
+            if ($order->customer_phone) {
+                $cloud->sendTemplate($this->formatPhone($order->customer_phone), 'biolinko_paiement_confirme',
+                    [$order->customer_name, $totalFormatted, $order->tracking_code, $store->name], $order->tracking_code);
+            }
+            if ($vendorPhone) {
+                $cloud->sendTemplate($this->formatPhone($vendorPhone), 'biolinko_vente_payee',
+                    [$store->name, $order->tracking_code, $order->customer_name, $vendorGain]);
+            }
+
+            return;
+        }
 
         // 1. Notification au Client (Reçu + Facture)
         if ($order->customer_phone) {
@@ -363,8 +401,6 @@ class WhatsappGatewayService
                 . "{$greeting}\n\n"
                 . "{$phrase}\n\n"
                 . "📦 Vos articles sont désormais en cours de préparation.\n\n"
-                . "📄 *Télécharger votre Facture PDF officielle :*\n"
-                . "{$invoiceUrl}\n\n"
                 . "📍 *Suivi de livraison en direct :*\n"
                 . "{$trackingUrl}\n\n"
                 . $this->getPolymorphicFooter($store, $order->tracking_code);
@@ -373,12 +409,11 @@ class WhatsappGatewayService
         }
 
         // 2. Alerte Gain au Vendeur
-        $vendorPhone = $store->phone_whatsapp ?: ($store->user->phone ?? null);
         if ($vendorPhone) {
             $vendorMsg = "🎉 *VENTE CONFIRMÉE & ENCAISSÉE — {$store->name} !*\n\n"
                 . "La commande *#{$order->tracking_code}* de *{$order->customer_name}* ({$order->customer_phone}) est PAYÉE.\n\n"
                 . "💰 *+{$vendorGain} FCFA* ont été crédités sur votre portefeuille vendeur disponible.\n"
-                . "📍 Destination : {$order->customer_city} - {$order->customer_delivery_address}\n\n"
+                . "📍 Destination : {$order->city} - {$order->address_details}\n\n"
                 . "👉 Préparez le colis : " . route('orders.index');
 
             $this->sendMessage($vendorPhone, $vendorMsg);
@@ -406,6 +441,14 @@ class WhatsappGatewayService
         ];
 
         $label = $statusLabels[$status] ?? ucfirst($status);
+
+        if ($cloud = $this->cloud()) {
+            $plain = ['in_delivery' => 'en cours de livraison', 'delivered' => 'livrée', 'cancelled' => 'annulée'][$status] ?? $status;
+            $cloud->sendTemplate($this->formatPhone($order->customer_phone), 'biolinko_suivi_commande',
+                [$order->customer_name, $order->tracking_code, $store->name, $plain], $order->tracking_code);
+
+            return;
+        }
 
         $msg = "📦 *Mise à jour de livraison — {$store->name}*\n\n"
             . "{$greeting}\n\n"
@@ -435,6 +478,12 @@ class WhatsappGatewayService
         $store = $order->store;
         $trackingUrl = route('order.track', $order->tracking_code);
         $totalFormatted = number_format($order->total_client, 0, ',', ' ');
+
+        if ($cloud = $this->cloud()) {
+            return $cloud->sendTemplate($this->formatPhone($order->customer_phone), 'biolinko_rappel_paiement',
+                [$order->customer_name, $order->tracking_code, $totalFormatted, $store->name], $order->tracking_code);
+        }
+
         $greeting = $this->getPolymorphicGreeting($order->customer_name);
 
         $reminderPhrases = [
@@ -446,8 +495,8 @@ class WhatsappGatewayService
 
         $reminderMsg = "{$greeting}\n\n"
             . "{$phrase}\n\n"
-            . "Vos articles sont réservés. Souhaitez-vous de l'aide pour régler par Mobile Money ou organiser la livraison ?\n\n"
-            . "👉 *Cliquez ici pour finaliser votre commande :*\n"
+            . "Vos articles sont encore réservés. Vous pouvez régler en un clic par MTN MoMo ou Orange Money.\n\n"
+            . "👉 *Payer ma commande :*\n"
             . "{$trackingUrl}\n\n"
             . $this->getPolymorphicFooter($store, $order->tracking_code);
 
@@ -482,14 +531,45 @@ class WhatsappGatewayService
             default => "Une décision de modération a été prise sur votre compte.",
         };
 
+        if ($cloud = $this->cloud()) {
+            $cloud->sendTemplate($this->formatPhone($phone), 'biolinko_moderation',
+                [$user->name, str_replace('*', '', $actionText), $reason]);
+
+            return;
+        }
+
         $msg = "⚠️ *Notification de Modération — BIOLINKO*\n\n"
             . "Bonjour *{$user->name}*,\n\n"
             . "{$actionText}\n\n"
             . "📋 *Motif communiqué :*\n"
             . "_{$reason}_\n\n"
-            . "Pour toute réclamation ou question, vous pouvez écrire à support@biolinko.app ou répondre directement à ce message.\n\n"
+            . "Pour toute réclamation ou question, vous pouvez écrire à support@biolinko.link ou répondre directement à ce message.\n\n"
             . "_[Équipe de Conformité & Modération BIOLINKO]_";
 
         $this->sendMessage($phone, $msg);
+    }
+
+    /** Prévient le vendeur qu'un client a signalé un problème : la vente reste gelée jusqu'à sa réponse. */
+    public function notifyOrderReported(Order $order, \App\Models\OrderReport $report): void
+    {
+        $order->loadMissing('store.user');
+        $store = $order->store;
+        $vendorPhone = $store->phone_whatsapp ?: ($store->user->phone_whatsapp ?? null);
+        if (! $vendorPhone) {
+            return;
+        }
+
+        if ($cloud = $this->cloud()) {
+            $cloud->sendTemplate($this->formatPhone($vendorPhone), 'biolinko_signalement',
+                [$order->tracking_code, $order->customer_name, $report->reason_label, $order->customer_phone]);
+
+            return;
+        }
+
+        $this->sendMessage($vendorPhone, "⚠️ *Signalement sur la commande #{$order->tracking_code}*\n\n"
+            ."Client : *{$order->customer_name}* ({$order->customer_phone})\n"
+            ."Motif : {$report->reason_label}\n"
+            ."Message : _{$report->message}_\n\n"
+            ."La vente reste en attente le temps de trouver une solution avec votre client. Répondez depuis vos commandes : ".route('orders.index'));
     }
 }

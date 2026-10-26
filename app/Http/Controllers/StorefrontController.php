@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\Store;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -70,23 +71,26 @@ class StorefrontController extends Controller
                     $product->discount_percentage = 0;
                 }
 
-                $tc = ceil($pb * 1.03); // Total Checkout Price with 3% platform fee
+                $tc = $pb + Order::clientFee($pb); // prix + frais de service client
                 $product->price_client_total = $tc;
                 $product->api_fee_unit = $tc - $pb;
                 return $product;
             });
 
+        // Packs affichés : actifs, non expirés et pas encore épuisés
         $activeSmartLinks = \App\Models\SmartLink::where('store_id', $store->id)
             ->where('is_active', true)
             ->latest()
-            ->get();
+            ->get()
+            ->filter(fn ($link) => $link->isValid())
+            ->values();
 
         if (empty($store->sections_json)) {
             $store->sections_json = Store::getDefaultSections();
         }
 
         return Inertia::render('Storefront/Boutique', [
-            'store' => $store,
+            'store' => $store->forPublic(),
             'products' => $products,
             'activeSmartLinks' => $activeSmartLinks,
             'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
@@ -129,10 +133,10 @@ class StorefrontController extends Controller
 
         $reviewData = [
             'customer_name' => $validated['customer_name'],
-            'customer_city' => $validated['customer_city'] ?? 'Cotonou',
+            'customer_city' => $validated['customer_city'] ?? null,
             'rating'        => $validated['rating'],
             'comment'       => $validated['comment'],
-            'is_verified'   => $hasOrder || true, // Verified buyer check
+            'is_verified'   => $hasOrder, // acheteur vérifié uniquement s'il a déjà commandé
             'is_featured'   => true,
         ];
 
@@ -223,12 +227,12 @@ class StorefrontController extends Controller
             $product->discount_percentage = 0;
         }
 
-        $tc = ceil($pb * 1.03);
+        $tc = $pb + Order::clientFee($pb);
         $product->price_client_total = $tc;
         $product->api_fee_unit = $tc - $pb;
 
         return Inertia::render('Storefront/[slug]', [
-            'store' => $store,
+            'store' => $store->forPublic(),
             'product' => $product,
             'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
             'isPreview' => !$store->is_published && $isOwnerOrAdmin,

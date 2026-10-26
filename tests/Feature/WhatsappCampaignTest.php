@@ -38,7 +38,7 @@ test('starter plan vendor is limited to 1 whatsapp campaign per month and 10 rec
 });
 
 test('pro plan vendor can create up to 4 campaigns per month with smartlinks', function () {
-    $user = User::factory()->create(['role' => 'seller', 'plan' => 'pro']);
+    $user = User::factory()->create(['role' => 'seller', 'plan' => 'pro', 'subscription_expires_at' => now()->addMonth()]);
     $store = Store::create([
         'user_id' => $user->id,
         'name' => 'Boutique Pro',

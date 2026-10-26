@@ -62,6 +62,15 @@ These pages follow a lighter direction than the dashboards. Match `resources/js/
 - **Real store fields**: `city_location`, `instagram_link`, `tiktok_link`, `facebook_link` (not `city` / `*_url`). Products have no category column.
 - **Images**: real photos only (`public/images/landing/*.webp`, logos in `public/images/brand/`; `public/branding` is gitignored). No fake ratings, review counts or stock numbers. CC BY-SA photos must stay credited (landing footer « Crédits photos »).
 
+## Landing (`Pages/Welcome.jsx`) — direction « entreprise » 2026-10
+
+Inspired by Stripe / Shopify / Mercy Pay. Overrides the public-page rules above for the landing AND the storefront (vitrine, fiche produit, panier, packs, suivi). Storefront sections live in `Components/Storefront/Sections.jsx` and use the seller `theme_color` as accent instead of yellow:
+
+- White background, `#F6F5F1` for cards/bento, `#0F0F0E` for the dark section with a soft yellow glow; ink `#141412`, muted `#5F5E58`.
+- `font-inter`, sentence-case headings `font-medium` with tight tracking (`tracking-[-0.03em]`), no uppercase labels.
+- Pill buttons: yellow gradient primary (`PrimaryButton`), outlined secondary; `rounded-3xl` cards with 1px `black/[0.06]` borders; thin container rails and a dashed divider in the hero.
+- Illustrations are real Biolinko UI built in code (`Components/Landing/Illustrations.jsx`: `BalanceCard`, `DashboardPanel`, `OrderFeed`, `PhoneStore`, `PhoneCheckout`, `PayoutsList`, `InvoiceMock`, `OperatorLogo`, `CursorTag`). Animate them subtly (live feed, progress bars); keep text short.
+
 ## Motion
 
 Follow the `biolinko-motion` skill for any animation.

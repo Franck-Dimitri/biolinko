@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
+            \App\Http\Middleware\LogoutBannedUser::class,
         ]);
 
         $middleware->alias([
@@ -48,6 +49,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 return back()->with([
                     'message' => 'Votre session a expiré. Veuillez recharger la page et réessayer.',
                 ]);
+            }
+
+            // Trop de tentatives (OTP, mot de passe oublié…) : message sous le formulaire au lieu d'une page d'erreur
+            if ($statusCode === 429) {
+                $msg = 'Trop de tentatives. Patientez une minute avant de réessayer.';
+
+                return back()->withErrors(['otp' => $msg, 'email' => $msg]);
             }
 
             // In production/staging handle 403, 404, 500, 503. In local handle 403, 404.

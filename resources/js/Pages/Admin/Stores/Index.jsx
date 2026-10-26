@@ -52,18 +52,19 @@ export default function StoresIndex({ stores, metrics, filters }) {
     return (
         <AuthenticatedLayout>
             <Head title="Gestion des Boutiques — Administration BIOLINKO" />
+            <div hidden={moderateModal.isOpen}>
 
-            <div className="space-y-8 font-sans pb-12">
+            <div className="space-y-8 pb-12">
                 {/* HERO BANNER */}
-                <div className="p-6 sm:p-8 rounded-3xl bg-[#FFCC00] text-slate-950 shadow-xs border border-amber-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="p-6 sm:p-8 rounded-3xl bg-[#FFCC00] text-[#141412] shadow-xs border border-amber-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div className="space-y-1">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950 text-white text-[11px] font-semibold uppercase tracking-wider">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#141412] text-white text-[11px] font-semibold">
                             <Store className="w-3.5 h-3.5 text-[#FFCC00]" /> GESTION DES BOUTIQUES RÉSEAU
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+                        <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
                             Supervision &amp; Modération des Boutiques ({metrics?.total || 0})
                         </h2>
-                        <p className="text-xs text-slate-900 font-medium">
+                        <p className="text-xs text-[#141412] font-medium">
                             Gérez les accès, le statut de publication (brouillon vs public) et attribuez les plans tarifaires.
                         </p>
                     </div>
@@ -73,24 +74,24 @@ export default function StoresIndex({ stores, metrics, filters }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     
                     {/* Total Boutiques */}
-                    <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>Total Boutiques Créées</span>
                             <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
                                 <Store className="w-4 h-4" />
                             </div>
                         </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-slate-950">
+                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
                             {metrics?.total || 0} boutique(s)
                         </div>
-                        <div className="text-[11px] text-slate-400 font-medium">
+                        <div className="text-[11px] text-[#8B8A83] font-medium">
                             Réseau BIOLINKO
                         </div>
                     </div>
 
                     {/* Publiées */}
-                    <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>Boutiques En Ligne</span>
                             <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
                                 <CheckCircle2 className="w-4 h-4" />
@@ -105,24 +106,24 @@ export default function StoresIndex({ stores, metrics, filters }) {
                     </div>
 
                     {/* Starter */}
-                    <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>Plan Starter (Gratuit)</span>
-                            <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-xl bg-[#F2F1EC] text-[#3D3C37] flex items-center justify-center">
                                 <Zap className="w-4 h-4" />
                             </div>
                         </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-slate-950">
+                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
                             {metrics?.starter || 0} boutique(s)
                         </div>
-                        <div className="text-[11px] text-slate-400 font-medium">
+                        <div className="text-[11px] text-[#8B8A83] font-medium">
                             Freemium
                         </div>
                     </div>
 
                     {/* Pro & Growth */}
-                    <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>Boutiques Pro / Growth</span>
                             <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
                                 <Crown className="w-4 h-4" />
@@ -139,16 +140,16 @@ export default function StoresIndex({ stores, metrics, filters }) {
                 </div>
 
                 {/* SEARCH & FILTER BAR */}
-                <div className="p-4 bg-white rounded-3xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="p-4 bg-white rounded-3xl border border-black/[0.08] shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
                     <form onSubmit={handleSearch} className="w-full sm:w-96 relative">
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Rechercher une boutique, nom, vendeur..."
-                            className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                            className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#F6F5F1] border border-black/[0.08] text-xs font-medium focus:border-amber-400 outline-none"
                         />
-                        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <Search className="w-4 h-4 text-[#8B8A83] absolute left-3 top-1/2 -translate-y-1/2" />
                     </form>
 
                     <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 text-xs font-semibold">
@@ -158,8 +159,8 @@ export default function StoresIndex({ stores, metrics, filters }) {
                                 onClick={() => handlePlanFilter(p)}
                                 className={`px-3 py-1.5 rounded-xl uppercase transition-all cursor-pointer ${
                                     plan === p 
-                                        ? 'bg-slate-950 text-white font-extrabold shadow-2xs' 
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                        ? 'bg-[#141412] text-white font-semibold shadow-2xs' 
+                                        : 'bg-[#F2F1EC] text-[#5F5E58] hover:bg-[#E9E7E0]'
                                 }`}
                             >
                                 {p === 'all' ? 'Tous les plans' : p}
@@ -169,11 +170,11 @@ export default function StoresIndex({ stores, metrics, filters }) {
                 </div>
 
                 {/* STORES TABLE */}
-                <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
+                <div className="bg-white rounded-3xl border border-black/[0.08] shadow-2xs overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-xs">
                             <thead>
-                                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px] font-bold">
+                                <tr className="bg-[#F6F5F1] border-b border-black/[0.08] text-[#5F5E58] text-[10px] font-semibold">
                                     <th className="py-4 px-6">Boutique</th>
                                     <th className="py-4 px-6">Vendeur</th>
                                     <th className="py-4 px-6">Plan SaaS</th>
@@ -182,13 +183,13 @@ export default function StoresIndex({ stores, metrics, filters }) {
                                     <th className="py-4 px-6 text-right">Actions Modération</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 font-medium">
+                            <tbody className="divide-y divide-black/[0.06] font-medium">
                                 {stores.data && stores.data.length > 0 ? (
                                     stores.data.map((st) => (
-                                        <tr key={st.id} className="hover:bg-slate-50/80 transition-colors">
+                                        <tr key={st.id} className="hover:bg-[#F6F5F1]/80 transition-colors">
                                             <td className="py-4 px-6">
-                                                <div className="font-bold text-slate-950 text-sm">{st.name}</div>
-                                                <div className="text-amber-700 font-mono text-[11px]">biolinko.app/{st.slug}</div>
+                                                <div className="font-semibold text-[#141412] text-sm">{st.name}</div>
+                                                <div className="text-amber-700 font-mono text-[11px]">biolinko.link/{st.slug}</div>
                                             </td>
                                             <td className="py-4 px-6">
                                                 {st.user_id ? (
@@ -196,25 +197,25 @@ export default function StoresIndex({ stores, metrics, filters }) {
                                                         href={route('admin.users.show', st.user_id)}
                                                         className="group block"
                                                     >
-                                                        <div className="font-semibold text-slate-900 group-hover:text-amber-600 transition flex items-center gap-1">
+                                                        <div className="font-semibold text-[#141412] group-hover:text-amber-600 transition flex items-center gap-1">
                                                             <span>{st.user?.name || 'N/A'}</span>
                                                         </div>
-                                                        <div className="text-slate-400 text-[11px] group-hover:underline">{st.user?.email}</div>
+                                                        <div className="text-[#8B8A83] text-[11px] group-hover:underline">{st.user?.email}</div>
                                                     </Link>
                                                 ) : (
                                                     <div>
-                                                        <div className="font-semibold text-slate-900">{st.user?.name || 'N/A'}</div>
-                                                        <div className="text-slate-400 text-[11px]">{st.user?.email}</div>
+                                                        <div className="font-semibold text-[#141412]">{st.user?.name || 'N/A'}</div>
+                                                        <div className="text-[#8B8A83] text-[11px]">{st.user?.email}</div>
                                                     </div>
                                                 )}
                                             </td>
                                             <td className="py-4 px-6">
-                                                <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-extrabold uppercase text-[10px]">
+                                                <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-semibold uppercase text-[10px]">
                                                     {st.plan_type || 'starter'}
                                                 </span>
                                             </td>
                                             <td className="py-4 px-6">
-                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold ${
                                                     st.is_published 
                                                         ? 'bg-emerald-100 text-emerald-800' 
                                                         : 'bg-amber-100 text-amber-800'
@@ -223,14 +224,14 @@ export default function StoresIndex({ stores, metrics, filters }) {
                                                     <span>{st.is_published ? 'Publiée' : 'Brouillon'}</span>
                                                 </span>
                                             </td>
-                                            <td className="py-4 px-6 font-bold text-slate-800">
+                                            <td className="py-4 px-6 font-semibold text-[#3D3C37]">
                                                 {st.products_count || 0} produit(s)
                                             </td>
                                             <td className="py-4 px-6 text-right space-x-1.5 whitespace-nowrap">
                                                 <button
                                                     type="button"
                                                     onClick={() => setModerateModal({ isOpen: true, store: st })}
-                                                    className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1 border border-amber-200"
+                                                    className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 font-semibold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1 border border-amber-200"
                                                 >
                                                     <ShieldAlert className="w-3.5 h-3.5 text-amber-700" /> Modérer
                                                 </button>
@@ -238,9 +239,9 @@ export default function StoresIndex({ stores, metrics, filters }) {
                                                     href={route('admin.stores.toggleStatus', st.id)}
                                                     method="post"
                                                     as="button"
-                                                    className={`px-2.5 py-1.5 rounded-xl font-bold text-[11px] transition-all cursor-pointer ${
+                                                    className={`px-2.5 py-1.5 rounded-xl font-semibold text-[11px] transition-all cursor-pointer ${
                                                         st.is_published 
-                                                            ? 'bg-slate-100 hover:bg-slate-200 text-slate-800' 
+                                                            ? 'bg-[#F2F1EC] hover:bg-[#E9E7E0] text-[#3D3C37]' 
                                                             : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                                                     }`}
                                                 >
@@ -250,7 +251,7 @@ export default function StoresIndex({ stores, metrics, filters }) {
                                                     href={`/${st.slug}`}
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-[11px] inline-flex items-center gap-1"
+                                                    className="px-2.5 py-1.5 rounded-xl bg-[#141412] hover:bg-[#2B2A26] text-white font-semibold text-[11px] inline-flex items-center gap-1"
                                                 >
                                                     <span>Vitrine</span>
                                                     <ExternalLink className="w-3 h-3 text-amber-400" />
@@ -260,7 +261,7 @@ export default function StoresIndex({ stores, metrics, filters }) {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={6} className="py-12 text-center text-slate-400 text-xs">
+                                        <td colSpan={6} className="py-12 text-center text-[#8B8A83] text-xs">
                                             Aucune boutique trouvée pour les critères de recherche.
                                         </td>
                                     </tr>
@@ -272,13 +273,15 @@ export default function StoresIndex({ stores, metrics, filters }) {
             </div>
 
             {/* MODERATION STORE MODAL */}
+            </div>
+
             <ModerationModal
                 isOpen={moderateModal.isOpen}
                 onClose={() => setModerateModal({ isOpen: false, store: null })}
                 onConfirm={handleConfirmModerate}
                 type="store"
                 itemName={moderateModal.store?.name || ''}
-                targetInfo={moderateModal.store ? `biolinko.app/${moderateModal.store.slug} • Vendeur : ${moderateModal.store.user?.email || 'N/A'}` : null}
+                targetInfo={moderateModal.store ? `biolinko.link/${moderateModal.store.slug} • Vendeur : ${moderateModal.store.user?.email || 'N/A'}` : null}
                 isLoading={isModerating}
             />
         </AuthenticatedLayout>

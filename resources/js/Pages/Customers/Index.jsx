@@ -1,807 +1,276 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, router } from '@inertiajs/react';
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    Users, Search, ShoppingBag, MessageSquare, Phone, 
-    Mail, MapPin, Calendar, Award, ArrowUpRight, TrendingUp, Sparkles, UserCheck,
-    Trophy, ShoppingCart, Send, CheckSquare, Square, X, Zap, Check, Share2, Tag,
-    Clock, AlertTriangle, Layers, Play, CheckCircle2
-} from 'lucide-react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { Megaphone, Repeat, Send, ShoppingCart, TrendingUp, Users } from 'lucide-react';
+import { WhatsappIcon } from '@/Components/BrandIcons';
+import {
+    Badge, Button, Card, CardHeader, SubPage, Empty, Field, PageHeader, PlanLock, SearchInput, Stat, Table, Tabs,
+    fcfa, fieldClass, shortDate,
+} from '@/Components/Dashboard/UI';
 
-export default function Index({ store, customers, top5Customers, abandonedOrders, products, smartLinks, metrics, whatsappQuota, campaignsHistory }) {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState('directory'); // 'directory', 'abandoned', 'broadcast'
-    const [toastNotification, setToastNotification] = useState(null);
+const VARIABLES = [['{prenom}', 'Prénom'], ['{ville}', 'Ville'], ['{nom_boutique}', 'Boutique'], ['{lien_produit}', 'Lien']];
 
-    const showToastNotification = (message, type = 'success') => {
-        setToastNotification({ message, type });
-        setTimeout(() => setToastNotification(null), 4500);
-    };
-    
-    // Broadcast Modal State
-    const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
-    const [campaignTitle, setCampaignTitle] = useState('Offre Spéciale Boutique');
-    const [broadcastMessage, setBroadcastMessage] = useState('Bonjour ! Nous avons de superbes nouveautés et promotions en boutique.');
-    const [selectedProductAttachment, setSelectedProductAttachment] = useState('');
-    const [selectedSmartLinkAttachment, setSelectedSmartLinkAttachment] = useState('');
-    const [selectedCustomerIds, setSelectedCustomerIds] = useState(customers ? customers.map(c => c.id) : []);
+const waNumber = (raw) => {
+    let n = (raw || '').replace(/\D/g, '');
+    if (n.length === 9) n = `237${n}`;
+    return n;
+};
 
-    const filteredCustomers = customers ? customers.filter(c => {
-        const query = searchQuery.toLowerCase();
-        return (
-            c.name?.toLowerCase().includes(query) ||
-            c.phone?.includes(query) ||
-            c.email?.toLowerCase().includes(query) ||
-            c.whatsapp?.includes(query)
-        );
-    }) : [];
+function CampaignDialog({ open, onClose, store, recipients, products, smartLinks, quota }) {
+    const { errors } = usePage().props;
+    const [title, setTitle] = useState('Nouveautés en boutique');
+    const [message, setMessage] = useState('Bonjour {prenom}, découvrez nos nouveautés chez {nom_boutique} : {lien_produit}');
+    const [attachment, setAttachment] = useState('');
+    const [sending, setSending] = useState(false);
 
-    const handleSelectAllCustomers = () => {
-        if (selectedCustomerIds.length === customers.length) {
-            setSelectedCustomerIds([]);
-        } else {
-            setSelectedCustomerIds(customers.map(c => c.id));
-        }
-    };
+    const tooMany = recipients.length > quota.max_recipients_per_campaign;
+    const noCampaignLeft = quota.remaining_campaigns <= 0;
+    const sample = recipients[0];
 
-    const handleToggleCustomer = (id) => {
-        if (selectedCustomerIds.includes(id)) {
-            setSelectedCustomerIds(selectedCustomerIds.filter(cId => cId !== id));
-        } else {
-            setSelectedCustomerIds([...selectedCustomerIds, id]);
-        }
-    };
+    const preview = useMemo(() => {
+        const link = attachment.startsWith('p:')
+            ? `${window.location.origin}/${store.slug}/p/${products.find((p) => `p:${p.id}` === attachment)?.slug || ''}`
+            : attachment.startsWith('s:')
+                ? `${window.location.origin}/pay/${smartLinks.find((s) => `s:${s.id}` === attachment)?.code || ''}`
+                : `${window.location.origin}/${store.slug}`;
+        return message
+            .replaceAll('{prenom}', (sample?.name || 'Awa').split(' ')[0])
+            .replaceAll('{ville}', sample?.city || 'Douala')
+            .replaceAll('{nom_boutique}', store.name)
+            .replaceAll('{lien_produit}', link);
+    }, [message, attachment, sample]);
 
-    // Generate WhatsApp URL for an abandoned order
-    const getAbandonedWhatsAppUrl = (order) => {
-        const phoneClean = (order.customer_phone || '').replace(/[^0-9]/g, '');
-        const itemsList = (order.items || []).map(i => i.product_name || i.product_title).join(', ');
-        const text = `Bonjour ${order.customer_name || 'cher client'},\nNous avons remarqué que votre commande #${order.tracking_code} (${itemsList}) d'un montant de ${Number(order.price_vendor || order.total_client).toLocaleString()} FCFA chez ${store.name} est en attente de paiement.\nBesoin d'aide pour la valider ? Nous sommes à votre disposition !`;
-        return `https://wa.me/${phoneClean}?text=${encodeURIComponent(text)}`;
+    const send = () => {
+        setSending(true);
+        router.post(route('customers.campaign.store'), {
+            title,
+            message_template: message,
+            recipients: recipients.map((c) => ({ name: c.name, phone: c.whatsapp || c.phone, city: c.city })),
+            attached_products: attachment.startsWith('p:') ? [attachment.slice(2)] : [],
+            smart_link_id: attachment.startsWith('s:') ? attachment.slice(2) : null,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => { toast.success('Campagne envoyée'); onClose(); },
+            onFinish: () => setSending(false),
+        });
     };
 
-    // Build & Parse Broadcast Message Content for a specific customer
-    const parseBroadcastContentForCustomer = (customer) => {
-        let msg = broadcastMessage.trim();
+    return (
+        <SubPage open={open} onClose={onClose} title="Nouvelle campagne WhatsApp" sub={`${recipients.length} destinataire${recipients.length > 1 ? 's' : ''} sélectionné${recipients.length > 1 ? 's' : ''}`} width="max-w-2xl">
+            <div className="grid gap-6 md:grid-cols-[1fr_240px]">
+                <div className="space-y-4">
+                    <Field label="Nom de la campagne" error={errors?.title}>
+                        <input value={title} onChange={(e) => setTitle(e.target.value)} className={fieldClass} />
+                    </Field>
+                    <Field label="Message" error={errors?.message_template}>
+                        <textarea rows={5} value={message} onChange={(e) => setMessage(e.target.value)} className={`${fieldClass} h-auto py-3`} />
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                            {VARIABLES.map(([v, label]) => (
+                                <button key={v} type="button" onClick={() => setMessage((m) => `${m} ${v}`)} className="rounded-full border border-black/10 px-2.5 py-1 text-[12px] text-[#5F5E58] hover:border-black/30">+ {label}</button>
+                            ))}
+                        </div>
+                    </Field>
+                    <Field label="Lien à joindre" error={errors?.smart_link || errors?.products}>
+                        <select value={attachment} onChange={(e) => setAttachment(e.target.value)} className={fieldClass}>
+                            <option value="">Ma boutique</option>
+                            <optgroup label="Produits">
+                                {products.map((p) => <option key={p.id} value={`p:${p.id}`}>{p.title}</option>)}
+                            </optgroup>
+                            {quota.allow_smartlinks && smartLinks.length > 0 && (
+                                <optgroup label="Liens de paiement">
+                                    {smartLinks.map((s) => <option key={s.id} value={`s:${s.id}`}>{s.title}</option>)}
+                                </optgroup>
+                            )}
+                        </select>
+                    </Field>
+                </div>
 
-        const nameParts = (customer?.name || '').trim().split(' ');
-        const prenom = nameParts[0] || 'Client';
-        const nom = nameParts.slice(1).join(' ') || customer?.name || '';
-        const ville = customer?.city || customer?.delivery_city || 'votre ville';
+                <div>
+                    <span className="mb-1.5 block text-[14px] font-medium text-[#141412]">Aperçu</span>
+                    <div className="rounded-2xl bg-[#E7E2D8] p-3">
+                        <div className="ml-4 whitespace-pre-line rounded-2xl rounded-tr-sm bg-[#DCF8C6] p-3 text-[13px] leading-relaxed text-[#141412] shadow-sm">{preview}</div>
+                    </div>
+                    <p className="mt-2 text-[12px] text-[#8B8A83]">Exemple pour {sample?.name || 'un client'}.</p>
+                </div>
+            </div>
 
-        msg = msg.replace(/\{prenom\}/g, prenom);
-        msg = msg.replace(/\{nom\}/g, nom);
-        msg = msg.replace(/\{ville\}/g, ville);
-        msg = msg.replace(/\{nom_boutique\}/g, store?.name || 'notre boutique');
+            <div className="mt-6 space-y-3">
+                {errors?.campaign && <p className="text-[14px] text-[#B91C1C]">{errors.campaign}</p>}
+                {(tooMany || errors?.recipients) && <PlanLock plan="Growth" text={errors?.recipients || `Votre plan permet ${quota.max_recipients_per_campaign} destinataires par campagne. Réduisez la sélection ou passez à un plan supérieur.`} />}
+                {noCampaignLeft && <PlanLock plan="Pro" text={`Vous avez utilisé vos ${quota.max_campaigns_per_month} campagne(s) du mois.`} />}
+                <div className="flex justify-end gap-2">
+                    <Button onClick={onClose}>Annuler</Button>
+                    <Button variant="primary" disabled={sending || tooMany || noCampaignLeft || !recipients.length} onClick={send}><Send className="h-4 w-4" /> Envoyer</Button>
+                </div>
+            </div>
+        </SubPage>
+    );
+}
 
-        let itemUrl = '';
-        if (selectedProductAttachment) {
-            const prod = products.find(p => String(p.id) === String(selectedProductAttachment));
-            if (prod) {
-                itemUrl = `${window.location.origin}/${store.slug}/p/${prod.id}`;
-            }
-        } else if (selectedSmartLinkAttachment) {
-            const sl = smartLinks.find(s => String(s.id) === String(selectedSmartLinkAttachment));
-            if (sl) {
-                itemUrl = `${window.location.origin}/store/${store.slug}/pay/sl/${sl.code}`;
-            }
-        }
-        if (!itemUrl) {
-            itemUrl = `${window.location.origin}/${store.slug}`;
-        }
-        msg = msg.replace(/\{lien_produit\}/g, itemUrl);
+export default function Index({ store, customers = [], top5Customers = [], abandonedOrders = [], products = [], smartLinks = [], metrics, whatsappQuota, campaignsHistory = [] }) {
+    const [tab, setTab] = useState('clients');
+    const [search, setSearch] = useState('');
+    const [selected, setSelected] = useState([]);
+    const [campaignOpen, setCampaignOpen] = useState(false);
+    const quota = whatsappQuota || { max_campaigns_per_month: 1, max_recipients_per_campaign: 10, remaining_campaigns: 0, used_campaigns_this_month: 0, allow_smartlinks: false };
 
-        return msg;
+    const filtered = customers.filter((c) => {
+        const q = search.toLowerCase();
+        return !q || c.name?.toLowerCase().includes(q) || (c.phone || '').includes(q) || c.city?.toLowerCase().includes(q);
+    });
+    const allSelected = filtered.length > 0 && filtered.every((c) => selected.includes(c.id));
+    const toggleAll = () => setSelected(allSelected ? [] : filtered.map((c) => c.id));
+    const toggle = (id) => setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+    const recipients = customers.filter((c) => selected.includes(c.id));
+    const openCampaign = () => {
+        if (!selected.length) setSelected(customers.slice(0, quota.max_recipients_per_campaign).map((c) => c.id));
+        setCampaignOpen(true);
     };
 
-    // Dispatch WhatsApp Broadcast to a customer
-    const sendWhatsAppBroadcastToCustomer = (customer) => {
-        const phoneClean = (customer.whatsapp || customer.phone || '').replace(/[^0-9]/g, '');
-        const text = parseBroadcastContentForCustomer(customer);
-        window.open(`https://wa.me/${phoneClean}?text=${encodeURIComponent(text)}`, '_blank');
+    const relance = (o) => {
+        const items = (o.items || []).map((i) => i.product_title).join(', ');
+        const text = `Bonjour ${o.customer_name}, votre commande ${o.tracking_code} (${items}) chez ${store.name} n’est pas encore payée. Voulez-vous de l’aide pour la finaliser ?`;
+        return `https://wa.me/${waNumber(o.customer_phone)}?text=${encodeURIComponent(text)}`;
     };
 
     return (
         <AuthenticatedLayout>
-            <Head title="Répertoire & Fidélité Clients — BIOLINKO" />
+            <Head title="Clients, Biolinko" />
+            <CampaignDialog open={campaignOpen} onClose={() => setCampaignOpen(false)} store={store} recipients={recipients}
+                products={products} smartLinks={smartLinks} quota={quota} />
+            <div className="space-y-6 pb-12" hidden={campaignOpen}>
+                <PageHeader title="Clients" sub="Votre fichier client se construit à chaque commande."
+                    actions={<Button variant="primary" onClick={openCampaign} disabled={!customers.length}><Megaphone className="h-4 w-4" /> Nouvelle campagne</Button>} />
 
-            {/* TOAST NOTIFICATION FLOATING BANNER */}
-            <AnimatePresence>
-                {toastNotification && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                        className={`fixed top-6 right-6 z-[100] px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border font-bold text-xs text-white ${
-                            toastNotification.type === 'error'
-                                ? 'bg-rose-950 border-rose-800 text-rose-100'
-                                : toastNotification.type === 'warning'
-                                ? 'bg-amber-950 border-amber-800 text-amber-100'
-                                : 'bg-slate-950 border-slate-800 text-slate-100'
-                        }`}
-                    >
-                        {toastNotification.type === 'error' ? (
-                            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
-                        ) : toastNotification.type === 'warning' ? (
-                            <Zap className="w-5 h-5 text-amber-400 fill-amber-400 shrink-0" />
-                        ) : (
-                            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-                        )}
-                        <div className="flex-1 pr-2">{toastNotification.message}</div>
-                        <button
-                            onClick={() => setToastNotification(null)}
-                            className="p-1 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors cursor-pointer"
-                        >
-                            <X className="w-4 h-4" />
-                        </button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            <div className="w-full space-y-8 font-sans pb-12">
-                
-                {/* Header Title */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-2xs">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <Users className="w-6 h-6 text-amber-500" />
-                            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight">
-                                Répertoire & Fidélité Clients
-                            </h1>
-                        </div>
-                        <p className="text-slate-500 text-xs sm:text-sm font-medium">
-                            Gérez votre base de clients, relancez les paniers abandonnés et diffusez des offres WhatsApp.
-                        </p>
-                    </div>
-
-                    <button
-                        onClick={() => setIsBroadcastModalOpen(true)}
-                        className="px-5 py-3 rounded-2xl bg-[#FFCC00] hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-2xs shrink-0 cursor-pointer"
-                    >
-                        <Send className="w-4 h-4" />
-                        <span>Créer une Campagne WhatsApp</span>
-                    </button>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <Stat label="Clients" value={metrics?.totalCustomers ?? 0} Icon={Users} delay={0.03} />
+                    <Stat label="Clients fidèles" value={metrics?.repeatCustomersCount ?? 0} hint="2 commandes ou plus" Icon={Repeat} delay={0.06} />
+                    <Stat label="Panier moyen" value={fcfa(metrics?.averageOrderValue)} Icon={ShoppingCart} delay={0.09} />
+                    <Stat label="Ventes encaissées" value={fcfa(metrics?.completedSalesRevenue)} Icon={TrendingUp} delay={0.12} />
                 </div>
 
-                {/* 4 METRICS CARDS */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-2xs space-y-2">
-                        <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            <span>Total Clients</span>
-                            <div className="w-9 h-9 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
-                                <Users className="w-5 h-5 text-amber-600" />
-                            </div>
-                        </div>
-                        <div className="text-2xl font-extrabold text-slate-950">
-                            {metrics?.totalCustomers || 0} client(s)
-                        </div>
-                        <div className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Base de données active
-                        </div>
-                    </div>
+                <Tabs id="customers" value={tab} onChange={setTab} tabs={[
+                    ['clients', 'Clients', customers.length],
+                    ['abandoned', 'Commandes non payées', abandonedOrders.length],
+                    ['campaigns', 'Campagnes', campaignsHistory.length],
+                ]} />
 
-                    <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-2xs space-y-2">
-                        <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            <span>Clients Fidèles (≥2)</span>
-                            <div className="w-9 h-9 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-                                <UserCheck className="w-5 h-5 text-emerald-700" />
-                            </div>
-                        </div>
-                        <div className="text-2xl font-extrabold text-slate-950">
-                            {metrics?.repeatCustomersCount || 0} fidèle(s)
-                        </div>
-                        <div className="text-[11px] text-emerald-600 font-semibold">Taux de récurrence élevé</div>
-                    </div>
-
-                    {/* 3RD CARD: MONTANT DES VENTES TERMINÉES */}
-                    <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-2xs space-y-2">
-                        <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            <span>Ventes Terminées</span>
-                            <div className="w-9 h-9 rounded-2xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold">
-                                <TrendingUp className="w-5 h-5 text-blue-700" />
-                            </div>
-                        </div>
-                        <div className="text-2xl font-extrabold text-slate-950">
-                            {Number(metrics?.completedSalesRevenue || 0).toLocaleString()} <span className="text-xs font-bold text-blue-700">FCFA</span>
-                        </div>
-                        <div className="text-[11px] text-slate-400 font-medium">Chiffre d'affaires livré/payé</div>
-                    </div>
-
-                    <div className="p-5 rounded-3xl bg-slate-950 text-white shadow-2xs flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            <span>Panier Moyen</span>
-                            <Sparkles className="w-4 h-4 text-[#FFCC00]" />
-                        </div>
-                        <div>
-                            <div className="text-2xl font-extrabold text-white">
-                                {Number(metrics?.averageOrderValue || 0).toLocaleString()} FCFA
-                            </div>
-                            <div className="text-[11px] text-slate-400 font-medium mt-1">Valeur moyenne par achat</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* TOP 5 CLIENTS FIDÈLES SECTION */}
-                {top5Customers && top5Customers.length > 0 && (
-                    <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-2xs space-y-4">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <div className="flex items-center gap-2">
-                                <Trophy className="w-5 h-5 text-amber-500" />
-                                <h3 className="font-extrabold text-sm text-slate-950">Top 5 Clients les Plus Fidèles</h3>
-                            </div>
-                            <span className="text-xs text-slate-500 font-medium">Classement par volume d'achat</span>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                            {top5Customers.map((c, idx) => {
-                                const phoneClean = (c.whatsapp || c.phone || '').replace(/[^0-9]/g, '');
-                                const waUrl = `https://wa.me/${phoneClean}?text=${encodeURIComponent(`Bonjour ${c.name}, merci pour votre grande fidélité chez ${store.name} !`)}`;
-
-                                return (
-                                    <div key={c.id} className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-2 relative flex flex-col justify-between">
-                                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[10px]">
-                                            #{idx + 1}
-                                        </span>
-
-                                        <div className="space-y-1 pr-6">
-                                            <div className="font-bold text-xs text-slate-950 truncate">{c.name}</div>
-                                            <div className="text-[11px] text-slate-500 font-medium">{c.phone}</div>
-                                        </div>
-
-                                        <div className="pt-2 border-t border-amber-200/80 flex items-center justify-between">
-                                            <div>
-                                                <div className="text-sm font-extrabold text-slate-950">{Number(c.pivot?.total_spent || 0).toLocaleString()} F</div>
-                                                <div className="text-[10px] text-emerald-700 font-bold">{c.pivot?.total_orders_count || 1} achat(s)</div>
-                                            </div>
-
-                                            <a
-                                                href={waUrl}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="p-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs transition-all shadow-2xs"
-                                                title="Contacter sur WhatsApp"
-                                            >
-                                                <MessageSquare className="w-3.5 h-3.5 fill-white" />
-                                            </a>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                {/* TABS NAVIGATION */}
-                <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-                    <button
-                        onClick={() => setActiveTab('directory')}
-                        className={`px-4 py-2 rounded-2xl font-extrabold text-xs transition-all cursor-pointer ${
-                            activeTab === 'directory' ? 'bg-slate-950 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        }`}
-                    >
-                        Tous les Clients ({customers?.length || 0})
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab('abandoned')}
-                        className={`px-4 py-2 rounded-2xl font-extrabold text-xs transition-all flex items-center gap-2 cursor-pointer ${
-                            activeTab === 'abandoned' ? 'bg-amber-500 text-slate-950 shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        }`}
-                    >
-                        <ShoppingCart className="w-3.5 h-3.5" />
-                        <span>Paniers Abandonnés ({abandonedOrders?.length || 0})</span>
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab('campaigns')}
-                        className={`px-4 py-2 rounded-2xl font-extrabold text-xs transition-all flex items-center gap-2 cursor-pointer ${
-                            activeTab === 'campaigns' ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        }`}
-                    >
-                        <Send className="w-3.5 h-3.5 fill-white" />
-                        <span>Historique Campagnes ({campaignsHistory?.length || 0})</span>
-                    </button>
-                </div>
-
-                {/* TAB 1: REPERTOIRE CLIENTS */}
-                {activeTab === 'directory' && (
-                    <div className="space-y-4">
-                        <div className="p-4 rounded-3xl bg-white border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div className="w-full sm:w-96 relative">
-                                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                                <input
-                                    type="text"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Rechercher un client par nom, téléphone, whatsapp..."
-                                    className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden">
-                            {filteredCustomers && filteredCustomers.length > 0 ? (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left border-collapse text-xs">
-                                        <thead>
-                                            <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
-                                                <th className="py-3.5 px-6">Identité Client</th>
-                                                <th className="py-3.5 px-6">Contacts (MoMo / WhatsApp)</th>
-                                                <th className="py-3.5 px-6">Nb Achats</th>
-                                                <th className="py-3.5 px-6">Total Dépensé</th>
-                                                <th className="py-3.5 px-6">Dernier Achat</th>
-                                                <th className="py-3.5 px-6 text-right">Relance WhatsApp</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                                            {filteredCustomers.map((customer) => {
-                                                const phoneClean = (customer.whatsapp || customer.phone || '').replace(/[^0-9]/g, '');
-                                                const waUrl = `https://wa.me/${phoneClean}?text=${encodeURIComponent(`Bonjour ${customer.name}, merci pour votre fidélité chez ${store.name} !`)}`;
-
-                                                return (
-                                                    <tr key={customer.id} className="hover:bg-slate-50/80 transition-colors">
-                                                        <td className="py-4 px-6">
-                                                            <div className="font-bold text-slate-950 text-sm flex items-center gap-2">
-                                                                <div className="w-7 h-7 rounded-full bg-[#FFCC00] text-slate-950 font-bold flex items-center justify-center text-xs shrink-0">
-                                                                    {customer.name ? customer.name.charAt(0).toUpperCase() : 'C'}
-                                                                </div>
-                                                                <span>{customer.name}</span>
-                                                            </div>
-                                                            {customer.city && (
-                                                                <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1 mt-0.5">
-                                                                    <MapPin className="w-3 h-3 text-slate-400" /> {customer.city}
-                                                                </div>
-                                                            )}
-                                                        </td>
-
-                                                        <td className="py-4 px-6 space-y-0.5">
-                                                            <div className="font-semibold text-slate-900 flex items-center gap-1.5">
-                                                                <Phone className="w-3 h-3 text-slate-400" /> {customer.phone}
-                                                            </div>
-                                                            {customer.whatsapp && (
-                                                                <div className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1">
-                                                                    <MessageSquare className="w-3 h-3 text-emerald-600 fill-emerald-600" /> WhatsApp: {customer.whatsapp}
-                                                                </div>
-                                                            )}
-                                                        </td>
-
-                                                        <td className="py-4 px-6">
-                                                            <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-900 font-bold text-xs">
-                                                                <ShoppingBag className="w-3 h-3 text-amber-600" />
-                                                                <span>{customer.pivot?.total_orders_count || 1} commande(s)</span>
-                                                            </div>
-                                                        </td>
-
-                                                        <td className="py-4 px-6">
-                                                            <div className="font-bold text-slate-950 text-sm">
-                                                                {Number(customer.pivot?.total_spent || 0).toLocaleString()} FCFA
-                                                            </div>
-                                                        </td>
-
-                                                        <td className="py-4 px-6 text-slate-500 text-[11px]">
-                                                            {customer.pivot?.last_order_at
-                                                                ? new Date(customer.pivot.last_order_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
-                                                                : new Date(customer.updated_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                                        </td>
-
-                                                        <td className="py-4 px-6 text-right">
-                                                            <a
-                                                                href={waUrl}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-2xs inline-flex items-center gap-1.5 transition-all"
-                                                            >
-                                                                <MessageSquare className="w-3.5 h-3.5 fill-white" />
-                                                                <span>WhatsApp</span>
-                                                            </a>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            ) : (
-                                <div className="p-12 text-center text-slate-500 space-y-2">
-                                    <Users className="w-10 h-10 text-slate-300 mx-auto" />
-                                    <h4 className="font-bold text-slate-900">Aucun client trouvé</h4>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* TAB 2: PANIERS ABANDONNÉS */}
-                {activeTab === 'abandoned' && (
-                    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden">
-                        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <ShoppingCart className="w-5 h-5 text-amber-500" />
-                                <h3 className="text-base font-extrabold text-slate-950">Commandes & Paniers Non Payés ({abandonedOrders?.length || 0})</h3>
-                            </div>
-                            <span className="text-xs text-slate-500 font-medium">Relancez vos clients en 1 clic</span>
-                        </div>
-
-                        {abandonedOrders && abandonedOrders.length > 0 ? (
-                            <div className="divide-y divide-slate-100">
-                                {abandonedOrders.map((order) => {
-                                    const waUrl = getAbandonedWhatsAppUrl(order);
-
-                                    return (
-                                        <div key={order.id} className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50/80 transition-colors">
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-mono text-xs font-bold text-slate-950 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                                                        #{order.tracking_code}
-                                                    </span>
-                                                    <span className="text-xs font-bold text-slate-900">{order.customer_name}</span>
-                                                    <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-extrabold uppercase">
-                                                        En attente
-                                                    </span>
-                                                </div>
-
-                                                <div className="text-xs text-slate-500 font-medium flex items-center gap-3">
-                                                    <span>Téléphone : {order.customer_phone}</span>
-                                                    <span>•</span>
-                                                    <span>Montant : <strong className="text-slate-950 font-bold">{Number(order.price_vendor || order.total_client).toLocaleString()} FCFA</strong></span>
-                                                </div>
-
-                                                {order.items && order.items.length > 0 && (
-                                                    <div className="text-[11px] text-slate-400 font-medium pt-1">
-                                                        Articles : {order.items.map(i => i.product_name || i.product_title).join(', ')}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <a
-                                                href={waUrl}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="px-4 py-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs transition-all flex items-center gap-2 shadow-2xs shrink-0"
-                                            >
-                                                <MessageSquare className="w-4 h-4 fill-white" />
-                                                <span>Relancer par WhatsApp</span>
-                                            </a>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div className="p-12 text-center text-slate-400 space-y-2">
-                                <ShoppingCart className="w-10 h-10 text-slate-300 mx-auto" />
-                                <h4 className="font-bold text-slate-900 text-sm">Aucun panier abandonné pour le moment !</h4>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* TAB 3: HISTORIQUE DES CAMPAGNES WHATSAPP */}
-                {activeTab === 'campaigns' && (
-                    <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xs overflow-hidden">
-                        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Send className="w-5 h-5 text-emerald-600 fill-emerald-600" />
-                                <h3 className="font-extrabold text-sm text-slate-950">Historique des Campagnes WhatsApp Lancées</h3>
-                            </div>
-                            <button
-                                onClick={() => setIsBroadcastModalOpen(true)}
-                                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                            >
-                                <Send className="w-3.5 h-3.5 fill-white" />
-                                <span>+ Nouvelle Campagne</span>
-                            </button>
-                        </div>
-
-                        {campaignsHistory && campaignsHistory.length > 0 ? (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left text-xs">
-                                    <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider">
-                                        <tr>
-                                            <th className="p-4">Campagne</th>
-                                            <th className="p-4">Destinataires</th>
-                                            <th className="p-4">Statut</th>
-                                            <th className="p-4">Date de Lancement</th>
-                                            <th className="p-4 text-right">Message</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
-                                        {campaignsHistory.map((camp) => (
-                                            <tr key={camp.id} className="hover:bg-slate-50/70 transition-colors">
-                                                <td className="p-4 font-extrabold text-slate-950">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-                                                            <Send className="w-4 h-4 text-emerald-600" />
-                                                        </div>
-                                                        <div>
-                                                            <div>{camp.title}</div>
-                                                            <div className="text-[10px] text-slate-400 font-normal">ID #{camp.id}</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="p-4">
-                                                    <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-900 font-bold text-[11px]">
-                                                        {camp.recipients_count || 0} client(s)
-                                                    </span>
-                                                </td>
-                                                <td className="p-4">
-                                                    <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[10px] flex items-center gap-1 w-max">
-                                                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                                                        <span>Envoyé & Exécuté</span>
-                                                    </span>
-                                                </td>
-                                                <td className="p-4 text-slate-500 font-semibold">
-                                                    {new Date(camp.created_at).toLocaleDateString('fr-FR', {
-                                                        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                                                    })}
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    <span className="text-[11px] text-slate-500 font-mono italic max-w-xs truncate inline-block">
-                                                        "{camp.message_template}"
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="p-12 text-center text-slate-400 space-y-2">
-                                <Send className="w-10 h-10 text-slate-300 mx-auto" />
-                                <h4 className="font-bold text-slate-900 text-sm">Aucune campagne lancée pour le moment !</h4>
-                                <p className="text-xs text-slate-500">Cliquez sur « Nouvelle Campagne » pour diffuser une offre à vos clients.</p>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* BROADCAST PROMOTIONAL CAMPAIGN MODAL */}
-                {isBroadcastModalOpen && (
-                    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
-                        <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                            
-                            <div className="px-6 py-4 border-b border-slate-200/80 flex items-center justify-between bg-slate-50">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-[#FFCC00] text-slate-950 font-bold">
-                                        <Send className="w-5 h-5 fill-slate-950" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-base font-extrabold text-slate-950">Campagne de Diffusion WhatsApp</h3>
-                                        <p className="text-xs text-slate-500 font-medium">Rédigez un message promo et envoyez-le aux clients sélectionnés</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setIsBroadcastModalOpen(false)}
-                                    className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-200 cursor-pointer"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                                
-                                {/* Plan Quota Header Badge */}
-                                {whatsappQuota && (
-                                    <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                                        <div className="flex items-center gap-2 font-bold text-slate-900">
-                                            <Zap className="w-4 h-4 text-amber-600 fill-amber-500" />
-                                            <span>Quota Plan {whatsappQuota.remaining_campaigns > 0 ? 'Actif' : 'Atteint'} :</span>
-                                            <span className="px-2.5 py-0.5 rounded-full bg-slate-950 text-white font-extrabold text-[10px]">
-                                                {whatsappQuota.remaining_campaigns} / {whatsappQuota.max_campaigns_per_month} campagnes restantes ce mois
-                                            </span>
-                                        </div>
-                                        <div className="text-[11px] text-slate-600 font-medium">
-                                            Max. <span className="font-bold text-slate-900">{whatsappQuota.max_recipients_per_campaign} clients</span> par campagne
-                                        </div>
+                {tab === 'clients' && (
+                    <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
+                        <Card padded={false}>
+                            <div className="flex flex-col gap-3 border-b border-black/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between">
+                                <SearchInput value={search} onChange={setSearch} placeholder="Nom, téléphone ou ville" className="sm:w-72" />
+                                {selected.length > 0 && (
+                                    <div className="flex items-center gap-2 text-[14px] text-[#5F5E58]">
+                                        {selected.length} sélectionné{selected.length > 1 ? 's' : ''}
+                                        <Button size="sm" variant="primary" onClick={() => setCampaignOpen(true)}><Megaphone className="h-4 w-4" /> Contacter</Button>
                                     </div>
                                 )}
-
-                                {/* Campaign Title */}
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-950 uppercase tracking-wider mb-2">
-                                        Nom de la Campagne *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={campaignTitle}
-                                        onChange={(e) => setCampaignTitle(e.target.value)}
-                                        placeholder="Ex: Promo Ventes Flash Été"
-                                        className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold focus:border-amber-400 outline-none"
-                                    />
-                                </div>
-
-                                {/* Message Body & Variable Tags */}
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className="block text-xs font-bold text-slate-950 uppercase tracking-wider">
-                                            Texte du Message WhatsApp *
-                                        </label>
-                                        <span className="text-[10px] text-slate-500">Variables dynamiques disponibles :</span>
-                                    </div>
-
-                                    {/* Variable Tag Inserters */}
-                                    <div className="flex flex-wrap gap-1.5 mb-2">
-                                        {[
-                                            { tag: '{prenom}', label: 'Prénom Client' },
-                                            { tag: '{nom}', label: 'Nom Client' },
-                                            { tag: '{ville}', label: 'Ville' },
-                                            { tag: '{lien_produit}', label: 'Lien Produit' },
-                                            { tag: '{nom_boutique}', label: 'Boutique' },
-                                        ].map(item => (
-                                            <button
-                                                key={item.tag}
-                                                type="button"
-                                                onClick={() => setBroadcastMessage(prev => prev + ' ' + item.tag + ' ')}
-                                                className="px-2 py-1 rounded-md bg-slate-100 hover:bg-amber-100 hover:text-amber-800 text-slate-700 text-[10px] font-bold border border-slate-200 transition-all cursor-pointer"
-                                            >
-                                                + {item.tag}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    <textarea
-                                        rows={4}
-                                        value={broadcastMessage}
-                                        onChange={(e) => setBroadcastMessage(e.target.value)}
-                                        placeholder="Ex: Bonjour {prenom} ! Découvrez nos promos chez {nom_boutique} !"
-                                        className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
-                                    />
-                                </div>
-
-                                {/* Attachments */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-950 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                            <ShoppingBag className="w-3.5 h-3.5 text-amber-500" />
-                                            <span>Joindre un Produit</span>
-                                        </label>
-                                        <select
-                                            value={selectedProductAttachment}
-                                            onChange={(e) => setSelectedProductAttachment(e.target.value)}
-                                            className="w-full px-3 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-bold focus:border-amber-400 outline-none"
-                                        >
-                                            <option value="">-- Aucun Produit Joindre --</option>
-                                            {products && products.map(p => (
-                                                <option key={p.id} value={p.id}>{p.title} ({Number(p.price_vendor).toLocaleString()} F)</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-950 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                            <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                                            <span>Joindre un SmartLink Express</span>
-                                        </label>
-                                        <select
-                                            value={selectedSmartLinkAttachment}
-                                            onChange={(e) => setSelectedSmartLinkAttachment(e.target.value)}
-                                            disabled={whatsappQuota && !whatsappQuota.allow_smartlinks}
-                                            className={`w-full px-3 py-2.5 rounded-xl border text-xs font-bold focus:border-amber-400 outline-none ${
-                                                whatsappQuota && !whatsappQuota.allow_smartlinks ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed' : 'bg-white border-slate-200'
-                                            }`}
-                                        >
-                                            <option value="">-- Aucun SmartLink --</option>
-                                            {smartLinks && smartLinks.map(s => (
-                                                <option key={s.id} value={s.id}>{s.title} ({Number(s.total_amount).toLocaleString()} F)</option>
-                                            ))}
-                                        </select>
-                                        {whatsappQuota && !whatsappQuota.allow_smartlinks && (
-                                            <p className="text-[10px] text-amber-600 font-semibold mt-1">SmartLinks réservés aux plans payants (Pro, Growth, Business)</p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Recipient Selection */}
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <label className="text-xs font-bold text-slate-950 uppercase tracking-wider">
-                                            Sélectionner les Destinataires ({selectedCustomerIds.length} / {customers?.length || 0})
-                                        </label>
-
-                                        <button
-                                            type="button"
-                                            onClick={handleSelectAllCustomers}
-                                            className="text-xs font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1 cursor-pointer"
-                                        >
-                                            {selectedCustomerIds.length === customers?.length ? <CheckSquare className="w-4 h-4 text-emerald-600" /> : <Square className="w-4 h-4" />}
-                                            <span>{selectedCustomerIds.length === customers?.length ? 'Désélectionner Tout' : 'Tout Sélectionner'}</span>
-                                        </button>
-                                    </div>
-
-                                    <div className="max-h-56 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-2xl p-2 bg-white">
-                                        {customers && customers.map(c => {
-                                            const isSelected = selectedCustomerIds.includes(c.id);
-
-                                            return (
-                                                <div 
-                                                    key={c.id} 
-                                                    onClick={() => handleToggleCustomer(c.id)}
-                                                    className={`p-3 rounded-xl flex items-center justify-between cursor-pointer transition-all ${
-                                                        isSelected ? 'bg-amber-50/60' : 'hover:bg-slate-50'
-                                                    }`}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <input 
-                                                            type="checkbox"
-                                                            checked={isSelected}
-                                                            onChange={() => {}}
-                                                            className="rounded border-slate-300 text-amber-500 focus:ring-amber-400"
-                                                        />
-                                                        <div>
-                                                            <div className="text-xs font-bold text-slate-950">{c.name}</div>
-                                                            <div className="text-[11px] text-slate-500">{c.phone}</div>
-                                                        </div>
-                                                    </div>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => { e.stopPropagation(); sendWhatsAppBroadcastToCustomer(c); }}
-                                                        className="px-3 py-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-emerald-500 hover:text-white font-bold text-[10px] flex items-center gap-1 transition-colors"
-                                                    >
-                                                        <MessageSquare className="w-3 h-3" />
-                                                        <span>1-par-1</span>
-                                                    </button>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
                             </div>
+                            {filtered.length ? (
+                                <Table head={[['', 'w-10'], ['Client'], ['Ville'], ['Commandes', 'text-right'], ['Dépensé', 'text-right'], ['Dernière commande'], ['', 'w-12']]}>
+                                    <tr className="bg-[#FAFAF8]">
+                                        <td className="px-4 py-2"><input type="checkbox" checked={allSelected} onChange={toggleAll} aria-label="Tout sélectionner" className="h-4 w-4 rounded border-black/20 text-[#141412] focus:ring-0" /></td>
+                                        <td colSpan={6} className="px-4 py-2 text-[13px] text-[#8B8A83]">Tout sélectionner</td>
+                                    </tr>
+                                    {filtered.map((c) => (
+                                        <tr key={c.id} className="hover:bg-[#FAFAF8]">
+                                            <td className="px-4 py-3"><input type="checkbox" checked={selected.includes(c.id)} onChange={() => toggle(c.id)} aria-label={`Sélectionner ${c.name}`} className="h-4 w-4 rounded border-black/20 text-[#141412] focus:ring-0" /></td>
+                                            <td className="px-4 py-3">
+                                                <span className="flex items-center gap-3">
+                                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F2F1EC] text-[13px] font-medium text-[#141412]">{(c.name || '?').charAt(0).toUpperCase()}</span>
+                                                    <span><span className="block text-[#141412]">{c.name}</span><span className="text-[13px] text-[#8B8A83]">{c.phone}</span></span>
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-[#5F5E58]">{c.city || '—'}</td>
+                                            <td className="px-4 py-3 text-right tabular-nums text-[#141412]">
+                                                {c.pivot?.total_orders_count ?? 0}
+                                                {(c.pivot?.total_orders_count ?? 0) >= 2 && <Badge tone="brand" className="ml-2">Fidèle</Badge>}
+                                            </td>
+                                            <td className="px-4 py-3 text-right tabular-nums text-[#141412]">{fcfa(c.pivot?.total_spent)}</td>
+                                            <td className="px-4 py-3 text-[#5F5E58]">{shortDate(c.pivot?.last_order_at)}</td>
+                                            <td className="px-4 py-3">
+                                                <a href={`https://wa.me/${waNumber(c.whatsapp || c.phone)}`} target="_blank" rel="noreferrer" aria-label={`WhatsApp ${c.name}`}
+                                                    className="flex h-9 w-9 items-center justify-center rounded-full text-[#16A34A] hover:bg-[#DCFCE7]"><WhatsappIcon className="h-4 w-4" /></a>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </Table>
+                            ) : (
+                                <div className="p-4"><Empty Icon={Users} title={search ? 'Aucun client trouvé' : 'Pas encore de client'} text={search ? 'Essayez un autre nom ou numéro.' : 'Chaque acheteur est ajouté automatiquement à votre fichier.'} /></div>
+                            )}
+                        </Card>
 
-                            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-                                <span className="text-xs text-slate-500 font-medium">
-                                    {selectedCustomerIds.length} client(s) sélectionné(s)
-                                </span>
+                        <Card>
+                            <CardHeader title="Meilleurs clients" sub="Par montant dépensé" />
+                            {top5Customers.length ? (
+                                <ol className="mt-4 space-y-3">
+                                    {top5Customers.map((c, i) => (
+                                        <li key={c.id} className="flex items-center gap-3">
+                                            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[12px] font-medium ${i === 0 ? 'bg-[#FFCC00] text-[#141412]' : 'bg-[#F6F5F1] text-[#5F5E58]'}`}>{i + 1}</span>
+                                            <span className="min-w-0 flex-1"><span className="block truncate text-[14px] text-[#141412]">{c.name}</span><span className="text-[12px] text-[#8B8A83]">{c.pivot?.total_orders_count} commande{c.pivot?.total_orders_count > 1 ? 's' : ''}</span></span>
+                                            <span className="shrink-0 text-[13px] tabular-nums text-[#141412]">{fcfa(c.pivot?.total_spent)}</span>
+                                        </li>
+                                    ))}
+                                </ol>
+                            ) : <p className="mt-4 text-[14px] text-[#8B8A83]">Le classement apparaîtra après vos premières ventes.</p>}
+                        </Card>
+                    </div>
+                )}
 
-                                <div className="flex items-center gap-3 w-full sm:w-auto">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsBroadcastModalOpen(false)}
-                                        className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
-                                    >
-                                        Fermer
-                                    </button>
+                {tab === 'abandoned' && (
+                    <Card padded={false}>
+                        <div className="border-b border-black/[0.06] p-5"><CardHeader title="Commandes non payées" sub="Le client a commandé mais n’a pas validé le paiement. Une relance suffit souvent." /></div>
+                        {abandonedOrders.length ? (
+                            <ul className="divide-y divide-black/[0.05]">
+                                {abandonedOrders.map((o) => (
+                                    <li key={o.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-[15px] text-[#141412]">{o.customer_name} <span className="font-mono text-[13px] text-[#8B8A83]">· {o.tracking_code}</span></p>
+                                            <p className="truncate text-[13px] text-[#8B8A83]">{(o.items || []).map((i) => i.product_title).join(', ')} · {shortDate(o.created_at)}</p>
+                                        </div>
+                                        <span className="shrink-0 tabular-nums text-[15px] text-[#141412]">{fcfa(o.total_client)}</span>
+                                        <Button size="sm" href={relance(o)} target="_blank" rel="noreferrer"><WhatsappIcon className="h-4 w-4 text-[#16A34A]" /> Relancer</Button>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : <div className="p-4"><Empty Icon={ShoppingCart} title="Aucune commande en attente" text="Toutes vos commandes ont été payées ou annulées." /></div>}
+                    </Card>
+                )}
 
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            if (selectedCustomerIds.length === 0) {
-                                                showToastNotification('Veuillez sélectionner au moins un client destinataire.', 'warning');
-                                                return;
-                                            }
-
-                                            if (whatsappQuota && whatsappQuota.remaining_campaigns <= 0) {
-                                                showToastNotification(`Quota mensuel atteint. Votre plan autorise ${whatsappQuota.max_campaigns_per_month} campagne(s) ce mois-ci.`, 'error');
-                                                return;
-                                            }
-
-                                            const selectedCustomersList = customers.filter(c => selectedCustomerIds.includes(c.id));
-
-                                            router.post(route('customers.campaign.store'), {
-                                                title: campaignTitle || 'Campagne WhatsApp',
-                                                message_template: broadcastMessage,
-                                                recipients: selectedCustomersList.map(c => ({ name: c.name, phone: c.phone || c.whatsapp })),
-                                                attached_products: selectedProductAttachment ? [selectedProductAttachment] : [],
-                                                smart_link_id: selectedSmartLinkAttachment || null,
-                                            }, {
-                                                preserveScroll: true,
-                                                onSuccess: () => {
-                                                    setIsBroadcastModalOpen(false);
-                                                    showToastNotification('🚀 Campagne WhatsApp 1-Clic lancée avec succès ! Les messages sont pris en charge en tâche de fond.', 'success');
-                                                }
-                                            });
-                                        }}
-                                        className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
-                                    >
-                                        <Send className="w-4 h-4 fill-white" />
-                                        <span>🚀 Lancer la Campagne 1-Clic</span>
-                                    </button>
-                                </div>
+                {tab === 'campaigns' && (
+                    <div className="grid gap-4 xl:grid-cols-[320px_1fr]">
+                        <Card>
+                            <CardHeader title="Quota du mois" />
+                            <p className="mt-4 text-[28px] font-medium tabular-nums text-[#141412]">{quota.used_campaigns_this_month}<span className="text-[16px] text-[#8B8A83]"> / {quota.max_campaigns_per_month}</span></p>
+                            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#F2F1EC]">
+                                <div className="h-full rounded-full bg-[#FFCC00]" style={{ width: `${Math.min(100, (quota.used_campaigns_this_month / Math.max(1, quota.max_campaigns_per_month)) * 100)}%` }} />
                             </div>
-                        </div>
+                            <ul className="mt-4 space-y-1.5 text-[14px] text-[#5F5E58]">
+                                <li>{quota.max_recipients_per_campaign} destinataires max par campagne</li>
+                                <li>{quota.allow_smartlinks ? 'Liens de paiement autorisés' : 'Liens de paiement : plan Pro'}</li>
+                            </ul>
+                            <Button variant="primary" className="mt-5 w-full" onClick={openCampaign} disabled={!customers.length}><Megaphone className="h-4 w-4" /> Nouvelle campagne</Button>
+                        </Card>
+                        <Card padded={false}>
+                            <div className="border-b border-black/[0.06] p-5"><CardHeader title="Historique" /></div>
+                            {campaignsHistory.length ? (
+                                <ul className="divide-y divide-black/[0.05]">
+                                    {campaignsHistory.map((c) => (
+                                        <li key={c.id} className="flex items-center gap-4 px-5 py-4">
+                                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F6F5F1]"><Megaphone className="h-4 w-4" /></span>
+                                            <span className="min-w-0 flex-1"><span className="block truncate text-[15px] text-[#141412]">{c.title}</span><span className="text-[13px] text-[#8B8A83]">{shortDate(c.created_at)} · {c.recipients_count} destinataire{c.recipients_count > 1 ? 's' : ''}</span></span>
+                                            <Badge tone={c.status === 'completed' ? 'success' : 'neutral'}>{c.status === 'completed' ? 'Envoyée' : c.status}</Badge>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : <div className="p-4"><Empty Icon={Megaphone} title="Aucune campagne" text="Prévenez vos clients de vos nouveautés et promotions en quelques clics." /></div>}
+                        </Card>
                     </div>
                 )}
             </div>
+
         </AuthenticatedLayout>
     );
 }

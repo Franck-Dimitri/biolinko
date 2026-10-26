@@ -26,17 +26,17 @@ export default function SubscriptionsIndex({ vendors, metrics, filters }) {
         <AuthenticatedLayout>
             <Head title="Abonnements SaaS & Tarifs — Administration BIOLINKO" />
 
-            <div className="space-y-8 font-sans pb-12">
+            <div className="space-y-8 pb-12">
                 {/* HERO BANNER */}
-                <div className="p-6 sm:p-8 rounded-3xl bg-[#FFCC00] text-slate-950 shadow-xs border border-amber-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="p-6 sm:p-8 rounded-3xl bg-[#FFCC00] text-[#141412] shadow-xs border border-amber-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div className="space-y-1">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950 text-white text-[11px] font-semibold uppercase tracking-wider">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#141412] text-white text-[11px] font-semibold">
                             <Crown className="w-3.5 h-3.5 text-[#FFCC00]" /> SUPERVISION DES ABONNEMENTS SAAS
                         </div>
-                        <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+                        <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
                             Plans Tarifaires &amp; Revenus Recurrents (MRR Est. {Number(metrics?.estimated_monthly_mrr || 0).toLocaleString()} FCFA)
                         </h2>
-                        <p className="text-xs text-slate-900 font-medium">
+                        <p className="text-xs text-[#141412] font-medium">
                             Attribuez manuellement des accès Pro, Growth ou Business et suivez la répartition des abonnés.
                         </p>
                     </div>
@@ -44,78 +44,78 @@ export default function SubscriptionsIndex({ vendors, metrics, filters }) {
 
                 {/* 4 ALIGNED METRICS CARDS (EXACT CAPTURE 2 STYLE) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>MRR Est. Mensuel</span>
                             <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
                                 <Crown className="w-4 h-4" />
                             </div>
                         </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-slate-950">
+                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
                             {Number(metrics?.estimated_monthly_mrr || 0).toLocaleString()} FCFA
                         </div>
-                        <div className="text-[11px] text-slate-400 font-medium">
+                        <div className="text-[11px] text-[#8B8A83] font-medium">
                             Revenus d'abonnements récurrents
                         </div>
                     </div>
 
-                    <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>Vendeurs Enregistrés</span>
                             <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
                                 <User className="w-4 h-4" />
                             </div>
                         </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-slate-950">
+                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
                             {metrics?.total_vendors || 0} vendeur(s)
                         </div>
-                        <div className="text-[11px] text-slate-400 font-medium">
+                        <div className="text-[11px] text-[#8B8A83] font-medium">
                             {metrics?.starter_count || 0} sur plan Starter (0 FCFA)
                         </div>
                     </div>
 
-                    <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>Abonnés Pro &amp; Growth</span>
-                            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-xl bg-[#F6F5F1] text-[#141412] flex items-center justify-center">
                                 <TrendingUp className="w-4 h-4" />
                             </div>
                         </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-blue-600">
+                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
                             {(metrics?.pro_count || 0) + (metrics?.growth_count || 0)} abonné(s)
                         </div>
-                        <div className="text-[11px] text-blue-600 font-semibold">
+                        <div className="text-[11px] text-[#141412] font-semibold">
                             Pro ({formatK('pro')}) &amp; Growth ({formatK('growth')})
                         </div>
                     </div>
 
-                    <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>Abonnés Business</span>
-                            <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-xl bg-[#F6F5F1] text-[#141412] flex items-center justify-center">
                                 <DollarSign className="w-4 h-4" />
                             </div>
                         </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-purple-700">
+                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
                             {metrics?.business_count || 0} abonné(s)
                         </div>
-                        <div className="text-[11px] text-purple-700 font-semibold">
+                        <div className="text-[11px] text-[#141412] font-semibold">
                             Business ({Number(planPrices.business || 0).toLocaleString('fr-FR')} FCFA/mois)
                         </div>
                     </div>
                 </div>
 
                 {/* SEARCH & FILTER BAR */}
-                <div className="p-4 bg-white rounded-3xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="p-4 bg-white rounded-3xl border border-black/[0.08] shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
                     <form onSubmit={handleSearch} className="w-full sm:w-96 relative">
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Rechercher un vendeur, une boutique..."
-                            className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none"
+                            className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#F6F5F1] border border-black/[0.08] text-xs font-medium focus:border-amber-400 outline-none"
                         />
-                        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <Search className="w-4 h-4 text-[#8B8A83] absolute left-3 top-1/2 -translate-y-1/2" />
                     </form>
 
                     <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 text-xs font-semibold">
@@ -125,8 +125,8 @@ export default function SubscriptionsIndex({ vendors, metrics, filters }) {
                                 onClick={() => handlePlanFilter(p)}
                                 className={`px-3 py-1.5 rounded-xl uppercase transition-all cursor-pointer ${
                                     plan === p 
-                                        ? 'bg-slate-950 text-white font-extrabold shadow-2xs' 
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                        ? 'bg-[#141412] text-white font-semibold shadow-2xs' 
+                                        : 'bg-[#F2F1EC] text-[#5F5E58] hover:bg-[#E9E7E0]'
                                 }`}
                             >
                                 {p === 'all' ? 'Tous les plans' : p}
@@ -136,37 +136,37 @@ export default function SubscriptionsIndex({ vendors, metrics, filters }) {
                 </div>
 
                 {/* SUBSCRIPTIONS TABLE */}
-                <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
+                <div className="bg-white rounded-3xl border border-black/[0.08] shadow-2xs overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-xs">
                             <thead>
-                                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px] font-bold">
+                                <tr className="bg-[#F6F5F1] border-b border-black/[0.08] text-[#5F5E58] text-[10px] font-semibold">
                                     <th className="py-4 px-6">Vendeur</th>
                                     <th className="py-4 px-6">Boutique</th>
                                     <th className="py-4 px-6">Plan Actuel</th>
                                     <th className="py-4 px-6 text-right">Changer / Sur-Mesure</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 font-medium">
+                            <tbody className="divide-y divide-black/[0.06] font-medium">
                                 {vendors.data && vendors.data.length > 0 ? (
                                     vendors.data.map((v) => (
-                                        <tr key={v.id} className="hover:bg-slate-50/80 transition-colors">
+                                        <tr key={v.id} className="hover:bg-[#F6F5F1]/80 transition-colors">
                                             <td className="py-4 px-6">
-                                                <div className="font-bold text-slate-950 text-sm">{v.name}</div>
-                                                <div className="text-slate-400 text-[11px]">{v.email}</div>
+                                                <div className="font-semibold text-[#141412] text-sm">{v.name}</div>
+                                                <div className="text-[#8B8A83] text-[11px]">{v.email}</div>
                                             </td>
                                             <td className="py-4 px-6">
                                                 {v.store ? (
                                                     <div>
-                                                        <div className="font-semibold text-slate-900">{v.store.name}</div>
-                                                        <div className="text-amber-700 font-mono text-[11px]">biolinko.app/{v.store.slug}</div>
+                                                        <div className="font-semibold text-[#141412]">{v.store.name}</div>
+                                                        <div className="text-amber-700 font-mono text-[11px]">biolinko.link/{v.store.slug}</div>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-slate-400 italic">Sans boutique</span>
+                                                    <span className="text-[#8B8A83] italic">Sans boutique</span>
                                                 )}
                                             </td>
                                             <td className="py-4 px-6">
-                                                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-extrabold uppercase text-[10px]">
+                                                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-semibold uppercase text-[10px]">
                                                     {v.plan || 'starter'}
                                                 </span>
                                             </td>
@@ -178,10 +178,10 @@ export default function SubscriptionsIndex({ vendors, metrics, filters }) {
                                                         method="post"
                                                         data={{ plan: p }}
                                                         as="button"
-                                                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all cursor-pointer ${
+                                                        className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase transition-all cursor-pointer ${
                                                             (v.plan || 'starter') === p 
-                                                                ? 'bg-slate-950 text-white font-extrabold' 
-                                                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                                                                ? 'bg-[#141412] text-white font-semibold' 
+                                                                : 'bg-[#F2F1EC] hover:bg-[#E9E7E0] text-[#3D3C37]'
                                                         }`}
                                                     >
                                                         {p}
@@ -192,7 +192,7 @@ export default function SubscriptionsIndex({ vendors, metrics, filters }) {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={4} className="py-12 text-center text-slate-400 text-xs">
+                                        <td colSpan={4} className="py-12 text-center text-[#8B8A83] text-xs">
                                             Aucun vendeur trouvé.
                                         </td>
                                     </tr>

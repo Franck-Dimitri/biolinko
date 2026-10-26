@@ -13,13 +13,17 @@ class AppearanceController extends Controller
 {
     public function index(Request $request): Response
     {
-        $user = $request->user();
-        $store = $user->store()->with('reviews')->first();
+        $store = $request->user()->store()->with(['reviews' => fn ($q) => $q->latest()])->first();
+        abort_unless($store, 404);
 
         return Inertia::render('Appearance/Index', [
             'store' => $store,
-            'reviews' => $store ? $store->reviews : [],
-            'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
+            'reviews' => $store->reviews,
+            'stats' => [
+                'products' => $store->products()->count(),
+                'promos' => $store->products()->where('is_promo', true)->count(),
+                'packs' => $store->smartLinks()->where('is_active', true)->count(),
+            ],
         ]);
     }
 
@@ -95,24 +99,6 @@ class AppearanceController extends Controller
         $store->update($validated);
 
         return redirect()->back()->with('message', 'Paramètres d\'apparence mis à jour avec succès !');
-    }
-
-    public function storeReview(Request $request): RedirectResponse
-    {
-        $store = $request->user()->store;
-
-        $validated = $request->validate([
-            'customer_name' => ['required', 'string', 'max:255'],
-            'customer_city' => ['nullable', 'string', 'max:255'],
-            'rating' => ['required', 'integer', 'min:1', 'max:5'],
-            'comment' => ['required', 'string'],
-            'is_verified' => ['boolean'],
-            'is_featured' => ['boolean'],
-        ]);
-
-        $store->reviews()->create($validated);
-
-        return redirect()->back()->with('message', 'Avis client ajouté avec succès !');
     }
 
     public function toggleReviewFeatured(StoreReview $review): RedirectResponse

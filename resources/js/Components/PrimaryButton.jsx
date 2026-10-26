@@ -17,7 +17,7 @@ export default function PrimaryButton({
             disabled={isBusy}
             aria-busy={isBusy}
             className={
-                `inline-flex items-center justify-center gap-2 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-200 select-none ${
+                `inline-flex items-center justify-center gap-2 rounded-xl font-semibold text-xs  transition-all duration-200 select-none ${
                     isBusy
                         ? 'opacity-70 cursor-not-allowed pointer-events-none scale-[0.99]'
                         : 'hover:scale-[1.01] active:scale-[0.98] cursor-pointer'

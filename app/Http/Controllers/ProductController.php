@@ -43,6 +43,8 @@ class ProductController extends Controller
             'planLimits' => [
                 'max_products' => $request->user()->getPlanMaxProducts(),
                 'max_stock' => $request->user()->getPlanMaxStock(),
+                'max_images' => $request->user()->getPlanMaxImagesPerProduct(),
+                'plan' => $request->user()->effectivePlan(),
             ],
             'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
         ]);
@@ -52,8 +54,9 @@ class ProductController extends Controller
     {
         $user = $request->user();
         $store = $user->store;
+        $userPlan = $user->effectivePlan();
 
-        // Plan quota limits enforcement (10 products max & 25 total stock capacity for Starter)
+        // Limites du plan : nombre de produits et stock cumulé (voir User::PLAN_LIMITS)
         $quotaError = $this->checkStockAndProductQuotas($user, $store, (int) $request->input('stock', 0));
         if ($quotaError) {
             return redirect()->back()->withErrors([
@@ -95,11 +98,19 @@ class ProductController extends Controller
             ]);
         }
 
+        $filledVariants = array_filter($validated['variants'] ?? [], fn ($v) => ! empty($v['name']) || ! empty($v['size']) || ! empty($v['color']));
+        if ($userPlan === 'starter' && count($filledVariants) > 1) {
+            return redirect()->back()->withErrors([
+                'title' => 'Le plan Starter est limité à 1 variante par produit. Passez au plan Pro pour en ajouter davantage.',
+            ]);
+        }
+
+        $maxImages = $user->getPlanMaxImagesPerProduct();
         $imagePaths = [];
 
         if ($request->hasFile('images_files')) {
             foreach ($request->file('images_files') as $file) {
-                if ($file && count($imagePaths) < 5) {
+                if ($file && count($imagePaths) < $maxImages) {
                     $path = $file->store('products', 'public');
                     $imagePaths[] = '/storage/'.$path;
                 }
@@ -113,10 +124,7 @@ class ProductController extends Controller
             $imagePaths[] = $validated['image_url_input'];
         }
 
-        // Fallback default placeholder if no image provided
-        if (empty($imagePaths)) {
-            $imagePaths[] = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600';
-        }
+        // Sans photo : la vitrine affiche un emplacement neutre, jamais l'image d'un autre produit
 
         $slug = Str::slug($validated['title']).'-'.Str::random(4);
 
@@ -132,7 +140,7 @@ class ProductController extends Controller
             'promo_start_at' => $validated['promo_start_at'] ?? null,
             'promo_end_at' => $validated['promo_end_at'] ?? null,
             'is_active' => $request->boolean('is_active', true),
-            'image_url' => $imagePaths[0],
+            'image_url' => $imagePaths[0] ?? null,
             'images' => $imagePaths,
         ]);
 
@@ -140,12 +148,6 @@ class ProductController extends Controller
             $validVariants = array_filter($validated['variants'], function ($v) {
                 return ! empty($v['name']) || ! empty($v['size']) || ! empty($v['color']);
             });
-
-            if ($userPlan === 'starter' && count($validVariants) > 1) {
-                return redirect()->back()->withErrors([
-                    'title' => 'La formule STARTER est limitée à 1 seule variante par produit. Passez au plan PRO pour ajouter des variantes illimitées.',
-                ]);
-            }
 
             foreach ($validVariants as $v) {
                 $product->variants()->create([
@@ -196,29 +198,35 @@ class ProductController extends Controller
             'variants' => ['nullable', 'array'],
         ]);
 
-        $userPlan = $request->user()->plan ?? 'starter';
+        $userPlan = $request->user()->effectivePlan();
         if ($request->boolean('is_promo') && $userPlan === 'starter') {
             return redirect()->back()->withErrors([
                 'title' => 'La mise en promotion des produits est réservée aux abonnements PRO, GROWTH et BUSINESS. Passez au plan Pro pour activer les promotions.',
             ]);
         }
 
-        $imagePaths = $product->images ?? [];
+        $filledVariants = array_filter((array) $request->input('variants', []), fn ($v) => ! empty($v['name']) || ! empty($v['size']) || ! empty($v['color']));
+        if ($userPlan === 'starter' && count($filledVariants) > 1) {
+            return redirect()->back()->withErrors([
+                'title' => 'Le plan Starter est limité à 1 variante par produit. Passez au plan Pro pour en ajouter davantage.',
+            ]);
+        }
+
+        // Photos : celles que le vendeur garde (kept_images), puis les nouvelles, dans la limite du plan
+        $imagesTouched = $request->has('kept_images') || $request->hasFile('images_files');
+        $current = $product->images ?? [];
+        $kept = $request->has('kept_images')
+            ? array_values(array_intersect((array) $request->input('kept_images', []), $current))
+            : $current;
+        $maxImages = $request->user()->getPlanMaxImagesPerProduct();
+        $imagePaths = array_slice($kept, 0, $maxImages);
 
         if ($request->hasFile('images_files')) {
-            $uploaded = [];
             foreach ($request->file('images_files') as $file) {
-                if ($file && count($uploaded) < 5) {
-                    $path = $file->store('products', 'public');
-                    $uploaded[] = '/storage/'.$path;
+                if ($file && count($imagePaths) < $maxImages) {
+                    $imagePaths[] = '/storage/'.$file->store('products', 'public');
                 }
             }
-            if (count($uploaded) > 0) {
-                $imagePaths = $uploaded;
-            }
-        } elseif ($request->hasFile('image_file')) {
-            $path = $request->file('image_file')->store('products', 'public');
-            $imagePaths = ['/storage/'.$path];
         }
 
         $updateData = [];
@@ -262,8 +270,8 @@ class ProductController extends Controller
             $updateData['is_active'] = (bool) $validated['is_active'];
         }
 
-        if (! empty($imagePaths)) {
-            $updateData['image_url'] = $imagePaths[0];
+        if ($imagesTouched) {
+            $updateData['image_url'] = $imagePaths[0] ?? null;
             $updateData['images'] = $imagePaths;
         }
 
@@ -325,7 +333,7 @@ class ProductController extends Controller
      */
     protected function checkStockAndProductQuotas($user, $store, int $addedStock, ?int $existingProductId = null): ?string
     {
-        $userPlan = strtolower($user->plan ?? 'starter');
+        $userPlan = $user->effectivePlan();
         $maxProducts = $user->getPlanMaxProducts();
         $maxStock = $user->getPlanMaxStock();
 

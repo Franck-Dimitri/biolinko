@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Wallet;
 use App\Models\Withdrawal;
-use App\Services\HrSkillsPayService;
 use App\Services\WhatsappGatewayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,12 +15,6 @@ use Inertia\Response;
 
 class OrderController extends Controller
 {
-    protected HrSkillsPayService $hrSkillsPay;
-
-    public function __construct(HrSkillsPayService $hrSkillsPay)
-    {
-        $this->hrSkillsPay = $hrSkillsPay;
-    }
 
     public function index(Request $request): Response
     {
@@ -39,11 +32,27 @@ class OrderController extends Controller
         ]);
 
         $statusFilter = $request->query('status', 'all');
+        $search = trim((string) $request->query('search', ''));
 
-        $ordersQuery = Order::with(['items'])->where('store_id', $store->id);
+        $ordersQuery = Order::with(['items', 'report'])->where('store_id', $store->id);
 
-        if ($statusFilter !== 'all') {
-            $ordersQuery->where('status', $statusFilter);
+        // Onglets de la vue : groupes de statuts
+        $groups = [
+            'to_deliver' => ['paid', 'in_delivery'],
+            'delivered' => ['delivered'],
+            'pending' => ['pending'],
+            'cancelled' => ['cancelled', 'failed'],
+        ];
+        if (isset($groups[$statusFilter])) {
+            $ordersQuery->whereIn('status', $groups[$statusFilter]);
+        }
+
+        if ($search !== '') {
+            $ordersQuery->where(function ($q) use ($search) {
+                $q->where('tracking_code', 'like', "%{$search}%")
+                    ->orWhere('customer_name', 'like', "%{$search}%")
+                    ->orWhere('customer_phone', 'like', "%{$search}%");
+            });
         }
 
         $orders = $ordersQuery->latest()->paginate(10)->withQueryString();
@@ -78,6 +87,7 @@ class OrderController extends Controller
             ],
             'filters' => [
                 'status' => $statusFilter,
+                'search' => $search,
             ],
             'canExportSales' => $request->user()->hasPlan('business'),
             'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
@@ -96,6 +106,21 @@ class OrderController extends Controller
             'status' => ['required', 'string', 'in:pending,paid,in_delivery,delivered,cancelled'],
         ]);
 
+        // Enchaînement autorisé. Une commande en ligne ne devient « payée » que par la confirmation
+        // de l'opérateur (sinon le solde ne serait pas crédité) : seules les factures manuelles se marquent payées à la main.
+        $allowed = [
+            'pending' => $order->is_manual ? ['paid', 'cancelled'] : ['cancelled'],
+            'paid' => ['in_delivery', 'delivered'],
+            'in_delivery' => ['delivered', 'paid'],
+            'delivered' => ['in_delivery'],
+            'cancelled' => [],
+            'failed' => [],
+        ];
+
+        if (! in_array($validated['status'], $allowed[$order->status] ?? [], true)) {
+            return back()->withErrors(['status' => 'Ce changement de statut n’est pas possible pour cette commande.']);
+        }
+
         $order->update([
             'status' => $validated['status'],
         ]);
@@ -111,74 +136,20 @@ class OrderController extends Controller
 
     }
 
-    public function requestWithdrawal(Request $request): RedirectResponse
+    /** Réponse du vendeur à un signalement : sans réaction du client sous 3 jours, la vente est libérée. */
+    public function respondToReport(Request $request, Order $order): RedirectResponse
     {
-        $store = $request->user()->store;
-        $wallet = $store->wallet;
+        abort_unless($order->store_id === $request->user()->store?->id, 403);
 
-        if (! $wallet) {
-            return back()->withErrors(['amount' => 'Portefeuille introuvable.']);
+        $validated = $request->validate(['response' => ['required', 'string', 'min:5', 'max:1000']]);
+        $report = $order->report;
+
+        if (! $report || ! $report->isOpen()) {
+            return back()->withErrors(['response' => 'Ce signalement est déjà clos.']);
         }
 
-        $validated = $request->validate([
-            'amount' => ['required', 'numeric', 'min:1000'],
-            'phone_momo' => ['required', 'string', 'max:50'],
-            'operator' => ['nullable', 'string', 'in:MTN,ORANGE,mtn,orange'],
-        ]);
+        $report->update(['status' => 'answered', 'seller_response' => $validated['response'], 'seller_responded_at' => now()]);
 
-        // Strictly validate Cameroon phone number
-        try {
-            $formattedPhone = $this->hrSkillsPay->formatCameroonPhone($validated['phone_momo']);
-        } catch (\InvalidArgumentException $e) {
-            return back()->withErrors(['phone_momo' => $e->getMessage()]);
-        }
-
-        $amount = (float) $validated['amount'];
-        $operatorChoice = $validated['operator'] ?? $this->hrSkillsPay->detectOperator($formattedPhone);
-
-        try {
-            return DB::transaction(function () use ($wallet, $amount, $formattedPhone, $operatorChoice) {
-                $lockedWallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
-
-                if ($amount > (float) $lockedWallet->balance_available) {
-                    return back()->withErrors(['amount' => 'Solde disponible insuffisant pour ce retrait.']);
-                }
-
-                $withdrawal = Withdrawal::create([
-                    'wallet_id' => $lockedWallet->id,
-                    'amount' => $amount,
-                    'operator' => $operatorChoice,
-                    'phone_number' => $formattedPhone,
-                    'payment_operator' => $operatorChoice,
-                    'status' => 'pending',
-                ]);
-
-                $lockedWallet->decrement('balance_available', $amount);
-
-                // Initiate Cash-Out via HR-Skills Pay
-                try {
-                    $payoutData = $this->hrSkillsPay->initiatePayout($withdrawal, $formattedPhone, $operatorChoice);
-
-                    $withdrawal->update([
-                        'hrskills_reference' => $payoutData['reference'],
-                        'hrskills_transaction_id' => $payoutData['transaction_id'],
-                    ]);
-
-                    return back()->with('message', 'Demande de virement Mobile Money de '.number_format($amount).' FCFA soumise vers '.$formattedPhone.' ('.$operatorChoice.').');
-                } catch (\Exception $e) {
-                    Log::error('Withdrawal HR-Skills Payout Error', ['withdrawal_id' => $withdrawal->id, 'err' => $e->getMessage()]);
-
-                    // Restore vendor wallet balance on error
-                    $lockedWallet->increment('balance_available', $amount);
-                    $withdrawal->update(['status' => 'rejected']);
-
-                    return back()->withErrors(['phone_momo' => 'Échec de l\'envoi du virement Mobile Money : '.$e->getMessage()]);
-                }
-            });
-        } catch (\Exception $e) {
-            Log::error('Transaction withdrawal error', ['err' => $e->getMessage()]);
-
-            return back()->withErrors(['amount' => 'Une erreur est survenue lors de la demande de retrait.']);
-        }
+        return back()->with('success', 'Réponse envoyée. Sans réaction du client sous '.\App\Models\OrderReport::CUSTOMER_REPLY_DAYS.' jours, la vente sera libérée.');
     }
 }

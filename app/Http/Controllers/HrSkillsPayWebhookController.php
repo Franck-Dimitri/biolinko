@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Subscription;
 use App\Models\Withdrawal;
 use App\Services\OrderInvoiceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class HrSkillsPayWebhookController extends Controller
@@ -24,18 +26,19 @@ class HrSkillsPayWebhookController extends Controller
         $signature = $request->header('X-Hub-Signature');
         $webhookSecret = config('services.hrskills_pay.webhook_secret');
 
-        Log::info('HR-Skills Pay Webhook Received', [
-            'signature' => $signature,
-            'body' => $request->all(),
-        ]);
+        Log::info('HR-Skills Pay Webhook Received', ['reference' => $request->input('data.reference') ?? $request->input('reference')]);
 
-        // Optional HMAC signature verification if secret configured
-        if ($webhookSecret && $signature) {
+        // Signature obligatoire : sans elle, n'importe qui pourrait marquer une commande payée.
+        // Seul l'environnement local accepte un webhook non signé quand aucun secret n'est configuré.
+        if ($webhookSecret) {
             $expected = 'sha256=' . hash_hmac('sha256', $rawPayload, $webhookSecret);
-            if (!hash_equals($expected, $signature)) {
-                Log::warning('HR-Skills Pay Webhook Invalid Signature', ['received' => $signature, 'expected' => $expected]);
+            if (! $signature || ! hash_equals($expected, $signature)) {
+                Log::warning('HR-Skills Pay Webhook Invalid Signature');
                 return response()->json(['error' => 'INVALID_SIGNATURE'], 401);
             }
+        } elseif (! app()->environment('local', 'testing')) {
+            Log::error('HR-Skills Pay Webhook refusé : HRSKILLS_PAY_WEBHOOK_SECRET manquant');
+            return response()->json(['error' => 'WEBHOOK_NOT_CONFIGURED'], 503);
         }
 
         $event = $request->input('event') ?? $request->input('type');
@@ -48,105 +51,40 @@ class HrSkillsPayWebhookController extends Controller
             return response()->json(['status' => 'IGNORED_NO_REF'], 200);
         }
 
-        // 1. Process Order (Cash-In)
-        $order = Order::where('hrskills_reference', $reference)->first();
+        $succeeded = in_array($event, ['payment.success', 'payment.succeeded', 'payout.success'], true) || $status === 'SUCCESS';
+        $failed = in_array($event, ['payment.failed', 'payout.failed'], true) || in_array($status, ['FAILED', 'CANCELLED'], true);
+
+        // 1. Commande (encaissement)
+        $order = Order::where('payment_reference', $reference)->where('payment_provider', 'hrskills')->first();
         if ($order) {
-            \Illuminate\Support\Facades\DB::transaction(function () use ($order, $event, $status, $data, $reference) {
-                // Lock row to prevent race conditions
-                $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->first();
-                if (!$lockedOrder) return;
-
-                if ($event === 'payment.succeeded' || $status === 'SUCCESS') {
-                    if ($lockedOrder->payment_status !== 'paid') {
-                        $lockedOrder->update([
-                            'status' => 'paid',
-                            'payment_status' => 'paid',
-                            'paid_at' => now(),
-                            'hrskills_transaction_id' => $data['transaction_id'] ?? $lockedOrder->hrskills_transaction_id,
-                        ]);
-
-                        // Credit vendor Wallet (solde disponible)
-                        $wallet = $lockedOrder->store->wallet;
-                        if ($wallet) {
-                            $wallet->lockForUpdate();
-                            $wallet->increment('balance_available', (float) $lockedOrder->price_vendor);
-                        }
-
-                        // Decrement product & variant stock upon successful payment
-                        foreach ($lockedOrder->items as $item) {
-                            if ($item->product_id) {
-                                $product = \App\Models\Product::find($item->product_id);
-                                if ($product) {
-                                    $newStock = max(0, $product->stock - (int) $item->quantity);
-                                    $product->update(['stock' => $newStock]);
-                                }
-                            }
-                            if ($item->variant_id) {
-                                $variant = \App\Models\ProductVariant::find($item->variant_id);
-                                if ($variant) {
-                                    $newVarStock = max(0, $variant->stock_quantity - (int) $item->quantity);
-                                    $variant->update(['stock_quantity' => $newVarStock]);
-                                }
-                            }
-                        }
-
-                        // Generate & Send PDF Invoice Emails to Vendor & Customer
-                        $this->invoiceService->sendOrderInvoiceEmails($lockedOrder);
-
-                        // Send Real-Time WhatsApp Receipt & Invoice to Customer and Merchant
-                        try {
-                            app(\App\Services\WhatsappGatewayService::class)->notifyOrderPaid($lockedOrder);
-                        } catch (\Exception $e) {
-                            Log::warning('WhatsApp notifyOrderPaid failed in webhook', ['order_id' => $lockedOrder->id, 'err' => $e->getMessage()]);
-                        }
-
-
-                        Log::info('Order Payment Succeeded via Webhook', ['order_id' => $lockedOrder->id, 'reference' => $reference]);
-                    }
-                } elseif ($event === 'payment.failed' || $status === 'FAILED') {
-                    if ($lockedOrder->payment_status !== 'paid') {
-                        $lockedOrder->update([
-                            'status' => 'cancelled',
-                            'payment_status' => 'failed',
-                        ]);
-                        Log::info('Order Payment Failed via Webhook', ['order_id' => $lockedOrder->id, 'reference' => $reference]);
-                    }
-                }
-            });
+            if ($succeeded) {
+                $order->markAsPaid($data['transaction_id'] ?? null);
+            } elseif ($failed) {
+                Order::whereKey($order->id)->where('payment_status', '!=', 'paid')
+                    ->update(['status' => 'cancelled', 'payment_status' => 'failed']);
+            }
 
             return response()->json(['status' => 'PROCESSED_ORDER'], 200);
         }
 
-        // 2. Process Withdrawal (Cash-Out)
-        $withdrawal = Withdrawal::where('hrskills_reference', $reference)->first();
-        if ($withdrawal) {
-            \Illuminate\Support\Facades\DB::transaction(function () use ($withdrawal, $event, $status, $data) {
-                $lockedWithdrawal = Withdrawal::where('id', $withdrawal->id)->lockForUpdate()->first();
-                if (!$lockedWithdrawal) return;
+        // 2. Abonnement : active le plan même si le vendeur a fermé la page de paiement
+        $subscription = Subscription::where('payment_reference', $reference)->where('payment_provider', 'hrskills')->first();
+        if ($subscription) {
+            if ($succeeded) {
+                $subscription->activate();
+            } elseif ($failed) {
+                Subscription::whereKey($subscription->id)->where('payment_status', 'pending')->update(['payment_status' => 'failed']);
+            }
 
-                if ($event === 'payment.succeeded' || $status === 'SUCCESS') {
-                    if ($lockedWithdrawal->status !== 'approved') {
-                        $lockedWithdrawal->update([
-                            'status' => 'approved',
-                            'processed_at' => now(),
-                            'hrskills_transaction_id' => $data['transaction_id'] ?? $lockedWithdrawal->hrskills_transaction_id,
-                        ]);
-                        Log::info('Withdrawal Payout Succeeded via Webhook', ['withdrawal_id' => $lockedWithdrawal->id]);
-                    }
-                } elseif ($event === 'payment.failed' || $status === 'FAILED') {
-                    if ($lockedWithdrawal->status !== 'rejected') {
-                        $lockedWithdrawal->update([
-                            'status' => 'rejected',
-                        ]);
-                        // Restore vendor wallet balance if payout failed
-                        if ($lockedWithdrawal->wallet) {
-                            $lockedWithdrawal->wallet->lockForUpdate();
-                            $lockedWithdrawal->wallet->increment('balance_available', (float) $lockedWithdrawal->amount);
-                        }
-                        Log::info('Withdrawal Payout Failed via Webhook', ['withdrawal_id' => $lockedWithdrawal->id]);
-                    }
-                }
-            });
+            return response()->json(['status' => 'PROCESSED_SUBSCRIPTION'], 200);
+        }
+
+        // 3. Retrait (décaissement)
+        $withdrawal = Withdrawal::where('payment_reference', $reference)->where('payment_provider', 'hrskills')->first();
+        if ($withdrawal) {
+            if ($succeeded || $failed) {
+                $withdrawal->settle($succeeded, $data['transaction_id'] ?? null);
+            }
 
             return response()->json(['status' => 'PROCESSED_WITHDRAWAL'], 200);
         }

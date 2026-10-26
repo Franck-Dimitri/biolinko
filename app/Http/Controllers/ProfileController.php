@@ -21,6 +21,12 @@ class ProfileController extends Controller
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
+            'account' => [
+                'plan' => $request->user()->effectivePlan(),
+                'expires_at' => $request->user()->subscription_expires_at?->toIso8601String(),
+                'member_since' => $request->user()->created_at?->toIso8601String(),
+                'store' => $request->user()->store?->only(['name', 'slug', 'logo_url', 'is_published']),
+            ],
         ]);
     }
 
@@ -37,7 +43,7 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
-        return Redirect::route('profile.edit');
+        return Redirect::route('profile.edit')->with('message', 'Profil mis à jour.');
     }
 
     /**

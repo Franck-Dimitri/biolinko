@@ -3,11 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Mail\VendorOtpVerificationMail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -40,7 +37,7 @@ class VerifyEmailOtpController extends Controller
         }
 
         if (!$user->verifyEmailOtp($request->otp)) {
-            return back()->withErrors(['otp' => 'Le code OTP saisi est incorrect ou a expiré. Veuillez réessayez.']);
+            return back()->withErrors(['otp' => 'Le code OTP saisi est incorrect ou a expiré. Veuillez réessayer.']);
         }
 
         return redirect()->route('dashboard')->with('success', 'Votre adresse e-mail a été vérifiée avec succès !');
@@ -54,13 +51,7 @@ class VerifyEmailOtpController extends Controller
             return redirect()->route('dashboard');
         }
 
-        $otp = $user->generateEmailOtp();
-
-        try {
-            Mail::to($user->email)->send(new VendorOtpVerificationMail($user, $otp));
-        } catch (\Exception $e) {
-            Log::warning('Failed to resend vendor OTP email', ['user_id' => $user->id, 'err' => $e->getMessage()]);
-        }
+        $user->sendEmailVerificationNotification();
 
         return back()->with('status', 'Un nouveau code de vérification à 6 chiffres a été envoyé à votre adresse e-mail.');
     }

@@ -29,7 +29,7 @@ _{{ $reason }}_
 ### Que faire maintenant ?
 Si vous estimez qu'il s'agit d'une erreur ou si vous avez mis votre vitrine et vos produits en conformité avec nos conditions générales d'utilisation, vous pouvez contacter notre support officiel :
 
-- ✉️ **Email du support :** support@biolinko.app
+- ✉️ **Email du support :** support@biolinko.link
 - 🌐 **Centre d'assistance :** [https://biolinko.mrdims.dev](https://biolinko.mrdims.dev)
 
 Cordialement,<br>

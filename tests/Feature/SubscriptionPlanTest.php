@@ -9,7 +9,7 @@ test('vendor franckdimitrio000@gmail.com is on starter plan', function () {
     ]);
 
     expect($user->plan)->toBe('starter');
-    expect($user->getPlanMaxProducts())->toBe(10);
+    expect($user->getPlanMaxProducts())->toBe(5);
     expect($user->getPlanMaxImagesPerProduct())->toBe(2);
     expect($user->getPlanMaxStores())->toBe(1);
     expect($user->getPlanMaxTemplates())->toBe(1);
@@ -50,22 +50,27 @@ test('user upgraded to pro, growth, business gets updated store and template lim
     expect($bizUser->getPlanMaxTemplates())->toBe(10);
 });
 
-test('billing cycle discount calculations for 6 months and 12 months', function () {
-    // Pro: 2500 FCFA/mo. 6 mo (-10%) = 13500 FCFA. 12 mo (-20%) = 24000 FCFA.
-    $proBase = User::planPrice('pro');
-    expect($proBase)->toBe(2500);
-    expect((int) round($proBase * 6 * 0.90))->toBe(13500);
-    expect((int) round($proBase * 12 * 0.80))->toBe(24000);
+test('billing cycle discount calculations for 1 year and 2 years', function () {
+    // 1 an : −15 %. 2 ans : −20 %.
+    foreach (['pro' => 2500, 'growth' => 7000, 'business' => 12000] as $plan => $monthly) {
+        expect(User::planPrice($plan))->toBe($monthly);
+    }
 
-    // Growth: 7000 FCFA/mo. 6 mo (-10%) = 37800 FCFA. 12 mo (-20%) = 67200 FCFA.
-    $growthBase = User::planPrice('growth');
-    expect($growthBase)->toBe(7000);
-    expect((int) round($growthBase * 6 * 0.90))->toBe(37800);
-    expect((int) round($growthBase * 12 * 0.80))->toBe(67200);
+    $user = User::factory()->create(['role' => 'seller', 'plan' => 'starter']);
+    config(['services.hrskills_pay.subscription_mode' => 'simulation']);
 
-    // Business: 12000 FCFA/mo. 6 mo (-10%) = 64800 FCFA. 12 mo (-20%) = 115200 FCFA.
-    $bizBase = User::planPrice('business');
-    expect($bizBase)->toBe(12000);
-    expect((int) round($bizBase * 6 * 0.90))->toBe(64800);
-    expect((int) round($bizBase * 12 * 0.80))->toBe(115200);
+    $this->actingAs($user)->postJson(route('seller.subscriptions.subscribe'), ['plan' => 'pro', 'phone_momo' => '677123456', 'cycle' => 12])
+        ->assertJson(['amount' => (int) round(2500 * 12 * 0.85)]);
+    $this->actingAs($user)->postJson(route('seller.subscriptions.subscribe'), ['plan' => 'pro', 'phone_momo' => '677123456', 'cycle' => 24])
+        ->assertJson(['amount' => (int) round(2500 * 24 * 0.80)]);
+    // L'ancienne durée de 6 mois n'existe plus
+    $this->actingAs($user)->postJson(route('seller.subscriptions.subscribe'), ['plan' => 'pro', 'phone_momo' => '677123456', 'cycle' => 6]);
+    expect(\App\Models\Subscription::where('billing_cycle', 6)->exists())->toBeFalse();
+});
+
+test('an expired paid plan falls back to starter limits', function () {
+    $user = User::factory()->create(['role' => 'seller', 'plan' => 'business', 'subscription_expires_at' => now()->subDay()]);
+
+    expect($user->effectivePlan())->toBe('starter');
+    expect($user->getPlanMaxProducts())->toBe(5);
 });

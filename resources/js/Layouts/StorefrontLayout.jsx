@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
 import HeaderBoutique from '@/Components/Storefront/HeaderBoutique';
 import FooterBoutique from '@/Components/Storefront/FooterBoutique';
-import { Toaster, toast } from 'sonner';
+import { Toaster } from 'sonner';
+import useCart from '@/Components/Storefront/useCart';
 import { MotionConfig } from 'framer-motion';
 import { Lock } from 'lucide-react';
 import { router } from '@inertiajs/react';
+import { useEffect } from 'react';
+import { initPixels, track } from '@/Components/Storefront/pixels';
 
 export default function StorefrontLayout({ 
     store, 
@@ -17,63 +19,26 @@ export default function StorefrontLayout({
     hasPromos = false,
     hasSmartLinks = false,
     cartCount = null,
+    fullBleed = false,
 }) {
     const primaryColor = store?.theme_color || '#FFCC00';
 
-    const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
-    const [cartItems, setCartItems] = useState([]);
-
-    // Sync cart items with localStorage
-    useEffect(() => {
-        if (!store?.id) return;
-        const saved = localStorage.getItem(`biolinko_cart_${store.id}`);
-        if (saved) {
-            try { setCartItems(JSON.parse(saved)); } catch (e) {}
-        }
-    }, [store?.id]);
-
-    const saveCart = (items) => {
-        setCartItems(items);
-        if (store?.id) {
-            localStorage.setItem(`biolinko_cart_${store.id}`, JSON.stringify(items));
-        }
-    };
-
-    const handleClearCart = () => {
-        saveCart([]);
-        toast.info('Panier vidé.');
-    };
-
-    const handleUpdateQuantity = (index, delta) => {
-        const newItems = [...cartItems];
-        newItems[index].quantity = (newItems[index].quantity || 1) + delta;
-        if (newItems[index].quantity <= 0) {
-            newItems.splice(index, 1);
-        }
-        saveCart(newItems);
-    };
-
-    const handleRemoveItem = (index) => {
-        const newItems = [...cartItems];
-        newItems.splice(index, 1);
-        saveCart(newItems);
-        toast.info('Article retiré du panier');
-    };
+    const cart = useCart(store?.id);
 
     // La page parente (ex. Boutique) passe son compteur à jour ; sinon on lit le panier enregistré.
-    const totalCartCount = cartCount ?? cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
+    const totalCartCount = cartCount ?? cart.count;
 
-    const handleProceedToCheckout = () => {
-        if (setActiveTab) {
-            setActiveTab('cart');
-        } else {
-            router.visit(`/${store.slug}?tab=cart`);
-        }
-    };
+    // Pixels du vendeur : une page vue à chaque visite (sauf aperçu de l'éditeur et visites du vendeur)
+    useEffect(() => {
+        const preview = !store?.is_published || new URLSearchParams(window.location.search).has('apercu');
+        if (preview || isOwner) return;
+        initPixels(store);
+        track('PageView');
+    }, [store?.id, typeof window !== 'undefined' ? window.location.href : '']);
 
     return (
         <MotionConfig reducedMotion="user">
-        <div className="min-h-screen bg-white text-brand-ink font-sans antialiased flex flex-col justify-between selection:bg-brand-honey selection:text-brand-ink">
+        <div className="min-h-screen bg-white text-[#141412] font-poppins antialiased flex flex-col justify-between selection:bg-brand-honey selection:text-brand-ink">
             {/* Sonner Toast Provider */}
             <Toaster position="top-center" richColors closeButton />
 
@@ -128,7 +93,7 @@ export default function StorefrontLayout({
             />
 
             {/* MAIN CONTENT AREA */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-8 py-6 sm:py-8 flex-1 w-full space-y-12">
+            <main className={fullBleed ? 'w-full flex-1' : 'mx-auto w-full max-w-[1200px] flex-1 space-y-12 px-5 py-8 lg:px-8'}>
                 {children}
             </main>
 

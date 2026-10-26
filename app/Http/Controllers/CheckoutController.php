@@ -7,8 +7,11 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\SmartLink;
 use App\Models\Store;
-use App\Services\HrSkillsPayService;
+use App\Payments\Countries;
+use App\Payments\OrderPayments;
+use App\Payments\PaymentException;
 use App\Services\OrderInvoiceService;
 use App\Services\WhatsappGatewayService;
 use Illuminate\Http\JsonResponse;
@@ -19,16 +22,16 @@ use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
-    protected HrSkillsPayService $hrSkillsPay;
+    protected OrderPayments $orderPayments;
     protected OrderInvoiceService $invoiceService;
     protected WhatsappGatewayService $whatsappService;
 
     public function __construct(
-        HrSkillsPayService $hrSkillsPay,
+        OrderPayments $orderPayments,
         OrderInvoiceService $invoiceService,
         WhatsappGatewayService $whatsappService
     ) {
-        $this->hrSkillsPay = $hrSkillsPay;
+        $this->orderPayments = $orderPayments;
         $this->invoiceService = $invoiceService;
         $this->whatsappService = $whatsappService;
     }
@@ -36,19 +39,20 @@ class CheckoutController extends Controller
 
     public function lookupCustomer(Request $request): JsonResponse
     {
-        $phone = trim($request->query('phone', ''));
-
-        if (empty($phone) || strlen(preg_replace('/[^0-9]/', '', $phone)) < 6) {
+        // Pré-remplissage limité à un client qui a déjà commandé dans CETTE boutique, avec le numéro exact :
+        // une recherche large exposait les coordonnées de n'importe quel client de la plateforme.
+        try {
+            $formatted = Countries::formatPhone('CM', (string) $request->query('phone', ''));
+        } catch (\InvalidArgumentException $e) {
             return response()->json(['found' => false]);
         }
 
-        $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+        $storeId = (int) $request->query('store_id');
+        $customer = $storeId
+            ? Customer::where('phone', $formatted)->whereHas('stores', fn ($q) => $q->where('stores.id', $storeId))->first()
+            : null;
 
-        $customer = Customer::where('phone', $phone)
-            ->orWhereRaw("REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', '') LIKE ?", ["%{$cleanPhone}%"])
-            ->first();
-
-        if (!$customer) {
+        if (! $customer) {
             return response()->json(['found' => false]);
         }
 
@@ -56,26 +60,25 @@ class CheckoutController extends Controller
             'found' => true,
             'customer' => [
                 'name' => $customer->name,
-                'phone' => $customer->phone,
-                'email' => $customer->email,
-                'whatsapp' => $customer->whatsapp,
                 'delivery_address' => $customer->delivery_address,
                 'city' => $customer->city,
-            ]
+            ],
         ]);
     }
 
     public function checkStatus(Request $request, string $reference): JsonResponse
     {
-        $order = Order::where('hrskills_reference', $reference)
+        $order = Order::where('payment_reference', $reference)
             ->orWhere('tracking_code', $reference)
             ->first();
 
-        if (!$order) {
+        if (! $order) {
             return response()->json(['status' => 'NOT_FOUND', 'paid' => false], 404);
         }
 
-        if ($order->payment_status === 'paid' || $order->status === 'paid') {
+        $status = $this->orderPayments->refresh($order);
+
+        if ($status === 'SUCCESS') {
             return response()->json([
                 'status' => 'SUCCESS',
                 'paid' => true,
@@ -84,68 +87,15 @@ class CheckoutController extends Controller
             ]);
         }
 
-        if ($order->payment_status === 'failed' || $order->status === 'cancelled') {
+        if ($status === 'FAILED') {
             return response()->json([
                 'status' => 'FAILED',
                 'paid' => false,
-                'message' => 'Le paiement Mobile Money a échoué ou a été annulé.',
+                'message' => 'Le paiement Mobile Money n’a pas abouti. Vous pouvez réessayer.',
             ]);
         }
 
-        // Live Poll HR-Skills Pay API for update
-        try {
-            $liveData = $this->hrSkillsPay->checkPaymentStatus($reference);
-            $liveStatus = strtoupper($liveData['status'] ?? 'PENDING');
-
-            if ($liveStatus === 'SUCCESS') {
-                if ($order->payment_status !== 'paid') {
-                    $order->update([
-                        'status' => 'paid',
-                        'payment_status' => 'paid',
-                        'paid_at' => now(),
-                    ]);
-
-                    // Credit vendor Wallet
-                    $wallet = $order->store->wallet;
-                    if ($wallet) {
-                        $wallet->increment('balance_available', (float) $order->price_vendor);
-                    }
-
-                    // Generate & Send PDF Invoice Emails to Vendor & Customer
-                    $this->invoiceService->sendOrderInvoiceEmails($order);
-
-                    // Send Real-time WhatsApp confirmation and invoice link
-                    $this->whatsappService->notifyOrderPaid($order);
-                }
-
-
-                return response()->json([
-                    'status' => 'SUCCESS',
-                    'paid' => true,
-                    'tracking_code' => $order->tracking_code,
-                    'redirect_url' => route('order.track', $order->tracking_code),
-                ]);
-            }
-
-            if ($liveStatus === 'FAILED') {
-                $order->update([
-                    'status' => 'cancelled',
-                    'payment_status' => 'failed',
-                ]);
-                return response()->json([
-                    'status' => 'FAILED',
-                    'paid' => false,
-                    'message' => 'Paiement décliné par l\'opérateur Mobile Money.',
-                ]);
-            }
-        } catch (\Exception $e) {
-            Log::warning('Error polling HR-Skills Pay status', ['ref' => $reference, 'err' => $e->getMessage()]);
-        }
-
-        return response()->json([
-            'status' => 'PENDING',
-            'paid' => false,
-        ]);
+        return response()->json(['status' => 'PENDING', 'paid' => false]);
     }
 
     public function process(Request $request)
@@ -157,6 +107,8 @@ class CheckoutController extends Controller
             'customer_email' => ['nullable', 'email', 'max:255'],
             'customer_whatsapp' => ['nullable', 'string', 'max:50'],
             'delivery_address' => ['required', 'string', 'max:500'],
+            'delivery_city' => ['nullable', 'string', 'max:120'],
+            'smart_link_code' => ['nullable', 'string', 'exists:smart_links,code'],
             'notes' => ['nullable', 'string', 'max:500'],
             'operator' => ['nullable', 'string', 'in:MTN,ORANGE,mtn,orange'],
             
@@ -172,19 +124,38 @@ class CheckoutController extends Controller
             'items.*.quantity' => ['required_with:items', 'integer', 'min:1'],
         ]);
 
-        // Strictly validate & format Cameroon phone number
-        try {
-            $formattedPhone = $this->hrSkillsPay->formatCameroonPhone($validated['customer_phone']);
-        } catch (\InvalidArgumentException $e) {
-            if ($request->wantsJson() || $request->header('X-Inertia')) {
-                return response()->json(['error' => $e->getMessage()], 422);
-            }
-            return back()->withErrors(['customer_phone' => $e->getMessage()]);
+        $store = Store::with('user')->findOrFail($validated['store_id']);
+
+        if (! $store->is_published || $store->user?->is_banned) {
+            return response()->json(['error' => 'Cette boutique n’accepte pas de commandes pour le moment.'], 422);
         }
 
-        $store = Store::findOrFail($validated['store_id']);
+        // Numéro Mobile Money au format du pays de la boutique
+        try {
+            $formattedPhone = Countries::formatPhone($store->country ?: 'CM', $validated['customer_phone']);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage(), 'errors' => ['customer_phone' => [$e->getMessage()]]], 422);
+        }
 
         // Determine items
+        // Pack (SmartLink) : les articles et le prix viennent du lien, pas du client
+        $smartLink = null;
+        if (!empty($validated['smart_link_code'])) {
+            $smartLink = SmartLink::where('code', $validated['smart_link_code'])
+                ->where('store_id', $store->id)
+                ->first();
+
+            if (!$smartLink || !$smartLink->isValid()) {
+                return response()->json(['error' => 'Ce lien de commande est expiré ou n\'est plus disponible.'], 422);
+            }
+
+            $validated['items'] = collect($smartLink->items)->map(fn ($it) => [
+                'product_id' => $it['product_id'],
+                'variant_id' => null,
+                'quantity' => $it['quantity'],
+            ])->all();
+        }
+
         $checkoutItems = [];
         if (!empty($validated['items']) && count($validated['items']) > 0) {
             $checkoutItems = $validated['items'];
@@ -208,7 +179,12 @@ class CheckoutController extends Controller
         foreach ($checkoutItems as $item) {
             $product = Product::where('store_id', $store->id)
                 ->where('id', $item['product_id'])
-                ->firstOrFail();
+                ->where('is_active', true)
+                ->first();
+
+            if (! $product) {
+                return response()->json(['error' => 'Un article de votre panier n’est plus disponible.'], 422);
+            }
 
             $variant = null;
             if (!empty($item['variant_id'])) {
@@ -217,7 +193,7 @@ class CheckoutController extends Controller
                     ->first();
             }
 
-            $minQ = $product->min_order_quantity || 1;
+            $minQ = $smartLink ? 1 : ($product->min_order_quantity ?: 1);
             $quantity = max((int)$item['quantity'], $minQ);
 
             // Stock Check Enforcement
@@ -237,12 +213,24 @@ class CheckoutController extends Controller
                 return back()->withErrors(['quantity' => $errMsg]);
             }
 
+            if ($variant && $variant->stock_quantity !== null && $quantity > (int) $variant->stock_quantity) {
+                $errMsg = "Il ne reste que {$variant->stock_quantity} article(s) pour cette option de '{$product->title}'.";
+                if ($request->wantsJson() || $request->header('X-Inertia')) {
+                    return response()->json(['error' => $errMsg], 422);
+                }
+                return back()->withErrors(['quantity' => $errMsg]);
+            }
+
             $currentPv = ($product->is_promo && $product->promo_price > 0) 
                 ? (float) $product->promo_price 
                 : (float) $product->price_vendor;
 
-            // 3% Platform fee paid by customer; 0% HR Pay Cash-In; Vendor receives 100% of price_vendor
-            $saasMarginUnit = ceil($currentPv * 0.03);
+            if ($variant && (float) $variant->price > 0) {
+                $currentPv = (float) $variant->price;
+            }
+
+            // Frais de service payés par le client (config payments.client_fee_percent)
+            $saasMarginUnit = Order::clientFee($currentPv);
             $tcUnit = $currentPv + $saasMarginUnit;
 
             $itemVendorPrice = $currentPv * $quantity;
@@ -268,6 +256,19 @@ class CheckoutController extends Controller
             ];
         }
 
+        // Frais calculés sur le total, exactement comme le panier côté client
+        $saasMarginTotal = Order::clientFee($priceVendorTotal);
+        $totalClient = $priceVendorTotal + $saasMarginTotal;
+
+        // Le pack a son propre prix (remise incluse) : on recalcule les totaux dessus
+        if ($smartLink) {
+            $priceVendorTotal = (float) $smartLink->total_amount;
+            $saasMarginTotal = Order::clientFee($priceVendorTotal);
+            $totalClient = $priceVendorTotal + $saasMarginTotal;
+        }
+
+        $city = trim($validated['delivery_city'] ?? '') ?: $validated['delivery_address'];
+
         // 1. SAVE OR UPDATE CUSTOMER
         $customer = Customer::firstOrNew(['phone' => $formattedPhone]);
         $customer->name = $validated['customer_name'];
@@ -278,23 +279,12 @@ class CheckoutController extends Controller
             $customer->whatsapp = $validated['customer_whatsapp'];
         }
         $customer->delivery_address = $validated['delivery_address'];
-        $customer->city = $validated['delivery_address'];
+        $customer->city = $city;
         $customer->save();
 
-        // 2. LINK CUSTOMER TO STORE
-        $existingPivot = $store->customers()->where('customer_id', $customer->id)->first();
-        if ($existingPivot) {
-            $store->customers()->updateExistingPivot($customer->id, [
-                'total_orders_count' => $existingPivot->pivot->total_orders_count + 1,
-                'total_spent' => (float)$existingPivot->pivot->total_spent + $totalClient,
-                'last_order_at' => now(),
-            ]);
-        } else {
-            $store->customers()->attach($customer->id, [
-                'total_orders_count' => 1,
-                'total_spent' => $totalClient,
-                'last_order_at' => now(),
-            ]);
+        // 2. Rattache le client à la boutique (ses totaux sont mis à jour au paiement, voir Order::markAsPaid)
+        if (! $store->customers()->where('customer_id', $customer->id)->exists()) {
+            $store->customers()->attach($customer->id, ['total_orders_count' => 0, 'total_spent' => 0, 'last_order_at' => now()]);
         }
 
         $trackingCode = 'BLK-CMD-' . strtoupper(Str::random(10));
@@ -314,11 +304,12 @@ class CheckoutController extends Controller
             'uuid' => (string) Str::uuid(),
             'tracking_code' => $trackingCode,
             'store_id' => $store->id,
+            'smart_link_id' => $smartLink?->id,
             'customer_id' => $customer->id,
             'customer_name' => $validated['customer_name'],
             'customer_phone' => $formattedPhone,
             'customer_email' => $validated['customer_email'] ?? null,
-            'city' => $validated['delivery_address'],
+            'city' => $city,
             'address_details' => $addressWithNotes,
             'price_vendor' => $priceVendorTotal,
             'saas_margin' => $saasMarginTotal,
@@ -327,11 +318,14 @@ class CheckoutController extends Controller
             'status' => 'pending',
             'payment_status' => 'pending',
             'payment_phone' => $formattedPhone,
+            'currency' => $store->currency ?: 'XAF',
+            'payment_country' => $store->country ?: 'CM',
         ]);
 
         foreach ($preparedOrderItems as $itemData) {
             $order->items()->create($itemData);
         }
+
 
         // Notify Customer & Vendor via WhatsApp that order has been initiated
         try {
@@ -341,43 +335,21 @@ class CheckoutController extends Controller
         }
 
 
-        // INITIATE HR-SKILLS PAY CASH-IN (MOBILE MONEY USSD PUSH)
+        // Demande de paiement Mobile Money sur le téléphone du client (agrégateur configuré)
         try {
-            $operatorChoice = $validated['operator'] ?? null;
-            $payinData = $this->hrSkillsPay->initiatePayin($order, $formattedPhone, $operatorChoice);
+            $payment = $this->orderPayments->start($order, $formattedPhone, $validated['operator'] ?? null);
+        } catch (PaymentException|\InvalidArgumentException $e) {
+            Log::warning('Checkout payment start failed', ['order_id' => $order->id, 'err' => $e->getMessage()]);
+            $order->update(['status' => 'cancelled', 'payment_status' => 'failed']);
 
-            $order->update([
-                'hrskills_reference' => $payinData['reference'],
-                'hrskills_transaction_id' => $payinData['transaction_id'],
-                'payment_operator' => $payinData['operator'],
-            ]);
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            report($e);
+            $order->update(['status' => 'cancelled', 'payment_status' => 'failed']);
 
-            if ($request->wantsJson() || $request->header('X-Inertia')) {
-                return response()->json([
-                    'success' => true,
-                    'requires_ussd' => true,
-                    'reference' => $payinData['reference'],
-                    'tracking_code' => $trackingCode,
-                    'amount' => $payinData['amount'],
-                    'operator' => $payinData['operator'],
-                    'phone' => $formattedPhone,
-                    'redirect_url' => route('order.track', $trackingCode),
-                ]);
-            }
-
-            return redirect()->route('order.track', $trackingCode)->with('message', 'Paiement USSD initié ! Veuillez valider le code PIN sur votre téléphone.');
-
-        } catch (\Exception $e) {
-            Log::error('Checkout HR-Skills Payin Error', ['order_id' => $order->id, 'err' => $e->getMessage()]);
-
-            if ($request->wantsJson() || $request->header('X-Inertia')) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Échec d\'initiation du paiement Mobile Money: ' . $e->getMessage(),
-                ], 422);
-            }
-
-            return back()->withErrors(['customer_phone' => 'Échec du paiement MoMo : ' . $e->getMessage()]);
+            return response()->json(['success' => false, 'error' => 'La demande de paiement n’a pas pu être envoyée. Réessayez dans un instant.'], 422);
         }
+
+        return response()->json(['success' => true, 'requires_ussd' => true] + $payment);
     }
 }

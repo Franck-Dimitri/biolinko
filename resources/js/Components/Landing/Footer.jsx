@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link } from '@inertiajs/react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
-import { FacebookIcon, InstagramIcon, TiktokIcon, WhatsappIcon } from '@/Components/BrandIcons';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, ChevronDown, Mail, MapPin } from 'lucide-react';
+import { OperatorLogo } from '@/Components/Landing/Illustrations';
 
 export const PHOTO_CREDITS = [
     ['Robe pagne', 'ItunuIjila', 'CC BY-SA 4.0', 'A_BEAUTIFUL_Ankara_dress.jpg'],
@@ -16,174 +16,112 @@ export const PHOTO_CREDITS = [
     ['Haut kente', 'Nationaal Museum van Wereldculturen', 'CC BY-SA 3.0', 'Shirt_van_Afrikaanse_kente_stof-_Stichting_Nationaal_Museum_van_Wereldculturen_-_R-3633c.jpg'],
 ];
 
+const CONTACT_EMAIL = 'contact@biolinko.link';
+
 /**
- * Footer Officiel Biolinko (Fond Noir Élégant & Unifié)
+ * Footer de la landing et des pages légales.
  */
 export default function Footer() {
     const [credits, setCredits] = useState(false);
+    const year = new Date().getFullYear();
 
     const cols = [
-        [
-            'Company',
-            [
-                ['À propos', '/#vitrine'],
-                ['Carrières', '#'],
-                ['Tarifs', '/#tarifs'],
-                ['FAQs', '/#questions'],
-                ['Contact', 'mailto:contact@biolinko.com'],
-            ],
-        ],
-        [
-            'Products',
-            [
-                ['Vitrine en ligne', '/#vitrine'],
-                ['Paiement Mobile Money', '/#comment'],
-                ['SmartLinks', '/#outils'],
-                ['Factures automatiques', '/#outils'],
-                ['Gestion des stocks', '/#outils'],
-            ],
-        ],
-        [
-            'Resources',
-            [
-                ['Guide vendeur', '#'],
-                ['Blog', '#'],
-                ['Témoignages', '/#temoignages'],
-                ['Vidéo de démonstration', '/#demo'],
-            ],
-        ],
-        [
-            'Legal',
-            [
-                ['Confidentialité', route('legal.privacy'), true],
-                ['Sécurité', '#', false],
-                ['Conditions d’utilisation', route('legal.terms'), true],
-                ['Cookies', route('legal.cookies'), true],
-            ],
-        ],
+        ['Produit', [
+            ['Boutique en ligne', '/#produit'],
+            ['Commandes et suivi', '/#produit'],
+            ['Factures et relances', '/#produit'],
+            ['Clients et campagnes', '/#produit'],
+            ['Liens de paiement', '/#produit'],
+            ['Marketing et statistiques', '/#produit'],
+        ]],
+        ['Ressources', [
+            ['Comment ça marche', '/#demarrer'],
+            ['Tarifs', '/#tarifs'],
+            ['Pays couverts', '/#pays'],
+            ['Questions fréquentes', '/#questions'],
+        ]],
+        ['Entreprise', [
+            ['Contact', `mailto:${CONTACT_EMAIL}`],
+            ['Se connecter', route('login')],
+            ['Créer un compte', route('register')],
+        ]],
+        ['Légal', [
+            ['Conditions d’utilisation', route('legal.terms')],
+            ['Confidentialité', route('legal.privacy')],
+            ['Cookies', route('legal.cookies')],
+        ]],
     ];
 
     return (
-        <footer className="relative overflow-hidden bg-[#0A0908] text-stone-400 pt-16 pb-12 border-t border-stone-800">
-            {/* Lueur d'ambiance jaune dorée subtile Biolinko */}
-            <div
-                className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-56 w-[600px] rounded-full bg-[#FFCC00]/[0.08] blur-3xl"
-                aria-hidden="true"
-            />
-            <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                {/* 5 Colonnes : Company, Products, Resources, Legal, Contact */}
-                <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5 text-sm">
-                    {cols.map(([title, links]) => (
-                        <div key={title} className="space-y-4">
-                            <h4 className="font-semibold text-sm text-white tracking-wide">{title}</h4>
-                            <ul className="space-y-2.5 text-xs text-stone-400">
-                                {links.map(([label, href, isInternal]) => (
-                                    <li key={label}>
-                                        {isInternal ? (
-                                            <Link href={href} className="hover:text-amber-400 transition-colors">
-                                                {label}
-                                            </Link>
-                                        ) : (
-                                            <a href={href} className="hover:text-amber-400 transition-colors">
-                                                {label}
-                                            </a>
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
+        <footer className="border-t border-black/[0.06] bg-white font-poppins text-[#141412]">
+            <div className="mx-auto max-w-[1200px] px-5 lg:px-8">
+                {/* Haut : marque + colonnes */}
+                <div className="grid gap-12 py-16 lg:grid-cols-[1.3fr_2fr]">
+                    <div className="max-w-[340px]">
+                        <Link href="/" className="flex items-center gap-2">
+                            <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-[#FFCC00]">
+                                <img src="/images/brand/logo-noir.png" alt="" className="h-12 w-12 max-w-none" />
+                            </span>
+                            <span className="text-[19px] font-semibold tracking-tight">Biolinko</span>
+                        </Link>
+                        <p className="mt-5 text-[15px] leading-relaxed text-[#5F5E58]">
+                            La plateforme pour lancer, gérer et développer votre commerce en ligne : boutique, commandes, factures, clients et paiements.
+                        </p>
+                        <ul className="mt-6 space-y-2.5 text-[14px] text-[#5F5E58]">
+                            <li className="flex items-center gap-2.5"><MapPin className="h-4 w-4 shrink-0" /> Douala, Cameroun</li>
+                            <li><a href={`mailto:${CONTACT_EMAIL}`} className="flex items-center gap-2.5 hover:text-[#141412]"><Mail className="h-4 w-4 shrink-0" /> {CONTACT_EMAIL}</a></li>
+                        </ul>
+                        <Link href={route('register')} className="group mt-7 inline-flex h-11 items-center gap-2 rounded-full bg-[#141412] px-5 text-[14px] font-medium text-white hover:bg-[#2B2A26]">
+                            Créer ma boutique <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                        </Link>
+                    </div>
 
-                    {/* Colonne Contact */}
-                    <div className="space-y-4">
-                        <h4 className="font-semibold text-sm text-white tracking-wide">Contact</h4>
-                        <div className="space-y-2 text-xs text-stone-400">
-                            <p className="hover:text-white transition-colors">contact@biolinko.com</p>
-                            <p className="hover:text-white transition-colors">+237 600 000 000</p>
-                            <div className="flex items-center gap-2 pt-2">
-                                <span className="rounded-md bg-[#FFCC00] px-2.5 py-1 text-[11px] font-semibold text-[#2B2620] shadow-xs">
-                                    MTN MoMo
-                                </span>
-                                <span className="rounded-md bg-[#FF7900] px-2.5 py-1 text-[11px] font-semibold text-white shadow-xs">
-                                    Orange Money
-                                </span>
+                    <div className="grid grid-cols-2 gap-10 sm:grid-cols-4">
+                        {cols.map(([title, links]) => (
+                            <div key={title}>
+                                <h4 className="text-[14px] font-medium">{title}</h4>
+                                <ul className="mt-4 space-y-3 text-[14px] text-[#5F5E58]">
+                                    {links.map(([label, href]) => (
+                                        <li key={label}><a href={href} className="transition-colors hover:text-[#141412]">{label}</a></li>
+                                    ))}
+                                </ul>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Séparateur fin sombre */}
-                <div className="my-10 border-t border-stone-800/80" />
-
-                {/* Ligne inférieure : Coordonnées + Réseaux sociaux ronds */}
-                <div className="flex flex-wrap items-center justify-between gap-6 text-xs text-stone-400">
-                    <div>
-                        <p className="text-stone-300 font-medium">Biolinko HQ, Douala & Yaoundé, Cameroun.</p>
-                        <p className="mt-1 text-stone-500 font-normal">© {new Date().getFullYear()} Biolinko Inc. Tous droits réservés.</p>
-                    </div>
-
-                    <div className="flex items-center gap-2.5">
-                        {[
-                            [InstagramIcon, 'Instagram'],
-                            [TiktokIcon, 'TikTok'],
-                            [FacebookIcon, 'Facebook'],
-                            [WhatsappIcon, 'WhatsApp'],
-                        ].map(([Icon, label]) => (
-                            <a
-                                key={label}
-                                href="#"
-                                aria-label={label}
-                                className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 border border-white/10 text-stone-300 hover:bg-[#FFCC00] hover:text-[#2B2620] hover:border-amber-400 transition-colors shadow-xs"
-                            >
-                                <Icon className="h-4 w-4" />
-                            </a>
                         ))}
                     </div>
                 </div>
 
-                {/* Crédits photos discrets */}
-                <div className="mt-6 text-[11px] text-stone-500">
-                    <button
-                        type="button"
-                        onClick={() => setCredits(!credits)}
-                        className="inline-flex items-center gap-1 hover:text-stone-300 cursor-pointer"
-                        aria-expanded={credits}
-                    >
-                        Crédits photos <ChevronDown className={`h-3 w-3 transition-transform ${credits ? 'rotate-180' : ''}`} />
-                    </button>
-                    <AnimatePresence initial={false}>
-                        {credits && (
-                            <motion.ul
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="mt-2 grid gap-1 overflow-hidden text-[10px] text-stone-400 sm:grid-cols-2"
-                            >
-                                {PHOTO_CREDITS.map(([what, author, licence, file]) => (
-                                    <li key={file}>
-                                        {what} :{' '}
-                                        <a
-                                            className="underline hover:text-white"
-                                            href={`https://commons.wikimedia.org/wiki/File:${file}`}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                        >
-                                            {author}
-                                        </a>
-                                        , {licence}
-                                    </li>
-                                ))}
-                            </motion.ul>
-                        )}
-                    </AnimatePresence>
+                {/* Moyens de paiement */}
+                <div className="flex flex-col gap-4 border-t border-black/[0.06] py-6 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap items-center gap-3">
+                        <span className="text-[13px] text-[#8B8A83]">Paiements acceptés</span>
+                        <span className="flex items-center gap-2 rounded-full border border-black/[0.08] py-1 pl-1 pr-3 text-[13px]"><OperatorLogo op="MTN" className="h-7 w-7" /> MTN Mobile Money</span>
+                        <span className="flex items-center gap-2 rounded-full border border-black/[0.08] py-1 pl-1 pr-3 text-[13px]"><OperatorLogo op="ORANGE" className="h-7 w-7" /> Orange Money</span>
+                    </div>
+                    <a href="/#pays" className="flex items-center gap-2 text-[13px] text-[#5F5E58] hover:text-[#141412]">
+                        <img src="/images/flags/cm.svg" alt="" className="h-5 w-5 rounded-full object-cover" /> Cameroun · d’autres pays bientôt
+                    </a>
                 </div>
-            </div>
 
-            {/* Filigrane géant "Biolinko" en bas */}
-            <div className="pointer-events-none select-none text-center -mb-8 sm:-mb-14 overflow-hidden">
-                <span className="inline-block text-[100px] sm:text-[160px] lg:text-[220px] font-bold tracking-tight text-white/[0.04] leading-none">
-                    Biolinko
-                </span>
+                {/* Bas */}
+                <div className="flex flex-col gap-3 border-t border-black/[0.06] py-6 text-[13px] text-[#8B8A83] sm:flex-row sm:items-center sm:justify-between">
+                    <p>© {year} Biolinko. Tous droits réservés.</p>
+                    <button type="button" onClick={() => setCredits((v) => !v)} aria-expanded={credits} className="flex items-center gap-1 hover:text-[#141412]">
+                        Crédits photos <ChevronDown className={`h-3.5 w-3.5 transition-transform ${credits ? 'rotate-180' : ''}`} />
+                    </button>
+                </div>
+                <AnimatePresence initial={false}>
+                    {credits && (
+                        <motion.ul initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                            className="grid gap-x-6 gap-y-1.5 overflow-hidden pb-8 text-[12px] text-[#8B8A83] sm:grid-cols-2 lg:grid-cols-3">
+                            {PHOTO_CREDITS.map(([what, author, licence, file]) => (
+                                <li key={file}>
+                                    {what} : <a href={`https://commons.wikimedia.org/wiki/File:${file}`} target="_blank" rel="noreferrer" className="underline hover:text-[#141412]">{author}</a>, {licence}
+                                </li>
+                            ))}
+                            <li>Logos MTN, Orange, Airtel, Moov, M-Pesa et drapeaux : Wikimedia Commons. Marques de leurs propriétaires respectifs.</li>
+                        </motion.ul>
+                    )}
+                </AnimatePresence>
             </div>
         </footer>
     );

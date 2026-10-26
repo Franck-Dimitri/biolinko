@@ -15,6 +15,11 @@ class WhatsappWebhookController extends Controller
      */
     public function handle(Request $request, WhatsappGatewayService $gateway): JsonResponse
     {
+        // Ancienne passerelle Evolution : ignorée quand l'API officielle est active (ce point d'entrée n'est pas signé)
+        if ($gateway->cloud()) {
+            return response()->json(['status' => 'ignored', 'reason' => 'Cloud API active']);
+        }
+
         $payload = $request->all();
         $event = $payload['event'] ?? '';
 
@@ -57,8 +62,13 @@ class WhatsappWebhookController extends Controller
     /**
      * Send automated contextual acknowledgment to customer reply.
      */
-    protected function respondToCustomer(string $phone, string $pushName, WhatsappGatewayService $gateway): void
+    public function respondToCustomer(string $phone, string $pushName, WhatsappGatewayService $gateway): void
     {
+        // Une seule réponse automatique par numéro et par jour : pas de ping-pong avec un client qui écrit plusieurs fois
+        if (! \Illuminate\Support\Facades\Cache::add('wa_autoreply_'.$phone, true, now()->addDay())) {
+            return;
+        }
+
         // Extract the last 8 digits of the phone number to reliably match database formats
         $shortPhone = substr($phone, -8);
 
@@ -82,13 +92,13 @@ class WhatsappWebhookController extends Controller
             }
 
             $reply .= "L'équipe Biolinko reste à votre entière disposition ! ✨\n"
-                . "_[Notification officielle Biolinko — biolinko.mrdims.dev]_";
+                . "_Biolinko — ".preg_replace('#^https?://#', '', config('app.url'))."_";
         } else {
             $reply = "👋 Bonjour *{$pushName}* !\n\n"
                 . "Merci d'avoir contacté le service officiel de notifications *Biolinko*.\n\n"
                 . "Nous avons bien reçu votre message. Pour suivre une commande en cours ou créer votre boutique en ligne avec encaissement Mobile Money, rendez-vous sur :\n"
-                . "👉 https://biolinko.mrdims.dev\n\n"
-                . "Pour contacter le support officiel : support@biolinko.app\n"
+                . "👉 ".config('app.url')."\n\n"
+                . "Pour contacter le support officiel : support@biolinko.link\n"
                 . "Belle journée ! ✨";
         }
 

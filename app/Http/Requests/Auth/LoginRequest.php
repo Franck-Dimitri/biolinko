@@ -50,6 +50,14 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        if (Auth::user()->is_banned) {
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'Ce compte a été suspendu. Contactez le support Biolinko.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

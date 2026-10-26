@@ -91,6 +91,7 @@ class DashboardController extends Controller
         $completionPercentage = round(($completedCount / count($checklist)) * 100);
 
         return Inertia::render('Dashboard', [
+            'upgradeHint' => $request->user()->upgradeSavings(),
             'store' => $store,
             'wallet' => $wallet,
             'products' => $products,

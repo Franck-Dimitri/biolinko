@@ -16,6 +16,7 @@ test('checkout creates customer record and links to store_customer pivot table',
         'user_id' => $user->id,
         'name' => 'Boutique Alpha',
         'slug' => 'boutique-alpha',
+        'is_published' => true,
     ]);
     Wallet::create(['store_id' => $store->id]);
 
@@ -51,7 +52,7 @@ test('checkout creates customer record and links to store_customer pivot table',
     $this->assertDatabaseHas('store_customer', [
         'store_id' => $store->id,
         'customer_id' => $customer->id,
-        'total_orders_count' => 1,
+        'total_orders_count' => 0, // compté seulement au paiement
     ]);
 });
 
@@ -65,18 +66,18 @@ test('customer lookup API endpoint returns saved customer profile', function () 
         'city' => 'Yaoundé',
     ]);
 
-    $response = $this->get(route('checkout.lookupCustomer', ['phone' => '237674455667']));
+    $store = Store::create(['user_id' => User::factory()->create()->id, 'name' => 'B', 'slug' => 'b']);
+    $other = Store::create(['user_id' => User::factory()->create()->id, 'name' => 'C', 'slug' => 'c']);
+    $store->customers()->attach($customer->id);
 
-    $response->assertStatus(200);
-    $response->assertJson([
-        'found' => true,
-        'customer' => [
-            'name' => 'Bob Testeur',
-            'phone' => '237674455667',
-            'email' => 'bob@test.com',
-            'delivery_address' => 'Yaoundé Bastos',
-        ]
-    ]);
+    $this->get(route('checkout.lookupCustomer', ['phone' => '674455667', 'store_id' => $store->id]))
+        ->assertOk()
+        ->assertJson(['found' => true, 'customer' => ['name' => 'Bob Testeur', 'delivery_address' => 'Yaoundé Bastos']])
+        ->assertJsonMissingPath('customer.email');
+
+    // Une autre boutique, ou un numéro partiel, ne révèle rien
+    $this->get(route('checkout.lookupCustomer', ['phone' => '674455667', 'store_id' => $other->id]))->assertJson(['found' => false]);
+    $this->get(route('checkout.lookupCustomer', ['phone' => '4455667', 'store_id' => $store->id]))->assertJson(['found' => false]);
 });
 
 test('vendor can view customer directory dashboard page', function () {

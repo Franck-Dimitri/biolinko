@@ -61,7 +61,8 @@ test('webhook handles payment succeeded and credits vendor wallet', function () 
         'total_client' => 15600,
         'status' => 'pending',
         'payment_status' => 'pending',
-        'hrskills_reference' => 'ref_test_webhook_123',
+        'payment_provider' => 'hrskills',
+        'payment_reference' => 'ref_test_webhook_123',
     ]);
 
     $response = $this->postJson('/api/webhooks/hrskills-pay', [
@@ -80,5 +81,5 @@ test('webhook handles payment succeeded and credits vendor wallet', function () 
     expect($order->status)->toBe('paid');
 
     $wallet->refresh();
-    expect((float) $wallet->balance_available)->toBe(15000.0);
+    expect((float) $wallet->balance_held)->toBe(13950.0); // 15 000 − 7 % de commission, retirable après le délai de sécurité
 });

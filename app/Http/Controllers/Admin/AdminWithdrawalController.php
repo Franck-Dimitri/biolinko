@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Withdrawal;
-use App\Services\HrSkillsPayService;
+use App\Payments\Countries;
+use App\Payments\PaymentManager;
+use Illuminate\Support\Str;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,7 +21,7 @@ class AdminWithdrawalController extends Controller
         $statusFilter = $request->query('status', 'all');
         $search = trim($request->query('search', ''));
 
-        $query = Withdrawal::with('wallet.store.user');
+        $query = Withdrawal::with(['wallet.store.user', 'wallet.store' => fn ($q) => $q->withCount('reports')]);
 
         if ($statusFilter !== 'all') {
             $query->where('status', $statusFilter);
@@ -27,7 +30,7 @@ class AdminWithdrawalController extends Controller
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('phone_number', 'like', "%{$search}%")
-                  ->orWhere('hrskills_reference', 'like', "%{$search}%")
+                  ->orWhere('payment_reference', 'like', "%{$search}%")
                   ->orWhereHas('wallet.store', function ($sq) use ($search) {
                       $sq->where('name', 'like', "%{$search}%");
                   });
@@ -55,46 +58,56 @@ class AdminWithdrawalController extends Controller
         ]);
     }
 
-    public function approve(Request $request, Withdrawal $withdrawal, HrSkillsPayService $hrSkillsPay): RedirectResponse
+    /**
+     * Valide un retrait : virement Mobile Money via la passerelle, ou confirmation d'un paiement déjà fait à la main.
+     * En cas d'échec du virement, le retrait reste en attente (jamais marqué payé sans argent envoyé).
+     */
+    public function approve(Request $request, Withdrawal $withdrawal, PaymentManager $payments): RedirectResponse
     {
         if ($withdrawal->status !== 'pending') {
             return redirect()->back()->withErrors(['withdrawal' => 'Ce retrait a déjà été traité.']);
         }
 
-        try {
-            $payoutResult = $hrSkillsPay->initiatePayout(
-                $withdrawal->phone_number,
-                (float) $withdrawal->amount,
-                $withdrawal->operator ?? 'ORANGE',
-                "Virement Portefeuille BIOLINKO #" . $withdrawal->id
-            );
+        // Paiement fait à la main hors plateforme : on enregistre seulement la validation
+        if ($request->boolean('manual')) {
+            DB::transaction(function () use ($withdrawal) {
+                $withdrawal->update(['status' => 'completed', 'processed_at' => now()]);
+                $withdrawal->wallet?->decrement('balance_pending', (float) $withdrawal->amount);
+            });
 
-            if ($payoutResult['success'] ?? false) {
-                $withdrawal->update([
-                    'status' => 'completed',
-                    'hrskills_reference' => $payoutResult['reference'] ?? null,
-                    'processed_at' => now(),
-                ]);
-
-                return redirect()->back()->with('message', 'Retrait approuvé et virement Mobile Money déclenché avec succès !');
-            }
-
-            $withdrawal->update([
-                'status' => 'completed',
-                'processed_at' => now(),
-            ]);
-
-            return redirect()->back()->with('message', 'Retrait marqué comme payé avec succès.');
-        } catch (\Exception $e) {
-            Log::error('Admin withdrawal approval error', ['error' => $e->getMessage()]);
-
-            $withdrawal->update([
-                'status' => 'completed',
-                'processed_at' => now(),
-            ]);
-
-            return redirect()->back()->with('message', 'Retrait approuvé et marqué comme traité.');
+            return redirect()->back()->with('message', 'Retrait marqué comme payé.');
         }
+
+        // Virement Mobile Money du montant net (frais de retrait déduits). Il reste « en cours »
+        // jusqu'à la confirmation de l'agrégateur (notification ou contrôle planifié).
+        $gateway = $payments->payoutDriver();
+        $reference = $withdrawal->payment_reference ?: (string) Str::uuid();
+        $withdrawal->update(['payment_provider' => $gateway->name(), 'payment_reference' => $reference, 'status' => 'processing']);
+
+        try {
+            $country = $withdrawal->wallet?->store?->country ?: 'CM';
+            $result = $gateway->payout([
+                'reference' => $reference,
+                'amount' => (int) ($withdrawal->net_amount ?? $withdrawal->amount),
+                'currency' => $withdrawal->wallet?->store?->currency ?: 'XAF',
+                'country' => $country,
+                'phone' => Countries::formatPhone($country, $withdrawal->phone_number),
+                'operator' => $withdrawal->operator,
+                'description' => 'Retrait Biolinko',
+                'client_reference' => 'RETRAIT-'.$withdrawal->id,
+                'metadata' => ['withdrawal' => (string) $withdrawal->id],
+            ]);
+            if ($result['reference'] !== $reference) {
+                $withdrawal->update(['payment_reference' => $result['reference']]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Admin withdrawal payout failed', ['withdrawal_id' => $withdrawal->id, 'error' => $e->getMessage()]);
+            $withdrawal->update(['status' => 'pending']);
+
+            return redirect()->back()->withErrors(['withdrawal' => 'Le virement Mobile Money a échoué : '.$e->getMessage().' Le retrait reste en attente.']);
+        }
+
+        return redirect()->back()->with('message', 'Virement envoyé. Il sera marqué payé dès la confirmation de l’opérateur.');
     }
 
     public function reject(Request $request, Withdrawal $withdrawal): RedirectResponse
@@ -103,16 +116,14 @@ class AdminWithdrawalController extends Controller
             return redirect()->back()->withErrors(['withdrawal' => 'Ce retrait a déjà été traité.']);
         }
 
-        $wallet = $withdrawal->wallet;
-        if ($wallet) {
-            $wallet->increment('balance_available', (float) $withdrawal->amount);
-        }
+        DB::transaction(function () use ($withdrawal) {
+            if ($wallet = $withdrawal->wallet) {
+                $wallet->decrement('balance_pending', (float) $withdrawal->amount);
+                $wallet->increment('balance_available', (float) $withdrawal->amount);
+            }
+            $withdrawal->update(['status' => 'rejected', 'processed_at' => now()]);
+        });
 
-        $withdrawal->update([
-            'status' => 'rejected',
-            'processed_at' => now(),
-        ]);
-
-        return redirect()->back()->with('message', 'Retrait rejeté et montant récrédité sur le solde du vendeur.');
+        return redirect()->back()->with('message', 'Retrait rejeté : le montant est revenu sur le solde du vendeur.');
     }
 }

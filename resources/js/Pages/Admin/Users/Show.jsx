@@ -123,57 +123,58 @@ export default function UserShow({ vendor, stats }) {
     return (
         <AuthenticatedLayout>
             <Head title={`Fiche Vendeur : ${vendor.name} — Administration BIOLINKO`} />
+            <div hidden={moderationModal.isOpen}>
 
-            <div className="space-y-8 font-sans pb-16 max-w-7xl mx-auto">
+            <div className="space-y-8 pb-16">
                 {/* BACK LINK & TITLE */}
                 <div className="flex items-center justify-between gap-4">
                     <Link
                         href={route('admin.users.index')}
-                        className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-950 transition cursor-pointer"
+                        className="inline-flex items-center gap-2 text-xs font-semibold text-[#5F5E58] hover:text-[#141412] transition cursor-pointer"
                     >
                         <ArrowLeft className="w-4 h-4" /> Retour à la liste des vendeurs &amp; utilisateurs
                     </Link>
 
                     <div className="flex items-center gap-2">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-semibold ${
                             vendor.is_banned ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'
                         }`}>
                             {vendor.is_banned ? 'Compte Banni' : 'Compte Actif'}
                         </span>
-                        <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-[10px] font-extrabold uppercase tracking-wider">
+                        <span className="px-3 py-1 rounded-full bg-[#F6F5F1] text-[#141412] text-[10px] font-semibold">
                             Rôle : {vendor.role || 'seller'}
                         </span>
                     </div>
                 </div>
 
                 {/* VENDOR PROFILE HEADER CARD */}
-                <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200/90 shadow-sm space-y-6">
-                    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+                <div className="p-6 sm:p-8 rounded-3xl bg-white border border-black/[0.08] shadow-sm space-y-6">
+                    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-black/[0.05]">
                         {/* Identity Info */}
                         <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-900 font-extrabold text-2xl flex items-center justify-center shadow-xs">
+                            <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-900 font-semibold text-2xl flex items-center justify-center shadow-xs">
                                 {vendor.name ? vendor.name.charAt(0).toUpperCase() : 'U'}
                             </div>
                             <div className="space-y-1">
                                 <div className="flex items-center gap-2.5">
-                                    <h1 className="text-xl sm:text-2xl font-extrabold text-slate-950">
+                                    <h1 className="text-xl sm:text-2xl font-medium tracking-[-0.03em] text-[#141412]">
                                         {vendor.name}
                                     </h1>
-                                    <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase">
+                                    <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-[#141412] text-[10px] font-semibold uppercase">
                                         Plan {vendor.plan || 'starter'}
                                     </span>
                                 </div>
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 font-medium">
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#5F5E58] font-medium">
                                     <span className="flex items-center gap-1">
-                                        <Mail className="w-3.5 h-3.5 text-slate-400" /> {vendor.email}
+                                        <Mail className="w-3.5 h-3.5 text-[#8B8A83]" /> {vendor.email}
                                     </span>
                                     {vendor.phone_whatsapp && (
-                                        <span className="flex items-center gap-1 text-emerald-700 font-mono font-bold">
+                                        <span className="flex items-center gap-1 text-emerald-700 font-mono font-semibold">
                                             <Phone className="w-3.5 h-3.5 text-emerald-600" /> {vendor.phone_whatsapp}
                                         </span>
                                     )}
                                     <span className="flex items-center gap-1">
-                                        <Calendar className="w-3.5 h-3.5 text-slate-400" /> Inscrit le {new Date(vendor.created_at).toLocaleDateString('fr-FR')}
+                                        <Calendar className="w-3.5 h-3.5 text-[#8B8A83]" /> Inscrit le {new Date(vendor.created_at).toLocaleDateString('fr-FR')}
                                     </span>
                                 </div>
                             </div>
@@ -186,7 +187,7 @@ export default function UserShow({ vendor, stats }) {
                                     href={waLink}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="px-4 py-2 rounded-xl bg-[#25D366] hover:bg-emerald-600 text-slate-950 text-xs font-black flex items-center gap-1.5 shadow-xs transition"
+                                    className="px-4 py-2 rounded-xl bg-[#25D366] hover:bg-emerald-600 text-[#141412] text-xs font-semibold flex items-center gap-1.5 shadow-xs transition"
                                 >
                                     <MessageSquare className="w-3.5 h-3.5" /> Écrire sur WhatsApp
                                 </a>
@@ -198,7 +199,7 @@ export default function UserShow({ vendor, stats }) {
                                         href={`/${store.slug}`}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-950 text-xs font-bold flex items-center gap-1.5 transition"
+                                        className="px-4 py-2 rounded-xl bg-[#F2F1EC] hover:bg-[#E9E7E0] text-[#141412] text-xs font-semibold flex items-center gap-1.5 transition"
                                     >
                                         <ExternalLink className="w-3.5 h-3.5" /> Voir sa vitrine
                                     </a>
@@ -206,8 +207,8 @@ export default function UserShow({ vendor, stats }) {
                                     {store.is_published ? (
                                         <button
                                             type="button"
-                                            onClick={() => openModerationModal('store', store.name, store.id, `Vitrine: biolinko.app/${store.slug}`)}
-                                            className="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900"
+                                            onClick={() => openModerationModal('store', store.name, store.id, `Vitrine: biolinko.link/${store.slug}`)}
+                                            className="px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900"
                                         >
                                             <ShieldAlert className="w-3.5 h-3.5" /> Modérer / Masquer vitrine
                                         </button>
@@ -216,7 +217,7 @@ export default function UserShow({ vendor, stats }) {
                                             href={route('admin.users.toggleStore', vendor.id)}
                                             method="post"
                                             as="button"
-                                            className="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-900"
+                                            className="px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-900"
                                         >
                                             <CheckCircle2 className="w-3.5 h-3.5" /> Publier la vitrine
                                         </Link>
@@ -229,7 +230,7 @@ export default function UserShow({ vendor, stats }) {
                                     href={route('admin.users.toggleBan', vendor.id)}
                                     method="post"
                                     as="button"
-                                    className="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    className="px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
                                 >
                                     <CheckCircle2 className="w-3.5 h-3.5" /> Réactiver le compte
                                 </Link>
@@ -237,7 +238,7 @@ export default function UserShow({ vendor, stats }) {
                                 <button
                                     type="button"
                                     onClick={() => openModerationModal('user', vendor.name, vendor.id, `Email: ${vendor.email}`)}
-                                    className="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800"
+                                    className="px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800"
                                 >
                                     <Ban className="w-3.5 h-3.5" /> Bannir le compte
                                 </button>
@@ -246,11 +247,11 @@ export default function UserShow({ vendor, stats }) {
                     </div>
 
                     {/* Change Plan Bar */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] text-xs">
                         <div className="flex items-center gap-2">
                             <Crown className="w-4 h-4 text-amber-500" />
-                            <span className="font-bold text-slate-950">Changer le Plan SaaS du Vendeur :</span>
-                            <span className="text-slate-500 font-medium">Attribuez un plan supérieur instantanément</span>
+                            <span className="font-semibold text-[#141412]">Changer le Plan SaaS du Vendeur :</span>
+                            <span className="text-[#5F5E58] font-medium">Attribuez un plan supérieur instantanément</span>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -259,10 +260,10 @@ export default function UserShow({ vendor, stats }) {
                                     key={p}
                                     onClick={() => handlePlanChange(p)}
                                     disabled={isUpdatingPlan || vendor.plan === p}
-                                    className={`px-3 py-1.5 rounded-xl uppercase font-extrabold text-[10px] transition-all cursor-pointer ${
+                                    className={`px-3 py-1.5 rounded-xl uppercase font-semibold text-[10px] transition-all cursor-pointer ${
                                         vendor.plan === p
-                                            ? 'bg-slate-950 text-white shadow-xs'
-                                            : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
+                                            ? 'bg-[#141412] text-white shadow-xs'
+                                            : 'bg-white text-[#3D3C37] hover:bg-[#E9E7E0] border border-black/[0.08]'
                                     }`}
                                 >
                                     {p}
@@ -275,46 +276,46 @@ export default function UserShow({ vendor, stats }) {
                 {/* 4 FINANCIAL & BUSINESS METRICS CARDS */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     {/* CA Total Encaissé */}
-                    <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-2.5">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-2.5">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>Chiffre d'Affaires (CA)</span>
                             <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center">
                                 <DollarSign className="w-4 h-4 text-amber-700" />
                             </div>
                         </div>
-                        <div className="text-2xl sm:text-3xl font-extrabold text-slate-950">
+                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
                             {formatFCFA(stats?.total_revenue)}
                         </div>
-                        <div className="text-[11px] text-slate-400 font-medium">
-                            Gains nets : <strong className="text-slate-700">{formatFCFA(stats?.vendor_earnings)}</strong>
+                        <div className="text-[11px] text-[#8B8A83] font-medium">
+                            Gains nets : <strong className="text-[#3D3C37]">{formatFCFA(stats?.vendor_earnings)}</strong>
                         </div>
                     </div>
 
                     {/* Solde Portefeuille Disponible */}
-                    <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-2.5">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-2.5">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>Portefeuille Vendeur</span>
                             <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
                                 <Wallet className="w-4 h-4 text-emerald-600" />
                             </div>
                         </div>
-                        <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600">
+                        <div className="text-2xl sm:text-3xl font-semibold text-emerald-600">
                             {formatFCFA(stats?.wallet_available)}
                         </div>
-                        <div className="text-[11px] text-slate-400 font-medium">
-                            En attente : <strong className="text-slate-700">{formatFCFA(stats?.wallet_pending)}</strong>
+                        <div className="text-[11px] text-[#8B8A83] font-medium">
+                            En attente : <strong className="text-[#3D3C37]">{formatFCFA(stats?.wallet_pending)}</strong>
                         </div>
                     </div>
 
                     {/* Total Commandes */}
-                    <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-2.5">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-2.5">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>Commandes Boutique</span>
-                            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center">
-                                <ShoppingBag className="w-4 h-4 text-blue-600" />
+                            <div className="w-8 h-8 rounded-xl bg-[#F6F5F1] text-[#141412] flex items-center justify-center">
+                                <ShoppingBag className="w-4 h-4 text-[#141412]" />
                             </div>
                         </div>
-                        <div className="text-2xl sm:text-3xl font-extrabold text-slate-950">
+                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
                             {stats?.total_orders || 0} commande(s)
                         </div>
                         <div className="text-[11px] text-emerald-600 font-semibold">
@@ -323,31 +324,31 @@ export default function UserShow({ vendor, stats }) {
                     </div>
 
                     {/* Produits au Catalogue */}
-                    <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-2.5">
-                        <div className="flex items-center justify-between text-xs font-medium text-slate-500">
+                    <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-2.5">
+                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
                             <span>Catalogue Produits</span>
-                            <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center">
-                                <Package className="w-4 h-4 text-purple-600" />
+                            <div className="w-8 h-8 rounded-xl bg-[#F6F5F1] text-[#141412] flex items-center justify-center">
+                                <Package className="w-4 h-4 text-[#141412]" />
                             </div>
                         </div>
-                        <div className="text-2xl sm:text-3xl font-extrabold text-purple-700">
+                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
                             {stats?.products_count || 0} produit(s)
                         </div>
-                        <div className="text-[11px] text-slate-400 font-medium">
+                        <div className="text-[11px] text-[#8B8A83] font-medium">
                             {stats?.active_products_count || 0} actif(s) en boutique
                         </div>
                     </div>
                 </div>
 
                 {/* TABS NAVIGATION */}
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="flex border-b border-slate-200 text-xs font-bold px-6 pt-4">
+                <div className="bg-white rounded-3xl border border-black/[0.08] shadow-sm overflow-hidden">
+                    <div className="flex border-b border-black/[0.08] text-xs font-semibold px-6 pt-4">
                         <button
                             onClick={() => setActiveTab('products')}
                             className={`pb-4 px-4 flex items-center gap-2 border-b-2 transition cursor-pointer ${
                                 activeTab === 'products'
-                                    ? 'border-slate-950 text-slate-950'
-                                    : 'border-transparent text-slate-400 hover:text-slate-700'
+                                    ? 'border-[#2B2A26] text-[#141412]'
+                                    : 'border-transparent text-[#8B8A83] hover:text-[#3D3C37]'
                             }`}
                         >
                             <Package className="w-4 h-4" /> Catalogue Produits ({stats?.products_count || 0})
@@ -357,8 +358,8 @@ export default function UserShow({ vendor, stats }) {
                             onClick={() => setActiveTab('orders')}
                             className={`pb-4 px-4 flex items-center gap-2 border-b-2 transition cursor-pointer ${
                                 activeTab === 'orders'
-                                    ? 'border-slate-950 text-slate-950'
-                                    : 'border-transparent text-slate-400 hover:text-slate-700'
+                                    ? 'border-[#2B2A26] text-[#141412]'
+                                    : 'border-transparent text-[#8B8A83] hover:text-[#3D3C37]'
                             }`}
                         >
                             <ShoppingBag className="w-4 h-4" /> Activité &amp; Commandes Récentes ({stats?.total_orders || 0})
@@ -368,8 +369,8 @@ export default function UserShow({ vendor, stats }) {
                             onClick={() => setActiveTab('store_info')}
                             className={`pb-4 px-4 flex items-center gap-2 border-b-2 transition cursor-pointer ${
                                 activeTab === 'store_info'
-                                    ? 'border-slate-950 text-slate-950'
-                                    : 'border-transparent text-slate-400 hover:text-slate-700'
+                                    ? 'border-[#2B2A26] text-[#141412]'
+                                    : 'border-transparent text-[#8B8A83] hover:text-[#3D3C37]'
                             }`}
                         >
                             <StoreIcon className="w-4 h-4" /> Paramètres Vitrine &amp; Marque
@@ -384,7 +385,7 @@ export default function UserShow({ vendor, stats }) {
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left border-collapse text-xs">
                                             <thead>
-                                                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px] font-bold">
+                                                <tr className="bg-[#F6F5F1] border-b border-black/[0.08] text-[#5F5E58] text-[10px] font-semibold">
                                                     <th className="py-3 px-4">Produit</th>
                                                     <th className="py-3 px-4">Prix Vendeur</th>
                                                     <th className="py-3 px-4">Promotion</th>
@@ -394,49 +395,49 @@ export default function UserShow({ vendor, stats }) {
                                                     <th className="py-3 px-4 text-right">Actions Modération</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-slate-100 font-medium">
+                                            <tbody className="divide-y divide-black/[0.06] font-medium">
                                                 {store.products.map((prod) => (
-                                                    <tr key={prod.id} className="hover:bg-slate-50/80 transition-colors">
+                                                    <tr key={prod.id} className="hover:bg-[#F6F5F1]/80 transition-colors">
                                                         <td className="py-3 px-4">
                                                             <div className="flex items-center gap-3">
-                                                                <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
+                                                                <div className="w-10 h-10 rounded-xl bg-[#F2F1EC] border border-black/[0.08] overflow-hidden shrink-0 flex items-center justify-center">
                                                                     {prod.image_url ? (
                                                                         <img src={prod.image_url} alt={prod.title} className="w-full h-full object-cover" />
                                                                     ) : (
-                                                                        <Package className="w-5 h-5 text-slate-400" />
+                                                                        <Package className="w-5 h-5 text-[#8B8A83]" />
                                                                     )}
                                                                 </div>
                                                                 <div>
-                                                                    <div className="font-bold text-slate-950 text-sm">{prod.title}</div>
-                                                                    <div className="text-slate-400 text-[10px] font-mono">/{prod.slug}</div>
+                                                                    <div className="font-semibold text-[#141412] text-sm">{prod.title}</div>
+                                                                    <div className="text-[#8B8A83] text-[10px] font-mono">/{prod.slug}</div>
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="py-3 px-4 font-bold text-slate-900">
+                                                        <td className="py-3 px-4 font-semibold text-[#141412]">
                                                             {formatFCFA(prod.price_vendor)}
                                                         </td>
                                                         <td className="py-3 px-4">
                                                             {prod.is_promo && prod.promo_price ? (
-                                                                <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-bold">
+                                                                <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-semibold">
                                                                     {formatFCFA(prod.promo_price)}
                                                                 </span>
                                                             ) : (
-                                                                <span className="text-slate-400 italic text-[11px]">—</span>
+                                                                <span className="text-[#8B8A83] italic text-[11px]">—</span>
                                                             )}
                                                         </td>
-                                                        <td className="py-3 px-4 font-semibold text-slate-800">
+                                                        <td className="py-3 px-4 font-semibold text-[#3D3C37]">
                                                             {prod.stock} unité(s)
                                                         </td>
-                                                        <td className="py-3 px-4 text-slate-500">
+                                                        <td className="py-3 px-4 text-[#5F5E58]">
                                                             {prod.variants?.length > 0 ? (
-                                                                <span className="text-slate-800 font-semibold">{prod.variants.length} option(s)</span>
+                                                                <span className="text-[#3D3C37] font-semibold">{prod.variants.length} option(s)</span>
                                                             ) : (
-                                                                <span className="text-slate-400 italic">Unique</span>
+                                                                <span className="text-[#8B8A83] italic">Unique</span>
                                                             )}
                                                         </td>
                                                         <td className="py-3 px-4">
-                                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                                                                prod.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+                                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
+                                                                prod.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-[#F2F1EC] text-[#5F5E58]'
                                                             }`}>
                                                                 {prod.is_active ? 'Actif' : 'Inactif'}
                                                             </span>
@@ -446,7 +447,7 @@ export default function UserShow({ vendor, stats }) {
                                                                 href={route('admin.products.toggleActive', prod.id)}
                                                                 method="post"
                                                                 as="button"
-                                                                className={`px-2.5 py-1 rounded-lg font-bold text-[10px] transition cursor-pointer ${
+                                                                className={`px-2.5 py-1 rounded-lg font-semibold text-[10px] transition cursor-pointer ${
                                                                     prod.is_active 
                                                                         ? 'bg-amber-100 hover:bg-amber-200 text-amber-900' 
                                                                         : 'bg-emerald-600 hover:bg-emerald-700 text-white'
@@ -457,7 +458,7 @@ export default function UserShow({ vendor, stats }) {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => openModerationModal('product', prod.title, prod.id, `Réf: /${prod.slug} • Prix: ${formatFCFA(prod.price_vendor)}`)}
-                                                                className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[10px] transition cursor-pointer inline-flex items-center gap-1 border border-rose-200"
+                                                                className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-[10px] transition cursor-pointer inline-flex items-center gap-1 border border-rose-200"
                                                             >
                                                                 <Trash2 className="w-3 h-3 text-rose-600" /> Supprimer
                                                             </button>
@@ -468,9 +469,9 @@ export default function UserShow({ vendor, stats }) {
                                         </table>
                                     </div>
                                 ) : (
-                                    <div className="py-12 text-center text-slate-400 text-xs space-y-2">
-                                        <Package className="w-10 h-10 text-slate-300 mx-auto" />
-                                        <div className="font-bold text-slate-700">Aucun produit au catalogue</div>
+                                    <div className="py-12 text-center text-[#8B8A83] text-xs space-y-2">
+                                        <Package className="w-10 h-10 text-[#8B8A83] mx-auto" />
+                                        <div className="font-semibold text-[#3D3C37]">Aucun produit au catalogue</div>
                                         <p className="text-[11px]">Ce vendeur n'a pas encore ajouté d'articles dans sa boutique.</p>
                                     </div>
                                 )}
@@ -484,7 +485,7 @@ export default function UserShow({ vendor, stats }) {
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left border-collapse text-xs">
                                             <thead>
-                                                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px] font-bold">
+                                                <tr className="bg-[#F6F5F1] border-b border-black/[0.08] text-[#5F5E58] text-[10px] font-semibold">
                                                     <th className="py-3 px-4">Réf. Commande</th>
                                                     <th className="py-3 px-4">Client</th>
                                                     <th className="py-3 px-4">Destination</th>
@@ -494,10 +495,10 @@ export default function UserShow({ vendor, stats }) {
                                                     <th className="py-3 px-4">Date</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-slate-100 font-medium">
+                                            <tbody className="divide-y divide-black/[0.06] font-medium">
                                                 {store.orders.map((ord) => (
-                                                    <tr key={ord.id} className="hover:bg-slate-50/80 transition-colors">
-                                                        <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                                                    <tr key={ord.id} className="hover:bg-[#F6F5F1]/80 transition-colors">
+                                                        <td className="py-3 px-4 font-mono font-semibold text-[#141412]">
                                                             <a
                                                                 href={route('order.track', ord.tracking_code)}
                                                                 target="_blank"
@@ -509,17 +510,17 @@ export default function UserShow({ vendor, stats }) {
                                                             </a>
                                                         </td>
                                                         <td className="py-3 px-4">
-                                                            <div className="font-bold text-slate-950">{ord.customer_name}</div>
-                                                            <div className="text-slate-400 text-[10px] font-mono">{ord.customer_phone}</div>
+                                                            <div className="font-semibold text-[#141412]">{ord.customer_name}</div>
+                                                            <div className="text-[#8B8A83] text-[10px] font-mono">{ord.customer_phone}</div>
                                                         </td>
-                                                        <td className="py-3 px-4 text-slate-600">
+                                                        <td className="py-3 px-4 text-[#5F5E58]">
                                                             {ord.city || 'N/A'} {ord.address_details ? `(${ord.address_details})` : ''}
                                                         </td>
-                                                        <td className="py-3 px-4 font-extrabold text-slate-950">
+                                                        <td className="py-3 px-4 font-semibold text-[#141412]">
                                                             {formatFCFA(ord.total_client)}
                                                         </td>
                                                         <td className="py-3 px-4">
-                                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
                                                                 ord.payment_status === 'paid'
                                                                     ? 'bg-emerald-100 text-emerald-800'
                                                                     : 'bg-amber-100 text-amber-800'
@@ -528,17 +529,17 @@ export default function UserShow({ vendor, stats }) {
                                                             </span>
                                                         </td>
                                                         <td className="py-3 px-4">
-                                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
                                                                 ord.status === 'delivered'
                                                                     ? 'bg-emerald-100 text-emerald-800'
                                                                     : ord.status === 'in_delivery'
-                                                                        ? 'bg-blue-100 text-blue-800'
-                                                                        : 'bg-slate-100 text-slate-700'
+                                                                        ? 'bg-[#F6F5F1] text-[#141412]'
+                                                                        : 'bg-[#F2F1EC] text-[#3D3C37]'
                                                             }`}>
                                                                 {ord.status}
                                                             </span>
                                                         </td>
-                                                        <td className="py-3 px-4 text-slate-400 text-[11px]">
+                                                        <td className="py-3 px-4 text-[#8B8A83] text-[11px]">
                                                             {new Date(ord.created_at).toLocaleDateString('fr-FR')}
                                                         </td>
                                                     </tr>
@@ -547,9 +548,9 @@ export default function UserShow({ vendor, stats }) {
                                         </table>
                                     </div>
                                 ) : (
-                                    <div className="py-12 text-center text-slate-400 text-xs space-y-2">
-                                        <ShoppingBag className="w-10 h-10 text-slate-300 mx-auto" />
-                                        <div className="font-bold text-slate-700">Aucune commande enregistrée</div>
+                                    <div className="py-12 text-center text-[#8B8A83] text-xs space-y-2">
+                                        <ShoppingBag className="w-10 h-10 text-[#8B8A83] mx-auto" />
+                                        <div className="font-semibold text-[#3D3C37]">Aucune commande enregistrée</div>
                                         <p className="text-[11px]">Cette boutique n'a pas encore enregistré de ventes.</p>
                                     </div>
                                 )}
@@ -562,27 +563,27 @@ export default function UserShow({ vendor, stats }) {
                                 {store ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-xs">
                                         <div className="space-y-4">
-                                            <h4 className="font-extrabold text-slate-950 text-sm border-b border-slate-100 pb-2">
+                                            <h4 className="font-semibold text-[#141412] text-sm border-b border-black/[0.05] pb-2">
                                                 Identité &amp; Configuration Vitrine
                                             </h4>
 
                                             <div className="space-y-3">
                                                 <div>
-                                                    <label className="text-slate-400 font-medium">Nom de la vitrine</label>
-                                                    <div className="font-bold text-slate-950 text-sm">{store.name}</div>
+                                                    <label className="text-[#8B8A83] font-medium">Nom de la vitrine</label>
+                                                    <div className="font-semibold text-[#141412] text-sm">{store.name}</div>
                                                 </div>
 
                                                 <div>
-                                                    <label className="text-slate-400 font-medium">Lien public officiel</label>
-                                                    <div className="font-mono text-amber-700 font-bold">
-                                                        biolinko.app/{store.slug}
+                                                    <label className="text-[#8B8A83] font-medium">Lien public officiel</label>
+                                                    <div className="font-mono text-amber-700 font-semibold">
+                                                        biolinko.link/{store.slug}
                                                     </div>
                                                 </div>
 
                                                 <div>
-                                                    <label className="text-slate-400 font-medium">Statut de visibilité</label>
+                                                    <label className="text-[#8B8A83] font-medium">Statut de visibilité</label>
                                                     <div>
-                                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
                                                             store.is_published ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
                                                         }`}>
                                                             {store.is_published ? 'En ligne (Publique)' : 'Brouillon (Masquée)'}
@@ -591,58 +592,58 @@ export default function UserShow({ vendor, stats }) {
                                                 </div>
 
                                                 <div>
-                                                    <label className="text-slate-400 font-medium">Catégorie</label>
-                                                    <div className="font-semibold text-slate-900">{store.category || 'Général'}</div>
+                                                    <label className="text-[#8B8A83] font-medium">Catégorie</label>
+                                                    <div className="font-semibold text-[#141412]">{store.category || 'Général'}</div>
                                                 </div>
 
                                                 <div>
-                                                    <label className="text-slate-400 font-medium">Bandeau d'annonce supérieur</label>
-                                                    <div className="font-medium text-slate-800">{store.announcement_header || 'Non configuré'}</div>
+                                                    <label className="text-[#8B8A83] font-medium">Bandeau d'annonce supérieur</label>
+                                                    <div className="font-medium text-[#3D3C37]">{store.announcement_header || 'Non configuré'}</div>
                                                 </div>
 
                                                 <div>
-                                                    <label className="text-slate-400 font-medium">Horaires d'ouverture</label>
-                                                    <div className="font-medium text-slate-800">{store.opening_hours || 'Non renseigné'}</div>
+                                                    <label className="text-[#8B8A83] font-medium">Horaires d'ouverture</label>
+                                                    <div className="font-medium text-[#3D3C37]">{store.opening_hours || 'Non renseigné'}</div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="space-y-4">
-                                            <h4 className="font-extrabold text-slate-950 text-sm border-b border-slate-100 pb-2">
+                                            <h4 className="font-semibold text-[#141412] text-sm border-b border-black/[0.05] pb-2">
                                                 Visuels &amp; Description
                                             </h4>
 
                                             <div className="space-y-3">
                                                 <div>
-                                                    <label className="text-slate-400 font-medium">Logo de la boutique</label>
-                                                    <div className="mt-1 w-16 h-16 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center">
+                                                    <label className="text-[#8B8A83] font-medium">Logo de la boutique</label>
+                                                    <div className="mt-1 w-16 h-16 rounded-2xl bg-[#F2F1EC] border border-black/[0.08] overflow-hidden flex items-center justify-center">
                                                         {store.logo_url ? (
                                                             <img src={store.logo_url} alt="Logo" className="w-full h-full object-cover" />
                                                         ) : (
-                                                            <StoreIcon className="w-8 h-8 text-slate-300" />
+                                                            <StoreIcon className="w-8 h-8 text-[#8B8A83]" />
                                                         )}
                                                     </div>
                                                 </div>
 
                                                 <div>
-                                                    <label className="text-slate-400 font-medium">Description</label>
-                                                    <p className="text-slate-700 leading-relaxed font-medium bg-slate-50 p-3 rounded-xl border border-slate-200/80">
+                                                    <label className="text-[#8B8A83] font-medium">Description</label>
+                                                    <p className="text-[#3D3C37] leading-relaxed font-medium bg-[#F6F5F1] p-3 rounded-xl border border-black/[0.08]">
                                                         {store.description || 'Aucune description rédigée.'}
                                                     </p>
                                                 </div>
 
                                                 <div>
-                                                    <label className="text-slate-400 font-medium">Couleur Thème Principale</label>
+                                                    <label className="text-[#8B8A83] font-medium">Couleur Thème Principale</label>
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <span className="w-5 h-5 rounded-full border border-slate-300" style={{ backgroundColor: store.theme_color || '#FFCC00' }} />
-                                                        <span className="font-mono text-[11px] text-slate-600">{store.theme_color || '#FFCC00'}</span>
+                                                        <span className="w-5 h-5 rounded-full border border-black/15" style={{ backgroundColor: store.theme_color || '#FFCC00' }} />
+                                                        <span className="font-mono text-[11px] text-[#5F5E58]">{store.theme_color || '#FFCC00'}</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="py-12 text-center text-slate-400 text-xs">
+                                    <div className="py-12 text-center text-[#8B8A83] text-xs">
                                         Aucune boutique associée à ce compte vendeur.
                                     </div>
                                 )}
@@ -653,6 +654,8 @@ export default function UserShow({ vendor, stats }) {
             </div>
 
             {/* REUSABLE MODERATION MODAL */}
+            </div>
+
             <ModerationModal
                 isOpen={moderationModal.isOpen}
                 onClose={closeModerationModal}

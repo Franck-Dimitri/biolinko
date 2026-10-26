@@ -1,152 +1,151 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, usePage } from '@inertiajs/react';
-import { motion } from 'framer-motion';
-import { Megaphone, Sparkles, BarChart3, ShieldCheck, Check, Save, Lock, ArrowRight } from 'lucide-react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { ArrowRight, Check, Copy, Link2, Megaphone, Percent, Repeat, ShoppingBag, Target, TrendingDown, TrendingUp, Users } from 'lucide-react';
+import { FacebookIcon, TiktokIcon, WhatsappIcon } from '@/Components/BrandIcons';
+import { Badge, Button, Card, CardHeader, Field, PageHeader, PlanLock, Stat, fcfa, fieldClass } from '@/Components/Dashboard/UI';
 
-export default function Index({ store, user, marketing }) {
-    const planPrices = usePage().props.planPrices || {};
-    const { data, setData, post, processing, errors } = useForm({
-        facebook_pixel_id: marketing.facebook_pixel_id || '',
-        tiktok_pixel_id: marketing.tiktok_pixel_id || '',
-        google_analytics_id: marketing.google_analytics_id || '',
-    });
+function Action({ done, title, text, href, cta, Icon, highlight }) {
+    return (
+        <li className={`flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center ${highlight && !done ? 'border-[#FFCC00]/60 bg-[#FFFBEA]' : 'border-black/[0.06] bg-white'}`}>
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${done ? 'bg-[#DCFCE7] text-[#15803D]' : highlight ? 'bg-[#FFCC00] text-[#141412]' : 'bg-[#F6F5F1] text-[#141412]'}`}>
+                {done ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+            </span>
+            <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-medium text-[#141412]">{title}</span>
+                <span className="block text-[14px] text-[#5F5E58]">{text}</span>
+            </span>
+            {href && <Button size="sm" variant={highlight && !done ? 'primary' : 'secondary'} href={href}>{cta} <ArrowRight className="h-4 w-4" /></Button>}
+        </li>
+    );
+}
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        post(route('seller.marketing.update'));
+export default function Index({ store, user, stats = {}, topProducts = [], marketing }) {
+    const { errors } = usePage().props;
+    const [pixels, setPixels] = useState(marketing);
+    const [saving, setSaving] = useState(false);
+    const storeUrl = `${window.location.origin}/${store.slug}`;
+    const trend = stats.revenue_trend;
+
+    const copy = async () => {
+        try { await navigator.clipboard.writeText(storeUrl); toast.success('Lien de la boutique copié'); } catch (e) { /* indisponible */ }
     };
+    const save = (e) => {
+        e.preventDefault();
+        setSaving(true);
+        router.post(route('seller.marketing.update'), pixels, { preserveScroll: true, onFinish: () => setSaving(false) });
+    };
+
+    const actions = [
+        {
+            done: stats.abandoned_count === 0, highlight: true, Icon: Repeat,
+            title: stats.abandoned_count ? `Relancer ${stats.abandoned_count} commande${stats.abandoned_count > 1 ? 's' : ''} non payée${stats.abandoned_count > 1 ? 's' : ''}` : 'Aucune commande à relancer',
+            text: stats.abandoned_count ? `${fcfa(stats.abandoned_value)} de ventes à récupérer par un simple message WhatsApp.` : 'Toutes vos commandes récentes ont été payées.',
+            href: stats.abandoned_count ? route('customers.index') : null, cta: 'Relancer',
+        },
+        {
+            done: stats.active_promos > 0, Icon: Percent,
+            title: stats.active_promos ? `${stats.active_promos} produit${stats.active_promos > 1 ? 's' : ''} en promotion` : 'Lancer une promotion',
+            text: 'Un prix barré et un compte à rebours s’affichent sur votre vitrine.',
+            href: route('products.index'), cta: stats.active_promos ? 'Gérer' : 'Créer',
+        },
+        {
+            done: stats.active_packs > 0, Icon: Link2,
+            title: stats.active_packs ? `${stats.active_packs} pack${stats.active_packs > 1 ? 's' : ''} actif${stats.active_packs > 1 ? 's' : ''}` : 'Créer un pack ou un lien de paiement',
+            text: stats.active_packs ? `${stats.pack_views} vues · ${stats.pack_sales} ventes depuis vos liens.` : 'Idéal à partager en story ou dans une conversation.',
+            href: route('seller.smartlinks.index'), cta: stats.active_packs ? 'Voir' : 'Créer',
+        },
+        {
+            done: stats.campaigns_used > 0, Icon: Megaphone,
+            title: 'Envoyer une campagne WhatsApp',
+            text: `${stats.campaigns_used} / ${stats.campaigns_quota} campagne${stats.campaigns_quota > 1 ? 's' : ''} utilisée${stats.campaigns_used > 1 ? 's' : ''} ce mois-ci. Annoncez vos nouveautés à vos ${stats.customers} clients.`,
+            href: route('customers.index'), cta: 'Préparer',
+        },
+    ];
 
     return (
         <AuthenticatedLayout>
-            <Head title="Marketing & Pixels — BIOLINKO" />
+            <Head title="Marketing, Biolinko" />
+            <div className="space-y-6 pb-12">
+                <PageHeader title="Marketing" sub="Vos chiffres des 30 derniers jours et les actions qui font vendre." />
 
-            <div className="w-full space-y-8 font-sans">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight flex items-center gap-2">
-                            <span>Marketing & Acquisition Client</span>
-                            <Megaphone className="w-6 h-6 text-amber-500" />
-                        </h1>
-                        <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1">
-                            Configurez vos Pixels de suivi Facebook, TikTok et Google Analytics pour optimiser vos campagnes publicitaires.
-                        </p>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <Stat label="Ventes (30 j)" value={fcfa(stats.revenue)} Icon={trend !== null && trend < 0 ? TrendingDown : TrendingUp} delay={0.03}
+                        hint={trend === null || trend === undefined ? 'Pas de comparaison disponible' : `${trend >= 0 ? '+' : ''}${trend} % vs 30 jours précédents`} />
+                    <Stat label="Commandes payées" value={`${stats.paid_orders ?? 0} / ${stats.orders ?? 0}`} hint="Payées sur passées" Icon={ShoppingBag} delay={0.06} />
+                    <Stat label="Taux de paiement" value={`${stats.conversion ?? 0} %`} hint="Commandes réellement payées" Icon={Target} delay={0.09} />
+                    <Stat label="Panier moyen" value={fcfa(stats.average_basket)} Icon={Percent} delay={0.12} />
+                </div>
+
+                <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+                    <Card delay={0.08}>
+                        <CardHeader title="Actions recommandées" sub="Classées par impact sur vos ventes." />
+                        <ul className="mt-5 space-y-2.5">{actions.map((a) => <Action key={a.title} {...a} />)}</ul>
+                    </Card>
+
+                    <div className="space-y-4">
+                        <Card delay={0.1}>
+                            <CardHeader title="Partager ma boutique" sub="Le geste qui rapporte le plus : votre lien partout." />
+                            <div className="mt-4 flex items-center gap-2 rounded-2xl bg-[#F6F5F1] p-3">
+                                <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-[#141412]">{storeUrl.replace(/^https?:\/\//, '')}</span>
+                                <Button size="sm" onClick={copy}><Copy className="h-4 w-4" /> Copier</Button>
+                            </div>
+                            <div className="mt-3 grid grid-cols-3 gap-2">
+                                <Button size="sm" href={`https://wa.me/?text=${encodeURIComponent(`Découvrez ma boutique : ${storeUrl}`)}`} target="_blank" rel="noreferrer"><WhatsappIcon className="h-4 w-4 text-[#16A34A]" /> Statut</Button>
+                                <Button size="sm" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(storeUrl)}`} target="_blank" rel="noreferrer"><FacebookIcon className="h-4 w-4 text-[#1877F2]" /> Facebook</Button>
+                                <Button size="sm" onClick={copy}><TiktokIcon className="h-4 w-4" /> Bio</Button>
+                            </div>
+                        </Card>
+
+                        <Card delay={0.12}>
+                            <CardHeader title="Audience" />
+                            <dl className="mt-4 grid grid-cols-2 gap-3">
+                                {[['Clients', stats.customers], ['Clients fidèles', stats.repeat_customers], ['Produits', stats.products], ['Vues des packs', stats.pack_views]].map(([l, v]) => (
+                                    <div key={l} className="rounded-2xl bg-[#F6F5F1] p-4"><dd className="text-[22px] font-medium tabular-nums text-[#141412]">{v ?? 0}</dd><dt className="text-[13px] text-[#8B8A83]">{l}</dt></div>
+                                ))}
+                            </dl>
+                            <Link href={route('customers.index')} className="mt-4 inline-flex items-center gap-1 text-[14px] text-[#5F5E58] hover:text-[#141412]"><Users className="h-4 w-4" /> Voir mes clients</Link>
+                        </Card>
                     </div>
                 </div>
 
-                {!user.has_marketing && (
-                    <div className="p-6 rounded-3xl bg-amber-950 text-amber-200 border border-amber-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                            <div className="flex items-center gap-2 font-bold text-amber-300">
-                                <Lock className="w-4 h-4 text-amber-400" />
-                                <span>Fonctionnalités Marketing Réservées au Plan Pro et Supérieur</span>
-                            </div>
-                            <p className="text-xs text-amber-300/80">
-                                Le suivi par Pixels Facebook/TikTok et le ciblage des paniers abandonnés nécessitent le Plan Pro ({Number(planPrices.pro || 0).toLocaleString('fr-FR')} FCFA/mois).
-                            </p>
-                        </div>
-                        <a
-                            href={route('seller.subscriptions.index')}
-                            className="px-4 py-2.5 rounded-2xl bg-[#FFCC00] text-slate-950 font-bold text-xs shadow-md hover:bg-amber-300 transition-all flex items-center gap-2 shrink-0"
-                        >
-                            <span>Mettre à Jour Mon Plan</span>
-                            <ArrowRight className="w-4 h-4" />
-                        </a>
-                    </div>
-                )}
+                <div className="grid gap-4 xl:grid-cols-2">
+                    <Card delay={0.12}>
+                        <CardHeader title="Produits qui se vendent" sub="30 derniers jours" />
+                        {topProducts.length ? (
+                            <ol className="mt-4 space-y-3">
+                                {topProducts.map((p, i) => (
+                                    <li key={p.product_title} className="flex items-center gap-3">
+                                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[12px] font-medium ${i === 0 ? 'bg-[#FFCC00]' : 'bg-[#F6F5F1] text-[#5F5E58]'}`}>{i + 1}</span>
+                                        <span className="min-w-0 flex-1 truncate text-[14px] text-[#141412]">{p.product_title}</span>
+                                        <span className="text-[13px] text-[#8B8A83]">{p.qty} vendu{p.qty > 1 ? 's' : ''}</span>
+                                        <span className="w-28 text-right text-[14px] tabular-nums text-[#141412]">{fcfa(p.revenue)}</span>
+                                    </li>
+                                ))}
+                            </ol>
+                        ) : <p className="mt-4 text-[14px] text-[#8B8A83]">Aucune vente sur les 30 derniers jours.</p>}
+                    </Card>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* FORM SECTION */}
-                    <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-6 shadow-2xs">
-                        <h2 className="text-lg font-bold text-slate-950 flex items-center gap-2">
-                            <BarChart3 className="w-5 h-5 text-amber-500" />
-                            <span>Configuration des Pixels Publicitaires</span>
-                        </h2>
-
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Facebook Pixel */}
-                            <div className="space-y-2">
-                                <label className="block text-xs font-bold text-slate-800">
-                                    ID Facebook Pixel (Meta Pixel)
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="ex: 123456789012345"
-                                    disabled={!user.has_marketing}
-                                    value={data.facebook_pixel_id}
-                                    onChange={(e) => setData('facebook_pixel_id', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none disabled:bg-slate-100 disabled:cursor-not-allowed"
-                                />
-                                <p className="text-[11px] text-slate-400">
-                                    Permet le suivi des événements `PageView` et `Purchase` dans Facebook Ads Manager.
-                                </p>
-                            </div>
-
-                            {/* TikTok Pixel */}
-                            <div className="space-y-2">
-                                <label className="block text-xs font-bold text-slate-800">
-                                    ID TikTok Pixel
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="ex: C123456789ABCDEF"
-                                    disabled={!user.has_marketing}
-                                    value={data.tiktok_pixel_id}
-                                    onChange={(e) => setData('tiktok_pixel_id', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none disabled:bg-slate-100 disabled:cursor-not-allowed"
-                                />
-                                <p className="text-[11px] text-slate-400">
-                                    Enregistre automatiquement les conversions issues de vos publicités TikTok Ads.
-                                </p>
-                            </div>
-
-                            {/* Google Analytics */}
-                            <div className="space-y-2">
-                                <label className="block text-xs font-bold text-slate-800">
-                                    ID Google Analytics (GA4)
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="ex: G-XXXXXXXXXX"
-                                    disabled={!user.has_marketing}
-                                    value={data.google_analytics_id}
-                                    onChange={(e) => setData('google_analytics_id', e.target.value)}
-                                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-xs font-medium focus:border-amber-400 outline-none disabled:bg-slate-100 disabled:cursor-not-allowed"
-                                />
-                                <p className="text-[11px] text-slate-400">
-                                    Mesure le trafic en direct et l'engagement sur votre vitrine e-commerce BIOLINKO.
-                                </p>
-                            </div>
-
-                            <div className="pt-4 border-t border-slate-100">
-                                <button
-                                    type="submit"
-                                    disabled={!user.has_marketing || processing}
-                                    className="px-6 py-3 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Save className="w-4 h-4 text-slate-950" />
-                                    <span>Enregistrer les Paramètres</span>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    {/* SIDEBAR TIPS */}
-                    <div className="space-y-6">
-                        <div className="bg-slate-950 text-white rounded-3xl p-6 space-y-4 shadow-xl">
-                            <h3 className="text-sm font-bold text-amber-300 flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-amber-400" />
-                                <span>Relance WhatsApp Paniers Abandonnés</span>
-                            </h3>
-                            <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                                Lorsqu'un client saisit son numéro mais ne confirme pas son règlement Mobile Money, notre bot WhatsApp lui envoie une relance automatique dans les 15 minutes.
-                            </p>
-                            <div className="p-3 rounded-2xl bg-white/10 text-[11px] font-bold text-amber-300 flex items-center gap-2">
-                                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                                <span>Taux de conversion moyen : +28%</span>
-                            </div>
-                        </div>
-                    </div>
+                    <Card delay={0.14}>
+                        <CardHeader title="Mesure publicitaire" sub="Suivez les ventes générées par vos publicités Facebook, Instagram, TikTok et Google." action={!user.has_marketing && <Badge tone="brand">Pro</Badge>} />
+                        {user.has_marketing ? (
+                            <form onSubmit={save} className="mt-4 space-y-3">
+                                <Field label="Pixel Meta (Facebook / Instagram)" error={errors?.facebook_pixel_id}>
+                                    <input value={pixels.facebook_pixel_id} onChange={(e) => setPixels((p) => ({ ...p, facebook_pixel_id: e.target.value }))} placeholder="Ex. 123456789012345" className={fieldClass} />
+                                </Field>
+                                <Field label="Pixel TikTok" error={errors?.tiktok_pixel_id}>
+                                    <input value={pixels.tiktok_pixel_id} onChange={(e) => setPixels((p) => ({ ...p, tiktok_pixel_id: e.target.value }))} placeholder="Ex. C4ABC123DEF" className={fieldClass} />
+                                </Field>
+                                <Field label="Google Analytics" error={errors?.google_analytics_id}>
+                                    <input value={pixels.google_analytics_id} onChange={(e) => setPixels((p) => ({ ...p, google_analytics_id: e.target.value }))} placeholder="Ex. G-XXXXXXXXXX" className={fieldClass} />
+                                </Field>
+                                <div className="flex justify-end"><Button variant="primary" type="submit" disabled={saving}>Enregistrer</Button></div>
+                            </form>
+                        ) : (
+                            <div className="mt-4"><PlanLock plan="Pro" text="Connectez vos pixels publicitaires à partir du plan Pro." /></div>
+                        )}
+                    </Card>
                 </div>
             </div>
         </AuthenticatedLayout>

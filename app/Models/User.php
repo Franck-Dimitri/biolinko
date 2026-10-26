@@ -3,13 +3,17 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
+use App\Mail\VendorOtpVerificationMail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -23,6 +27,22 @@ class User extends Authenticatable
         'growth' => 7000,
         'business' => 12000,
     ];
+
+    /**
+     * Limites de chaque plan : seule source utilisée par le code, la page Abonnement et la landing.
+     * null = illimité.
+     */
+    public const PLAN_LIMITS = [
+        'starter' => ['products' => 5, 'stock' => 50, 'images' => 2, 'smartlinks' => 2],
+        'pro' => ['products' => 30, 'stock' => 300, 'images' => 5, 'smartlinks' => 10],
+        'growth' => ['products' => 100, 'stock' => 1500, 'images' => 8, 'smartlinks' => null],
+        'business' => ['products' => null, 'stock' => null, 'images' => 10, 'smartlinks' => null],
+    ];
+
+    public function planLimit(string $key): ?int
+    {
+        return (self::PLAN_LIMITS[$this->effectivePlan()] ?? self::PLAN_LIMITS['starter'])[$key];
+    }
 
     public static function planPrice(string $plan): int
     {
@@ -90,9 +110,22 @@ class User extends Authenticatable
         return $otp;
     }
 
+    /**
+     * La vérification passe par un code OTP à 6 chiffres plutôt que par le lien signé de Laravel.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $otp = $this->generateEmailOtp();
+        try {
+            Mail::to($this->email)->send(new VendorOtpVerificationMail($this, $otp));
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send vendor OTP email', ['user_id' => $this->id, 'err' => $e->getMessage()]);
+        }
+    }
+
     public function verifyEmailOtp(string $otp): bool
     {
-        if (empty($this->email_otp) || $this->email_otp !== trim($otp)) {
+        if (empty($this->email_otp) || ! hash_equals((string) $this->email_otp, trim($otp))) {
             return false;
         }
 
@@ -116,6 +149,67 @@ class User extends Authenticatable
         }
 
         return $this->subscription_expires_at && $this->subscription_expires_at->isFuture();
+    }
+
+    /**
+     * Changement de plan payant avant l'échéance : la valeur des jours restants de l'ancien plan
+     * est convertie en jours offerts sur le nouveau (au prix mensuel de chacun). 0 si rien à convertir.
+     */
+    public function planConversionDays(string $targetPlan): int
+    {
+        $current = strtolower($this->plan ?? 'starter');
+        $target = strtolower($targetPlan);
+        $oldPrice = self::planPrice($current);
+        $newPrice = self::planPrice($target);
+
+        if ($current === $target || $oldPrice <= 0 || $newPrice <= 0
+            || ! $this->subscription_expires_at || ! $this->subscription_expires_at->isFuture()) {
+            return 0;
+        }
+
+        $remainingDays = now()->diffInSeconds($this->subscription_expires_at) / 86400;
+
+        return (int) floor($remainingDays * $oldPrice / $newPrice);
+    }
+
+    /**
+     * Plan qui aurait coûté le moins cher au vendeur sur ses 30 derniers jours de ventes
+     * (commission + abonnement). null si son plan actuel est déjà le plus avantageux.
+     */
+    public function upgradeSavings(): ?array
+    {
+        $store = $this->store;
+        if (! $store) {
+            return null;
+        }
+
+        $sales = (float) Order::where('store_id', $store->id)->where('payment_status', 'paid')
+            ->where('paid_at', '>=', now()->subDays(30))->sum('price_vendor');
+        if ($sales <= 0) {
+            return null;
+        }
+
+        $current = $this->effectivePlan();
+        $rates = config('payments.commission_percent');
+        $cost = fn (string $plan) => $sales * $rates[$plan] / 100 + self::planPrice($plan);
+        $currentCost = $sales * $rates[$current] / 100; // l'abonnement en cours est déjà payé
+
+        $best = collect(array_keys($rates))
+            ->filter(fn ($p) => self::planPrice($p) > self::planPrice($current))
+            ->map(fn ($p) => ['plan' => $p, 'cost' => $cost($p)])
+            ->sortBy('cost')->first();
+
+        if (! $best || $best['cost'] >= $currentCost) {
+            return null;
+        }
+
+        return [
+            'plan' => $best['plan'],
+            'sales' => round($sales),
+            'commission_paid' => round($currentCost),
+            'would_pay' => round($best['cost']),
+            'saving' => round($currentCost - $best['cost']),
+        ];
     }
 
     public function getDaysRemaining(): int
@@ -149,34 +243,27 @@ class User extends Authenticatable
         return $userRank >= $requiredRank && $this->isSubscriptionActive();
     }
 
+    /**
+     * Plan réellement appliqué : un abonnement payant expiré retombe sur les limites du Starter.
+     */
+    public function effectivePlan(): string
+    {
+        return $this->isSubscriptionActive() ? strtolower($this->plan ?? 'starter') : 'starter';
+    }
+
     public function getPlanMaxProducts(): int
     {
-        return match (strtolower($this->plan ?? 'starter')) {
-            'pro' => 50,
-            'growth' => 250,
-            'business' => 99999,
-            default => 10,
-        };
+        return $this->planLimit('products') ?? 99999;
     }
 
     public function getPlanMaxStock(): int
     {
-        return match (strtolower($this->plan ?? 'starter')) {
-            'pro' => 500,
-            'growth' => 3000,
-            'business' => 999999,
-            default => 25,
-        };
+        return $this->planLimit('stock') ?? 999999;
     }
 
     public function getPlanMaxImagesPerProduct(): int
     {
-        return match (strtolower($this->plan ?? 'starter')) {
-            'pro' => 5,
-            'growth' => 8,
-            'business' => 10,
-            default => 2,
-        };
+        return $this->planLimit('images') ?? 10;
     }
 
     public function getPlanMaxStores(): int
@@ -186,7 +273,7 @@ class User extends Authenticatable
 
     public function getPlanMaxTemplates(): int
     {
-        return match (strtolower($this->plan ?? 'starter')) {
+        return match ($this->effectivePlan()) {
             'pro' => 2,
             'growth' => 5,
             'business' => 10,
@@ -196,7 +283,7 @@ class User extends Authenticatable
 
     public function getWhatsappCampaignsQuota(): array
     {
-        $plan = strtolower($this->plan ?? 'starter');
+        $plan = $this->effectivePlan();
 
         return match ($plan) {
             'pro' => ['max_campaigns_per_month' => 4, 'max_recipients_per_campaign' => 25, 'allow_smartlinks' => true, 'max_products' => 10],

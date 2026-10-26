@@ -1,55 +1,32 @@
 import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
+import AuthShell, { fieldClass, labelClass, primaryButtonClass } from '@/Components/AuthShell';
 import { Head, useForm } from '@inertiajs/react';
+import { Loader2 } from 'lucide-react';
 
 export default function ConfirmPassword() {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        password: '',
-    });
+    const { data, setData, post, processing, errors, reset } = useForm({ password: '' });
 
     const submit = (e) => {
         e.preventDefault();
-
-        post(route('password.confirm'), {
-            onFinish: () => reset('password'),
-        });
+        post(route('password.confirm'), { onFinish: () => reset('password') });
     };
 
     return (
-        <GuestLayout>
-            <Head title="Confirm Password" />
-
-            <div className="mb-4 text-sm text-gray-600">
-                This is a secure area of the application. Please confirm your
-                password before continuing.
-            </div>
-
-            <form onSubmit={submit}>
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        isFocused={true}
-                        onChange={(e) => setData('password', e.target.value)}
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing} processing={processing} loadingText="Confirmation...">
-                        Confirmer
-                    </PrimaryButton>
-                </div>
-            </form>
-        </GuestLayout>
+        <>
+            <Head title="Confirmer le mot de passe, Biolinko" />
+            <AuthShell title="Confirmez votre identité" subtitle="Cette zone est protégée. Saisissez votre mot de passe pour continuer.">
+                <form onSubmit={submit} className="space-y-5">
+                    <div>
+                        <label htmlFor="password" className={labelClass}>Mot de passe</label>
+                        <input id="password" type="password" name="password" value={data.password} required autoFocus autoComplete="current-password"
+                            placeholder="••••••••" className={fieldClass} onChange={(e) => setData('password', e.target.value)} />
+                        <InputError message={errors.password} className="mt-1.5" />
+                    </div>
+                    <button type="submit" disabled={processing} className={primaryButtonClass}>
+                        {processing ? <><Loader2 className="h-4 w-4 animate-spin" /> Vérification…</> : 'Confirmer'}
+                    </button>
+                </form>
+            </AuthShell>
+        </>
     );
 }

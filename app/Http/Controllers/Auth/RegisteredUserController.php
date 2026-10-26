@@ -3,14 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Mail\VendorOtpVerificationMail;
 use App\Models\User;
+use App\Support\PlanIntent;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -21,9 +20,11 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('Auth/Register');
+        return Inertia::render('Auth/Register', [
+            'intendedPlan' => PlanIntent::remember($request),
+        ]);
     }
 
     /**
@@ -49,16 +50,8 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Le listener Registered appelle sendEmailVerificationNotification() → envoi de l'OTP
         event(new Registered($user));
-
-        // Generate 6-digit OTP Code and send verification email
-        $otp = $user->generateEmailOtp();
-        try {
-            Mail::to($user->email)->send(new VendorOtpVerificationMail($user, $otp));
-        } catch (\Exception $e) {
-            // Silently log email sending failure in local development if SMTP not configured
-            \Illuminate\Support\Facades\Log::warning('Failed to send vendor OTP email', ['user_id' => $user->id, 'err' => $e->getMessage()]);
-        }
 
         Auth::login($user);
 

@@ -14,6 +14,11 @@ class Store extends Model
     use HasFactory;
 
     protected $fillable = [
+        'country',
+        'currency',
+        'facebook_pixel_id',
+        'tiktok_pixel_id',
+        'google_analytics_id',
         'user_id',
         'name',
         'slug',
@@ -102,5 +107,32 @@ class Store extends Model
     public function smartLinks(): HasMany
     {
         return $this->hasMany(SmartLink::class);
+    }
+
+    /**
+     * Prépare la boutique pour une page publique : retire le compte du vendeur (e-mail, téléphone, plan…)
+     * et n'expose les pixels que si le plan du vendeur les inclut (Pro et plus).
+     */
+    public function forPublic(): static
+    {
+        $pixels = (bool) $this->user?->hasPlan('pro');
+        $this->unsetRelation('user');
+        $this->makeHidden(['user']);
+        if (! $pixels) {
+            $this->makeHidden(['facebook_pixel_id', 'tiktok_pixel_id', 'google_analytics_id']);
+        }
+
+        return $this;
+    }
+
+    public function reports(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(OrderReport::class);
+    }
+
+    /** À partir de 3 signalements, les retraits du vendeur sont examinés avec attention par l'admin. */
+    public function isUnderReview(): bool
+    {
+        return $this->reports()->count() >= OrderReport::REVIEW_THRESHOLD;
     }
 }

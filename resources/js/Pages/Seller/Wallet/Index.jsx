@@ -1,311 +1,205 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    Wallet as WalletIcon, ArrowUpRight, ArrowDownLeft, ShieldCheck, 
-    RefreshCw, CheckCircle2, Clock, Smartphone, AlertCircle, Sparkles, DollarSign, Loader2
-} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
+import { AlertTriangle, ArrowDownLeft, ArrowUpRight, Clock, Hourglass, Landmark, ShieldCheck, TrendingUp, Wallet } from 'lucide-react';
+import { OperatorLogo } from '@/Components/Landing/Illustrations';
+import {
+    Badge, Button, Card, CardHeader, SubPage, Empty, Field, PageHeader, Stat, Tabs, dateTime, fcfa, fieldClass, reveal,
+} from '@/Components/Dashboard/UI';
+import { EASE_OUT } from '@/Components/Motion';
 
-export default function Index({ store, wallet, withdrawals, metrics, appUrl }) {
-    const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+const STATUS = { completed: ['Effectué', 'success'], held: ['En attente', 'neutral'], pending: ['En cours', 'warning'], processing: ['Virement en cours', 'info'], rejected: ['Rejeté', 'danger'] };
 
-    const { data, setData, post, processing, errors, reset } = useForm({
-        amount: 5000,
-        payment_operator: 'MTN',
-        phone: store?.phone_whatsapp || '',
-    });
+function WithdrawDialog({ open, onClose, available, min, feePercent = 3, defaultPhone }) {
+    const { errors } = usePage().props;
+    const [amount, setAmount] = useState('');
+    const [operator, setOperator] = useState('MTN');
+    const [phone, setPhone] = useState(defaultPhone || '');
+    const [busy, setBusy] = useState(false);
+    const value = Number(amount) || 0;
+    const invalid = value < min || value > available;
+    const fee = Math.ceil(value * feePercent / 100);
 
-    const requestedAmount = Number(data.amount) || 0;
-    const totalFee = Math.round(requestedAmount * 0.015); // 1.5% Frais de retrait
-    const netPayout = Math.max(0, requestedAmount - totalFee);
-
-    const handleWithdrawSubmit = (e) => {
+    const submit = (e) => {
         e.preventDefault();
-        post(route('seller.wallet.withdraw'), {
+        setBusy(true);
+        router.post(route('wallet.withdraw'), { amount: value, payment_operator: operator, phone }, {
             preserveScroll: true,
-            onSuccess: () => {
-                setShowWithdrawModal(false);
-                reset();
-            }
+            onSuccess: () => { setAmount(''); onClose(); },
+            onFinish: () => setBusy(false),
         });
     };
 
     return (
+        <SubPage open={open} onClose={onClose} title="Retirer vers Mobile Money" sub={`Disponible : ${fcfa(available)}`}>
+            <form onSubmit={submit} className="space-y-5">
+                <Field label="Montant" hint={`Minimum ${fcfa(min)}.`} error={errors?.amount}>
+                    <div className="relative">
+                        <input type="number" inputMode="numeric" min={min} max={available} required value={amount} onChange={(e) => setAmount(e.target.value)}
+                            placeholder="0" className={`${fieldClass} h-14 pr-20 text-[22px] tabular-nums`} />
+                        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[14px] text-[#8B8A83]">FCFA</span>
+                    </div>
+                    <div className="mt-2 flex gap-1.5">
+                        {[0.25, 0.5, 1].map((r) => (
+                            <button key={r} type="button" onClick={() => setAmount(String(Math.floor(available * r)))} disabled={available * r < min}
+                                className="rounded-full border border-black/10 px-3 py-1 text-[13px] text-[#5F5E58] hover:border-black/30 disabled:opacity-40">
+                                {r === 1 ? 'Tout' : `${r * 100} %`}
+                            </button>
+                        ))}
+                    </div>
+                </Field>
+
+                <Field label="Vers">
+                    <div className="grid grid-cols-2 gap-2">
+                        {[['MTN', 'MTN MoMo'], ['ORANGE', 'Orange Money']].map(([id, label]) => (
+                            <button key={id} type="button" aria-pressed={operator === id} onClick={() => setOperator(id)}
+                                className={`flex items-center gap-2.5 rounded-2xl border-2 p-3 text-left text-[14px] font-medium transition-colors ${operator === id ? 'border-[#141412] bg-[#FFFBEA]' : 'border-black/[0.08] hover:border-black/20'}`}>
+                                <OperatorLogo op={id} className="h-8 w-8" /> {label}
+                            </button>
+                        ))}
+                    </div>
+                </Field>
+
+                <Field label="Numéro" error={errors?.phone}>
+                    <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="6XX XX XX XX" className={fieldClass} />
+                </Field>
+
+                <div className="rounded-2xl bg-[#F6F5F1] p-4 text-[14px] text-[#5F5E58]">
+                    <div className="flex justify-between"><span>Montant retiré</span><span className="tabular-nums">{fcfa(value)}</span></div>
+                    <div className="mt-1 flex justify-between"><span>Frais de retrait ({String(feePercent).replace('.', ',')} %)</span><span className="tabular-nums">−{fcfa(fee)}</span></div>
+                    <div className="mt-2 flex justify-between border-t border-black/[0.08] pt-2 text-[#141412]"><span>Vous recevez</span><strong className="font-medium tabular-nums">{fcfa(Math.max(0, value - fee))}</strong></div>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                    <Button onClick={onClose}>Annuler</Button>
+                    <Button variant="primary" type="submit" disabled={busy || invalid}><ArrowUpRight className="h-4 w-4" /> Demander le retrait</Button>
+                </div>
+            </form>
+        </SubPage>
+    );
+}
+
+export default function Index({ ledger = [], monthly = [], pendingWithdrawals = [], heldSales = [], holdRules, metrics, defaultPhone }) {
+    const [open, setOpen] = useState(false);
+    const [filter, setFilter] = useState('all');
+    const available = metrics?.available_balance || 0;
+    const min = metrics?.min_withdrawal || 1000;
+    const max = Math.max(...monthly.map((m) => m.total), 1);
+    const rows = ledger.filter((l) => filter === 'all' || l.type === filter);
+
+    return (
         <AuthenticatedLayout>
-            <Head title="Portefeuille & Retraits MoMo - BIOLINKO" />
+            <Head title="Portefeuille, Biolinko" />
+            <WithdrawDialog open={open} onClose={() => setOpen(false)} available={available} min={min} feePercent={metrics?.withdrawal_fee_percent ?? 3} defaultPhone={defaultPhone} />
+            <div className="space-y-6 pb-12" hidden={open}>
+                <PageHeader title="Portefeuille" sub="Vos revenus, votre solde et vos retraits vers Mobile Money." />
 
-            <div className="space-y-8 mx-auto pb-12">
-                
-                {/* HEADER */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/90 shadow-2xs">
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-extrabold text-[11px] border border-amber-300">
-                                COMPTE VENDEUR VERIFIÉ
-                            </span>
+                <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+                    {/* Solde */}
+                    <motion.section {...reveal()} className="relative overflow-hidden rounded-3xl bg-[#141412] p-7 text-white">
+                        <div aria-hidden className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#FFCC00]/20 blur-3xl" />
+                        <p className="relative text-[14px] text-white/60">Solde disponible</p>
+                        <p className="relative mt-2 text-[40px] font-medium tracking-[-0.03em] tabular-nums">{fcfa(available)}</p>
+                        <div className="relative mt-6 flex flex-wrap items-center gap-3">
+                            <Button variant="primary" size="lg" onClick={() => setOpen(true)} disabled={available < min}>
+                                <ArrowUpRight className="h-4 w-4" /> Retirer
+                            </Button>
+                            {available < min && <span className="text-[13px] text-white/55">Retrait possible dès {fcfa(min)}</span>}
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950 mt-1">Portefeuille & Solde MoMo</h1>
-                        <p className="text-xs text-slate-500 font-medium">Gérez vos revenus nets, vos soldes et demandez vos retraits Mobile Money en 1 clic.</p>
-                    </div>
+                        <div className="relative mt-6 space-y-1.5 text-[14px] text-white/70">
+                            {(metrics?.held_balance || 0) > 0 && <p className="flex items-center gap-2"><Hourglass className="h-4 w-4" /> {fcfa(metrics.held_balance)} en attente de disponibilité</p>}
+                            {(metrics?.pending_balance || 0) > 0 && <p className="flex items-center gap-2"><Clock className="h-4 w-4" /> {fcfa(metrics.pending_balance)} en cours de retrait</p>}
+                        </div>
+                    </motion.section>
 
-                    <button
-                        onClick={() => setShowWithdrawModal(true)}
-                        disabled={metrics.available_balance < 5000}
-                        className="px-5 py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-xs transition-all flex items-center justify-center gap-2 border border-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <ArrowUpRight className="w-4 h-4" />
-                        <span>Demander un Retrait MoMo</span>
-                    </button>
+                    {/* Revenus par mois */}
+                    <Card delay={0.05}>
+                        <CardHeader title="Revenus des 6 derniers mois" sub={`Ce mois-ci : ${fcfa(metrics?.this_month)}`} />
+                        <div className="mt-6 flex h-36 items-end gap-3">
+                            {monthly.map((m, i) => (
+                                <div key={m.label} className="group flex h-full flex-1 flex-col items-center justify-end gap-2">
+                                    <span className="text-[11px] tabular-nums text-[#8B8A83] opacity-0 transition-opacity group-hover:opacity-100">{Math.round(m.total / 1000)}k</span>
+                                    <motion.span initial={{ height: 0 }} animate={{ height: `${m.total ? Math.max(6, (m.total / max) * 100) : 3}%` }} transition={{ duration: 0.7, delay: i * 0.05, ease: EASE_OUT }}
+                                        className={`w-full rounded-lg ${i === monthly.length - 1 ? 'bg-[#FFCC00]' : 'bg-[#F2F1EC] group-hover:bg-[#E9E7E0]'}`} />
+                                    <span className="text-[12px] text-[#8B8A83]">{m.label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
                 </div>
 
-                {/* 4 METRIC CARDS */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {/* Card 1: Available Balance */}
-                    <motion.div 
-                        whileHover={{ y: -2 }}
-                        className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-2xs space-y-3 relative overflow-hidden"
-                    >
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Solde Disponible</span>
-                            <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-                                <WalletIcon className="w-5 h-5" />
-                            </div>
-                        </div>
-                        <div className="text-3xl font-extrabold text-slate-950">
-                            {Number(metrics.available_balance).toLocaleString()} <span className="text-sm font-bold text-slate-500">FCFA</span>
-                        </div>
-                        <div className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Retirable immédiatement vers MoMo</span>
-                        </div>
-                    </motion.div>
-
-                    {/* Card 2: Pending Balance */}
-                    <motion.div 
-                        whileHover={{ y: -2 }}
-                        className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-2xs space-y-3 relative overflow-hidden"
-                    >
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Solde en Attente</span>
-                            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
-                                <Clock className="w-5 h-5" />
-                            </div>
-                        </div>
-                        <div className="text-3xl font-extrabold text-slate-950">
-                            {Number(metrics.pending_balance).toLocaleString()} <span className="text-sm font-bold text-slate-500">FCFA</span>
-                        </div>
-                        <div className="text-[11px] text-amber-700 font-semibold flex items-center gap-1">
-                            <RefreshCw className="w-3.5 h-3.5" />
-                            <span>Commandes en cours de livraison</span>
-                        </div>
-                    </motion.div>
-
-                    {/* Card 3: Lifetime Earnings */}
-                    <motion.div 
-                        whileHover={{ y: -2 }}
-                        className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-2xs space-y-3 relative overflow-hidden"
-                    >
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ventes Nettes Cumulées</span>
-                            <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
-                                <DollarSign className="w-5 h-5" />
-                            </div>
-                        </div>
-                        <div className="text-3xl font-extrabold text-slate-950">
-                            {Number(metrics.lifetime_earnings).toLocaleString()} <span className="text-sm font-bold text-slate-500">FCFA</span>
-                        </div>
-                        <div className="text-[11px] text-slate-500 font-medium">Revenus nets réels après frais</div>
-                    </motion.div>
-
-                    {/* Card 4: Total Withdrawn */}
-                    <motion.div 
-                        whileHover={{ y: -2 }}
-                        className="bg-white p-6 rounded-3xl border border-slate-200/90 shadow-2xs space-y-3 relative overflow-hidden"
-                    >
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Solde Total Retiré</span>
-                            <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
-                                <ArrowUpRight className="w-5 h-5" />
-                            </div>
-                        </div>
-                        <div className="text-3xl font-extrabold text-slate-950">
-                            {Number(metrics.total_withdrawals || 0).toLocaleString()} <span className="text-sm font-bold text-slate-500">FCFA</span>
-                        </div>
-                        <div className="text-[11px] text-purple-700 font-semibold flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Total déjà versé par MoMo</span>
-                        </div>
-                    </motion.div>
+                <div className="grid gap-4 sm:grid-cols-3">
+                     <Stat label="Revenus cumulés" value={fcfa(metrics?.lifetime_earnings)} hint={(metrics?.commission_paid || 0) > 0 ? `Commissions Biolinko déduites : ${fcfa(metrics.commission_paid)}` : 'Ventes en ligne payées'} Icon={TrendingUp} delay={0.08} />
+                    <Stat label="Déjà retiré" value={fcfa(metrics?.total_withdrawals)} Icon={Landmark} delay={0.1} />
+                    <Stat label="En cours de retrait" value={fcfa(metrics?.pending_balance)} hint={`${pendingWithdrawals.length} demande${pendingWithdrawals.length > 1 ? 's' : ''}`} Icon={Clock} delay={0.12} />
                 </div>
 
-                {/* INFORMATIVE BANNER */}
-                <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/90 text-amber-950 text-xs font-medium flex items-start gap-3 shadow-2xs">
-                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                    <div className="space-y-1">
-                        <span className="font-extrabold text-amber-900 block">Règle de Sécurité des Retraits Portefeuille :</span>
-                        <p className="text-[11px] leading-relaxed text-amber-900/90">
-                            Votre solde disponible retirable provient exclusivement des encaissements enregistrés en ligne via l'API Mobile Money Biolinko. Les factures enregistrées manuellement pour vos clients directs en magasin n'alimentent pas ce solde retirable.
-                        </p>
-                    </div>
-                </div>
-
-                {/* WITHDRAWAL HISTORY TABLE */}
-                <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-6 shadow-2xs">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                        <div>
-                            <h2 className="text-lg font-extrabold text-slate-950">Historique des Retraits Mobile Money</h2>
-                            <p className="text-xs text-slate-500 font-medium">Suivez toutes vos demandes de virement vers votre compte MoMo</p>
+                {/* Délai de sécurité : ventes bientôt retirables */}
+                <Card delay={0.1}>
+                    <div className="flex items-start gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F6F5F1]"><ShieldCheck className="h-5 w-5 text-[#141412]" /></span>
+                        <div className="min-w-0">
+                            <h2 className="text-[17px] font-medium text-[#141412]">Argent en attente</h2>
+                            <p className="mt-1 text-[14px] text-[#5F5E58]">
+                                Chaque vente devient retirable <strong className="font-medium text-[#141412]">{holdRules?.current} jours</strong> après le paiement.
+                                {holdRules?.current === holdRules?.new
+                                    ? ` Après ${holdRules?.after} ventes livrées, ce délai passe à ${holdRules?.established} jours (vous en êtes à ${holdRules?.delivered}).`
+                                    : ' Vous bénéficiez du délai réduit des boutiques établies.'}
+                            </p>
                         </div>
-                        <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-800 font-bold text-xs border border-slate-200">
-                            Seuil min: 5 000 FCFA
-                        </span>
                     </div>
+                    {heldSales.length > 0 ? (
+                        <ul className="mt-4 divide-y divide-black/[0.05] rounded-2xl border border-black/[0.06]">
+                            {heldSales.map((h) => (
+                                <li key={h.id} className="flex items-center justify-between gap-3 px-4 py-3 text-[14px]">
+                                    <span className="min-w-0">
+                                        <span className="block truncate text-[#141412]">{h.customer_name} · <span className="font-mono text-[13px]">{h.tracking_code}</span></span>
+                                        <span className={`flex items-center gap-1.5 text-[13px] ${h.frozen ? 'text-[#B45309]' : 'text-[#8B8A83]'}`}>
+                                            {h.frozen ? <><AlertTriangle className="h-3.5 w-3.5" /> Signalée par le client, en attente de règlement</> : <>Disponible le {dateTime(h.available_at)}</>}
+                                        </span>
+                                    </span>
+                                    <span className="shrink-0 tabular-nums text-[#141412]">{fcfa(h.amount)}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : <p className="mt-4 text-[14px] text-[#8B8A83]">Aucune vente en attente : tout votre argent est disponible.</p>}
+                </Card>
 
-                    {withdrawals && withdrawals.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-xs">
-                                <thead>
-                                    <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-600 uppercase font-bold text-[10px] tracking-wider">
-                                        <th className="py-3 px-4 rounded-l-xl">Référence / Date</th>
-                                        <th className="py-3 px-4">Montant Demandé</th>
-                                        <th className="py-3 px-4">Frais (1,5%)</th>
-                                        <th className="py-3 px-4">Montant Net Reçu</th>
-                                        <th className="py-3 px-4">Opérateur & Téléphone</th>
-                                        <th className="py-3 px-4 rounded-r-xl text-right">Statut</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 font-medium">
-                                    {withdrawals.map((w) => (
-                                        <tr key={w.id} className="hover:bg-slate-50/80 transition-colors">
-                                            <td className="py-3.5 px-4 font-bold text-slate-900">
-                                                <div>#{w.id}</div>
-                                                <div className="text-[10px] text-slate-400 font-normal">{new Date(w.created_at).toLocaleDateString('fr-FR')}</div>
-                                            </td>
-                                            <td className="py-3.5 px-4 font-bold text-slate-950">{Number(w.amount).toLocaleString()} FCFA</td>
-                                            <td className="py-3.5 px-4 text-slate-500">{Number(w.fee).toLocaleString()} FCFA</td>
-                                            <td className="py-3.5 px-4 font-extrabold text-emerald-600">{Number(w.net_amount).toLocaleString()} FCFA</td>
-                                            <td className="py-3.5 px-4">
-                                                <span className="font-bold text-slate-900">{w.operator}</span> ({w.phone})
-                                            </td>
-                                            <td className="py-3.5 px-4 text-right">
-                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase ${
-                                                    w.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
-                                                    w.status === 'PENDING' ? 'bg-amber-100 text-amber-900 border border-amber-300' :
-                                                    'bg-rose-100 text-rose-800 border border-rose-300'
-                                                }`}>
-                                                    {w.status === 'APPROVED' ? 'Virement Effectué' : w.status === 'PENDING' ? 'En Cours (< 4h)' : 'Rejeté'}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                <Card padded={false} delay={0.12}>
+                    <div className="flex flex-col gap-3 border-b border-black/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <h2 className="px-1 text-[17px] font-medium text-[#141412]">Mouvements</h2>
+                        <Tabs id="ledger" value={filter} onChange={setFilter} tabs={[['all', 'Tout'], ['sale', 'Ventes'], ['withdrawal', 'Retraits']]} />
+                    </div>
+                    {rows.length ? (
+                        <ul className="divide-y divide-black/[0.05]">
+                            {rows.map((l) => {
+                                const credit = l.amount > 0;
+                                const [label, tone] = STATUS[l.status] || STATUS.completed;
+                                return (
+                                    <li key={l.id} className="flex items-center gap-4 px-5 py-3.5">
+                                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${credit ? 'bg-[#FFF6CC]' : 'bg-[#F2F1EC]'}`}>
+                                            {credit ? <ArrowDownLeft className="h-4 w-4 text-[#141412]" /> : <ArrowUpRight className="h-4 w-4 text-[#141412]" />}
+                                        </span>
+                                        <span className="min-w-0 flex-1">
+                                            <span className="block truncate text-[15px] text-[#141412]">{l.label}</span>
+                                            <span className="text-[13px] text-[#8B8A83]">{l.detail} · {dateTime(l.date)}</span>
+                                        </span>
+                                        {!credit && <Badge tone={tone}>{label}</Badge>}
+                                        <span className={`w-32 shrink-0 text-right text-[15px] tabular-nums ${credit ? 'text-[#15803D]' : 'text-[#141412]'}`}>
+                                            {credit ? '+' : '−'}{fcfa(Math.abs(l.amount))}
+                                        </span>
+                                    </li>
+                                );
+                            })}
+                        </ul>
                     ) : (
-                        <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 font-medium">
-                            Aucune demande de retrait effectuée pour le moment.
-                        </div>
+                        <div className="p-4"><Empty Icon={Wallet} title="Aucun mouvement" text="Vos ventes payées en ligne apparaîtront ici et créditeront votre solde." /></div>
                     )}
-                </div>
-
+                </Card>
             </div>
 
-            {/* WITHDRAWAL MODAL */}
-            <AnimatePresence>
-                {showWithdrawModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 sm:p-8 space-y-6 relative"
-                        >
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                                <div>
-                                    <h3 className="text-lg font-bold text-slate-950">Demande de Retrait Mobile Money</h3>
-                                    <p className="text-xs text-slate-500 font-medium">Transfert vers votre compte MTN / Orange</p>
-                                </div>
-                                <button onClick={() => setShowWithdrawModal(false)} className="p-2 rounded-full text-slate-400 hover:text-slate-700 bg-slate-100">
-                                    ✕
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleWithdrawSubmit} className="space-y-4 text-xs font-medium">
-                                <div>
-                                    <label className="block text-slate-700 font-bold mb-1">Montant à retirer (FCFA) *</label>
-                                    <input
-                                        type="number"
-                                        min={5000}
-                                        required
-                                        value={data.amount}
-                                        onChange={(e) => setData('amount', e.target.value)}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-extrabold text-sm focus:bg-white focus:border-amber-400"
-                                    />
-                                    <p className="text-[10px] text-slate-500 mt-1 font-semibold">Montant minimum : 5 000 FCFA</p>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-slate-700 font-bold mb-1">Opérateur MoMo *</label>
-                                        <select
-                                            value={data.payment_operator}
-                                            onChange={(e) => setData('payment_operator', e.target.value)}
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 font-bold"
-                                        >
-                                            <option value="MTN">MTN MoMo 🟡</option>
-                                            <option value="ORANGE">Orange Money 🍊</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-slate-700 font-bold mb-1">Numéro de Téléphone *</label>
-                                        <input
-                                            type="tel"
-                                            required
-                                            value={data.phone}
-                                            onChange={(e) => setData('phone', e.target.value)}
-                                            placeholder="ex: 690000000"
-                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 font-bold"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* FEE BREAKDOWN */}
-                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
-                                    <div className="flex justify-between text-slate-600">
-                                        <span>Frais de Retrait MoMo (1,5%) :</span>
-                                        <span className="font-bold text-slate-900">{totalFee.toLocaleString()} FCFA</span>
-                                    </div>
-                                    <div className="pt-2 border-t border-slate-200 flex justify-between font-extrabold text-slate-950 text-sm">
-                                        <span>Montant Net Versé :</span>
-                                        <span className="text-emerald-600">{netPayout.toLocaleString()} FCFA</span>
-                                    </div>
-                                </div>
-
-                                {errors.amount && <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-bold text-xs">{errors.amount}</div>}
-
-                                <button
-                                    type="submit"
-                                    disabled={processing || requestedAmount < 5000 || requestedAmount > (wallet?.balance_available || 0)}
-                                    className={`w-full py-3.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs shadow-md transition-all border border-amber-300 flex items-center justify-center gap-2 cursor-pointer ${
-                                        processing ? 'opacity-75 cursor-not-allowed pointer-events-none scale-[0.99]' : ''
-                                    }`}
-                                >
-                                    {processing ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
-                                            <span>Traitement du retrait en cours...</span>
-                                        </>
-                                    ) : (
-                                        <span>Confirmer le Retrait de {netPayout.toLocaleString()} FCFA</span>
-                                    )}
-                                </button>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
         </AuthenticatedLayout>
     );
 }

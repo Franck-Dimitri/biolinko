@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Subscription;
 use App\Models\User;
-use App\Services\HrSkillsPayService;
+use App\Payments\Countries;
+use App\Payments\PaymentException;
+use App\Payments\SubscriptionPayments;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -15,11 +17,8 @@ use Inertia\Response;
 
 class SubscriptionController extends Controller
 {
-    protected HrSkillsPayService $hrSkillsPay;
-
-    public function __construct(HrSkillsPayService $hrSkillsPay)
+    public function __construct(protected SubscriptionPayments $subscriptionPayments)
     {
-        $this->hrSkillsPay = $hrSkillsPay;
     }
 
     public function index(Request $request): Response
@@ -27,102 +26,70 @@ class SubscriptionController extends Controller
         $user = $request->user();
         $store = $user->store;
 
+        $L = User::PLAN_LIMITS;
+        $C = config('payments.commission_percent');
+        $pct = fn ($n) => str_replace('.', ',', (string) $n).' %';
+        $fmt = fn ($n) => number_format($n, 0, ',', ' ');
         $plans = [
             [
                 'id' => 'starter',
                 'name' => 'Starter',
                 'price' => 0,
-                'period' => 'Gratuit à vie',
-                'badge' => 'Gratuit',
-                'color' => 'slate',
-                'max_products' => 10,
-                'max_stock' => 25,
-                'whatsapp_recovery' => false,
-                'marketing_pixels' => false,
-                'priority_support' => false,
+                'tagline' => 'Pour faire vos premières ventes',
                 'features' => [
-                    'Jusqu\'à 10 produits au catalogue',
-                    'Capacité de stock : 25 articles max',
-                    '1-Click WhatsApp manuel (wa.me)',
-                    '1 campagne WhatsApp / mois (10 clients max)',
-                    'Vitrine e-commerce sous-domaine BIOLINKO',
-                    'Fast Checkout Mobile Money (MTN & Orange 🇨🇲)',
-                    '1 variante par produit (Taille ou Couleur)',
-                    'Factures PDF avec QR Code (mention BIOLINKO)',
-                    'Support client standard',
+                    'Commission de '.$pct($C['starter']).' par vente',
+                    "Jusqu’à {$L['starter']['products']} produits, {$L['starter']['stock']} articles en stock",
+                    "{$L['starter']['images']} photos par produit, {$L['starter']['smartlinks']} liens de paiement actifs",
+                    'Boutique en ligne et lien unique',
+                    'Paiement MTN MoMo et Orange Money',
+                    'Factures automatiques',
+                    'Notifications WhatsApp de commande',
+                    '1 campagne WhatsApp par mois',
                 ],
             ],
             [
                 'id' => 'pro',
                 'name' => 'Pro',
                 'price' => User::planPrice('pro'),
-                'period' => 'FCFA / mois',
-                'badge' => 'Populaire',
-                'color' => 'amber',
-                'max_products' => 50,
-                'max_stock' => 500,
-                'whatsapp_recovery' => true,
-                'marketing_pixels' => true,
-                'priority_support' => true,
+                'tagline' => 'Pour les commerçants actifs',
+                'popular' => true,
                 'features' => [
-                    'Jusqu\'à 50 produits au catalogue',
-                    'Capacité de stock cumulé : 500 articles',
-                    '🚀 Notifications WhatsApp Officielles Automatiques',
-                    'Variantes illimitées (Tailles, Couleurs & Surprix)',
-                    'Relance WhatsApp 1-Clic des paniers réservés',
-                    'Factures PDF avec QR Code à votre marque (sans mention BIOLINKO)',
-                    'Pixels Marketing (Facebook, TikTok, Google Ads)',
-                    'Campagnes WhatsApp + SmartLinks : 4 / mois (25 clients max)',
-                    'Studio Visuel (Ordre des sections de vitrine)',
-                    'Promotions & prix barrés activables',
-                    'Support Prioritaire WhatsApp 7j/7',
+                    'Commission réduite à '.$pct($C['pro']),
+                    "Jusqu’à {$L['pro']['products']} produits, {$L['pro']['stock']} articles en stock",
+                    "{$L['pro']['images']} photos par produit, {$L['pro']['smartlinks']} liens de paiement actifs",
+                    'Tailles, couleurs et promotions',
+                    'Factures à votre marque, sans Biolinko',
+                    'Pixels Facebook, TikTok et Google',
+                    '4 campagnes WhatsApp par mois',
+                    'Support prioritaire',
                 ],
             ],
             [
                 'id' => 'growth',
                 'name' => 'Growth',
                 'price' => User::planPrice('growth'),
-                'period' => 'FCFA / mois',
-                'badge' => 'Croissance',
-                'color' => 'indigo',
-                'max_products' => 250,
-                'max_stock' => 3000,
-                'whatsapp_recovery' => true,
-                'marketing_pixels' => true,
-                'priority_support' => true,
+                'tagline' => 'Pour accélérer vos ventes',
                 'features' => [
-                    'Jusqu\'à 250 produits au catalogue',
-                    'Capacité de stock cumulé : 3 000 articles',
-                    'Toutes les fonctionnalités Pro incluses',
-                    '⚡ Relances automatiques WhatsApp des paniers',
-                    'Campagnes WhatsApp + SmartLinks : 10 / mois (40 clients max)',
-                    'Module Statistiques & Ventes avancées',
-                    'Retraits Mobile Money prioritaires (< 4h)',
-                    'Accompagnement Stratégique Vente',
+                    'Tout le plan Pro',
+                    'Commission réduite à '.$pct($C['growth']),
+                    "Jusqu’à {$L['growth']['products']} produits, {$fmt($L['growth']['stock'])} articles en stock",
+                    'Liens de paiement illimités',
+                    'Relance automatique des paniers',
+                    '10 campagnes WhatsApp par mois',
                 ],
             ],
             [
                 'id' => 'business',
                 'name' => 'Business',
                 'price' => User::planPrice('business'),
-                'period' => 'FCFA / mois',
-                'badge' => 'Illimité VIP',
-                'color' => 'emerald',
-                'max_products' => 99999,
-                'max_stock' => 999999,
-                'whatsapp_recovery' => true,
-                'marketing_pixels' => true,
-                'priority_support' => true,
+                'tagline' => 'Pour les marques établies',
                 'features' => [
-                    'Catalogue Produits ILLIMITÉ (99 999)',
-                    'Capacité de stock ILLIMITÉE',
-                    'Toutes les fonctionnalités Growth incluses',
-                    'Campagnes WhatsApp + SmartLinks : 25 / mois (100 clients max)',
-                    'Flux Notifications WhatsApp haute priorité',
-                    'Retraits Mobile Money en Temps Réel instantanés',
-                    'Exportation comptable des commandes (CSV / Excel)',
-                    'Multi-thèmes vitrines (jusqu\'à 10 templates)',
-                    'Account Manager & Conseiller VIP Dédié 24h/24',
+                    'Tout le plan Growth',
+                    'Commission réduite à '.$pct($C['business']),
+                    'Produits et stock illimités',
+                    'Export comptable CSV et Excel',
+                    '25 campagnes WhatsApp par mois',
+                    'Conseiller dédié',
                 ],
             ],
         ];
@@ -135,14 +102,14 @@ class SubscriptionController extends Controller
                 'badge' => null,
             ],
             [
-                'months' => 6,
-                'label' => 'Semestriel (6 mois)',
-                'discount_percent' => 10,
-                'badge' => '-10% de réduction',
-            ],
-            [
                 'months' => 12,
                 'label' => 'Annuel (1 an)',
+                'discount_percent' => 15,
+                'badge' => '-15% de réduction',
+            ],
+            [
+                'months' => 24,
+                'label' => '2 ans',
                 'discount_percent' => 20,
                 'badge' => '-20% de réduction',
             ],
@@ -168,10 +135,17 @@ class SubscriptionController extends Controller
                 'days_remaining' => $user->getDaysRemaining(),
                 'is_active' => $user->isSubscriptionActive(),
                 'max_products' => $user->getPlanMaxProducts(),
+                'products_count' => $store ? $store->products()->count() : 0,
+                // Jours offerts si le vendeur passe à ce plan (conversion des jours restants)
+                'conversion_days' => collect(['pro', 'growth', 'business'])->mapWithKeys(fn ($p) => [$p => $user->planConversionDays($p)]),
             ],
             'plans' => $plans,
+            'upgradeHint' => $user->upgradeSavings(),
             'cycles' => $cycles,
             'history' => $history,
+            // Plan choisi sur la landing (?plan=pro) : la page ouvre directement son paiement
+            'intendedPlan' => in_array($request->query('plan'), ['pro', 'growth', 'business'], true) ? $request->query('plan') : null,
+            'simulation' => $this->isSimulation(),
         ]);
     }
 
@@ -181,7 +155,7 @@ class SubscriptionController extends Controller
             'plan' => ['required', 'string', 'in:starter,pro,growth,business'],
             'phone_momo' => ['required', 'string', 'max:50'],
             'operator' => ['nullable', 'string', 'in:MTN,ORANGE,mtn,orange'],
-            'cycle' => ['nullable', 'integer', 'in:1,6,12'],
+            'cycle' => ['nullable', 'integer', 'in:1,12,24'],
         ]);
 
         $user = $request->user();
@@ -206,8 +180,8 @@ class SubscriptionController extends Controller
 
         // Apply discount percentage based on billing cycle
         $discountRate = match ($cycleMonths) {
-            6 => 0.10,  // -10%
-            12 => 0.20, // -20%
+            12 => 0.15, // -15 % sur 1 an
+            24 => 0.20, // -20 % sur 2 ans
             default => 0.0,
         };
 
@@ -215,12 +189,12 @@ class SubscriptionController extends Controller
 
         // Validate Cameroon MoMo phone number
         try {
-            $formattedPhone = $this->hrSkillsPay->formatCameroonPhone($validated['phone_momo']);
+            $formattedPhone = Countries::formatPhone($user->store?->country ?: 'CM', $validated['phone_momo']);
         } catch (\InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
         }
 
-        $operatorChoice = $validated['operator'] ?? $this->hrSkillsPay->detectOperator($formattedPhone);
+        $operatorChoice = $validated['operator'] ?? Countries::detectOperator($user->store?->country ?: 'CM', $formattedPhone);
 
         // Create Pending Subscription Record
         $subscription = Subscription::create([
@@ -234,81 +208,54 @@ class SubscriptionController extends Controller
             'ends_at' => now()->addMonths($cycleMonths),
         ]);
 
-        // Initiate HR-Skills Pay Mobile Money Cash-In
-        try {
-            $url = config('services.hrskills_pay.base_url').'/api/v1/payin/mobile-money';
-            $token = $this->hrSkillsPay->getTransactionToken();
-            $idempotencyKey = (string) Str::uuid();
-
-            $cycleLabel = match ($cycleMonths) {
-                6 => '6 mois (-10%)',
-                12 => '1 an (-20%)',
-                default => '1 mois',
-            };
-
-            $payload = [
-                'operator' => $operatorChoice,
-                'country' => 'CM',
-                'phone_number' => $formattedPhone,
-                'amount' => (int) $totalPrice,
-                'currency' => 'XAF',
-                'description' => 'Abonnement BIOLINKO Plan '.ucfirst($targetPlan).' ('.$cycleLabel.')',
-                'metadata' => [
-                    'subscription_id' => $subscription->id,
-                    'user_id' => $user->id,
-                    'plan' => $targetPlan,
-                    'billing_cycle' => $cycleMonths,
-                ],
-            ];
-
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer '.config('services.hrskills_pay.public_key'),
-                'X-Transaction-Token' => $token,
-                'Idempotency-Key' => $idempotencyKey,
-                'Content-Type' => 'application/json',
-            ])->post($url, $payload);
-
-            if ($response->failed()) {
-                $resJson = $response->json();
-                $msg = $resJson['message'] ?? $resJson['error'] ?? 'Échec d\'initiation du paiement Mobile Money.';
-                throw new \RuntimeException($msg);
-            }
-
-            $resData = $response->json();
-            $data = $resData['data'] ?? $resData;
-
-            $subscription->update([
-                'hrskills_reference' => $data['reference'] ?? null,
-                'hrskills_transaction_id' => $data['transaction_id'] ?? null,
-            ]);
+        // Mode simulation : aucune demande n'est envoyée à l'opérateur, le paiement est confirmé au contrôle suivant
+        if ($this->isSimulation()) {
+            $reference = 'SIM-'.Str::upper(Str::random(12));
+            $subscription->update(['payment_provider' => 'simulation', 'payment_reference' => $reference]);
 
             return response()->json([
                 'success' => true,
                 'requires_ussd' => true,
-                'reference' => $data['reference'],
+                'simulated' => true,
+                'reference' => $reference,
                 'amount' => $totalPrice,
-                'operator' => $operatorChoice,
+                'operator' => strtoupper($operatorChoice),
                 'phone' => $formattedPhone,
                 'plan_name' => ucfirst($targetPlan),
                 'cycle_months' => $cycleMonths,
             ]);
+        }
 
-        } catch (\Exception $e) {
-            Log::error('Subscription HR-Skills Payin Error', ['user_id' => $user->id, 'err' => $e->getMessage()]);
+        // Demande de paiement Mobile Money (agrégateur configuré)
+        try {
+            $result = $this->subscriptionPayments->start($subscription, $formattedPhone, strtoupper($operatorChoice));
+        } catch (\Throwable $e) {
+            Log::error('Subscription payment start failed', ['user_id' => $user->id, 'err' => $e->getMessage()]);
             $subscription->update(['payment_status' => 'failed']);
 
             return response()->json([
                 'success' => false,
-                'error' => 'Échec du paiement Mobile Money : '.$e->getMessage(),
+                'error' => $e instanceof PaymentException || $e instanceof \InvalidArgumentException ? $e->getMessage() : 'Le paiement n’a pas pu être lancé. Réessayez dans un instant.',
             ], 422);
         }
+
+        return response()->json([
+            'success' => true,
+            'requires_ussd' => true,
+            'reference' => $result['reference'],
+            'amount' => $totalPrice,
+            'operator' => strtoupper($operatorChoice),
+            'phone' => $formattedPhone,
+            'plan_name' => ucfirst($targetPlan),
+            'cycle_months' => $cycleMonths,
+        ]);
     }
 
     public function checkStatus(Request $request, string $reference): JsonResponse
     {
-        $subscription = Subscription::where('hrskills_reference', $reference)->first();
+        $subscription = Subscription::where('payment_reference', $reference)->orWhere('hrskills_reference', $reference)->first();
 
-        if (! $subscription) {
+        if (! $subscription || $subscription->user_id !== $request->user()->id) {
             return response()->json(['status' => 'NOT_FOUND', 'paid' => false], 404);
         }
 
@@ -320,54 +267,42 @@ class SubscriptionController extends Controller
             ]);
         }
 
-        // Poll HR-Skills Pay Status
-        try {
-            $liveData = $this->hrSkillsPay->checkPaymentStatus($reference);
-            $liveStatus = strtoupper($liveData['status'] ?? 'PENDING');
-
-            if ($liveStatus === 'SUCCESS') {
-                $subscription->update([
-                    'payment_status' => 'paid',
-                ]);
-
-                $user = $subscription->user;
-                $months = $subscription->billing_cycle ?? 1;
-
-                // Extend subscription expiration date from now (or current expiry if still active)
-                $currentExpiry = ($user->subscription_expires_at && $user->subscription_expires_at->isFuture())
-                    ? $user->subscription_expires_at
-                    : now();
-
-                $newExpiry = $currentExpiry->copy()->addMonths($months);
-
-                $user->update([
-                    'plan' => $subscription->plan,
-                    'subscription_expires_at' => $newExpiry,
-                ]);
-
-                return response()->json([
-                    'status' => 'SUCCESS',
-                    'paid' => true,
-                    'message' => 'Abonnement '.ucfirst($subscription->plan).' activé avec succès pour '.$months.' mois !',
-                ]);
+        // Paiement simulé : validé quelques secondes après la demande, comme une vraie confirmation USSD
+        if (str_starts_with($reference, 'SIM-')) {
+            if ($subscription->created_at->diffInSeconds(now()) < 4) {
+                return response()->json(['status' => 'PENDING', 'paid' => false]);
             }
 
-            if ($liveStatus === 'FAILED') {
-                $subscription->update(['payment_status' => 'failed']);
-
-                return response()->json([
-                    'status' => 'FAILED',
-                    'paid' => false,
-                    'message' => 'Paiement d\'abonnement annulé ou décliné.',
-                ]);
-            }
-        } catch (\Exception $e) {
-            Log::warning('Subscription status poll error', ['ref' => $reference, 'err' => $e->getMessage()]);
+            return $this->activate($subscription);
         }
 
+        $status = $this->subscriptionPayments->refresh($subscription);
+
+        if ($status === 'SUCCESS') {
+            return $this->activate($subscription->fresh());
+        }
+        if ($status === 'FAILED') {
+            return response()->json(['status' => 'FAILED', 'paid' => false, 'message' => 'Paiement d’abonnement annulé ou refusé.']);
+        }
+
+        return response()->json(['status' => 'PENDING', 'paid' => false]);
+    }
+
+    private function isSimulation(): bool
+    {
+        // Jamais de paiement simulé en production, même si la variable est oubliée
+        return config('services.hrskills_pay.subscription_mode') === 'simulation' && ! app()->environment('production');
+    }
+
+    private function activate(Subscription $subscription): JsonResponse
+    {
+        $subscription->activate();
+        $months = $subscription->billing_cycle ?? 1;
+
         return response()->json([
-            'status' => 'PENDING',
-            'paid' => false,
+            'status' => 'SUCCESS',
+            'paid' => true,
+            'message' => 'Abonnement '.ucfirst($subscription->plan).' activé pour '.$months.' mois !',
         ]);
     }
 }

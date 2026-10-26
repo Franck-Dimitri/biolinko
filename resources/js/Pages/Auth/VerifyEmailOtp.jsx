@@ -1,87 +1,50 @@
-import GuestLayout from '@/Layouts/GuestLayout';
-import PrimaryButton from '@/Components/PrimaryButton';
-import { Head, useForm } from '@inertiajs/react';
-import { Mail, ShieldCheck, ArrowRight, RefreshCw, KeyRound } from 'lucide-react';
+import InputError from '@/Components/InputError';
+import AuthShell, { primaryButtonClass } from '@/Components/AuthShell';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { ArrowRight, Loader2, RefreshCw } from 'lucide-react';
 
 export default function VerifyEmailOtp({ email, status }) {
-    const { data, setData, post, processing, errors } = useForm({
-        otp: '',
-    });
+    const { data, setData, post, processing, errors } = useForm({ otp: '' });
+    const resend = useForm({});
 
     const submit = (e) => {
         e.preventDefault();
         post(route('verification.verify_otp'));
     };
 
-    const handleResend = (e) => {
-        e.preventDefault();
-        post(route('verification.resend_otp'));
-    };
-
     return (
-        <GuestLayout>
-            <Head title="Vérification par Code OTP — BIOLINKO" />
-
-            <div className="space-y-6">
-                <div className="text-center space-y-2">
-                    <div className="w-14 h-14 rounded-2xl bg-[#FFCC00] text-slate-950 font-bold flex items-center justify-center mx-auto shadow-md">
-                        <KeyRound className="w-7 h-7 text-slate-950" />
-                    </div>
-                    <h2 className="text-xl font-black text-slate-950">Vérification de votre E-mail</h2>
-                    <p className="text-xs text-slate-600 font-medium max-w-sm mx-auto">
-                        Un code de sécurité à 6 chiffres a été envoyé à l'adresse <strong className="text-slate-900">{email}</strong>. Saisissez-le ci-dessous pour activer votre compte vendeur BIOLINKO.
-                    </p>
-                </div>
-
-                {status && (
-                    <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800 text-center">
-                        {status}
-                    </div>
-                )}
+        <>
+            <Head title="Vérifier votre e-mail, Biolinko" />
+            <AuthShell
+                title="Vérifiez votre e-mail"
+                subtitle={<>Saisissez le code à 6 chiffres envoyé à <strong className="font-medium text-[#141412] [overflow-wrap:anywhere]">{email}</strong>. Il est valable 15 minutes.</>}
+                footer={<>Mauvaise adresse ? <Link href={route('logout')} method="post" as="button" className="font-medium text-[#141412] underline underline-offset-4">Se déconnecter</Link> et recommencer l’inscription.</>}
+            >
+                {status && <div className="mb-6 rounded-xl bg-[#F0FDF4] p-4 text-[14px] text-[#15803D]">{status}</div>}
 
                 <form onSubmit={submit} className="space-y-5">
                     <div>
-                        <label className="block text-xs font-bold text-slate-800 text-center mb-2">
-                            Code de Vérification à 6 Chiffres *
-                        </label>
-                        <input
-                            type="text"
-                            maxLength={6}
-                            required
-                            autoFocus
-                            placeholder="000000"
-                            value={data.otp}
+                        <label htmlFor="otp" className="sr-only">Code de vérification</label>
+                        <input id="otp" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} required autoFocus
+                            placeholder="000000" value={data.otp}
                             onChange={(e) => setData('otp', e.target.value.replace(/[^0-9]/g, ''))}
-                            className="w-full text-center tracking-[12px] text-2xl font-black px-4 py-3.5 rounded-2xl border border-slate-200 focus:border-amber-400 outline-none text-slate-900 font-mono shadow-inner"
-                        />
-                        {errors.otp && (
-                            <p className="text-xs text-rose-600 font-medium text-center mt-1.5">{errors.otp}</p>
-                        )}
+                            className="h-14 w-full rounded-xl border border-black/10 bg-white px-4 text-center font-mono text-[24px] tracking-[0.5em] text-[#141412] placeholder:text-[#D4D3CD] focus:border-black/30 focus:ring-0" />
+                        <InputError message={errors.otp} className="mt-1.5" />
                     </div>
 
-                    <PrimaryButton
-                        className="w-full py-3.5 rounded-2xl bg-[#FFCC00] hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
-                        disabled={processing || data.otp.length < 6}
-                        processing={processing}
-                        loadingText="Vérification en cours..."
-                    >
-                        <span>Valider et Activer Mon Compte</span>
-                        <ArrowRight className="w-4 h-4" />
-                    </PrimaryButton>
+                    <button type="submit" disabled={processing || data.otp.length < 6} className={primaryButtonClass}>
+                        {processing ? <><Loader2 className="h-4 w-4 animate-spin" /> Vérification…</> : <>Activer mon compte <ArrowRight className="h-4 w-4" /></>}
+                    </button>
                 </form>
 
-                <div className="pt-4 border-t border-slate-100 text-center space-y-2">
-                    <p className="text-xs text-slate-500 font-medium">Vous n'avez pas reçu le code ?</p>
-                    <button
-                        onClick={handleResend}
-                        disabled={processing}
-                        className="text-xs font-bold text-amber-900 hover:text-amber-800 underline inline-flex items-center gap-1"
-                    >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                        <span>Renvoyer un nouveau code OTP</span>
+                <p className="mt-6 text-center text-[14px] text-[#5F5E58]">
+                    Pas reçu ? Vérifiez vos spams, ou{' '}
+                    <button type="button" disabled={resend.processing} onClick={() => resend.post(route('verification.resend_otp'), { preserveScroll: true })}
+                        className="inline-flex items-center gap-1 font-medium text-[#141412] underline underline-offset-4 disabled:opacity-50">
+                        <RefreshCw className={`h-3.5 w-3.5 ${resend.processing ? 'animate-spin' : ''}`} /> renvoyer un code
                     </button>
-                </div>
-            </div>
-        </GuestLayout>
+                </p>
+            </AuthShell>
+        </>
     );
 }

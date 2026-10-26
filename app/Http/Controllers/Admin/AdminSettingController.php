@@ -14,7 +14,10 @@ class AdminSettingController extends Controller
 {
     public function index(Request $request, WhatsappGatewayService $gateway): Response
     {
-        $whatsappStatus = $gateway->getInstanceStatus();
+        $cloud = $gateway->cloud();
+        $whatsappStatus = $cloud
+            ? ['instance' => 'API officielle Meta', 'state' => $cloud->isConfigured() ? 'open' : 'close']
+            : $gateway->getInstanceStatus();
 
         $settings = [
             'platform_fee_percent' => 2.0,
@@ -23,7 +26,7 @@ class AdminSettingController extends Controller
             'whatsapp_gateway_url' => config('services.whatsapp_gateway.base_url', 'https://evolutionapi.mrdims.dev'),
             'whatsapp_default_instance' => config('services.whatsapp_gateway.default_instance', 'test_dims'),
             'hrskills_pay_url' => config('services.hrskills_pay.base_url', 'https://api.hrskills-pay.com'),
-            'support_email' => 'support@biolinko.app',
+            'support_email' => 'support@biolinko.link',
             'system_status' => 'operational',
             'whatsapp_bot' => [
                 'instance' => $whatsappStatus['instance'] ?? 'test_dims',
@@ -93,7 +96,10 @@ class AdminSettingController extends Controller
         
         $msg = $customText ?: "🚀 *Test Biolinko Bot Réussi !*\n\nLe Bot officiel Biolinko est 100% opérationnel et prêt à distribuer les notifications.";
 
-        $res = $gateway->sendMessage($phone, $msg);
+        // API officielle : hors conversation ouverte, seul un modèle passe ; hello_world existe sur tout compte
+        $res = ($cloud = $gateway->cloud()) && ! $customText
+            ? $cloud->sendTemplate($gateway->formatPhone($phone), 'hello_world', [], null, 'en_US')
+            : $gateway->sendMessage($phone, $msg);
 
         return response()->json($res);
     }

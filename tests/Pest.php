@@ -16,6 +16,11 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
+    ->beforeEach(function () {
+        // Aucun appel réel aux API de paiement ou de messagerie, et pas de PDF générés pour rien
+        \Illuminate\Support\Facades\Http::preventStrayRequests();
+        \Illuminate\Support\Facades\Mail::fake();
+    })
     ->in('Feature');
 
 /*

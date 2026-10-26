@@ -15,11 +15,13 @@ class Wallet extends Model
         'store_id',
         'balance_available',
         'balance_pending',
+        'balance_held',
     ];
 
     protected $casts = [
         'balance_available' => 'decimal:2',
         'balance_pending' => 'decimal:2',
+        'balance_held' => 'decimal:2',
     ];
 
     public function store(): BelongsTo

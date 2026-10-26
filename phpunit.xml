@@ -32,5 +32,11 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="INERTIA_SSR_ENABLED" value="false"/>
+        <env name="PAYMENT_DRIVER" value="pawapay"/>
+        <env name="PAWAPAY_ENV" value="sandbox"/>
+        <env name="PAWAPAY_API_TOKEN" value="test-token"/>
+        <env name="WHATSAPP_DRIVER" value="cloud"/>
+        <env name="WHATSAPP_CLOUD_TOKEN" value=""/>
     </php>
 </phpunit>

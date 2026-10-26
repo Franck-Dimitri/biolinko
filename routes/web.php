@@ -49,6 +49,11 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function (Request $re
         return redirect()->route('admin.dashboard');
     }
 
+    // Plan choisi sur la landing avant connexion / inscription : on reprend l'abonnement
+    if ($plan = \App\Support\PlanIntent::pull($request)) {
+        return redirect()->route('seller.subscriptions.index', ['plan' => $plan]);
+    }
+
     return redirect()->route('seller.dashboard');
 })->name('dashboard');
 
@@ -108,7 +113,6 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
     // Appearance / Store Customization
     Route::get('/appearance', [AppearanceController::class, 'index'])->name('appearance.index');
     Route::post('/appearance', [AppearanceController::class, 'update'])->name('appearance.update');
-    Route::post('/appearance/reviews', [AppearanceController::class, 'storeReview'])->name('appearance.reviews.store');
     Route::patch('/appearance/reviews/{review}/toggle', [AppearanceController::class, 'toggleReviewFeatured'])->name('appearance.reviews.toggle');
     Route::delete('/appearance/reviews/{review}', [AppearanceController::class, 'destroyReview'])->name('appearance.reviews.destroy');
 
@@ -123,6 +127,7 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/export', [SalesReportController::class, 'export'])->middleware('plan:business')->name('orders.export');
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    Route::post('/orders/{order}/report/respond', [OrderController::class, 'respondToReport'])->name('orders.report.respond');
 
     // Wallet & Cashout Management
     Route::get('/wallet', [WalletController::class, 'index'])->name('seller.wallet.index');
@@ -167,21 +172,29 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Webhook Endpoints (CSRF Exempted in bootstrap/app.php)
+Route::post('/api/webhooks/pawapay/deposits', [\App\Http\Controllers\PawapayWebhookController::class, 'deposits'])->name('webhooks.pawapay.deposits');
+Route::post('/api/webhooks/pawapay/payouts', [\App\Http\Controllers\PawapayWebhookController::class, 'payouts'])->name('webhooks.pawapay.payouts');
+Route::post('/api/webhooks/pawapay/refunds', [\App\Http\Controllers\PawapayWebhookController::class, 'refunds'])->name('webhooks.pawapay.refunds');
 Route::post('/api/webhooks/hrskills-pay', [HrSkillsPayWebhookController::class, 'handle'])->name('webhooks.hrskills-pay');
 Route::post('/api/webhooks/whatsapp', [WhatsappWebhookController::class, 'handle'])->name('webhooks.whatsapp');
+Route::get('/api/webhooks/whatsapp-cloud', [\App\Http\Controllers\WhatsappCloudWebhookController::class, 'verify'])->name('webhooks.whatsapp-cloud.verify');
+Route::post('/api/webhooks/whatsapp-cloud', [\App\Http\Controllers\WhatsappCloudWebhookController::class, 'handle'])->name('webhooks.whatsapp-cloud');
 
 // Public Client Fast Checkout & Order Tracking & Customer Lookup
-Route::get('/checkout/lookup-customer', [CheckoutController::class, 'lookupCustomer'])->name('checkout.lookupCustomer');
-Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
+Route::get('/checkout/lookup-customer', [CheckoutController::class, 'lookupCustomer'])->middleware('throttle:20,1')->name('checkout.lookupCustomer');
+Route::post('/checkout', [CheckoutController::class, 'process'])->middleware('throttle:10,1')->name('checkout.process');
 Route::get('/checkout/status/{reference}', [CheckoutController::class, 'checkStatus'])->name('checkout.status');
 Route::get('/track/{tracking_code}', [OrderTrackingController::class, 'show'])->name('order.track');
+Route::post('/track/{tracking_code}/report', [OrderTrackingController::class, 'report'])->middleware('throttle:3,1')->name('order.report');
+Route::post('/track/{tracking_code}/report/resolve', [OrderTrackingController::class, 'resolve'])->middleware('throttle:5,1')->name('order.report.resolve');
+Route::post('/track/{tracking_code}/pay', [OrderTrackingController::class, 'pay'])->middleware('throttle:5,1')->name('order.pay');
 
 // Public SmartLink Fast Checkout Pages
 Route::get('/pay/{code}', [SmartLinkController::class, 'showPublic'])->name('smartlink.show');
 Route::get('/pay/sl/{code}', [SmartLinkController::class, 'showPublic']);
 Route::get('/store/{store_slug}/pay/sl/{code}', [SmartLinkController::class, 'showPublicByStore'])->name('smartlink.showByStore');
 Route::get('/{store_slug}/pay/sl/{code}', [SmartLinkController::class, 'showPublicByStore']);
-Route::post('/pay/{code}/checkout', [SmartLinkController::class, 'processPublicCheckout'])->name('smartlink.checkout');
+Route::post('/pay/{code}/checkout', [SmartLinkController::class, 'processPublicCheckout'])->middleware('throttle:10,1')->name('smartlink.checkout');
 
 // Public Legal Pages (Terms, Privacy, Cookies)
 Route::get('/conditions-generales', function () {
@@ -212,6 +225,6 @@ Route::get('/cookies', function () {
 require __DIR__.'/auth.php';
 
 // Public Storefront Catch-All (MUST BE ABSOLUTELY LAST)
-Route::post('/{store_slug}/reviews', [StorefrontController::class, 'submitReview'])->name('storefront.reviews.store');
+Route::post('/{store_slug}/reviews', [StorefrontController::class, 'submitReview'])->middleware('throttle:5,1')->name('storefront.reviews.store');
 Route::get('/{store_slug}/p/{product_slug}', [StorefrontController::class, 'showProduct'])->name('storefront.product.show');
 Route::get('/{store_slug}', [StorefrontController::class, 'show'])->name('storefront.show');

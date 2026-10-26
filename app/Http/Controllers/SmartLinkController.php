@@ -2,12 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\SmartLink;
 
-use App\Services\HrSkillsPayService;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Auth;
@@ -18,12 +15,6 @@ use Inertia\Response;
 
 class SmartLinkController extends Controller
 {
-    protected HrSkillsPayService $hrSkillsPay;
-
-    public function __construct(HrSkillsPayService $hrSkillsPay)
-    {
-        $this->hrSkillsPay = $hrSkillsPay;
-    }
 
     /**
      * Seller SmartLinks dashboard page.
@@ -79,7 +70,21 @@ class SmartLinkController extends Controller
             'topSmartLinks' => $topSmartLinks,
             'products' => $products,
             'stats' => $stats,
+            'maxActiveLinks' => $user->planLimit('smartlinks'),
         ]);
+    }
+
+    /**
+     * Nombre de liens actifs autorisé par le plan atteint ? (null = illimité)
+     */
+    private function activeLinksLimitReached($user, $store): ?string
+    {
+        $max = $user->planLimit('smartlinks');
+        if ($max !== null && SmartLink::where('store_id', $store->id)->where('is_active', true)->count() >= $max) {
+            return "Votre plan permet {$max} liens de paiement actifs. Désactivez-en un ou passez au plan supérieur.";
+        }
+
+        return null;
     }
 
     /**
@@ -92,6 +97,10 @@ class SmartLinkController extends Controller
 
         if (!$store) {
             return back()->with('error', 'Boutique introuvable.');
+        }
+
+        if ($limit = $this->activeLinksLimitReached($user, $store)) {
+            return back()->withErrors(['title' => $limit])->with('error', $limit);
         }
 
         $validated = $request->validate([
@@ -178,6 +187,10 @@ class SmartLinkController extends Controller
             abort(403);
         }
 
+        if (! $smartLink->is_active && ($limit = $this->activeLinksLimitReached($user, $user->store))) {
+            return back()->with('error', $limit);
+        }
+
         $smartLink->update([
             'is_active' => !$smartLink->is_active,
         ]);
@@ -217,7 +230,7 @@ class SmartLinkController extends Controller
 
         return Inertia::render('SmartLink/Show', [
             'smartLink' => $smartLink,
-            'store' => $smartLink->store,
+            'store' => $smartLink->store->forPublic(),
             'isValid' => $isValid,
         ]);
     }
@@ -232,85 +245,17 @@ class SmartLinkController extends Controller
 
     /**
      * Process Public Mobile Money Checkout for a SmartLink.
+     * Délègue au tunnel unique (CheckoutController) pour avoir les mêmes règles partout.
      */
     public function processPublicCheckout(Request $request, string $code)
     {
         $smartLink = SmartLink::where('code', $code)->firstOrFail();
 
-        if (!$smartLink->isValid()) {
-            return response()->json([
-                'status' => 'ERROR',
-                'message' => 'Ce lien de commande est expiré ou n\'est plus disponible.',
-            ], 422);
-        }
-
-        $validated = $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'customer_phone' => 'required|string|max:35',
-            'customer_email' => 'nullable|email|max:255',
-            'customer_city' => 'required|string|max:255',
-            'customer_address' => 'required|string|max:500',
-            'operator' => 'required|in:MTN,ORANGE',
-        ]);
-
-        $trackingCode = 'BLK-' . strtoupper(Str::random(6));
-        $totalAmount = (float) $smartLink->total_amount;
-
-        // Initiate HR-Skills Pay USSD Cash-In
-        $payResult = $this->hrSkillsPay->initiatePayment([
-            'amount' => $totalAmount,
-            'phone' => $validated['customer_phone'],
-            'operator' => $validated['operator'],
-            'reference' => 'smart_' . $trackingCode,
-            'description' => "Achat Pack {$smartLink->title} ({$smartLink->store->name})",
-        ]);
-
-        if (empty($payResult['success'])) {
-            return response()->json([
-                'status' => 'PAYMENT_FAILED',
-                'message' => $payResult['message'] ?? 'Échec de l\'initialisation du paiement Mobile Money.',
-            ], 400);
-        }
-
-        // Create Order Record
-        $order = Order::create([
+        $request->merge([
             'store_id' => $smartLink->store_id,
-            'tracking_code' => $trackingCode,
-            'customer_name' => $validated['customer_name'],
-            'customer_phone' => $validated['customer_phone'],
-            'customer_email' => $validated['customer_email'] ?? null,
-            'customer_city' => $validated['customer_city'],
-            'customer_address' => $validated['customer_address'],
-            'total_client' => $totalAmount,
-            'price_vendor' => $totalAmount,
-            'status' => 'pending',
-            'payment_status' => 'pending',
-            'payment_method' => $validated['operator'],
-            'payment_reference' => $payResult['reference'] ?? 'smart_' . $trackingCode,
-            'hrskills_reference' => $payResult['reference'] ?? 'smart_' . $trackingCode,
+            'smart_link_code' => $smartLink->code,
         ]);
 
-        // Create Order Items
-        foreach ($smartLink->items as $item) {
-            OrderItem::create([
-                'order_id' => $order->id,
-                'product_id' => $item['product_id'] ?? null,
-                'product_name' => $item['product_name'],
-                'quantity' => $item['quantity'],
-                'unit_price' => $item['unit_price'],
-                'line_total' => $item['line_total'],
-            ]);
-        }
-
-        // Increment SmartLink sales count
-        $smartLink->increment('sales_count');
-
-        return response()->json([
-            'status' => 'SUCCESS',
-            'message' => 'Demande USSD envoyée avec succès !',
-            'reference' => $payResult['reference'] ?? 'smart_' . $trackingCode,
-            'tracking_code' => $order->tracking_code,
-            'redirect_url' => route('order.track', $order->tracking_code),
-        ]);
+        return app(CheckoutController::class)->process($request);
     }
 }
