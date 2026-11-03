@@ -44,10 +44,15 @@ class PawapayWebhookController extends Controller
             ? Withdrawal::where('payment_reference', $id)->where('payment_provider', 'pawapay')->first()
             : null;
 
-        if ($withdrawal) {
+        // Retrait vendeur ou remboursement client (les deux sont des virements)
+        $operation = $withdrawal ?? (preg_match('/^[0-9a-f-]{36}$/i', $id)
+            ? \App\Models\Refund::where('payment_reference', $id)->where('payment_provider', 'pawapay')->first()
+            : null);
+
+        if ($operation) {
             $status = $payments->driver('pawapay')->payoutStatus($id);
             if ($status['status'] !== 'PENDING') {
-                $withdrawal->settle($status['status'] === 'SUCCESS', $status['transaction_id'] ?? null);
+                $operation->settle($status['status'] === 'SUCCESS', $status['transaction_id'] ?? null);
             }
         }
 

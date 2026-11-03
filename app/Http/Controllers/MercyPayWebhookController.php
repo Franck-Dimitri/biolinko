@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Refund;
 use App\Models\Subscription;
 use App\Models\Withdrawal;
 use App\Payments\OrderPayments;
@@ -49,6 +50,11 @@ class MercyPayWebhookController extends Controller
                 $status = $payments->driver('mercypay')->payoutStatus($uuid);
                 if ($status['status'] !== 'PENDING') {
                     $withdrawal->settle($status['status'] === 'SUCCESS', $status['transaction_id'] ?? null);
+                }
+            } elseif ($refund = Refund::where('payment_reference', $uuid)->where('payment_provider', 'mercypay')->first()) {
+                $status = $payments->driver('mercypay')->payoutStatus($uuid);
+                if ($status['status'] !== 'PENDING') {
+                    $refund->settle($status['status'] === 'SUCCESS', $status['transaction_id'] ?? null);
                 }
             }
         }

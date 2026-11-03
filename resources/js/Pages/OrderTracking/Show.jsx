@@ -282,6 +282,9 @@ export default function Show({ order, store, canReport = false, reportReasons = 
                             <dt className="font-semibold">{awaitingPayment || cancelled ? 'Total' : 'Total payé'}</dt>
                             <dd className="text-xl font-bold tabular-nums">{formatFcfa(order.total_client)}</dd>
                         </div>
+                        {Number(order.refunded_amount) > 0 && (
+                            <div className="flex justify-between font-medium text-[#15803D]"><dt>Remboursé sur votre Mobile Money</dt><dd className="tabular-nums">{formatFcfa(order.refunded_amount)}</dd></div>
+                        )}
                         {Number(order.balance_due) > 0 && (
                             <div className="flex justify-between font-medium text-[#141412]"><dt>{order.balance_collected_at ? 'Solde réglé à la livraison' : 'Reste à payer au livreur'}</dt><dd className="tabular-nums">{formatFcfa(order.balance_due)}</dd></div>
                         )}

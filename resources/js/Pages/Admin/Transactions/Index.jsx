@@ -1,7 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, Clock, ExternalLink, ReceiptText, TrendingUp, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, ExternalLink, ReceiptText, RotateCcw, TrendingUp, X, XCircle } from 'lucide-react';
+import RefundBox, { refundableOf } from '@/Components/Dashboard/RefundBox';
 import { Badge, Card, Empty, OrderStatus, PageHeader, Pagination, SearchInput, Stat, Table, Tabs, dateTime, fcfa } from '@/Components/Dashboard/UI';
 
 const PROVIDER = { mercypay: 'Mercy Pay', pawapay: 'pawaPay', hrskills: 'HR-Skills' };
@@ -11,6 +12,8 @@ export default function Index({ orders, metrics = {}, filters = {} }) {
     const [search, setSearch] = useState(filters.search || '');
     const first = useRef(true);
     const list = orders?.data || [];
+    const [refunding, setRefunding] = useState(null);
+    const current = refunding && list.find((o) => o.id === refunding);
 
     useEffect(() => {
         if (first.current) { first.current = false; return; }
@@ -32,6 +35,19 @@ export default function Index({ orders, metrics = {}, filters = {} }) {
                     <Stat label="En attente de paiement" value={metrics.pending_orders ?? 0} Icon={Clock} delay={0.06} />
                     <Stat label="Échouées ou annulées" value={metrics.cancelled_orders ?? 0} Icon={XCircle} delay={0.09} />
                 </div>
+
+                {current && (
+                    <Card>
+                        <div className="mb-3 flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                                <p className="font-mono text-[14px] text-[#141412]">{current.tracking_code}</p>
+                                <p className="text-[13px] text-[#8B8A83]">{current.store?.name} · {current.customer_name} · payé {fcfa(current.total_client)}</p>
+                            </div>
+                            <button type="button" onClick={() => setRefunding(null)} aria-label="Fermer" className="flex h-8 w-8 items-center justify-center rounded-full text-[#8B8A83] hover:bg-[#F2F1EC]"><X className="h-4 w-4" /></button>
+                        </div>
+                        <RefundBox order={current} endpoint={route('admin.transactions.refund', current.id)} admin />
+                    </Card>
+                )}
 
                 <Card padded={false}>
                     <div className="flex flex-col gap-3 border-b border-black/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -62,9 +78,11 @@ export default function Index({ orders, metrics = {}, filters = {} }) {
                                         <span className="flex flex-wrap gap-1.5">
                                             <OrderStatus status={o.status} />
                                             {o.is_manual ? <Badge>Facture manuelle</Badge> : null}
+                                            {Number(o.refunded_amount) > 0 && <Badge tone="danger">Remboursé {fcfa(o.refunded_amount)}</Badge>}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3.5">
+                                    <td className="flex items-center gap-1 px-4 py-3.5">
+                                        {(refundableOf(o) > 0 || o.refunds?.length > 0) && <button type="button" onClick={() => { setRefunding(o.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Rembourser" title="Rembourser" className="flex h-8 w-8 items-center justify-center rounded-full text-[#8B8A83] hover:bg-[#F2F1EC] hover:text-[#141412]"><RotateCcw className="h-4 w-4" /></button>}
                                         <a href={route('order.track', o.tracking_code)} target="_blank" rel="noreferrer" aria-label="Voir la page de suivi" className="flex h-8 w-8 items-center justify-center rounded-full text-[#8B8A83] hover:bg-[#F2F1EC] hover:text-[#141412]"><ExternalLink className="h-4 w-4" /></a>
                                     </td>
                                 </tr>

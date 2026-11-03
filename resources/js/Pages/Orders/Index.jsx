@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { AlertTriangle, ArrowRight, Clock, Copy, Download, FileText, MapPin, PackageCheck, Phone, ShoppingBag, Truck, Wallet, X } from 'lucide-react';
 import ExportSalesModal from '@/Components/ExportSalesModal';
+import RefundBox from '@/Components/Dashboard/RefundBox';
 import { WhatsappIcon } from '@/Components/BrandIcons';
 import {
     Badge, Button, Card, Empty, OrderStatus, PageHeader, SubPage, SearchInput, Stat, Table, Tabs, dateTime, fcfa, shortDate,
@@ -188,9 +189,12 @@ function OrderPanel({ order, store, onClose }) {
                             {Number(order.commission_amount) > 0 && <div className="flex justify-between text-[#5F5E58]"><dt>Commission Biolinko ({String(Number(order.commission_rate)).replace('.', ',')} %)</dt><dd className="tabular-nums">−{fcfa(order.commission_amount)}</dd></div>}
                             {Number(order.commission_amount) > 0 && <div className="flex justify-between font-medium text-[#15803D]"><dt>{Number(order.balance_due) > 0 ? 'Sur votre portefeuille' : 'Vous recevez'}</dt><dd className="tabular-nums">{fcfa(Number(order.price_vendor) - Number(order.balance_due || 0) - Number(order.commission_amount))}</dd></div>}
                             {Number(order.balance_due) > 0 && <div className={`flex justify-between font-medium ${order.balance_collected_at ? 'text-[#15803D]' : 'text-[#7A5B00]'}`}><dt>{order.balance_collected_at ? 'Solde encaissé à la livraison' : 'Solde à encaisser à la livraison'}</dt><dd className="tabular-nums">{fcfa(order.balance_due)}</dd></div>}
+                            {Number(order.refunded_amount) > 0 && <div className="flex justify-between text-[#B91C1C]"><dt>Remboursé au client</dt><dd className="tabular-nums">−{fcfa(order.refunded_amount)}</dd></div>}
                             <div className="flex justify-between font-medium text-[#141412]"><dt>Payé par le client</dt><dd className="tabular-nums">{fcfa(order.total_client)}</dd></div>
                         </dl>
                     </section>
+
+                    <RefundBox order={order} endpoint={route('orders.refund', order.id)} />
 
                     <section className="rounded-2xl bg-[#F6F5F1] p-4 text-[14px]">
                         <p className="text-[#5F5E58]">Lien de suivi envoyé au client</p>

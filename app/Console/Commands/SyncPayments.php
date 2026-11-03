@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Order;
+use App\Models\Refund;
 use App\Models\Subscription;
 use App\Models\Withdrawal;
 use App\Payments\OrderPayments;
@@ -37,6 +38,14 @@ class SyncPayments extends Command
                 $status = $payments->driver($w->payment_provider)->payoutStatus($w->payment_reference);
                 if ($status['status'] !== 'PENDING') {
                     $done += (int) $w->settle($status['status'] === 'SUCCESS', $status['transaction_id'] ?? null);
+                }
+            });
+
+        Refund::where('status', 'processing')->whereNotNull('payment_provider')->where('updated_at', '<', now()->subMinutes(2))
+            ->each(function (Refund $r) use ($payments, &$done) {
+                $status = $payments->driver($r->payment_provider)->payoutStatus($r->payment_reference);
+                if ($status['status'] !== 'PENDING') {
+                    $done += (int) $r->settle($status['status'] === 'SUCCESS', $status['transaction_id'] ?? null);
                 }
             });
 

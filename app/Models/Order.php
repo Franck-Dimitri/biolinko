@@ -58,6 +58,7 @@ class Order extends Model
         'promo_code',
         'balance_due',
         'balance_collected_at',
+        'refunded_amount',
     ];
 
     protected $casts = [
@@ -75,6 +76,7 @@ class Order extends Model
         'discount_amount' => 'decimal:2',
         'delivery_fee' => 'decimal:2',
         'balance_due' => 'decimal:2',
+        'refunded_amount' => 'decimal:2',
         'balance_collected_at' => 'datetime',
         'paid_at' => 'datetime',
         'invoice_issued_at' => 'datetime',
@@ -258,7 +260,7 @@ class Order extends Model
     public function sellerNet(): float
     {
         // Avec un acompte, seule la part payée en ligne passe par le portefeuille ; le solde est encaissé par le vendeur
-        return max(0, (float) $this->price_vendor - (float) $this->balance_due - (float) $this->commission_amount);
+        return max(0, (float) $this->price_vendor - (float) $this->balance_due - (float) $this->refunded_amount - (float) $this->commission_amount);
     }
 
     /** Ventes livrées à partir desquelles un vendeur est considéré comme établi. */
@@ -306,6 +308,11 @@ class Order extends Model
     {
         return $this->payment_status === 'paid' && ! $this->funds_released_at && ! $this->is_manual
             && $this->funds_release_at && $this->funds_release_at->isFuture();
+    }
+
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(Refund::class);
     }
 
     public function report(): HasOne

@@ -34,7 +34,7 @@ class OrderController extends Controller
         $statusFilter = $request->query('status', 'all');
         $search = trim((string) $request->query('search', ''));
 
-        $ordersQuery = Order::with(['items', 'report'])->where('store_id', $store->id);
+        $ordersQuery = Order::with(['items', 'report', 'refunds'])->where('store_id', $store->id);
 
         // Onglets de la vue : groupes de statuts
         $groups = [
@@ -151,5 +151,29 @@ class OrderController extends Controller
         $report->update(['status' => 'answered', 'seller_response' => $validated['response'], 'seller_responded_at' => now()]);
 
         return back()->with('success', 'Réponse envoyée. Sans réaction du client sous '.\App\Models\OrderReport::CUSTOMER_REPLY_DAYS.' jours, la vente sera libérée.');
+    }
+
+    /**
+     * Rembourse le client par virement Mobile Money (total ou partiel).
+     */
+    public function refund(Request $request, Order $order, \App\Payments\OrderRefunds $refunds): RedirectResponse
+    {
+        abort_unless($order->store_id === $request->user()->store?->id, 403);
+        $data = $request->validate([
+            'amount' => ['required', 'numeric', 'min:1'],
+            'reason' => ['required', 'string', 'min:3', 'max:500'],
+        ], ['reason.required' => 'Indiquez la raison du remboursement.']);
+
+        try {
+            $refund = $refunds->refund($order, (float) $data['amount'], $data['reason'], $request->user());
+        } catch (\App\Payments\PaymentException $e) {
+            return back()->withErrors(['refund' => $e->getMessage()]);
+        }
+
+        $amount = number_format((float) $refund->amount, 0, ',', ' ');
+
+        return back()->with('message', $refund->status === 'completed'
+            ? "Remboursement de {$amount} FCFA envoyé au client."
+            : "Remboursement de {$amount} FCFA en cours : le client le recevra dès la confirmation de l’opérateur.");
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,7 +16,7 @@ class AdminTransactionController extends Controller
         $statusFilter = $request->query('status', 'all');
         $search = trim($request->query('search', ''));
 
-        $query = Order::with(['store', 'items']);
+        $query = Order::with(['store', 'items', 'refunds']);
 
         match ($statusFilter) {
             'paid' => $query->where('payment_status', 'paid'),
@@ -55,5 +56,29 @@ class AdminTransactionController extends Controller
                 'search' => $search,
             ],
         ]);
+    }
+
+    /**
+     * Rembourse le client par virement Mobile Money (total ou partiel).
+     */
+    public function refund(Request $request, Order $order, \App\Payments\OrderRefunds $refunds): RedirectResponse
+    {
+        // Admin : arbitrage d'un litige
+        $data = $request->validate([
+            'amount' => ['required', 'numeric', 'min:1'],
+            'reason' => ['required', 'string', 'min:3', 'max:500'],
+        ], ['reason.required' => 'Indiquez la raison du remboursement.']);
+
+        try {
+            $refund = $refunds->refund($order, (float) $data['amount'], $data['reason'], $request->user());
+        } catch (\App\Payments\PaymentException $e) {
+            return back()->withErrors(['refund' => $e->getMessage()]);
+        }
+
+        $amount = number_format((float) $refund->amount, 0, ',', ' ');
+
+        return back()->with('message', $refund->status === 'completed'
+            ? "Remboursement de {$amount} FCFA envoyé au client."
+            : "Remboursement de {$amount} FCFA en cours : le client le recevra dès la confirmation de l’opérateur.");
     }
 }

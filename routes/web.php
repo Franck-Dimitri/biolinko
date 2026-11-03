@@ -94,6 +94,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
 
     // 8. Ventes & Transactions
     Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('admin.transactions.index');
+    Route::post('/transactions/{order}/refund', [AdminTransactionController::class, 'refund'])->middleware('throttle:10,1')->name('admin.transactions.refund');
 
     // 9. Paramètres Plateforme & API
     Route::get('/settings', [AdminSettingController::class, 'index'])->name('admin.settings.index');
@@ -124,6 +125,7 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/export', [SalesReportController::class, 'export'])->middleware('plan:business')->name('orders.export');
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    Route::post('/orders/{order}/refund', [OrderController::class, 'refund'])->middleware('throttle:10,1')->name('orders.refund');
     Route::post('/orders/{order}/report/respond', [OrderController::class, 'respondToReport'])->name('orders.report.respond');
 
     // Wallet & Cashout Management
