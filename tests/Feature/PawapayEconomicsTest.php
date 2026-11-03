@@ -94,3 +94,24 @@ test('l’admin envoie le virement net par pawaPay', function () {
     Http::assertSent(fn ($r) => $r['amount'] === '9700' && $r['recipient']['accountDetails']['provider'] === 'MTN_MOMO_CMR');
     expect($w->fresh()->status)->toBe('processing');
 });
+
+test('une commande sous 1 000 FCFA est refusée, au-delà elle passe', function () {
+    Http::fake(['api.sandbox.pawapay.io/*' => Http::response(['status' => 'ACCEPTED'])]);
+    $product = \App\Models\Product::create(['store_id' => $this->store->id, 'title' => 'Bonbon', 'slug' => 'bonbon', 'price_vendor' => 100, 'stock' => 50, 'min_order_quantity' => 1, 'is_active' => true]);
+    $base = ['store_id' => $this->store->id, 'customer_name' => 'Awa', 'customer_phone' => '699887766', 'delivery_address' => 'Akwa'];
+
+    $this->postJson(route('checkout.process'), $base + ['product_id' => $product->id, 'quantity' => 9])
+        ->assertStatus(422)->assertJsonFragment(['error' => 'Le montant minimum d’une commande est de 1 000 FCFA. Ajoutez un article ou augmentez la quantité.']);
+    expect(Order::where('store_id', $this->store->id)->count())->toBe(1); // seulement la commande du beforeEach
+
+    $this->postJson(route('checkout.process'), $base + ['product_id' => $product->id, 'quantity' => 10])->assertOk();
+});
+
+test('le chiffre d’affaires du tableau de bord compte aussi les commandes livrées', function () {
+    $this->order->markAsPaid();
+    $this->order->update(['status' => 'delivered']);
+
+    $props = $this->actingAs($this->seller)->get('/seller/dashboard')->viewData('page')['props'];
+    expect((float) $props['totalRevenue'])->toBe(10000.0);
+    expect((float) $props['totalNet'])->toBe(9300.0);
+});

@@ -259,7 +259,7 @@ export function InvoiceMock({ className = '' }) {
                 <span className="grid h-8 w-8 grid-cols-4 gap-px bg-white p-0.5">
                     {Array.from({ length: 16 }).map((_, i) => <span key={i} className={[0, 2, 3, 5, 6, 9, 10, 12, 15].includes(i) ? 'bg-[#141412]' : ''} />)}
                 </span>
-                Envoyée par WhatsApp et e-mail
+                Envoyée par e-mail
             </div>
         </div>
     );

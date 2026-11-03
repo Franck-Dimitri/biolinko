@@ -23,13 +23,13 @@ class DashboardController extends Controller
             ->get()
             ->map(function ($product) {
                 $pv = (float) $product->price_vendor;
-                $product->price_display = ceil($pv * 1.02);
+                $product->price_display = $pv + \App\Models\Order::clientFee($pv);
                 return $product;
             });
 
         $productsCount = $products->count();
         $ordersCount = $store->orders()->count();
-        $totalRevenue = (float) $store->orders()->where('status', 'paid')->sum('price_vendor');
+        $totalRevenue = (float) $store->orders()->paid()->sum('price_vendor');
         $recentOrders = $store->orders()->with('items')->latest()->take(5)->get();
 
         $wallet = $store->wallet;
@@ -37,9 +37,9 @@ class DashboardController extends Controller
         // Daily Sales Chart Data (Last 14 Days) - Optimized to 1 grouped query
         $startDate = Carbon::now()->subDays(13)->startOfDay();
         $salesAggregates = $store->orders()
-            ->where('status', 'paid')
-            ->where('created_at', '>=', $startDate)
-            ->selectRaw('DATE(created_at) as order_date, SUM(price_vendor) as total_revenue, COUNT(*) as total_orders')
+            ->paid()
+            ->where('paid_at', '>=', $startDate)
+            ->selectRaw('DATE(paid_at) as order_date, SUM(price_vendor) as total_revenue, COUNT(*) as total_orders')
             ->groupBy('order_date')
             ->get()
             ->keyBy(function ($item) {
@@ -63,7 +63,7 @@ class DashboardController extends Controller
         // Top 5 Selling Products
         $topProducts = OrderItem::select('product_title', DB::raw('SUM(quantity) as total_qty'), DB::raw('SUM(total_price_vendor) as total_revenue'))
             ->whereHas('order', function ($q) use ($store) {
-                $q->where('store_id', $store->id)->where('status', 'paid');
+                $q->where('store_id', $store->id)->paid();
             })
             ->groupBy('product_title')
             ->orderByDesc('total_qty')
@@ -98,6 +98,7 @@ class DashboardController extends Controller
             'productsCount' => $productsCount,
             'ordersCount' => $ordersCount,
             'totalRevenue' => $totalRevenue,
+            'totalNet' => $totalRevenue - (float) $store->orders()->paid()->sum('commission_amount'),
             'recentOrders' => $recentOrders,
             'setupChecklist' => $checklist,
             'completionPercentage' => $completionPercentage,

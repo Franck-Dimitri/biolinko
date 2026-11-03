@@ -159,6 +159,11 @@ class SmartLinkController extends Controller
         // Generate Unique Code
         $code = 'sl_' . Str::random(8);
 
+        $minOrder = \App\Payments\Countries::minOrder($store->country ?: 'CM');
+        if ($totalAmount < $minOrder) {
+            return back()->withErrors(['items' => 'Le prix du lien doit être d’au moins '.number_format($minOrder, 0, ',', ' ').' FCFA (montant minimum d’une commande).']);
+        }
+
         SmartLink::create([
             'store_id' => $store->id,
             'title' => $validated['title'],

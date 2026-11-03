@@ -1,289 +1,107 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-    Store, Search, ExternalLink, ShieldCheck, Filter, Crown, CheckCircle2, AlertCircle, ArrowUpRight, Zap, Check, ShieldAlert, Trash2
-} from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { AlertTriangle, ChevronRight, ExternalLink, Eye, EyeOff, FileEdit, Globe, Store } from 'lucide-react';
 import ModerationModal from '@/Components/Admin/ModerationModal';
+import { Badge, Button, Card, Empty, PageHeader, Pagination, SearchInput, Stat, Table, Tabs, fcfa, shortDate } from '@/Components/Dashboard/UI';
 
-export default function StoresIndex({ stores, metrics, filters }) {
-    const [search, setSearch] = useState(filters?.search || '');
-    const [plan, setPlan] = useState(filters?.plan || 'all');
+const planOf = (u) => (u?.plan || 'starter').replace(/^./, (c) => c.toUpperCase());
 
-    // Moderation modal state
-    const [moderateModal, setModerateModal] = useState({
-        isOpen: false,
-        store: null,
-    });
-    const [isModerating, setIsModerating] = useState(false);
+export default function Index({ stores, metrics = {}, filters = {} }) {
+    const [search, setSearch] = useState(filters.search || '');
+    const [target, setTarget] = useState(null);
+    const [busy, setBusy] = useState(false);
+    const first = useRef(true);
+    const list = stores?.data || [];
 
-    const handleConfirmModerate = ({ reason, action }) => {
-        if (!moderateModal.store) return;
-        setIsModerating(true);
-        router.post(route('admin.stores.moderate', moderateModal.store.id), {
-            action: action || 'suspend',
-            reason,
-        }, {
+    useEffect(() => {
+        if (first.current) { first.current = false; return; }
+        const t = setTimeout(() => router.get(route('admin.stores.index'), { search, status: filters.status }, { preserveState: true, replace: true }), 350);
+        return () => clearTimeout(t);
+    }, [search]);
+
+    const setStatus = (status) => router.get(route('admin.stores.index'), { search, status }, { preserveState: true, replace: true });
+
+    const republish = (s) => router.post(route('admin.stores.toggleStatus', s.id), {}, { preserveScroll: true, onSuccess: () => toast.success(`${s.name} est de nouveau en ligne.`) });
+
+    const suspend = ({ reason }) => {
+        setBusy(true);
+        router.post(route('admin.stores.moderate', target.id), { reason, action: 'suspend' }, {
             preserveScroll: true,
-            onSuccess: () => {
-                setIsModerating(false);
-                setModerateModal({ isOpen: false, store: null });
-                toast.success('Action de modération effectuée. Le vendeur a été notifié par email et WhatsApp.');
-            },
-            onError: (errs) => {
-                setIsModerating(false);
-                toast.error(errs?.reason || 'Erreur lors de la modération de la vitrine.');
-            },
+            onSuccess: () => { toast.success(`${target.name} est suspendue, le vendeur a été prévenu.`); setTarget(null); },
+            onFinish: () => setBusy(false),
         });
-    };
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        router.get(route('admin.stores.index'), { search, plan }, { preserveState: true });
-    };
-
-    const handlePlanFilter = (newPlan) => {
-        setPlan(newPlan);
-        router.get(route('admin.stores.index'), { search, plan: newPlan }, { preserveState: true });
     };
 
     return (
         <AuthenticatedLayout>
-            <Head title="Gestion des Boutiques — Administration BIOLINKO" />
-            <div hidden={moderateModal.isOpen}>
+            <Head title="Boutiques, Administration Biolinko" />
+            <div hidden={!!target} className="space-y-6 pb-12">
+                <PageHeader title="Boutiques" sub="Toutes les vitrines, leur état de publication et les signalements reçus." />
 
-            <div className="space-y-8 pb-12">
-                {/* HERO BANNER */}
-                <div className="p-6 sm:p-8 rounded-3xl bg-[#FFCC00] text-[#141412] shadow-xs border border-amber-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#141412] text-white text-[11px] font-semibold">
-                            <Store className="w-3.5 h-3.5 text-[#FFCC00]" /> GESTION DES BOUTIQUES RÉSEAU
-                        </div>
-                        <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
-                            Supervision &amp; Modération des Boutiques ({metrics?.total || 0})
-                        </h2>
-                        <p className="text-xs text-[#141412] font-medium">
-                            Gérez les accès, le statut de publication (brouillon vs public) et attribuez les plans tarifaires.
-                        </p>
-                    </div>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+                    <Stat label="Boutiques" value={metrics.total ?? 0} Icon={Store} />
+                    <Stat label="En ligne" value={metrics.published ?? 0} Icon={Globe} delay={0.03} />
+                    <Stat label="Brouillons" value={metrics.draft ?? 0} Icon={FileEdit} delay={0.06} />
+                    <Stat label="Avec signalements" value={metrics.reported ?? 0} Icon={AlertTriangle} accent={(metrics.reported ?? 0) > 0} delay={0.09} />
                 </div>
 
-                {/* 4 METRICS CARDS (EXACT STYLE FROM CAPTURE 2) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    
-                    {/* Total Boutiques */}
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Total Boutiques Créées</span>
-                            <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
-                                <Store className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
-                            {metrics?.total || 0} boutique(s)
-                        </div>
-                        <div className="text-[11px] text-[#8B8A83] font-medium">
-                            Réseau BIOLINKO
-                        </div>
+                <Card padded={false}>
+                    <div className="flex flex-col gap-3 border-b border-black/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <Tabs id="store-status" value={filters.status || 'all'} onChange={setStatus} tabs={[['all', 'Toutes'], ['published', 'En ligne'], ['draft', 'Brouillons'], ['reported', 'Signalées']]} />
+                        <SearchInput value={search} onChange={setSearch} placeholder="Boutique, adresse ou vendeur" className="sm:w-72" />
                     </div>
 
-                    {/* Publiées */}
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Boutiques En Ligne</span>
-                            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                                <CheckCircle2 className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-emerald-600">
-                            {metrics?.published || 0} en ligne
-                        </div>
-                        <div className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Vitrines actives
-                        </div>
-                    </div>
-
-                    {/* Starter */}
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Plan Starter (Gratuit)</span>
-                            <div className="w-8 h-8 rounded-xl bg-[#F2F1EC] text-[#3D3C37] flex items-center justify-center">
-                                <Zap className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
-                            {metrics?.starter || 0} boutique(s)
-                        </div>
-                        <div className="text-[11px] text-[#8B8A83] font-medium">
-                            Freemium
-                        </div>
-                    </div>
-
-                    {/* Pro & Growth */}
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Boutiques Pro / Growth</span>
-                            <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
-                                <Crown className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-amber-600">
-                            {(metrics?.pro || 0) + (metrics?.growth || 0) + (metrics?.business || 0)} payante(s)
-                        </div>
-                        <div className="text-[11px] text-amber-700 font-semibold">
-                            Abonnements actifs
-                        </div>
-                    </div>
-
-                </div>
-
-                {/* SEARCH & FILTER BAR */}
-                <div className="p-4 bg-white rounded-3xl border border-black/[0.08] shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <form onSubmit={handleSearch} className="w-full sm:w-96 relative">
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Rechercher une boutique, nom, vendeur..."
-                            className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#F6F5F1] border border-black/[0.08] text-xs font-medium focus:border-amber-400 outline-none"
-                        />
-                        <Search className="w-4 h-4 text-[#8B8A83] absolute left-3 top-1/2 -translate-y-1/2" />
-                    </form>
-
-                    <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 text-xs font-semibold">
-                        {['all', 'starter', 'pro', 'growth', 'business'].map((p) => (
-                            <button
-                                key={p}
-                                onClick={() => handlePlanFilter(p)}
-                                className={`px-3 py-1.5 rounded-xl uppercase transition-all cursor-pointer ${
-                                    plan === p 
-                                        ? 'bg-[#141412] text-white font-semibold shadow-2xs' 
-                                        : 'bg-[#F2F1EC] text-[#5F5E58] hover:bg-[#E9E7E0]'
-                                }`}
-                            >
-                                {p === 'all' ? 'Tous les plans' : p}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* STORES TABLE */}
-                <div className="bg-white rounded-3xl border border-black/[0.08] shadow-2xs overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse text-xs">
-                            <thead>
-                                <tr className="bg-[#F6F5F1] border-b border-black/[0.08] text-[#5F5E58] text-[10px] font-semibold">
-                                    <th className="py-4 px-6">Boutique</th>
-                                    <th className="py-4 px-6">Vendeur</th>
-                                    <th className="py-4 px-6">Plan SaaS</th>
-                                    <th className="py-4 px-6">Statut</th>
-                                    <th className="py-4 px-6">Produits</th>
-                                    <th className="py-4 px-6 text-right">Actions Modération</th>
+                    {list.length ? (
+                        <Table head={[['Boutique'], ['Vendeur'], ['Activité', 'text-right'], ['Solde', 'text-right'], ['État'], ['', 'w-44']]}>
+                            {list.map((s) => (
+                                <tr key={s.id} className="transition-colors hover:bg-[#FAFAF8]">
+                                    <td className="px-4 py-3.5">
+                                        <span className="flex items-center gap-3">
+                                            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F6F5F1]">{s.logo_url ? <img src={s.logo_url} alt="" className="h-full w-full object-cover" /> : <Store className="h-4 w-4 text-[#8B8A83]" />}</span>
+                                            <span className="min-w-0">
+                                                <span className="block max-w-[200px] truncate text-[#141412]">{s.name || 'Sans nom'}</span>
+                                                <span className="block text-[13px] text-[#8B8A83]">/{s.slug} · {shortDate(s.created_at)}</span>
+                                            </span>
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3.5">
+                                        {s.user ? (
+                                            <Link href={route('admin.users.show', s.user.id)} className="block hover:underline">
+                                                <span className="block max-w-[180px] truncate text-[#141412]">{s.user.name}</span>
+                                                <span className="text-[13px] text-[#8B8A83]">{planOf(s.user)}{s.user.is_banned ? ' · banni' : ''}</span>
+                                            </Link>
+                                        ) : '—'}
+                                    </td>
+                                    <td className="px-4 py-3.5 text-right text-[13px] text-[#5F5E58]">{s.products_count} produit{s.products_count > 1 ? 's' : ''}<br />{s.orders_count} commande{s.orders_count > 1 ? 's' : ''}</td>
+                                    <td className="px-4 py-3.5 text-right tabular-nums text-[#141412]">{fcfa(s.wallet?.balance_available || 0)}</td>
+                                    <td className="px-4 py-3.5">
+                                        <span className="flex flex-wrap gap-1.5">
+                                            <Badge tone={s.is_published ? 'success' : 'neutral'}>{s.is_published ? 'En ligne' : 'Brouillon'}</Badge>
+                                            {s.reports_count > 0 && <Badge tone={s.reports_count >= 3 ? 'danger' : 'warning'}>{s.reports_count} signalement{s.reports_count > 1 ? 's' : ''}</Badge>}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3.5">
+                                        <div className="flex items-center justify-end gap-1">
+                                            <a href={`/${s.slug}`} target="_blank" rel="noreferrer" aria-label="Voir la boutique" className="flex h-8 w-8 items-center justify-center rounded-full text-[#5F5E58] hover:bg-[#F2F1EC]"><ExternalLink className="h-4 w-4" /></a>
+                                            {s.is_published
+                                                ? <Button size="sm" variant="ghost" onClick={() => setTarget(s)}><EyeOff className="h-4 w-4" /> Suspendre</Button>
+                                                : <Button size="sm" onClick={() => republish(s)}><Eye className="h-4 w-4" /> Publier</Button>}
+                                            {s.user && <Link href={route('admin.users.show', s.user.id)} aria-label="Fiche du vendeur" className="flex h-8 w-8 items-center justify-center rounded-full text-[#8B8A83] hover:bg-[#F2F1EC] hover:text-[#141412]"><ChevronRight className="h-4 w-4" /></Link>}
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody className="divide-y divide-black/[0.06] font-medium">
-                                {stores.data && stores.data.length > 0 ? (
-                                    stores.data.map((st) => (
-                                        <tr key={st.id} className="hover:bg-[#F6F5F1]/80 transition-colors">
-                                            <td className="py-4 px-6">
-                                                <div className="font-semibold text-[#141412] text-sm">{st.name}</div>
-                                                <div className="text-amber-700 font-mono text-[11px]">biolinko.link/{st.slug}</div>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                {st.user_id ? (
-                                                    <Link 
-                                                        href={route('admin.users.show', st.user_id)}
-                                                        className="group block"
-                                                    >
-                                                        <div className="font-semibold text-[#141412] group-hover:text-amber-600 transition flex items-center gap-1">
-                                                            <span>{st.user?.name || 'N/A'}</span>
-                                                        </div>
-                                                        <div className="text-[#8B8A83] text-[11px] group-hover:underline">{st.user?.email}</div>
-                                                    </Link>
-                                                ) : (
-                                                    <div>
-                                                        <div className="font-semibold text-[#141412]">{st.user?.name || 'N/A'}</div>
-                                                        <div className="text-[#8B8A83] text-[11px]">{st.user?.email}</div>
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-semibold uppercase text-[10px]">
-                                                    {st.plan_type || 'starter'}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold ${
-                                                    st.is_published 
-                                                        ? 'bg-emerald-100 text-emerald-800' 
-                                                        : 'bg-amber-100 text-amber-800'
-                                                }`}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${st.is_published ? 'bg-emerald-600' : 'bg-amber-600'}`} />
-                                                    <span>{st.is_published ? 'Publiée' : 'Brouillon'}</span>
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-6 font-semibold text-[#3D3C37]">
-                                                {st.products_count || 0} produit(s)
-                                            </td>
-                                            <td className="py-4 px-6 text-right space-x-1.5 whitespace-nowrap">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setModerateModal({ isOpen: true, store: st })}
-                                                    className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 font-semibold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1 border border-amber-200"
-                                                >
-                                                    <ShieldAlert className="w-3.5 h-3.5 text-amber-700" /> Modérer
-                                                </button>
-                                                <Link
-                                                    href={route('admin.stores.toggleStatus', st.id)}
-                                                    method="post"
-                                                    as="button"
-                                                    className={`px-2.5 py-1.5 rounded-xl font-semibold text-[11px] transition-all cursor-pointer ${
-                                                        st.is_published 
-                                                            ? 'bg-[#F2F1EC] hover:bg-[#E9E7E0] text-[#3D3C37]' 
-                                                            : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                                                    }`}
-                                                >
-                                                    {st.is_published ? 'Masquer' : 'Publier'}
-                                                </Link>
-                                                <a
-                                                    href={`/${st.slug}`}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="px-2.5 py-1.5 rounded-xl bg-[#141412] hover:bg-[#2B2A26] text-white font-semibold text-[11px] inline-flex items-center gap-1"
-                                                >
-                                                    <span>Vitrine</span>
-                                                    <ExternalLink className="w-3 h-3 text-amber-400" />
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={6} className="py-12 text-center text-[#8B8A83] text-xs">
-                                            Aucune boutique trouvée pour les critères de recherche.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                            ))}
+                        </Table>
+                    ) : <div className="p-6"><Empty Icon={Store} title="Aucune boutique" text="Aucune boutique ne correspond à ces filtres." /></div>}
+
+                    <Pagination page={stores} label="boutiques" />
+                </Card>
             </div>
 
-            {/* MODERATION STORE MODAL */}
-            </div>
-
-            <ModerationModal
-                isOpen={moderateModal.isOpen}
-                onClose={() => setModerateModal({ isOpen: false, store: null })}
-                onConfirm={handleConfirmModerate}
-                type="store"
-                itemName={moderateModal.store?.name || ''}
-                targetInfo={moderateModal.store ? `biolinko.link/${moderateModal.store.slug} • Vendeur : ${moderateModal.store.user?.email || 'N/A'}` : null}
-                isLoading={isModerating}
-            />
+            <ModerationModal isOpen={!!target} onClose={() => setTarget(null)} onConfirm={suspend} type="store" isLoading={busy}
+                itemName={target?.name || ''} targetInfo={target ? `biolinko.link/${target.slug} · ${target.user?.email || ''}` : null} />
         </AuthenticatedLayout>
     );
 }

@@ -3,104 +3,104 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Payments\Countries;
 use App\Services\WhatsappGatewayService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Paramètres : état réel de la configuration (paiements, WhatsApp, système), en lecture.
+ * Les valeurs se règlent dans .env et config/payments.php, jamais depuis le navigateur.
+ */
 class AdminSettingController extends Controller
 {
-    public function index(Request $request, WhatsappGatewayService $gateway): Response
+    public function index(): Response
     {
-        $cloud = $gateway->cloud();
-        $whatsappStatus = $cloud
-            ? ['instance' => 'API officielle Meta', 'state' => $cloud->isConfigured() ? 'open' : 'close']
-            : $gateway->getInstanceStatus();
-
-        $settings = [
-            'platform_fee_percent' => 2.0,
-            'momo_currency' => 'XAF',
-            'momo_country' => 'CM',
-            'whatsapp_gateway_url' => config('services.whatsapp_gateway.base_url', 'https://evolutionapi.mrdims.dev'),
-            'whatsapp_default_instance' => config('services.whatsapp_gateway.default_instance', 'test_dims'),
-            'hrskills_pay_url' => config('services.hrskills_pay.base_url', 'https://api.hrskills-pay.com'),
-            'support_email' => 'support@biolinko.link',
-            'system_status' => 'operational',
-            'whatsapp_bot' => [
-                'instance' => $whatsappStatus['instance'] ?? 'test_dims',
-                'state' => $whatsappStatus['state'] ?? 'close',
-            ],
-            'anti_ban_shield' => [
-                'human_presence' => true,
-                'polymorphic_templates' => true,
-                'anti_burst_jitter' => true,
-                'two_way_trust' => true,
-                'contextual_branding' => true,
-            ],
-        ];
+        $cloud = config('services.whatsapp_cloud');
 
         return Inertia::render('Admin/Settings/Index', [
-            'settings' => $settings,
+            'payments' => [
+                'driver' => config('payments.driver'),
+                'payout_driver' => config('payments.payout_driver'),
+                'pawapay_env' => config('payments.pawapay.env'),
+                'pawapay_configured' => filled(config('payments.pawapay.token')),
+                'mercypay_configured' => filled(config('payments.mercypay.key')),
+                'mercypay_live' => str_starts_with((string) config('payments.mercypay.key'), 'mp_live_'),
+                'mercypay_webhook_secret' => filled(config('payments.mercypay.webhook_secret')),
+                'hrskills_configured' => filled(config('services.hrskills_pay.public_key')) && filled(config('services.hrskills_pay.secret_key')),
+                'hrskills_webhook_secret' => filled(config('services.hrskills_pay.webhook_secret')),
+                'subscription_simulation' => config('services.hrskills_pay.subscription_mode') === 'simulation' && ! app()->environment('production'),
+                'client_fee_percent' => config('payments.client_fee_percent'),
+                'withdrawal_fee_percent' => config('payments.withdrawal_fee_percent'),
+                'min_withdrawal' => config('payments.min_withdrawal'),
+                'commission_percent' => config('payments.commission_percent'),
+                'countries' => collect(config('payments.countries'))->map(fn ($c, $code) => [
+                    'code' => $code, 'name' => $c['name'], 'currency' => $c['currency'], 'enabled' => $c['enabled'],
+                    'operators' => array_map([Countries::class, 'operatorLabel'], array_keys($c['operators'])),
+                ])->values(),
+            ],
+            'whatsapp' => [
+                'driver' => config('services.whatsapp_driver'),
+                'configured' => filled($cloud['token'] ?? null) && filled($cloud['phone_number_id'] ?? null),
+                'phone_number_id' => $cloud['phone_number_id'] ?? null,
+                'app_secret' => filled($cloud['app_secret'] ?? null),
+                'verify_token' => filled($cloud['verify_token'] ?? null),
+                'webhook_url' => url('/api/webhooks/whatsapp-cloud'),
+            ],
+            'system' => [
+                'env' => app()->environment(),
+                'debug' => (bool) config('app.debug'),
+                'url' => config('app.url'),
+                'mailer' => config('mail.default'),
+                'mail_from' => config('mail.from.address'),
+                'queue' => config('queue.default'),
+                'schedule' => [
+                    ['orders:expire-unpaid', 'Toutes les heures', 'Annule les commandes non payées après 24 h'],
+                    ['orders:remind-unpaid', 'Toutes les 15 min', 'Relance WhatsApp des paniers (Growth et plus)'],
+                    ['funds:release', 'Toutes les 15 min', 'Rend l’argent des ventes retirable après le délai'],
+                    ['payments:sync', 'Toutes les 5 min', 'Vérifie les paiements et virements en attente'],
+                ],
+            ],
         ]);
     }
 
-    public function update(Request $request): RedirectResponse
+    /** Statut des modèles WhatsApp chez Meta (mis en cache 10 minutes). */
+    public function whatsappTemplates(): JsonResponse
     {
-        $validated = $request->validate([
-            'platform_fee_percent' => ['required', 'numeric', 'min:0', 'max:50'],
-            'support_email' => ['required', 'email'],
-        ]);
+        $waba = config('services.whatsapp_cloud.business_account_id');
+        $token = config('services.whatsapp_cloud.token');
+        if (! $waba || ! $token) {
+            return response()->json(['templates' => [], 'error' => 'API WhatsApp non configurée.']);
+        }
 
-        return redirect()->back()->with('message', 'Paramètres de la plateforme mis à jour avec succès !');
+        $templates = Cache::get('admin_wa_templates');
+        if ($templates === null) {
+            $res = Http::withToken($token)->timeout(10)
+                ->get('https://graph.facebook.com/'.config('services.whatsapp_cloud.version').'/'.$waba.'/message_templates', ['fields' => 'name,status,category,language', 'limit' => 200]);
+            if ($res->failed()) {
+                return response()->json(['templates' => [], 'error' => 'Meta refuse la requête : '.($res->json('error.message') ?? 'HTTP '.$res->status())]);
+            }
+            $templates = collect($res->json('data', []))->filter(fn ($t) => str_starts_with($t['name'], 'biolinko_'))->values()->all();
+            Cache::put('admin_wa_templates', $templates, 600);
+        }
+
+        return response()->json(['templates' => $templates]);
     }
 
-    /**
-     * Get live status of Biolinko WhatsApp Bot.
-     */
-    public function getWhatsappStatus(WhatsappGatewayService $gateway): JsonResponse
-    {
-        return response()->json($gateway->getInstanceStatus());
-    }
-
-    /**
-     * Connect or retrieve QR code / pairing code for Biolinko WhatsApp Bot.
-     */
-    public function connectWhatsapp(Request $request, WhatsappGatewayService $gateway): JsonResponse
-    {
-        $phoneNumber = $request->input('phone');
-        return response()->json($gateway->connectInstance(null, $phoneNumber));
-    }
-
-    /**
-     * Disconnect Biolinko WhatsApp Bot.
-     */
-    public function disconnectWhatsapp(WhatsappGatewayService $gateway): JsonResponse
-    {
-        return response()->json($gateway->disconnectInstance());
-    }
-
-    /**
-     * Test sending a message from Biolinko WhatsApp Bot.
-     */
+    /** Message de test : modèle hello_world de Meta (accepté même sans conversation ouverte). */
     public function testWhatsappMessage(Request $request, WhatsappGatewayService $gateway): JsonResponse
     {
-        $request->validate([
-            'phone' => ['required', 'string'],
-            'message' => ['nullable', 'string'],
-        ]);
+        $request->validate(['phone' => ['required', 'string', 'max:30']]);
+        $phone = $gateway->formatPhone($request->input('phone'));
 
-        $phone = $request->input('phone');
-        $customText = $request->input('message');
-        
-        $msg = $customText ?: "🚀 *Test Biolinko Bot Réussi !*\n\nLe Bot officiel Biolinko est 100% opérationnel et prêt à distribuer les notifications.";
+        $cloud = $gateway->cloud();
 
-        // API officielle : hors conversation ouverte, seul un modèle passe ; hello_world existe sur tout compte
-        $res = ($cloud = $gateway->cloud()) && ! $customText
-            ? $cloud->sendTemplate($gateway->formatPhone($phone), 'hello_world', [], null, 'en_US')
-            : $gateway->sendMessage($phone, $msg);
-
-        return response()->json($res);
+        return response()->json($cloud
+            ? $cloud->sendTemplate($phone, 'hello_world', [], null, 'en_US')
+            : ['success' => false, 'error' => 'Notifications WhatsApp automatiques en veille.']);
     }
 }

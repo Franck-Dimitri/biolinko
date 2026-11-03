@@ -22,6 +22,12 @@ class OrderPayments
      */
     public function start(Order $order, string $rawPhone, ?string $operator = null): array
     {
+        // Garde-fou pour toute commande payée en ligne (panier, lien de paiement, relance, facture)
+        $minOrder = Countries::minOrder($order->payment_country ?: 'CM');
+        if ((float) $order->price_vendor < $minOrder) {
+            throw new PaymentException('Le paiement en ligne est possible à partir de '.number_format($minOrder, 0, ',', ' ').' FCFA.');
+        }
+
         $country = $order->payment_country ?: 'CM';
         $phone = Countries::formatPhone($country, $rawPhone);
         $operator = strtoupper($operator ?: Countries::detectOperator($country, $phone));
@@ -38,7 +44,7 @@ class OrderPayments
 
         $result = $gateway->deposit([
             'reference' => $reference,
-            'amount' => max(100, (int) round($order->total_client)),
+            'amount' => (float) $order->total_client,
             'currency' => $order->currency ?: 'XAF',
             'country' => $country,
             'phone' => $phone,
@@ -55,7 +61,7 @@ class OrderPayments
         return [
             'reference' => $result['reference'],
             'tracking_code' => $order->tracking_code,
-            'amount' => max(100, (int) round($order->total_client)),
+            'amount' => (float) $order->total_client,
             'operator' => $operator,
             'phone' => $phone,
             'redirect_url' => route('order.track', $order->tracking_code),

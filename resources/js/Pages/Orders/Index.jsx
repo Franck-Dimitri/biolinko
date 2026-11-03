@@ -27,7 +27,14 @@ const RANK = { pending: 0, paid: 1, in_delivery: 2, delivered: 3 };
 function whatsappLink(order, store) {
     let phone = (order.customer_phone || '').replace(/\D/g, '');
     if (phone.length === 9) phone = `237${phone}`;
-    const text = `Bonjour ${order.customer_name}, c’est ${store.name}. Je vous contacte au sujet de votre commande ${order.tracking_code}.`;
+    const track = `${window.location.origin}/track/${order.tracking_code}`;
+    const hello = `Bonjour ${order.customer_name}, c’est ${store.name}.`;
+    const text = {
+        pending: `${hello} Votre commande ${order.tracking_code} n’est pas encore payée. Vous pouvez la régler ici : ${track}`,
+        paid: `${hello} Votre paiement pour la commande ${order.tracking_code} est bien reçu, nous la préparons. Suivi : ${track}`,
+        in_delivery: `${hello} Votre commande ${order.tracking_code} est en cours de livraison. Suivi : ${track}`,
+        delivered: `${hello} Votre commande ${order.tracking_code} est livrée. Merci pour votre achat !`,
+    }[order.status] || `${hello} Je vous contacte au sujet de votre commande ${order.tracking_code}.`;
     return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 }
 
@@ -106,7 +113,7 @@ function OrderPanel({ order, store, onClose }) {
         setBusy(true);
         router.patch(route('orders.updateStatus', order.id), { status }, {
             preserveScroll: true,
-            onSuccess: () => toast.success('Statut mis à jour. Le client est prévenu sur WhatsApp.'),
+            onSuccess: () => toast.success('Statut mis à jour.'),
             onError: (e) => toast.error(e.status || 'Mise à jour impossible.'),
             onFinish: () => setBusy(false),
         });
@@ -153,7 +160,7 @@ function OrderPanel({ order, store, onClose }) {
                             )}
                         </ul>
                         <div className="mt-3 flex flex-wrap gap-2">
-                            <Button size="sm" href={whatsappLink(order, store)} target="_blank" rel="noreferrer"><WhatsappIcon className="h-4 w-4 text-[#16A34A]" /> WhatsApp</Button>
+                            <Button size="sm" href={whatsappLink(order, store)} target="_blank" rel="noreferrer"><WhatsappIcon className="h-4 w-4 text-[#16A34A]" /> Prévenir sur WhatsApp</Button>
                             <Button size="sm" href={`tel:+${(order.customer_phone || '').replace(/\D/g, '')}`}><Phone className="h-4 w-4" /> Appeler</Button>
                         </div>
                     </section>
@@ -171,11 +178,16 @@ function OrderPanel({ order, store, onClose }) {
                                 </li>
                             ))}
                         </ul>
-                        <dl className="mt-3 space-y-1.5 px-1 text-[14px]">
-                            <div className="flex justify-between text-[#5F5E58]"><dt>Vos articles</dt><dd className="tabular-nums">{fcfa(order.price_vendor)}</dd></div>
+                        <dl className="mt-3 space-y-1.5 px-1 text-[14px] [&_dd]:shrink-0 [&_dd]:whitespace-nowrap [&_div]:gap-3">
+                            {Number(order.discount_amount) > 0 || Number(order.delivery_fee) > 0 ? (<>
+                                <div className="flex justify-between text-[#5F5E58]"><dt>Articles</dt><dd className="tabular-nums">{fcfa(order.subtotal)}</dd></div>
+                                {Number(order.discount_amount) > 0 && <div className="flex justify-between text-[#15803D]"><dt>Code {order.promo_code}</dt><dd className="tabular-nums">−{fcfa(order.discount_amount)}</dd></div>}
+                                {Number(order.delivery_fee) > 0 && <div className="flex justify-between text-[#5F5E58]"><dt>Livraison (sans commission)</dt><dd className="tabular-nums">{fcfa(order.delivery_fee)}</dd></div>}
+                            </>) : <div className="flex justify-between text-[#5F5E58]"><dt>Vos articles</dt><dd className="tabular-nums">{fcfa(order.price_vendor)}</dd></div>}
                             {fee > 0 && <div className="flex justify-between text-[#5F5E58]"><dt>Frais de service (payés par le client)</dt><dd className="tabular-nums">{fcfa(fee)}</dd></div>}
                             {Number(order.commission_amount) > 0 && <div className="flex justify-between text-[#5F5E58]"><dt>Commission Biolinko ({String(Number(order.commission_rate)).replace('.', ',')} %)</dt><dd className="tabular-nums">−{fcfa(order.commission_amount)}</dd></div>}
-                            {Number(order.commission_amount) > 0 && <div className="flex justify-between font-medium text-[#15803D]"><dt>Vous recevez</dt><dd className="tabular-nums">{fcfa(Number(order.price_vendor) - Number(order.commission_amount))}</dd></div>}
+                            {Number(order.commission_amount) > 0 && <div className="flex justify-between font-medium text-[#15803D]"><dt>{Number(order.balance_due) > 0 ? 'Sur votre portefeuille' : 'Vous recevez'}</dt><dd className="tabular-nums">{fcfa(Number(order.price_vendor) - Number(order.balance_due || 0) - Number(order.commission_amount))}</dd></div>}
+                            {Number(order.balance_due) > 0 && <div className={`flex justify-between font-medium ${order.balance_collected_at ? 'text-[#15803D]' : 'text-[#7A5B00]'}`}><dt>{order.balance_collected_at ? 'Solde encaissé à la livraison' : 'Solde à encaisser à la livraison'}</dt><dd className="tabular-nums">{fcfa(order.balance_due)}</dd></div>}
                             <div className="flex justify-between font-medium text-[#141412]"><dt>Payé par le client</dt><dd className="tabular-nums">{fcfa(order.total_client)}</dd></div>
                         </dl>
                     </section>

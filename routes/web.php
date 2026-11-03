@@ -22,12 +22,12 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SalesReportController;
 use App\Http\Controllers\SellerInvoiceController;
 use App\Http\Controllers\SmartLinkController;
+use App\Http\Controllers\SellingController;
 use App\Http\Controllers\StoreController;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\ToolPluginController;
 use App\Http\Controllers\WalletController;
-use App\Http\Controllers\WhatsappWebhookController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -97,10 +97,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
 
     // 9. Paramètres Plateforme & API
     Route::get('/settings', [AdminSettingController::class, 'index'])->name('admin.settings.index');
-    Route::post('/settings', [AdminSettingController::class, 'update'])->name('admin.settings.update');
-    Route::get('/settings/whatsapp-status', [AdminSettingController::class, 'getWhatsappStatus'])->name('admin.settings.whatsapp.status');
-    Route::post('/settings/whatsapp-connect', [AdminSettingController::class, 'connectWhatsapp'])->name('admin.settings.whatsapp.connect');
-    Route::post('/settings/whatsapp-disconnect', [AdminSettingController::class, 'disconnectWhatsapp'])->name('admin.settings.whatsapp.disconnect');
+    Route::get('/settings/whatsapp-templates', [AdminSettingController::class, 'whatsappTemplates'])->name('admin.settings.whatsapp.templates');
     Route::post('/settings/whatsapp-test', [AdminSettingController::class, 'testWhatsappMessage'])->name('admin.settings.whatsapp.test');
 });
 
@@ -151,6 +148,14 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
     Route::post('/customers/campaign', [CustomerController::class, 'storeCampaign'])->name('customers.campaign.store');
 
+    // Livraison & codes promo
+    Route::get('/livraison-promos', [SellingController::class, 'index'])->name('seller.selling.index');
+    Route::post('/livraison', [SellingController::class, 'updateDelivery'])->name('seller.delivery.update');
+    Route::post('/acompte', [SellingController::class, 'updateDeposit'])->name('seller.deposit.update');
+    Route::post('/promo-codes', [SellingController::class, 'storePromo'])->name('seller.promos.store');
+    Route::patch('/promo-codes/{promoCode}/toggle', [SellingController::class, 'togglePromo'])->name('seller.promos.toggle');
+    Route::delete('/promo-codes/{promoCode}', [SellingController::class, 'destroyPromo'])->name('seller.promos.destroy');
+
     // Marketing & Pixels
     Route::get('/marketing', [MarketingController::class, 'index'])->name('seller.marketing.index');
     Route::post('/marketing', [MarketingController::class, 'update'])->name('seller.marketing.update');
@@ -172,16 +177,17 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Webhook Endpoints (CSRF Exempted in bootstrap/app.php)
+Route::post('/api/webhooks/mercypay', [\App\Http\Controllers\MercyPayWebhookController::class, 'handle'])->name('webhooks.mercypay');
 Route::post('/api/webhooks/pawapay/deposits', [\App\Http\Controllers\PawapayWebhookController::class, 'deposits'])->name('webhooks.pawapay.deposits');
 Route::post('/api/webhooks/pawapay/payouts', [\App\Http\Controllers\PawapayWebhookController::class, 'payouts'])->name('webhooks.pawapay.payouts');
 Route::post('/api/webhooks/pawapay/refunds', [\App\Http\Controllers\PawapayWebhookController::class, 'refunds'])->name('webhooks.pawapay.refunds');
 Route::post('/api/webhooks/hrskills-pay', [HrSkillsPayWebhookController::class, 'handle'])->name('webhooks.hrskills-pay');
-Route::post('/api/webhooks/whatsapp', [WhatsappWebhookController::class, 'handle'])->name('webhooks.whatsapp');
 Route::get('/api/webhooks/whatsapp-cloud', [\App\Http\Controllers\WhatsappCloudWebhookController::class, 'verify'])->name('webhooks.whatsapp-cloud.verify');
 Route::post('/api/webhooks/whatsapp-cloud', [\App\Http\Controllers\WhatsappCloudWebhookController::class, 'handle'])->name('webhooks.whatsapp-cloud');
 
 // Public Client Fast Checkout & Order Tracking & Customer Lookup
 Route::get('/checkout/lookup-customer', [CheckoutController::class, 'lookupCustomer'])->middleware('throttle:20,1')->name('checkout.lookupCustomer');
+Route::post('/checkout/promo', [CheckoutController::class, 'checkPromo'])->middleware('throttle:20,1')->name('checkout.promo');
 Route::post('/checkout', [CheckoutController::class, 'process'])->middleware('throttle:10,1')->name('checkout.process');
 Route::get('/checkout/status/{reference}', [CheckoutController::class, 'checkStatus'])->name('checkout.status');
 Route::get('/track/{tracking_code}', [OrderTrackingController::class, 'show'])->name('order.track');

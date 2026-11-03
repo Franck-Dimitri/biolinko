@@ -12,6 +12,7 @@ test('new users can register and are redirected to verification notice', functio
         'email' => 'test@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',
+        'terms' => '1',
     ]);
 
     $this->assertAuthenticated();

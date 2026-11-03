@@ -3,6 +3,7 @@
 namespace App\Payments;
 
 use App\Payments\Gateways\HrSkillsGateway;
+use App\Payments\Gateways\MercyPayGateway;
 use App\Payments\Gateways\PawapayGateway;
 use InvalidArgumentException;
 
@@ -15,6 +16,7 @@ class PaymentManager
     public function driver(?string $name = null): PaymentGateway
     {
         return match ($name ?? config('payments.driver')) {
+            'mercypay' => app(MercyPayGateway::class),
             'pawapay' => app(PawapayGateway::class),
             'hrskills' => app(HrSkillsGateway::class),
             default => throw new InvalidArgumentException('Agrégateur de paiement inconnu : '.$name),

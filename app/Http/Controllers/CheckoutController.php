@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\PromoCode;
 use App\Models\SmartLink;
 use App\Models\Store;
 use App\Payments\Countries;
@@ -66,6 +67,30 @@ class CheckoutController extends Controller
         ]);
     }
 
+    /**
+     * Vérifie un code promo depuis le panier. Le montant est recalculé côté serveur au paiement.
+     */
+    public function checkPromo(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'store_id' => ['required', 'integer'],
+            'code' => ['required', 'string', 'max:30'],
+            'subtotal' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        $promo = PromoCode::where('store_id', $data['store_id'])->where('code', PromoCode::normalize($data['code']))->first();
+        if (! $promo) {
+            return response()->json(['valid' => false, 'message' => 'Ce code promo n’existe pas dans cette boutique.']);
+        }
+
+        [$discount, $error] = $promo->evaluate((float) $data['subtotal']);
+        if ($error) {
+            return response()->json(['valid' => false, 'message' => $error]);
+        }
+
+        return response()->json(['valid' => true, 'code' => $promo->code, 'label' => $promo->label(), 'discount' => $discount]);
+    }
+
     public function checkStatus(Request $request, string $reference): JsonResponse
     {
         $order = Order::where('payment_reference', $reference)
@@ -111,7 +136,9 @@ class CheckoutController extends Controller
             'smart_link_code' => ['nullable', 'string', 'exists:smart_links,code'],
             'notes' => ['nullable', 'string', 'max:500'],
             'operator' => ['nullable', 'string', 'in:MTN,ORANGE,mtn,orange'],
-            
+            'promo_code' => ['nullable', 'string', 'max:30'],
+            'payment_mode' => ['nullable', 'in:full,deposit'],
+
             // Single-item checkout
             'product_id' => ['nullable', 'exists:products,id'],
             'variant_id' => ['nullable', 'exists:product_variants,id'],
@@ -260,14 +287,45 @@ class CheckoutController extends Controller
         $saasMarginTotal = Order::clientFee($priceVendorTotal);
         $totalClient = $priceVendorTotal + $saasMarginTotal;
 
-        // Le pack a son propre prix (remise incluse) : on recalcule les totaux dessus
-        if ($smartLink) {
-            $priceVendorTotal = (float) $smartLink->total_amount;
-            $saasMarginTotal = Order::clientFee($priceVendorTotal);
-            $totalClient = $priceVendorTotal + $saasMarginTotal;
+        // Le pack a son propre prix (remise incluse)
+        $goods = $smartLink ? (float) $smartLink->total_amount : $priceVendorTotal;
+
+        // Code promo (pas sur les packs, déjà remisés)
+        $promo = null;
+        $discount = 0;
+        if (! $smartLink && ! empty($validated['promo_code'])) {
+            $promo = $store->promoCodes()->where('code', PromoCode::normalize($validated['promo_code']))->first();
+            [$discount, $promoError] = $promo ? $promo->evaluate($goods) : [0, 'Ce code promo n’existe pas dans cette boutique.'];
+            if ($promoError) {
+                return response()->json(['error' => $promoError, 'errors' => ['promo_code' => [$promoError]]], 422);
+            }
         }
 
         $city = trim($validated['delivery_city'] ?? '') ?: $validated['delivery_address'];
+
+        $deliveryFee = $store->deliveryFeeFor($city, $goods - $discount);
+        if ($deliveryFee === null) {
+            return response()->json(['error' => "{$store->name} ne livre pas à {$city}. Choisissez une ville de livraison proposée."], 422);
+        }
+
+        // Ce que reçoit le vendeur (articles remisés + livraison) ; les frais de service s'ajoutent pour le client
+        $priceVendorTotal = $goods - $discount + $deliveryFee;
+        $saasMarginTotal = Order::clientFee($priceVendorTotal);
+        $totalClient = $priceVendorTotal + $saasMarginTotal;
+
+        $minOrder = Countries::minOrder($store->country ?: 'CM');
+        if ($priceVendorTotal < $minOrder) {
+            return response()->json(['error' => 'Le montant minimum d’une commande est de '.number_format($minOrder, 0, ',', ' ').' '.($store->currency === 'XAF' || $store->currency === 'XOF' ? 'FCFA' : $store->currency).'. Ajoutez un article ou augmentez la quantité.'], 422);
+        }
+
+        // Acompte : le client paie une partie en ligne, le reste en espèces au livreur
+        $balanceDue = 0;
+        if (($validated['payment_mode'] ?? 'full') === 'deposit' && $store->deposit_percent) {
+            $deposit = Order::depositFor($priceVendorTotal, $store->deposit_percent, $minOrder);
+            $balanceDue = $priceVendorTotal - $deposit;
+            $saasMarginTotal = Order::clientFee($deposit);
+            $totalClient = $deposit + $saasMarginTotal;
+        }
 
         // 1. SAVE OR UPDATE CUSTOMER
         $customer = Customer::firstOrNew(['phone' => $formattedPhone]);
@@ -290,7 +348,9 @@ class CheckoutController extends Controller
         $trackingCode = 'BLK-CMD-' . strtoupper(Str::random(10));
 
         $extraNotes = [];
-        if (!empty($validated['customer_whatsapp'])) {
+        // Numéro WhatsApp noté seulement s'il diffère du numéro de paiement
+        $whatsappDigits = preg_replace('/\D/', '', (string) ($validated['customer_whatsapp'] ?? ''));
+        if ($whatsappDigits && $whatsappDigits !== $formattedPhone && '237'.$whatsappDigits !== $formattedPhone) {
             $extraNotes[] = "WhatsApp: {$validated['customer_whatsapp']}";
         }
         if (!empty($validated['notes'])) {
@@ -312,6 +372,12 @@ class CheckoutController extends Controller
             'city' => $city,
             'address_details' => $addressWithNotes,
             'price_vendor' => $priceVendorTotal,
+            'subtotal' => $goods,
+            'discount_amount' => $discount,
+            'delivery_fee' => $deliveryFee,
+            'promo_code_id' => $promo?->id,
+            'promo_code' => $promo?->code,
+            'balance_due' => $balanceDue,
             'saas_margin' => $saasMarginTotal,
             'api_fee' => $apiFeeTotal,
             'total_client' => $totalClient,

@@ -36,6 +36,11 @@ class EnsureUserHasRole
 
         // Check if user has required role
         if (in_array($userRole, $roles, true)) {
+            // Un vendeur a toujours une boutique (créée en brouillon si elle manque)
+            if ($userRole === 'seller') {
+                $user->ensureStore();
+            }
+
             return $next($request);
         }
 

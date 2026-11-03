@@ -18,6 +18,13 @@ class RemindUnpaidOrders extends Command
 
     public function handle(WhatsappGatewayService $whatsapp): int
     {
+        // Sans notifications automatiques, rien n'est marqué : le vendeur relance en 1 clic
+        if (! WhatsappGatewayService::automatic()) {
+            $this->info('Notifications WhatsApp en veille, aucune relance automatique.');
+
+            return self::SUCCESS;
+        }
+
         $sent = 0;
 
         Order::with('store.user')
@@ -37,7 +44,7 @@ class RemindUnpaidOrders extends Command
                     $order->update(['payment_reminded_at' => now()]);
 
                     try {
-                        $result = $whatsapp->send1ClickReminder($order);
+                        $result = $whatsapp->sendPaymentReminder($order);
                         if ($result['success'] ?? false) {
                             $sent++;
                         }

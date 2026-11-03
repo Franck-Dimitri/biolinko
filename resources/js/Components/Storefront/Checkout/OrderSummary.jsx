@@ -5,9 +5,10 @@ import { formatFcfa, useServiceFeePercent } from '@/Components/Storefront/useCar
 
 /**
  * Récapitulatif de commande. Passer `onQuantity` / `onRemove` pour un panier modifiable.
- * `discount` (montant) s'affiche pour les packs avec remise.
+ * `discount` (montant) s'affiche pour les packs avec remise, `promo` = { code, discount } pour un code promo.
+ * `delivery` : montant de livraison, ou undefined si le vendeur n'a pas fixé de tarifs (« à convenir »).
  */
-export default function OrderSummary({ items, subtotal, fee, total, discount = 0, onQuantity, onRemove, title = 'Récapitulatif' }) {
+export default function OrderSummary({ items, subtotal, fee, total, discount = 0, promo = null, delivery, balance = 0, onQuantity, onRemove, title = 'Récapitulatif' }) {
     const feePercent = useServiceFeePercent();
     const count = items.reduce((acc, it) => acc + (it.quantity || 1), 0);
 
@@ -58,12 +59,18 @@ export default function OrderSummary({ items, subtotal, fee, total, discount = 0
                 {discount > 0 && (
                     <div className="flex justify-between text-[#15803D]"><dt>Remise pack</dt><dd className="tabular-nums">−{formatFcfa(discount)}</dd></div>
                 )}
+                {promo?.discount > 0 && (
+                    <div className="flex justify-between text-[#15803D]"><dt>Code {promo.code}</dt><dd className="tabular-nums">−{formatFcfa(promo.discount)}</dd></div>
+                )}
+                <div className="flex justify-between text-[#5F5E58]"><dt className="flex items-center gap-1.5"><Truck className="h-4 w-4" /> Livraison</dt><dd className="tabular-nums">{delivery === undefined || delivery === null ? 'À convenir avec le vendeur' : delivery > 0 ? formatFcfa(delivery) : <span className="text-[#15803D]">Offerte</span>}</dd></div>
                 <div className="flex justify-between text-[#5F5E58]"><dt>Frais de service ({String(feePercent).replace('.', ',')} %)</dt><dd className="tabular-nums">{formatFcfa(fee)}</dd></div>
-                <div className="flex justify-between text-[#5F5E58]"><dt className="flex items-center gap-1.5"><Truck className="h-4 w-4" /> Livraison</dt><dd>À convenir avec le vendeur</dd></div>
                 <div className="flex items-baseline justify-between pt-2 text-[#141412]">
-                    <dt className="font-semibold">Total à payer</dt>
+                    <dt className="font-semibold">{balance > 0 ? 'À payer maintenant' : 'Total à payer'}</dt>
                     <motion.dd key={total} initial={{ opacity: 0.4, y: 4 }} animate={{ opacity: 1, y: 0 }} className="text-2xl font-bold tabular-nums">{formatFcfa(total)}</motion.dd>
                 </div>
+                {balance > 0 && (
+                    <div className="flex justify-between text-[#141412]"><dt>À payer au livreur (espèces)</dt><dd className="font-semibold tabular-nums">{formatFcfa(balance)}</dd></div>
+                )}
             </dl>
         </div>
     );

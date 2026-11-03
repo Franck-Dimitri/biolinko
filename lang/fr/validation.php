@@ -48,7 +48,7 @@ return [
         'numeric' => 'Le champ :attribute doit être d’au moins :min.',
         'string' => 'Le champ :attribute doit contenir au moins :min caractères.',
     ],
-    'not_in' => 'La valeur sélectionnée pour :attribute est invalide.',
+    'not_in' => 'Cette :attribute est réservée par Biolinko, choisissez-en une autre.',
     'numeric' => 'Le champ :attribute doit être un nombre.',
     'password' => [
         'letters' => 'Le mot de passe doit contenir au moins une lettre.',
@@ -97,5 +97,11 @@ return [
         'comment' => 'commentaire',
         'rating' => 'note',
         'slug' => 'adresse de la boutique',
+        'category' => 'catégorie',
+        'theme_color' => 'couleur',
+        'city_location' => 'ville',
+        'opening_hours' => 'horaires',
+        'logo_file' => 'logo',
+        'banner_file' => 'image d’accueil',
     ],
 ];

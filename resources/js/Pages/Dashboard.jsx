@@ -127,7 +127,7 @@ function Onboarding({ store, checklist, percent, productsCount }) {
     );
 }
 
-export default function Dashboard({ upgradeHint = null, store, wallet, productsCount, ordersCount, totalRevenue, recentOrders = [], setupChecklist, completionPercentage, analytics }) {
+export default function Dashboard({ upgradeHint = null, totalNet = 0, store, wallet, productsCount, ordersCount, totalRevenue, recentOrders = [], setupChecklist, completionPercentage, analytics }) {
     const user = usePage().props.auth.user;
     const products = usePage().props.products || [];
     const dailySales = analytics?.dailySales || [];
@@ -185,8 +185,8 @@ export default function Dashboard({ upgradeHint = null, store, wallet, productsC
 
                 {/* Indicateurs */}
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <Metric label="Chiffre d’affaires" value={fcfa(totalRevenue)} hint="Total des ventes payées" Icon={TrendingUp} delay={0.04} />
-                    <Metric label="Solde disponible" value={fcfa(wallet?.balance_available)} hint="Retirable vers Mobile Money" Icon={Wallet} href={route('seller.wallet.index')} delay={0.08} />
+                     <Metric label="Chiffre d’affaires" value={fcfa(totalRevenue)} hint={totalRevenue > totalNet ? `${fcfa(totalNet)} pour vous après commission` : 'Total des ventes payées'} Icon={TrendingUp} delay={0.04} />
+                    <Metric label="Solde disponible" value={fcfa(wallet?.balance_available)} hint={Number(wallet?.balance_held) > 0 ? `+ ${fcfa(wallet.balance_held)} en attente du délai` : 'Retirable vers Mobile Money'} Icon={Wallet} href={route('seller.wallet.index')} delay={0.08} />
                     <Metric label="Commandes" value={(ordersCount || 0).toLocaleString('fr-FR')} hint={analytics?.pendingFollowupsCount ? `${analytics.pendingFollowupsCount} en attente` : 'Toutes périodes'} Icon={PackageCheck} href={route('orders.index')} delay={0.12} />
                     <Metric label="Produits" value={(productsCount || 0).toLocaleString('fr-FR')} hint="Dans votre catalogue" Icon={ShoppingBag} href={route('products.index')} delay={0.16} />
                 </div>
@@ -270,7 +270,7 @@ export default function Dashboard({ upgradeHint = null, store, wallet, productsC
                                             <span className="block truncate text-[14px] text-[#141412]">{p.title}</span>
                                             <span className="text-[12px] text-[#8B8A83]">Stock : {p.stock}</span>
                                         </span>
-                                        <span className="shrink-0 text-[13px] tabular-nums text-[#141412]">{fcfa(p.price_display || p.price_vendor)}</span>
+                                        <span className="shrink-0 text-[13px] tabular-nums text-[#141412]">{fcfa(p.is_promo && p.promo_price ? p.promo_price : p.price_vendor)}</span>
                                     </li>
                                 ))}
                                 <li className="pt-1 text-[13px] text-[#8B8A83]">Le classement apparaîtra après vos premières ventes.</li>

@@ -50,9 +50,17 @@ class Store extends Model
         'sections_json',
         'location_address',
         'support_email',
+        'delivery_zones',
+        'delivery_other_fee',
+        'delivery_free_from',
+        'deposit_percent',
     ];
 
     protected $casts = [
+        'delivery_zones' => 'array',
+        'delivery_other_fee' => 'float',
+        'delivery_free_from' => 'float',
+        'deposit_percent' => 'integer',
         'is_configured' => 'boolean',
         'is_published' => 'boolean',
         'benefits_json' => 'array',
@@ -123,6 +131,40 @@ class Store extends Model
         }
 
         return $this;
+    }
+
+    public function promoCodes(): HasMany
+    {
+        return $this->hasMany(PromoCode::class);
+    }
+
+    public function hasDelivery(): bool
+    {
+        return ! empty($this->delivery_zones) || $this->delivery_other_fee !== null;
+    }
+
+    /**
+     * Frais de livraison pour une ville, selon les zones du vendeur.
+     * null = le vendeur ne livre pas cette ville. Sans zones configurées : livraison non facturée (0).
+     */
+    public function deliveryFeeFor(string $city, float $goods): ?float
+    {
+        if (! $this->hasDelivery()) {
+            return 0;
+        }
+
+        $key = mb_strtolower(trim($city));
+        $zone = collect($this->delivery_zones ?? [])->first(fn ($z) => mb_strtolower(trim($z['name'] ?? '')) === $key);
+        $fee = $zone ? (float) $zone['fee'] : $this->delivery_other_fee;
+
+        if ($fee === null) {
+            return null;
+        }
+        if ($this->delivery_free_from !== null && $goods >= $this->delivery_free_from) {
+            return 0;
+        }
+
+        return $fee;
     }
 
     public function reports(): \Illuminate\Database\Eloquent\Relations\HasMany

@@ -18,7 +18,9 @@ const waNumber = (raw) => {
 };
 
 function CampaignDialog({ open, onClose, store, recipients, products, smartLinks, quota }) {
-    const { errors } = usePage().props;
+    const { errors, whatsappAutomatic } = usePage().props;
+    const [prepared, setPrepared] = useState(false);
+    const [opened, setOpened] = useState([]);
     const [title, setTitle] = useState('Nouveautés en boutique');
     const [message, setMessage] = useState('Bonjour {prenom}, découvrez nos nouveautés chez {nom_boutique} : {lien_produit}');
     const [attachment, setAttachment] = useState('');
@@ -28,18 +30,18 @@ function CampaignDialog({ open, onClose, store, recipients, products, smartLinks
     const noCampaignLeft = quota.remaining_campaigns <= 0;
     const sample = recipients[0];
 
-    const preview = useMemo(() => {
-        const link = attachment.startsWith('p:')
+    const link = useMemo(() => ( attachment.startsWith('p:')
             ? `${window.location.origin}/${store.slug}/p/${products.find((p) => `p:${p.id}` === attachment)?.slug || ''}`
             : attachment.startsWith('s:')
                 ? `${window.location.origin}/pay/${smartLinks.find((s) => `s:${s.id}` === attachment)?.code || ''}`
-                : `${window.location.origin}/${store.slug}`;
-        return message
-            .replaceAll('{prenom}', (sample?.name || 'Awa').split(' ')[0])
-            .replaceAll('{ville}', sample?.city || 'Douala')
-            .replaceAll('{nom_boutique}', store.name)
-            .replaceAll('{lien_produit}', link);
-    }, [message, attachment, sample]);
+                : `${window.location.origin}/${store.slug}`
+    ), [attachment]);
+    const render = (c) => message
+        .replaceAll('{prenom}', (c?.name || 'Awa').split(' ')[0])
+        .replaceAll('{ville}', c?.city || 'Douala')
+        .replaceAll('{nom_boutique}', store.name)
+        .replaceAll('{lien_produit}', link);
+    const preview = render(sample);
 
     const send = () => {
         setSending(true);
@@ -51,10 +53,29 @@ function CampaignDialog({ open, onClose, store, recipients, products, smartLinks
             smart_link_id: attachment.startsWith('s:') ? attachment.slice(2) : null,
         }, {
             preserveScroll: true,
-            onSuccess: () => { toast.success('Campagne envoyée'); onClose(); },
+            onSuccess: () => { if (whatsappAutomatic) { toast.success('Campagne envoyée'); onClose(); } else setPrepared(true); },
             onFinish: () => setSending(false),
         });
     };
+
+    // Sans envoi automatique : un bouton par client, le message part du WhatsApp du vendeur
+    if (prepared) {
+        return (
+            <SubPage open={open} onClose={() => { setPrepared(false); setOpened([]); onClose(); }} title="Envoyez votre campagne" sub={`${opened.length} / ${recipients.length} ouverts. Chaque bouton ouvre WhatsApp avec le message prêt, il ne reste qu’à l’envoyer.`} width="max-w-2xl">
+                <ul className="divide-y divide-black/[0.05]">
+                    {recipients.map((c) => (
+                        <li key={c.id} className="flex items-center justify-between gap-3 py-3 text-[14px]">
+                            <span className="min-w-0"><span className="block truncate text-[#141412]">{c.name}</span><span className="text-[13px] text-[#8B8A83]">{c.whatsapp || c.phone}</span></span>
+                            <Button size="sm" variant={opened.includes(c.id) ? 'secondary' : 'primary'} href={`https://wa.me/${waNumber(c.whatsapp || c.phone)}?text=${encodeURIComponent(render(c))}`} target="_blank" rel="noreferrer"
+                                onClick={() => setOpened((l) => (l.includes(c.id) ? l : [...l, c.id]))}>
+                                <WhatsappIcon className="h-4 w-4" /> {opened.includes(c.id) ? 'Rouvrir' : 'Ouvrir WhatsApp'}
+                            </Button>
+                        </li>
+                    ))}
+                </ul>
+            </SubPage>
+        );
+    }
 
     return (
         <SubPage open={open} onClose={onClose} title="Nouvelle campagne WhatsApp" sub={`${recipients.length} destinataire${recipients.length > 1 ? 's' : ''} sélectionné${recipients.length > 1 ? 's' : ''}`} width="max-w-2xl">
@@ -101,7 +122,7 @@ function CampaignDialog({ open, onClose, store, recipients, products, smartLinks
                 {noCampaignLeft && <PlanLock plan="Pro" text={`Vous avez utilisé vos ${quota.max_campaigns_per_month} campagne(s) du mois.`} />}
                 <div className="flex justify-end gap-2">
                     <Button onClick={onClose}>Annuler</Button>
-                    <Button variant="primary" disabled={sending || tooMany || noCampaignLeft || !recipients.length} onClick={send}><Send className="h-4 w-4" /> Envoyer</Button>
+                    <Button variant="primary" disabled={sending || tooMany || noCampaignLeft || !recipients.length} onClick={send}><Send className="h-4 w-4" /> {whatsappAutomatic ? 'Envoyer' : 'Préparer les messages'}</Button>
                 </div>
             </div>
         </SubPage>
@@ -130,7 +151,7 @@ export default function Index({ store, customers = [], top5Customers = [], aband
 
     const relance = (o) => {
         const items = (o.items || []).map((i) => i.product_title).join(', ');
-        const text = `Bonjour ${o.customer_name}, votre commande ${o.tracking_code} (${items}) chez ${store.name} n’est pas encore payée. Voulez-vous de l’aide pour la finaliser ?`;
+        const text = `Bonjour ${o.customer_name}, votre commande ${o.tracking_code} (${items}) chez ${store.name} n’est pas encore payée. Vous pouvez la régler ici : ${window.location.origin}/track/${o.tracking_code}`;
         return `https://wa.me/${waNumber(o.customer_phone)}?text=${encodeURIComponent(text)}`;
     };
 

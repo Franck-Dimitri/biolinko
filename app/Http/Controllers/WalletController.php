@@ -31,7 +31,7 @@ class WalletController extends Controller
 
         $paidOrders = Order::where('store_id', $store->id)
             ->where('is_manual', false)
-            ->whereIn('status', ['paid', 'in_delivery', 'delivered'])
+            ->paid()
             ->with('report:id,order_id,status')
             ->get(['id', 'tracking_code', 'customer_name', 'price_vendor', 'commission_amount', 'commission_rate', 'paid_at', 'created_at', 'payment_operator', 'funds_release_at', 'funds_released_at']);
 

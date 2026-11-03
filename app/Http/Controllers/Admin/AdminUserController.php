@@ -103,11 +103,19 @@ class AdminUserController extends Controller
             'active_products_count' => $activeProductsCount,
             'wallet_available' => $walletAvailable,
             'wallet_pending' => $walletPending,
+            'wallet_held' => $store && $store->wallet ? (float) $store->wallet->balance_held : 0.0,
+            'commission_paid' => (float) $paidOrders->sum('commission_amount'),
+            'delivered_count' => $ordersBreakdown['delivered'],
+            'hold_days' => $store ? \App\Models\Order::holdDaysFor($store->id) : null,
         ];
 
         return Inertia::render('Admin/Users/Show', [
             'vendor' => $user,
             'stats' => $stats,
+            'reports' => $store ? $store->reports()->with('order:id,tracking_code,total_client')->latest()->take(20)->get() : [],
+            'withdrawals' => $store && $store->wallet ? \App\Models\Withdrawal::where('wallet_id', $store->wallet->id)->latest()->take(15)->get() : [],
+            'subscriptions' => \App\Models\Subscription::where('user_id', $user->id)->latest()->take(10)->get(),
+            'daysRemaining' => $user->plan && $user->plan !== 'starter' ? $user->getDaysRemaining() : null,
         ]);
     }
 
@@ -115,19 +123,14 @@ class AdminUserController extends Controller
     {
         $validated = $request->validate([
             'plan' => ['required', 'string', 'in:starter,pro,growth,business'],
+            'months' => ['nullable', 'integer', 'in:1,3,6,12'],
         ]);
 
-        $user->update([
-            'plan' => $validated['plan'],
-        ]);
+        $user->grantPlan($validated['plan'], (int) ($validated['months'] ?? 1));
 
-        if ($user->store) {
-            $user->store->update([
-                'plan_type' => $validated['plan'],
-            ]);
-        }
-
-        return redirect()->back()->with('message', "Plan du vendeur {$user->name} mis à jour vers " . strtoupper($validated['plan']) . " !");
+        return redirect()->back()->with('message', $validated['plan'] === 'starter'
+            ? "{$user->name} repasse au plan Starter."
+            : "{$user->name} passe au plan ".ucfirst($validated['plan'])." jusqu’au ".$user->fresh()->subscription_expires_at->format('d/m/Y').'.');
     }
 
     public function toggleBan(Request $request, User $user, WhatsappGatewayService $whatsapp): RedirectResponse
@@ -171,7 +174,7 @@ class AdminUserController extends Controller
                 Log::warning('Failed to send account ban WhatsApp', ['err' => $e->getMessage()]);
             }
 
-            return redirect()->back()->with('message', "Le vendeur {$user->name} a été banni et notifié par email et WhatsApp.");
+            return redirect()->back()->with('message', "Le vendeur {$user->name} a été banni et notifié par e-mail.");
         } else {
             // Unbanning user
             $user->update(['is_banned' => false]);

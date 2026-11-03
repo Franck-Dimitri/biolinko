@@ -39,7 +39,8 @@ class RegisteredUserController extends Controller
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'phone_whatsapp' => 'nullable|string|max:50',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+            'terms' => ['accepted'],
+        ], ['terms.accepted' => 'Vous devez accepter les conditions d’utilisation et la politique de confidentialité.']);
 
         $user = User::create([
             'name' => $request->name,
@@ -49,6 +50,9 @@ class RegisteredUserController extends Controller
             'plan' => 'starter',
             'password' => Hash::make($request->password),
         ]);
+        $user->forceFill(['terms_accepted_at' => now()])->save();
+
+        $user->ensureStore();
 
         // Le listener Registered appelle sendEmailVerificationNotification() → envoi de l'OTP
         event(new Registered($user));

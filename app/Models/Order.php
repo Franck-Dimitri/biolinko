@@ -51,6 +51,13 @@ class Order extends Model
         'invoice_issued_at',
         'invoice_due_at',
         'invoice_notes',
+        'subtotal',
+        'discount_amount',
+        'delivery_fee',
+        'promo_code_id',
+        'promo_code',
+        'balance_due',
+        'balance_collected_at',
     ];
 
     protected $casts = [
@@ -64,6 +71,11 @@ class Order extends Model
         'saas_margin' => 'decimal:2',
         'api_fee' => 'decimal:2',
         'total_client' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'delivery_fee' => 'decimal:2',
+        'balance_due' => 'decimal:2',
+        'balance_collected_at' => 'datetime',
         'paid_at' => 'datetime',
         'invoice_issued_at' => 'datetime',
         'invoice_due_at' => 'date',
@@ -147,8 +159,13 @@ class Order extends Model
                 'paid_at' => now(),
                 'hrskills_transaction_id' => $transactionId ?? $order->hrskills_transaction_id,
                 'commission_rate' => $rate,
-                'commission_amount' => round((float) $order->price_vendor * $rate / 100),
+                // La livraison revient entièrement au vendeur : pas de commission dessus
+                'commission_amount' => round(max(0, (float) $order->price_vendor - (float) $order->delivery_fee) * $rate / 100),
             ]);
+
+            if ($order->promo_code_id) {
+                PromoCode::whereKey($order->promo_code_id)->increment('used_count');
+            }
 
             // La vente reste « en attente » le temps du délai de sécurité, puis devient retirable (releaseFunds)
             $order->update(['funds_release_at' => now()->addDays(static::holdDaysFor($order->store_id))]);
@@ -205,7 +222,25 @@ class Order extends Model
         return $paid;
     }
 
+    /**
+     * Ventes réellement encaissées, quel que soit leur avancement (payée, en livraison, livrée).
+     * Seule définition à utiliser pour les chiffres d'affaires.
+     */
+    public function scopePaid($query)
+    {
+        return $query->where('payment_status', 'paid');
+    }
+
     /** Frais de service ajoutés au prix pour le client (arrondis à l'unité supérieure). */
+    /**
+     * Part payée en ligne quand le client choisit l'acompte : au moins le minimum de paiement en ligne,
+     * jamais plus que la commande. Couvre toujours la commission (acompte ≥ 20 %, commission ≤ 7 %).
+     */
+    public static function depositFor(float $vendorAmount, int $percent, float $minOnline): float
+    {
+        return min($vendorAmount, max(ceil($vendorAmount * $percent / 100), $minOnline));
+    }
+
     public static function clientFee(float $amount): float
     {
         return ceil($amount * config('payments.client_fee_percent') / 100);
@@ -222,7 +257,8 @@ class Order extends Model
     /** Ce que le vendeur touche sur la vente, commission déduite. */
     public function sellerNet(): float
     {
-        return max(0, (float) $this->price_vendor - (float) $this->commission_amount);
+        // Avec un acompte, seule la part payée en ligne passe par le portefeuille ; le solde est encaissé par le vendeur
+        return max(0, (float) $this->price_vendor - (float) $this->balance_due - (float) $this->commission_amount);
     }
 
     /** Ventes livrées à partir desquelles un vendeur est considéré comme établi. */

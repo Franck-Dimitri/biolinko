@@ -12,7 +12,7 @@ export default function ModerationModal({
     isLoading = false,
 }) {
     const [reason, setReason] = useState('');
-    const [storeAction, setStoreAction] = useState('suspend'); // 'suspend' | 'delete'
+    const storeAction = 'suspend';
     const [error, setError] = useState('');
 
     // Predefined reason suggestions based on moderation type
@@ -41,7 +41,6 @@ export default function ModerationModal({
     useEffect(() => {
         if (isOpen) {
             setReason('');
-            setStoreAction('suspend');
             setError('');
         }
     }, [isOpen]);
@@ -58,7 +57,7 @@ export default function ModerationModal({
         e.preventDefault();
         const trimmed = reason.trim();
         if (!trimmed || trimmed.length < 5) {
-            setError('Veuillez préciser un motif clair d\'au moins 5 caractères (requis pour l\'email/WhatsApp du vendeur).');
+            setError('Veuillez préciser un motif clair d\'au moins 5 caractères (il est envoyé au vendeur).');
             return;
         }
 
@@ -79,14 +78,12 @@ export default function ModerationModal({
             warning: 'Le produit sera définitivement retiré du catalogue de la boutique.',
         },
         store: {
-            title: 'Modérer la vitrine',
+            title: 'Suspendre la vitrine',
             icon: Store,
-            iconBg: storeAction === 'delete' ? 'bg-rose-100 text-rose-600' : 'bg-[#FFF3C4] text-[#7A5B00]',
-            buttonText: storeAction === 'delete' ? 'Supprimer et notifier' : 'Suspendre et notifier',
-            buttonColor: storeAction === 'delete' ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-amber-600 hover:bg-amber-700 text-white',
-            warning: storeAction === 'delete' 
-                ? 'La vitrine et ses données seront supprimées de la plateforme.' 
-                : 'La vitrine sera immédiatement masquée du public et passée en brouillon.',
+            iconBg: 'bg-[#FFF3C4] text-[#7A5B00]',
+            buttonText: 'Suspendre et notifier',
+            buttonColor: '',
+            warning: 'La vitrine est masquée du public et repasse en brouillon. Ses commandes, son portefeuille et ses données sont conservés : vous pourrez la republier.',
         },
         user: {
             title: 'Bannir le compte vendeur',
@@ -118,21 +115,6 @@ export default function ModerationModal({
                     <p className="pt-1.5">{config.warning}</p>
                 </div>
 
-                {type === 'store' && (
-                    <div>
-                        <p className={labelClass}>Action</p>
-                        <div className="grid gap-2 sm:grid-cols-2">
-                            {[['suspend', 'Suspendre', 'Dépublier, passer en brouillon'], ['delete', 'Supprimer', 'Suppression totale de la vitrine']].map(([val, label, hint]) => (
-                                <button key={val} type="button" onClick={() => setStoreAction(val)}
-                                    className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-left transition-colors ${storeAction === val ? 'border-[#141412] bg-[#FFFBEA]' : 'border-black/10 hover:border-black/30'}`}>
-                                    <span><span className="block text-[14px] font-medium text-[#141412]">{label}</span><span className="text-[13px] text-[#8B8A83]">{hint}</span></span>
-                                    {storeAction === val && <Check className="h-4 w-4 text-[#141412]" />}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
                 <div>
                     <label htmlFor="moderation-reason" className={labelClass}>Motif communiqué au vendeur</label>
                     <textarea id="moderation-reason" rows={4} value={reason} placeholder="Expliquez clairement la raison de cette décision…"
@@ -148,12 +130,12 @@ export default function ModerationModal({
                 </div>
 
                 <p className="flex items-start gap-2 text-[13px] text-[#5F5E58]">
-                    <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" /> Le vendeur reçoit ce motif par e-mail et par WhatsApp dès la validation.
+                    <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" /> Le vendeur reçoit ce motif par e-mail dès la validation.
                 </p>
 
                 <div className="flex flex-wrap justify-end gap-2 border-t border-black/[0.06] pt-5">
                     <Button type="button" onClick={onClose} disabled={isLoading}>Annuler</Button>
-                    <Button type="submit" variant={type === 'store' && storeAction === 'suspend' ? 'dark' : 'danger'} disabled={isLoading}>
+                    <Button type="submit" variant={type === 'store' ? 'dark' : 'danger'} disabled={isLoading}>
                         {isLoading ? 'Traitement…' : config.buttonText}
                     </Button>
                 </div>

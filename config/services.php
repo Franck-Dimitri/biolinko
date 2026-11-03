@@ -47,8 +47,8 @@ return [
         'subscription_mode' => env('SUBSCRIPTION_PAYMENT_MODE', 'simulation'),
     ],
 
-    // Passerelle utilisée pour les notifications : "cloud" (API officielle Meta) ou "evolution"
-    'whatsapp_driver' => env('WHATSAPP_DRIVER', 'cloud'),
+    // Notifications automatiques : "cloud" (API officielle Meta) ou "off" (en veille, contact en 1 clic par le vendeur)
+    'whatsapp_driver' => env('WHATSAPP_DRIVER', 'off'),
 
     'whatsapp_cloud' => [
         'token' => env('WHATSAPP_CLOUD_TOKEN'),
@@ -60,13 +60,6 @@ return [
         'language' => env('WHATSAPP_CLOUD_LANGUAGE', 'fr'),
         // Domaine public des liens dans les modèles (Meta refuse localhost)
         'public_url' => env('WHATSAPP_CLOUD_PUBLIC_URL', 'https://biolinko.link'),
-    ],
-
-    'whatsapp_gateway' => [
-        'enabled' => env('WHATSAPP_GATEWAY_ENABLED', false),
-        'base_url' => env('WHATSAPP_GATEWAY_URL', env('EVOLUTION_API_URL')),
-        'api_key' => env('WHATSAPP_GATEWAY_KEY', env('EVOLUTION_API_KEY')),
-        'default_instance' => env('WHATSAPP_GATEWAY_DEFAULT_INSTANCE', env('EVOLUTION_INSTANCE', 'test_dims')),
     ],
 
 ];

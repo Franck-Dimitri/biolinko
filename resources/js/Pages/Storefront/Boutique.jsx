@@ -205,13 +205,12 @@ export default function Boutique({ store, products = [], activeSmartLinks = [], 
                             </div>
 
                             {cart.items.length > 0 ? (
-                                <CheckoutForm
+                                <CheckoutForm subtotal={cart.subtotal}
                                     store={store}
-                                    total={cart.total}
                                     payload={{ items: cart.items.map((it) => ({ product_id: it.product_id, variant_id: it.variant_id, quantity: it.quantity })) }}
                                     onPaid={cart.clear}
                                     disabled={isPreview}
-                                    summary={<OrderSummary items={cart.items} subtotal={cart.subtotal} fee={cart.fee} total={cart.total} onQuantity={cart.setQuantity} onRemove={cart.remove} />}
+                                    summary={(x) => <OrderSummary items={cart.items} subtotal={cart.subtotal} fee={x.fee} total={x.total} promo={x.promo} delivery={x.delivery} balance={x.balance} onQuantity={cart.setQuantity} onRemove={cart.remove} />}
                                 />
                             ) : (
                                 <div className="mx-auto max-w-md space-y-4 rounded-3xl bg-[#F6F5F1] p-12 text-center">

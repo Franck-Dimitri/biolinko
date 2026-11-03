@@ -1,238 +1,114 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { 
-    Wallet, DollarSign, TrendingUp, Crown, ShieldCheck, ArrowUpRight, CheckCircle2, FileText, ArrowRight, BarChart3, PieChart
-} from 'lucide-react';
+import { Crown, Percent, ShoppingBag, Wallet } from 'lucide-react';
+import { Card, CardHeader, Empty, PageHeader, Stat, Table, dateTime, fcfa, reveal } from '@/Components/Dashboard/UI';
+import { EASE_OUT } from '@/Components/Motion';
 
-export default function WalletIndex({ metrics, paidOrders, completedWithdrawals }) {
-    const user = usePage().props.auth.user;
+const LINES = [
+    ['commissions', 'Commissions sur les ventes', 'bg-[#141412]'],
+    ['client_fees', 'Frais de service clients', 'bg-[#FFCC00]'],
+    ['withdrawal_fees', 'Frais de retrait', 'bg-[#B45309]'],
+    ['subscriptions', 'Abonnements', 'bg-[#16A34A]'],
+];
+const pct = (n) => `${String(n).replace('.', ',')} %`;
 
-    const streamsData = [
-        { label: 'Gain 3% Marge Ventes', val: metrics?.total_saas_margin || 0, color: 'from-amber-400 to-[#FFCC00]' },
-        { label: 'Gain 1,5% Frais Retraits MoMo', val: metrics?.total_withdrawal_fees || 0, color: 'from-emerald-400 to-emerald-600' },
-        { label: 'Gain Abonnements SaaS', val: metrics?.total_subscription_revenue || 0, color: 'from-[#FFF6CC] to-[#FFFBEA]' },
-    ];
-
-    const totalVal = Math.max(1, metrics?.total_wallet_balance || 0);
+export default function Index({ total = {}, thisMonth = {}, months = [], gatewayCost = {}, latestSales = [], latestSubscriptions = [] }) {
+    const max = Math.max(...months.map((m) => m.gross), 1);
 
     return (
         <AuthenticatedLayout>
-            <Head title="Portefeuille Admin & Gains Plateforme — Administration BIOLINKO" />
+            <Head title="Revenus, Administration Biolinko" />
+            <div className="space-y-6 pb-12">
+                <PageHeader title="Revenus Biolinko" sub="L’argent réellement encaissé par la plateforme, et ce qu’il en reste après les frais de l’agrégateur." />
 
-            <div className="space-y-8 pb-12">
-                
-                {/* HERO BANNER */}
-                <div className="p-6 sm:p-8 rounded-3xl bg-[#FFCC00] text-[#141412] shadow-xs border border-amber-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#141412] text-white text-[11px] font-semibold">
-                            <Wallet className="w-3.5 h-3.5 text-[#FFCC00]" /> PORTEFEUILLE FINANCIER SUPER-ADMIN
-                        </div>
-                        <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
-                            Solde Cumulé &amp; Revenus Réseau BIOLINKO
-                        </h2>
-                        <p className="text-xs text-[#141412] font-medium">
-                            Suivez l'intégralité des gains issus des frais de service de 3% sur les ventes, des frais de 1,5% sur les retraits MoMo et des abonnements SaaS.
-                        </p>
+                <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+                    <motion.section {...reveal()} className="relative overflow-hidden rounded-3xl bg-[#141412] p-7 text-white">
+                        <div aria-hidden className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#FFCC00]/20 blur-3xl" />
+                        <p className="relative text-[14px] text-white/60">Revenu net ce mois-ci</p>
+                        <p className="relative mt-2 text-[40px] font-medium tracking-[-0.03em] tabular-nums">{fcfa(thisMonth.net)}</p>
+                        <dl className="relative mt-5 space-y-2 border-t border-white/10 pt-4 text-[14px]">
+                            {LINES.map(([k, label]) => (
+                                <div key={k} className="flex justify-between gap-3 text-white/70"><dt>{label}</dt><dd className="tabular-nums text-white">{fcfa(thisMonth[k])}</dd></div>
+                            ))}
+                            <div className="flex justify-between gap-3 text-white/70"><dt>Frais agrégateur (estimés)</dt><dd className="tabular-nums text-[#FCA5A5]">−{fcfa(thisMonth.gateway_cost)}</dd></div>
+                        </dl>
+                    </motion.section>
+
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                        <Stat label="Revenu net depuis le lancement" value={fcfa(total.net)} hint={`${fcfa(total.gross)} brut − ${fcfa(total.gateway_cost)} de frais estimés`} Icon={Wallet} delay={0.03} />
+                        <Stat label="Ventes traitées" value={fcfa(total.gmv)} hint={`${total.orders ?? 0} commandes payées`} Icon={ShoppingBag} delay={0.06} />
                     </div>
                 </div>
 
-                {/* 4 ALIGNED STAT CARDS (EXACT CAPTURE 2 STYLE) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    
-                    {/* Solde Total Cumulé */}
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Solde Total Portefeuille</span>
-                            <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
-                                <Wallet className="w-4 h-4" />
+                <Card delay={0.08}>
+                    <CardHeader title="Six derniers mois" sub="Revenus bruts par source" />
+                    <div className="mt-6 flex h-48 items-end gap-3">
+                        {months.map((m, i) => (
+                            <div key={m.key} className="group flex h-full flex-1 flex-col items-center justify-end gap-2">
+                                <span className="text-[11px] tabular-nums text-[#8B8A83] opacity-0 transition-opacity group-hover:opacity-100">{fcfa(m.gross)}</span>
+                                <motion.div initial={{ height: 0 }} animate={{ height: `${m.gross ? Math.max(4, (m.gross / max) * 100) : 2}%` }} transition={{ duration: 0.7, delay: i * 0.05, ease: EASE_OUT }}
+                                    className="flex w-full max-w-[56px] flex-col-reverse overflow-hidden rounded-lg bg-[#F2F1EC]">
+                                    {m.gross > 0 && LINES.map(([k, , color]) => <span key={k} className={color} style={{ height: `${(m[k] / m.gross) * 100}%` }} />)}
+                                </motion.div>
+                                <span className="text-[12px] text-[#8B8A83]">{m.label}</span>
                             </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
-                            {Number(metrics?.total_wallet_balance || 0).toLocaleString()} FCFA
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-600">
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-100 flex items-center gap-0.5 font-semibold">
-                                <ArrowUpRight className="w-3 h-3" /> Net Cumulé
-                            </span>
-                            <span className="text-[#8B8A83]">Total Plateforme</span>
-                        </div>
+                        ))}
                     </div>
+                    <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[13px] text-[#5F5E58]">
+                        {LINES.map(([k, label, color]) => <li key={k} className="flex items-center gap-2"><span className={`h-2.5 w-2.5 rounded-sm ${color}`} />{label}</li>)}
+                    </ul>
+                </Card>
 
-                    {/* Gain 3% Marge Ventes */}
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Marge 3% sur les Ventes</span>
-                            <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
-                                <DollarSign className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-amber-600">
-                            {Number(metrics?.total_saas_margin || 0).toLocaleString()} FCFA
-                        </div>
-                        <div className="text-[11px] text-amber-700 font-semibold">
-                            Commissions Fast Checkout
-                        </div>
-                    </div>
+                <Card padded={false} delay={0.1}>
+                    <div className="p-5 pb-3"><CardHeader title="Détail par mois" /></div>
+                    <Table head={[['Mois'], ['Ventes', 'text-right'], ['Commissions', 'text-right'], ['Frais clients', 'text-right'], ['Frais retrait', 'text-right'], ['Abonnements', 'text-right'], ['Frais agrégateur', 'text-right'], ['Net', 'text-right']]}>
+                        {[...months].reverse().map((m) => (
+                            <tr key={m.key}>
+                                <td className="px-4 py-3 text-[#141412]">{m.label}</td>
+                                <td className="px-4 py-3 text-right tabular-nums text-[#5F5E58]">{fcfa(m.gmv)}</td>
+                                <td className="px-4 py-3 text-right tabular-nums">{fcfa(m.commissions)}</td>
+                                <td className="px-4 py-3 text-right tabular-nums">{fcfa(m.client_fees)}</td>
+                                <td className="px-4 py-3 text-right tabular-nums">{fcfa(m.withdrawal_fees)}</td>
+                                <td className="px-4 py-3 text-right tabular-nums">{fcfa(m.subscriptions)}</td>
+                                <td className="px-4 py-3 text-right tabular-nums text-[#B91C1C]">−{fcfa(m.gateway_cost)}</td>
+                                <td className="px-4 py-3 text-right font-medium tabular-nums text-[#141412]">{fcfa(m.net)}</td>
+                            </tr>
+                        ))}
+                    </Table>
+                    <p className="border-t border-black/[0.06] p-4 text-[13px] text-[#8B8A83]">
+                        Frais de l’agrégateur estimés à {pct(gatewayCost.collection)} des encaissements et {pct(gatewayCost.payout)} des virements (réglables dans config/payments.php). Les abonnements attribués par l’admin ou simulés ne sont pas comptés.
+                    </p>
+                </Card>
 
-                    {/* Gain 1,5% Frais Retraits MoMo */}
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Gain 1,5% Retraits MoMo</span>
-                            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                                <TrendingUp className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-emerald-600">
-                            {Number(metrics?.total_withdrawal_fees || 0).toLocaleString()} FCFA
-                        </div>
-                        <div className="text-[11px] text-emerald-600 font-semibold">
-                            Frais Payout Vendeurs
-                        </div>
-                    </div>
-
-                    {/* Gain Abonnements SaaS */}
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Gain Abonnements SaaS</span>
-                            <div className="w-8 h-8 rounded-xl bg-[#F6F5F1] text-[#141412] flex items-center justify-center">
-                                <Crown className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
-                            {Number(metrics?.total_subscription_revenue || 0).toLocaleString()} FCFA
-                        </div>
-                        <div className="text-[11px] text-[#141412] font-semibold">
-                            Pro, Growth &amp; Business
-                        </div>
-                    </div>
-
-                </div>
-
-                {/* CHARTS & REVENUE BREAKDOWN */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
-                    {/* VISUAL BREAKDOWN BARS (2 COLUMNS) */}
-                    <div className="lg:col-span-2 bg-white rounded-3xl border border-black/[0.08] p-6 space-y-6 shadow-xs">
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                                <h3 className="text-base font-semibold text-[#141412] flex items-center gap-2">
-                                    <BarChart3 className="w-5 h-5 text-amber-500" />
-                                    <span>Analyse des Sources de Revenus</span>
-                                </h3>
-                                <p className="text-xs text-[#5F5E58] font-medium">Répartition des gains par flux de commissions et abonnements</p>
-                            </div>
-                        </div>
-
-                        <div className="space-y-5 pt-2">
-                            {streamsData.map((stream, idx) => {
-                                const percent = Math.round((stream.val / totalVal) * 100) || 0;
-                                return (
-                                    <div key={idx} className="space-y-2">
-                                        <div className="flex items-center justify-between text-xs font-semibold">
-                                            <span className="text-[#3D3C37]">{stream.label}</span>
-                                            <span className="text-[#141412] font-mono">{Number(stream.val).toLocaleString()} FCFA ({percent}%)</span>
-                                        </div>
-                                        <div className="h-4 w-full bg-[#F2F1EC] rounded-full overflow-hidden p-0.5">
-                                            <div 
-                                                style={{ width: `${Math.max(5, percent)}%` }} 
-                                                className={`h-full rounded-full bg-gradient-to-r ${stream.color} transition-all duration-500`}
-                                            />
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* FINANCIAL SUMMARY CARD (1 COLUMN) */}
-                    <div className="bg-white rounded-3xl border border-black/[0.08] p-6 space-y-6 shadow-xs flex flex-col justify-between">
-                        <div className="space-y-4">
-                            <h3 className="text-base font-semibold text-[#141412] flex items-center gap-2">
-                                <ShieldCheck className="w-5 h-5 text-amber-600" />
-                                <span>Sécurité &amp; Traçabilité</span>
-                            </h3>
-                            <p className="text-xs text-[#5F5E58] leading-relaxed font-medium">
-                                Toutes les commissions (3% ventes, 1,5% retraits) sont calculées et enregistrées automatiquement lors des événements webhook Mobile Money.
-                            </p>
-                            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 font-medium">
-                                🔥 <strong>Garantie BIOLINKO</strong> : Aucun frais caché. Solde transférable vers le compte bancaire/MoMo principal du Super-Admin.
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                {/* TABLES: HISTORY OF INCOME ENTRIES */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    
-                    {/* SAAS MARGIN FROM PAID ORDERS */}
-                    <div className="bg-white rounded-3xl border border-black/[0.08] p-6 space-y-4 shadow-xs">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-base font-semibold text-[#141412] flex items-center gap-2">
-                                <DollarSign className="w-4 h-4 text-amber-600" />
-                                <span>Gains 3% Ventes Récents</span>
-                            </h3>
-                            <span className="text-xs text-[#8B8A83] font-medium">{paidOrders?.length || 0} transaction(s)</span>
-                        </div>
-
-                        {paidOrders && paidOrders.length > 0 ? (
-                            <div className="space-y-3">
-                                {paidOrders.map((ord) => (
-                                    <div key={ord.id} className="p-4 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] flex items-center justify-between gap-3 text-xs">
-                                        <div>
-                                            <div className="font-semibold text-amber-700 font-mono text-sm">+{Number(ord.saas_margin || 0).toLocaleString()} FCFA</div>
-                                            <div className="text-[#5F5E58] text-[11px]">Boutique: <strong className="text-[#141412]">{ord.store?.name}</strong></div>
-                                            <div className="text-[10px] text-[#8B8A83]">Réf: {ord.tracking_code}</div>
-                                        </div>
-                                        <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-semibold">
-                                            3% Encaissé
-                                        </span>
-                                    </div>
+                <div className="grid gap-4 xl:grid-cols-2">
+                    <Card padded={false} delay={0.12}>
+                        <div className="p-5 pb-3"><CardHeader title="Dernières ventes" /></div>
+                        {latestSales.length ? (
+                            <ul className="divide-y divide-black/[0.05]">
+                                {latestSales.map((o) => (
+                                    <li key={o.id} className="flex items-center justify-between gap-3 px-5 py-3 text-[14px]">
+                                        <span className="min-w-0"><span className="block truncate text-[#141412]">{o.store?.name} · <span className="font-mono text-[13px]">{o.tracking_code}</span></span><span className="text-[12px] text-[#8B8A83]">{dateTime(o.paid_at)} · {fcfa(o.total_client)}</span></span>
+                                        <span className="shrink-0 text-right"><span className="block tabular-nums text-[#141412]">+{fcfa(Number(o.saas_margin) + Number(o.commission_amount))}</span><span className="text-[12px] text-[#8B8A83]">commission {pct(Number(o.commission_rate))}</span></span>
+                                    </li>
                                 ))}
-                            </div>
-                        ) : (
-                            <div className="text-xs text-[#8B8A83] p-8 text-center bg-[#F6F5F1] rounded-2xl">
-                                Aucun gain de vente enregistré pour le moment.
-                            </div>
-                        )}
-                    </div>
-
-                    {/* WITHDRAWAL FEES FROM CASH-OUTS */}
-                    <div className="bg-white rounded-3xl border border-black/[0.08] p-6 space-y-4 shadow-xs">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-base font-semibold text-[#141412] flex items-center gap-2">
-                                <TrendingUp className="w-4 h-4 text-emerald-600" />
-                                <span>Gains 1,5% Frais Payout Retraits</span>
-                            </h3>
-                            <span className="text-xs text-[#8B8A83] font-medium">{completedWithdrawals?.length || 0} virement(s)</span>
-                        </div>
-
-                        {completedWithdrawals && completedWithdrawals.length > 0 ? (
-                            <div className="space-y-3">
-                                {completedWithdrawals.map((w) => (
-                                    <div key={w.id} className="p-4 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] flex items-center justify-between gap-3 text-xs">
-                                        <div>
-                                            <div className="font-semibold text-emerald-600 font-mono text-sm">+{Number(w.amount * 0.015).toLocaleString()} FCFA</div>
-                                            <div className="text-[#5F5E58] text-[11px]">Boutique: <strong className="text-[#141412]">{w.wallet?.store?.name || 'N/A'}</strong></div>
-                                            <div className="text-[10px] text-[#8B8A83]">Retrait #{w.id} ({Number(w.amount).toLocaleString()} FCFA)</div>
-                                        </div>
-                                        <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-semibold">
-                                            1,5% Payout Fee
-                                        </span>
-                                    </div>
+                            </ul>
+                        ) : <div className="p-5"><Empty Icon={Percent} title="Aucune vente" text="Les revenus des ventes apparaîtront ici." /></div>}
+                    </Card>
+                    <Card padded={false} delay={0.14}>
+                        <div className="p-5 pb-3"><CardHeader title="Derniers abonnements payés" /></div>
+                        {latestSubscriptions.length ? (
+                            <ul className="divide-y divide-black/[0.05]">
+                                {latestSubscriptions.map((s) => (
+                                    <li key={s.id} className="flex items-center justify-between gap-3 px-5 py-3 text-[14px]">
+                                        <span className="min-w-0"><span className="block truncate text-[#141412]">{s.user?.name}</span><span className="text-[12px] text-[#8B8A83]">{(s.plan || '').replace(/^./, (c) => c.toUpperCase())} · {s.billing_cycle} mois · {dateTime(s.updated_at)}</span></span>
+                                        <span className="shrink-0 tabular-nums text-[#141412]">+{fcfa(s.amount)}</span>
+                                    </li>
                                 ))}
-                            </div>
-                        ) : (
-                            <div className="text-xs text-[#8B8A83] p-8 text-center bg-[#F6F5F1] rounded-2xl">
-                                Aucun gain sur virement pour le moment.
-                            </div>
-                        )}
-                    </div>
-
+                            </ul>
+                        ) : <div className="p-5"><Empty Icon={Crown} title="Aucun abonnement payé" text="Les paiements d’abonnement réels apparaîtront ici." /></div>}
+                    </Card>
                 </div>
-
             </div>
         </AuthenticatedLayout>
     );

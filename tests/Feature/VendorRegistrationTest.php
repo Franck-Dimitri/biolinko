@@ -10,6 +10,7 @@ test('new user registration automatically creates store and wallet and redirects
         'email' => 'glamour@example.com',
         'password' => 'password123',
         'password_confirmation' => 'password123',
+        'terms' => '1',
     ]);
 
     $this->assertAuthenticated();

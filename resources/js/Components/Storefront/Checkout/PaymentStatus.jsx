@@ -90,7 +90,7 @@ export default function PaymentStatus({ payment, primaryColor, primaryTextColor,
                                     <p className="text-[#5F5E58]">
                                         {status === 'FAILED'
                                             ? (message || 'Vérifiez votre solde ou votre code secret, puis réessayez.')
-                                            : `Si vous avez déjà validé, patientez encore un peu. Sinon, composez ${op.ussd} pour retrouver la demande.`}
+                                            : `L’opérateur n’a pas encore répondu. Si vous avez validé, la commande sera confirmée automatiquement : suivez-la depuis sa page. Pas de demande reçue ? Composez ${op.ussd}.`}
                                     </p>
                                 </div>
                                 <div className="grid gap-2">
@@ -101,11 +101,18 @@ export default function PaymentStatus({ payment, primaryColor, primaryTextColor,
                                             <RefreshCw className="h-4 w-4" /> J'ai validé, vérifier à nouveau
                                         </button>
                                     )}
-                                    <button type="button" onClick={onRetry}
-                                        className={`flex h-12 items-center justify-center rounded-full font-semibold ${status === 'FAILED' ? '' : 'border border-black/15 text-[#141412]'}`}
-                                        style={status === 'FAILED' ? { backgroundColor: primaryColor, color: primaryTextColor } : undefined}>
-                                        Modifier le numéro ou réessayer
-                                    </button>
+                                    {status === 'FAILED' ? (
+                                        <button type="button" onClick={onRetry} className="flex h-12 items-center justify-center rounded-full font-semibold"
+                                            style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                                            Modifier le numéro ou réessayer
+                                        </button>
+                                    ) : (
+                                        // Pas de nouvelle commande tant que la première peut encore aboutir : sinon double débit possible
+                                        <a href={payment.redirect_url || `/track/${payment.tracking_code}`}
+                                            className="flex h-12 items-center justify-center rounded-full border border-black/15 font-semibold text-[#141412]">
+                                            Suivre ma commande
+                                        </a>
+                                    )}
                                 </div>
                             </div>
                         )}

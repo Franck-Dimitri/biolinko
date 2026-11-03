@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -33,10 +34,10 @@ class User extends Authenticatable implements MustVerifyEmail
      * null = illimité.
      */
     public const PLAN_LIMITS = [
-        'starter' => ['products' => 5, 'stock' => 50, 'images' => 2, 'smartlinks' => 2],
-        'pro' => ['products' => 30, 'stock' => 300, 'images' => 5, 'smartlinks' => 10],
-        'growth' => ['products' => 100, 'stock' => 1500, 'images' => 8, 'smartlinks' => null],
-        'business' => ['products' => null, 'stock' => null, 'images' => 10, 'smartlinks' => null],
+        'starter' => ['products' => 5, 'stock' => 50, 'images' => 2, 'smartlinks' => 2, 'promo_codes' => 1],
+        'pro' => ['products' => 30, 'stock' => 300, 'images' => 5, 'smartlinks' => 10, 'promo_codes' => 5],
+        'growth' => ['products' => 100, 'stock' => 1500, 'images' => 8, 'smartlinks' => null, 'promo_codes' => null],
+        'business' => ['products' => null, 'stock' => null, 'images' => 10, 'smartlinks' => null, 'promo_codes' => null],
     ];
 
     public function planLimit(string $key): ?int
@@ -210,6 +211,67 @@ class User extends Authenticatable implements MustVerifyEmail
             'would_pay' => round($best['cost']),
             'saving' => round($currentCost - $best['cost']),
         ];
+    }
+
+    /**
+     * Plan attribué par l'admin (geste commercial, test, correction). Un plan payant reçoit une échéance,
+     * prolongée si c'est le même plan encore actif ; l'opération est tracée dans l'historique des abonnements.
+     */
+    public function grantPlan(string $plan, int $months = 1): void
+    {
+        $plan = strtolower($plan);
+        if ($plan === 'starter') {
+            $this->update(['plan' => 'starter', 'subscription_expires_at' => null]);
+            $this->store?->update(['plan_type' => 'starter']);
+
+            return;
+        }
+
+        $from = ($this->plan === $plan && $this->subscription_expires_at?->isFuture()) ? $this->subscription_expires_at : now();
+        $this->update(['plan' => $plan, 'subscription_expires_at' => $from->copy()->addMonths($months)]);
+        $this->store?->update(['plan_type' => $plan]);
+
+        Subscription::create([
+            'user_id' => $this->id, 'plan' => $plan, 'billing_cycle' => $months, 'amount' => 0,
+            'payment_status' => 'paid', 'payment_provider' => 'admin', 'starts_at' => now(), 'ends_at' => $this->subscription_expires_at,
+        ]);
+    }
+
+    /** Adresses déjà prises par l'application : une boutique ne peut pas s'appeler ainsi. */
+    public const RESERVED_SLUGS = ['admin', 'seller', 'login', 'register', 'logout', 'dashboard', 'profile', 'track', 'pay', 'store', 'api',
+        'checkout', 'verify-email', 'forgot-password', 'reset-password', 'confirm-password', 'password', 'email', 'storage', 'build', 'images',
+        'conditions-generales', 'politique-de-confidentialite', 'politique-des-cookies', 'privacy', 'terms', 'cookies', 'up', 'biolinko'];
+
+    /**
+     * Chaque vendeur a une boutique (en brouillon au départ) et un portefeuille : sans eux, aucune page vendeur ne fonctionne.
+     */
+    public function ensureStore(): Store
+    {
+        if ($this->store) {
+            return $this->store;
+        }
+
+        $base = Str::slug($this->name) ?: 'boutique';
+        $slug = $base;
+        $i = 2;
+        while (in_array($slug, self::RESERVED_SLUGS, true) || Store::where('slug', $slug)->exists()) {
+            $slug = $base.'-'.$i++;
+        }
+
+        $store = Store::create([
+            'user_id' => $this->id,
+            'name' => $this->name,
+            'slug' => $slug,
+            'phone_whatsapp' => $this->phone_whatsapp,
+            'is_published' => false,
+            'country' => 'CM',
+            'currency' => 'XAF',
+        ]);
+        Wallet::firstOrCreate(['store_id' => $store->id], ['balance_available' => 0, 'balance_pending' => 0]);
+
+        $this->setRelation('store', $store);
+
+        return $store;
     }
 
     public function getDaysRemaining(): int

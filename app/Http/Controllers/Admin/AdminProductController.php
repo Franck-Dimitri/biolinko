@@ -105,6 +105,6 @@ class AdminProductController extends Controller
         // 3. Delete product
         $product->delete();
 
-        return redirect()->back()->with('message', "Le produit \"{$productTitle}\" a été supprimé et le vendeur a été notifié par email et WhatsApp.");
+        return redirect()->back()->with('message', "Le produit \"{$productTitle}\" a été supprimé et le vendeur a été notifié par e-mail.");
     }
 }

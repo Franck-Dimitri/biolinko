@@ -1,3 +1,4 @@
+import { WhatsappIcon } from '@/Components/BrandIcons';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
@@ -114,6 +115,12 @@ export default function Index({ invoices, stats, filters }) {
     useEffect(() => { if (errors?.status) toast.error(errors.status); }, [errors]);
 
     const setStatus = (o, status) => router.patch(route('seller.invoices.updateStatus', o.id), { status }, { preserveScroll: true });
+    const reminderLink = (o) => {
+        let phone = (o.customer_phone || '').replace(/\D/g, '');
+        if (phone.length === 9) phone = `237${phone}`;
+        const text = `Bonjour ${o.customer_name}, votre facture ${o.invoice_number || o.tracking_code} de ${fcfa(o.total_client)} est en attente de règlement.`;
+        return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    };
     const remind = (o) => router.post(route('seller.invoices.sendReminder', o.id), {}, { preserveScroll: true });
 
     return (
@@ -163,7 +170,8 @@ export default function Index({ invoices, stats, filters }) {
                                                 {pendingManual && (
                                                     <>
                                                         <Button size="sm" variant="primary" onClick={() => setStatus(o, 'paid')}><Check className="h-4 w-4" /> Payée</Button>
-                                                        <Button size="sm" variant="ghost" onClick={() => remind(o)} title="Relancer le client"><Bell className="h-4 w-4" /></Button>
+                                                        <Button size="sm" variant="ghost" href={reminderLink(o)} target="_blank" rel="noreferrer" title="Relancer sur WhatsApp"><WhatsappIcon className="h-4 w-4 text-[#16A34A]" /></Button>
+                                                        {o.customer_email && <Button size="sm" variant="ghost" onClick={() => remind(o)} title="Relancer par e-mail"><Bell className="h-4 w-4" /></Button>}
                                                         <Button size="sm" variant="ghost" onClick={() => setStatus(o, 'cancelled')} title="Annuler la facture"><X className="h-4 w-4" /></Button>
                                                     </>
                                                 )}

@@ -106,12 +106,12 @@ export default function SmartLinkShow({ smartLink, store, isValid }) {
 
                 <div>
                     <h2 className="mb-4 text-2xl font-medium tracking-[-0.03em] text-[#141412]">Commander ce pack</h2>
-                    <CheckoutForm
+                    <CheckoutForm subtotal={packPrice}
                         store={store}
-                        total={packPrice + fee}
+                        allowPromo={false}
                         endpoint={route('smartlink.checkout', smartLink.code)}
                         payload={{}}
-                        summary={<OrderSummary items={items} subtotal={subtotal} discount={discount} fee={fee} total={packPrice + fee} />}
+                        summary={(x) => <OrderSummary items={items} subtotal={subtotal} discount={discount} fee={x.fee} total={x.total} delivery={x.delivery} balance={x.balance} />}
                     />
                 </div>
             </div>

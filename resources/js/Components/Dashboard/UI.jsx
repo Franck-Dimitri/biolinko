@@ -1,5 +1,5 @@
-import { Link } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { Link, router } from '@inertiajs/react';
+import { cloneElement, isValidElement, useEffect, useId } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, X } from 'lucide-react';
 import { EASE_OUT } from '@/Components/Motion';
@@ -65,7 +65,7 @@ export function Button({ variant = 'secondary', size = 'md', href, as, method, c
 
 export function Card({ children, className = '', delay = 0, padded = true }) {
     return (
-        <motion.section {...reveal(delay)} className={`rounded-3xl border border-black/[0.06] bg-white ${padded ? 'p-6' : ''} ${className}`}>
+        <motion.section {...reveal(delay)} className={`min-w-0 rounded-3xl border border-black/[0.06] bg-white ${padded ? 'p-5 sm:p-6' : ''} ${className}`}>
             {children}
         </motion.section>
     );
@@ -85,13 +85,13 @@ export function CardHeader({ title, sub, action, className = '' }) {
 
 export function Stat({ label, value, hint, Icon, accent = false, delay = 0 }) {
     return (
-        <motion.div {...reveal(delay)} className={`rounded-3xl border p-5 ${accent ? 'border-[#FFCC00]/60 bg-[#FFFBEA]' : 'border-black/[0.06] bg-white'}`}>
-            <div className="flex items-center justify-between text-[14px] text-[#5F5E58]">
+        <motion.div {...reveal(delay)} className={`min-w-0 rounded-3xl border p-4 sm:p-5 ${accent ? 'border-[#FFCC00]/60 bg-[#FFFBEA]' : 'border-black/[0.06] bg-white'}`}>
+            <div className="flex items-start justify-between gap-2 text-[13px] text-[#5F5E58] sm:text-[14px]">
                 {label}
-                {Icon && <span className={`flex h-8 w-8 items-center justify-center rounded-xl ${accent ? 'bg-[#FFCC00]' : 'bg-[#F6F5F1]'} text-[#141412]`}><Icon className="h-4 w-4" /></span>}
+                {Icon && <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${accent ? 'bg-[#FFCC00]' : 'bg-[#F6F5F1]'} text-[#141412]`}><Icon className="h-4 w-4" /></span>}
             </div>
-            <p className="mt-4 text-[26px] font-medium tracking-[-0.02em] tabular-nums text-[#141412]">{value}</p>
-            {hint && <p className="mt-1 text-[13px] text-[#8B8A83]">{hint}</p>}
+            <p className="mt-3 text-[20px] font-medium tracking-[-0.02em] tabular-nums text-[#141412] [overflow-wrap:anywhere] sm:mt-4 sm:text-[26px]">{value}</p>
+            {hint && <p className="mt-1 text-[12px] text-[#8B8A83] sm:text-[13px]">{hint}</p>}
         </motion.div>
     );
 }
@@ -168,10 +168,14 @@ export const fieldClass = 'h-11 w-full rounded-xl border border-black/10 bg-whit
 export const labelClass = 'mb-1.5 block text-[14px] font-medium text-[#141412]';
 
 export function Field({ label, hint, error, children }) {
+    // Un seul champ (input, select, textarea) : le libellé lui est relié, pour les lecteurs d'écran et le clic
+    const autoId = useId();
+    const single = isValidElement(children) && ['input', 'select', 'textarea'].includes(children.type);
+    const id = single ? (children.props.id || autoId) : undefined;
     return (
         <div>
-            {label && <span className={labelClass}>{label}</span>}
-            {children}
+            {label && (single ? <label htmlFor={id} className={labelClass}>{label}</label> : <span className={labelClass}>{label}</span>)}
+            {single ? cloneElement(children, { id }) : children}
             {hint && !error && <p className="mt-1.5 text-[13px] text-[#8B8A83]">{hint}</p>}
             {error && <p className="mt-1.5 text-[13px] text-[#B91C1C]">{error}</p>}
         </div>
@@ -223,6 +227,21 @@ export function PlanLock({ plan = 'Pro', text }) {
         <div className="flex flex-col items-start justify-between gap-3 rounded-2xl border border-[#FFCC00]/50 bg-[#FFFBEA] p-4 sm:flex-row sm:items-center">
             <p className="text-[14px] text-[#141412]">{text || `Disponible à partir du plan ${plan}.`}</p>
             <Button variant="primary" size="sm" href={route('seller.subscriptions.index', { plan: plan.toLowerCase() })}>Passer au {plan}</Button>
+        </div>
+    );
+}
+
+/** Pied de liste paginée (pagination Laravel), filtres conservés. */
+export function Pagination({ page, label = 'éléments' }) {
+    if (!page || page.last_page <= 1) return null;
+    const go = (url) => url && router.get(url, {}, { preserveState: true, preserveScroll: false });
+    return (
+        <div className="flex items-center justify-between border-t border-black/[0.06] p-4 text-[13px] text-[#5F5E58]">
+            <span>Page {page.current_page} sur {page.last_page} · {page.total} {label}</span>
+            <div className="flex gap-2">
+                <Button size="sm" disabled={!page.prev_page_url} onClick={() => go(page.prev_page_url)}>Précédent</Button>
+                <Button size="sm" disabled={!page.next_page_url} onClick={() => go(page.next_page_url)}>Suivant</Button>
+            </div>
         </div>
     );
 }

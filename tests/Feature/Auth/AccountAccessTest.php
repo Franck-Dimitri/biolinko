@@ -18,6 +18,7 @@ test('l’inscription envoie un seul code OTP', function () {
         'email' => 'awa@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',
+        'terms' => '1',
     ])->assertRedirect(route('verification.notice'));
 
     Mail::assertSent(VendorOtpVerificationMail::class, 1);
@@ -58,4 +59,14 @@ test('un compte banni pendant sa session est déconnecté', function () {
 
 test('mot de passe oublié ne révèle pas si l’adresse existe', function () {
     $this->post('/forgot-password', ['email' => 'inconnu@example.com'])->assertSessionHasNoErrors()->assertSessionHas('status');
+});
+
+test('l’inscription exige l’acceptation des CGU et la date est enregistrée', function () {
+    $this->post('/register', ['name' => 'X', 'email' => 'x@example.com', 'password' => 'password', 'password_confirmation' => 'password'])
+        ->assertSessionHasErrors('terms');
+
+    $this->post('/register', ['name' => 'X', 'email' => 'x@example.com', 'password' => 'password', 'password_confirmation' => 'password', 'terms' => '1']);
+    $user = \App\Models\User::where('email', 'x@example.com')->first();
+    expect($user->terms_accepted_at)->not->toBeNull();
+    expect($user->store)->not->toBeNull(); // boutique créée à l'inscription
 });

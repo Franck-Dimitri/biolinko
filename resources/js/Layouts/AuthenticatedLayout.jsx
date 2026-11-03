@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster, toast } from 'sonner';
 import {
-    ArrowUpRight, BarChart3, ChevronDown, Copy, CreditCard, Crown, FileText, LayoutDashboard, Link2, LogOut, Megaphone,
+    ArrowUpRight, Truck, BarChart3, ChevronDown, Copy, CreditCard, Crown, FileText, LayoutDashboard, Link2, LogOut, Megaphone,
     Menu, Package, Palette, PackageCheck, Settings, ShieldCheck, Store, Users, Wallet, Wrench, X,
 } from 'lucide-react';
 
@@ -17,6 +17,7 @@ const SELLER_NAV = [
     ['Ventes', [
         ['Factures', 'seller.invoices.index', FileText, ['seller.invoices.*']],
         ['Liens de paiement', 'seller.smartlinks.index', Link2, ['seller.smartlinks.*']],
+        ['Livraison & promos', 'seller.selling.index', Truck, ['seller.selling.*']],
         ['Portefeuille', 'seller.wallet.index', Wallet, ['seller.wallet.*']],
     ]],
     ['Croissance', [
@@ -37,10 +38,10 @@ const ADMIN_NAV = [
         ['Produits', 'admin.products.index', Package, ['admin.products.*']],
     ]],
     ['Finance', [
+        ['Revenus', 'admin.wallet.index', CreditCard, ['admin.wallet.*']],
         ['Abonnements', 'admin.subscriptions.index', Crown, ['admin.subscriptions.*']],
         ['Transactions', 'admin.transactions.index', BarChart3, ['admin.transactions.*']],
         ['Retraits', 'admin.withdrawals.index', Wallet, ['admin.withdrawals.*']],
-        ['Portefeuille', 'admin.wallet.index', CreditCard, ['admin.wallet.*']],
     ]],
     ['Système', [
         ['Paramètres', 'admin.settings.index', Settings, ['admin.settings.*']],

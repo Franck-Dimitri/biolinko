@@ -33,8 +33,8 @@ class AppearanceController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'alpha_dash', 'unique:stores,slug,' . $store->id],
-            'category' => ['required', 'string', 'max:255'],
+            'slug' => ['required', 'string', 'max:255', 'alpha_dash', 'unique:stores,slug,' . $store->id, \Illuminate\Validation\Rule::notIn(\App\Models\User::RESERVED_SLUGS)],
+            'category' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'about_text' => ['nullable', 'string'],
             'theme_color' => ['required', 'string', 'max:20'],

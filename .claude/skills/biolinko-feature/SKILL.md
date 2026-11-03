@@ -31,4 +31,4 @@ Stack: Laravel 13 (PHP 8.3), Inertia 2 + React 19 (JSX, no TypeScript), Tailwind
 
 - No secrets or `.env` values in code or commits.
 - Don't edit `vendor/` or generated files in `public/build`.
-- Payment webhooks (`HrSkillsPayWebhookController`, `WhatsappWebhookController`) must stay idempotent and verify signatures — be extra careful there and add tests.
+- Payment webhooks (`HrSkillsPayWebhookController`, `WhatsappCloudWebhookController`) must stay idempotent and verify signatures — be extra careful there and add tests.

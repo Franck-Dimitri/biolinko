@@ -1,269 +1,100 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-    Package, Search, ShieldCheck, Tag, ExternalLink, AlertCircle, CheckCircle2, Flame, Trash2
-} from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { Eye, EyeOff, Package, PackageX, Percent, Trash2 } from 'lucide-react';
 import ModerationModal from '@/Components/Admin/ModerationModal';
+import { Badge, Card, Empty, PageHeader, Pagination, SearchInput, Stat, Table, Tabs, fcfa } from '@/Components/Dashboard/UI';
 
-export default function ProductsIndex({ products, metrics, filters }) {
-    const [search, setSearch] = useState(filters?.search || '');
-    const [promo, setPromo] = useState(filters?.promo || 'all');
+export default function ProductsIndex({ products, metrics = {}, filters = {} }) {
+    const [search, setSearch] = useState(filters.search || '');
+    const [target, setTarget] = useState(null);
+    const [busy, setBusy] = useState(false);
+    const first = useRef(true);
+    const list = products?.data || [];
 
-    // Moderation delete modal state
-    const [deleteModal, setDeleteModal] = useState({
-        isOpen: false,
-        product: null,
-    });
-    const [isDeleting, setIsDeleting] = useState(false);
+    useEffect(() => {
+        if (first.current) { first.current = false; return; }
+        const t = setTimeout(() => router.get(route('admin.products.index'), { search, promo: filters.promo }, { preserveState: true, replace: true }), 350);
+        return () => clearTimeout(t);
+    }, [search]);
 
-    const handleConfirmDelete = ({ reason }) => {
-        if (!deleteModal.product) return;
-        setIsDeleting(true);
-        router.delete(route('admin.products.destroy', deleteModal.product.id), {
+    const setPromo = (promo) => router.get(route('admin.products.index'), { search, promo }, { preserveState: true, replace: true });
+
+    const remove = ({ reason }) => {
+        setBusy(true);
+        router.delete(route('admin.products.destroy', target.id), {
             data: { reason },
             preserveScroll: true,
-            onSuccess: () => {
-                setIsDeleting(false);
-                setDeleteModal({ isOpen: false, product: null });
-                toast.success('Le produit a été supprimé et le vendeur a été notifié par email et WhatsApp.');
-            },
-            onError: (errs) => {
-                setIsDeleting(false);
-                toast.error(errs?.reason || 'Erreur lors de la suppression du produit.');
-            },
+            onSuccess: () => { toast.success(`« ${target.title} » est supprimé, le vendeur a été prévenu.`); setTarget(null); },
+            onFinish: () => setBusy(false),
         });
-    };
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        router.get(route('admin.products.index'), { search, promo }, { preserveState: true });
-    };
-
-    const handlePromoFilter = (newPromo) => {
-        setPromo(newPromo);
-        router.get(route('admin.products.index'), { search, promo: newPromo }, { preserveState: true });
     };
 
     return (
         <AuthenticatedLayout>
-            <Head title="Catalogue Produits Réseau — Administration BIOLINKO" />
-            <div hidden={deleteModal.isOpen}>
+            <Head title="Produits, Administration Biolinko" />
+            <div hidden={!!target} className="space-y-6 pb-12">
+                <PageHeader title="Produits" sub="Le catalogue de toutes les boutiques, pour repérer et retirer ce qui n’a pas sa place." />
 
-            <div className="space-y-8 pb-12">
-                {/* HERO BANNER */}
-                <div className="p-6 sm:p-8 rounded-3xl bg-[#FFCC00] text-[#141412] shadow-xs border border-amber-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#141412] text-white text-[11px] font-semibold">
-                            <Package className="w-3.5 h-3.5 text-[#FFCC00]" /> CATALOGUE PRODUITS DU RÉSEAU
-                        </div>
-                        <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
-                            Supervision des Articles ({metrics?.total_products || 0} produits)
-                        </h2>
-                        <p className="text-xs text-[#141412] font-medium">
-                            Surveillez les produits mis en ligne par l'ensemble des vendeurs et modérez l'activation du catalogue.
-                        </p>
-                    </div>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+                    <Stat label="Produits" value={metrics.total_products ?? 0} Icon={Package} />
+                    <Stat label="Visibles" value={metrics.active_products ?? 0} Icon={Eye} delay={0.03} />
+                    <Stat label="En promotion" value={metrics.promo_products ?? 0} Icon={Percent} delay={0.06} />
+                    <Stat label="En rupture" value={metrics.out_of_stock ?? 0} Icon={PackageX} delay={0.09} />
                 </div>
 
-                {/* 4 ALIGNED METRICS CARDS (EXACT CAPTURE 2 STYLE) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Produits au Catalogue</span>
-                            <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
-                                <Package className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
-                            {metrics?.total_products || 0} produit(s)
-                        </div>
-                        <div className="text-[11px] text-[#8B8A83] font-medium">
-                            Réseau BIOLINKO
-                        </div>
+                <Card padded={false}>
+                    <div className="flex flex-col gap-3 border-b border-black/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <Tabs id="promo" value={filters.promo || 'all'} onChange={setPromo} tabs={[['all', 'Tous'], ['promo', 'En promo'], ['regular', 'Prix normal']]} />
+                        <SearchInput value={search} onChange={setSearch} placeholder="Produit ou boutique" className="sm:w-72" />
                     </div>
 
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Produits Actifs</span>
-                            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                                <CheckCircle2 className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-emerald-600">
-                            {metrics?.active_products || 0} actif(s)
-                        </div>
-                        <div className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> En vente
-                        </div>
-                    </div>
-
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Produits en Promo</span>
-                            <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center">
-                                <Flame className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-rose-600">
-                            {metrics?.promo_products || 0} promo(s)
-                        </div>
-                        <div className="text-[11px] text-rose-600 font-semibold">
-                            Offres spéciales
-                        </div>
-                    </div>
-
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Ruptures de Stock</span>
-                            <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
-                                <Tag className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-amber-700">
-                            {metrics?.out_of_stock || 0} rupture(s)
-                        </div>
-                        <div className="text-[11px] text-amber-700 font-semibold">
-                            Stock épuisé
-                        </div>
-                    </div>
-                </div>
-
-                {/* SEARCH & FILTER BAR */}
-                <div className="p-4 bg-white rounded-3xl border border-black/[0.08] shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <form onSubmit={handleSearch} className="w-full sm:w-96 relative">
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Rechercher un produit, une description, une boutique..."
-                            className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#F6F5F1] border border-black/[0.08] text-xs font-medium focus:border-amber-400 outline-none"
-                        />
-                        <Search className="w-4 h-4 text-[#8B8A83] absolute left-3 top-1/2 -translate-y-1/2" />
-                    </form>
-
-                    <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 text-xs font-semibold">
-                        {['all', 'promo', 'regular'].map((pr) => (
-                            <button
-                                key={pr}
-                                onClick={() => handlePromoFilter(pr)}
-                                className={`px-3 py-1.5 rounded-xl uppercase transition-all cursor-pointer ${
-                                    promo === pr 
-                                        ? 'bg-[#141412] text-white font-semibold shadow-2xs' 
-                                        : 'bg-[#F2F1EC] text-[#5F5E58] hover:bg-[#E9E7E0]'
-                                }`}
-                            >
-                                {pr === 'all' ? 'Tous les produits' : pr === 'promo' ? 'En Promo' : 'Réguliers'}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* PRODUCTS TABLE */}
-                <div className="bg-white rounded-3xl border border-black/[0.08] shadow-2xs overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse text-xs">
-                            <thead>
-                                <tr className="bg-[#F6F5F1] border-b border-black/[0.08] text-[#5F5E58] text-[10px] font-semibold">
-                                    <th className="py-4 px-6">Produit</th>
-                                    <th className="py-4 px-6">Boutique</th>
-                                    <th className="py-4 px-6">Prix Vendeur</th>
-                                    <th className="py-4 px-6">Prix Client (+3%)</th>
-                                    <th className="py-4 px-6">Stock</th>
-                                    <th className="py-4 px-6 text-right">Actions Modération</th>
+                    {list.length ? (
+                        <Table head={[['Produit'], ['Boutique'], ['Prix', 'text-right'], ['Stock', 'text-right'], ['État'], ['', 'w-24']]}>
+                            {list.map((p) => (
+                                <tr key={p.id} className="transition-colors hover:bg-[#FAFAF8]">
+                                    <td className="px-4 py-3">
+                                        <span className="flex items-center gap-3">
+                                            <span className="h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-[#F6F5F1]">{(p.image_url || p.images?.[0]) && <img src={p.image_url || p.images[0]} alt="" loading="lazy" className="h-full w-full object-cover" />}</span>
+                                            <span className="min-w-0">
+                                                <a href={p.store ? `/${p.store.slug}/p/${p.slug}` : '#'} target="_blank" rel="noreferrer" className="block max-w-[240px] truncate text-[#141412] hover:underline">{p.title}</a>
+                                                {p.variants?.length > 0 && <span className="text-[13px] text-[#8B8A83]">{p.variants.length} variante{p.variants.length > 1 ? 's' : ''}</span>}
+                                            </span>
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        {p.store?.user ? <Link href={route('admin.users.show', p.store.user.id)} className="block max-w-[160px] truncate text-[#141412] hover:underline">{p.store.name}</Link> : (p.store?.name || '—')}
+                                    </td>
+                                    <td className="px-4 py-3 text-right tabular-nums">
+                                        {p.is_promo && p.promo_price
+                                            ? <><span className="block text-[#141412]">{fcfa(p.promo_price)}</span><span className="text-[12px] text-[#8B8A83] line-through">{fcfa(p.price_vendor)}</span></>
+                                            : fcfa(p.price_vendor)}
+                                    </td>
+                                    <td className={`px-4 py-3 text-right tabular-nums ${Number(p.stock) === 0 ? 'text-[#B91C1C]' : ''}`}>{p.stock}</td>
+                                    <td className="px-4 py-3">
+                                        <span className="flex flex-wrap gap-1.5">
+                                            <Badge tone={p.is_active ? 'success' : 'neutral'}>{p.is_active ? 'Visible' : 'Masqué'}</Badge>
+                                            {p.is_promo && <Badge tone="brand">Promo</Badge>}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex justify-end gap-1">
+                                            <Link href={route('admin.products.toggleActive', p.id)} method="post" as="button" preserveScroll aria-label={p.is_active ? 'Masquer' : 'Rendre visible'}
+                                                className="flex h-8 w-8 items-center justify-center rounded-full text-[#5F5E58] hover:bg-[#F2F1EC]">{p.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Link>
+                                            <button type="button" aria-label="Supprimer" onClick={() => setTarget(p)} className="flex h-8 w-8 items-center justify-center rounded-full text-[#B91C1C] hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody className="divide-y divide-black/[0.06] font-medium">
-                                {products.data && products.data.length > 0 ? (
-                                    products.data.map((p) => (
-                                        <tr key={p.id} className="hover:bg-[#F6F5F1]/80 transition-colors">
-                                            <td className="py-4 px-6">
-                                                <div className="flex items-center gap-3">
-                                                    <img 
-                                                        src={p.image_url || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600'} 
-                                                        alt={p.title} 
-                                                        className="w-10 h-10 rounded-xl object-cover border border-black/[0.08] shrink-0" 
-                                                    />
-                                                    <div>
-                                                        <div className="font-semibold text-[#141412] text-sm flex items-center gap-1.5">
-                                                            <span>{p.title}</span>
-                                                            {p.is_promo && (
-                                                                <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[9px] font-semibold">
-                                                                    SOLDE
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <div className="text-[#8B8A83] text-[11px]">Variantes: {p.variants?.length || 0}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <div className="font-semibold text-[#141412]">{p.store?.name || 'N/A'}</div>
-                                                <div className="text-amber-700 font-mono text-[11px]">biolinko.link/{p.store?.slug}</div>
-                                            </td>
-                                            <td className="py-4 px-6 font-semibold text-[#141412]">
-                                                {Number(p.price_vendor).toLocaleString()} FCFA
-                                            </td>
-                                            <td className="py-4 px-6 font-semibold text-amber-700">
-                                                {Number(Math.ceil((p.is_promo && p.promo_price > 0 ? p.promo_price : p.price_vendor) * 1.03)).toLocaleString()} FCFA
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${
-                                                    p.stock > 3 ? 'bg-[#F2F1EC] text-[#3D3C37]' : 'bg-amber-100 text-amber-900 font-semibold'
-                                                }`}>
-                                                    {p.stock} en stock
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-6 text-right space-x-2 whitespace-nowrap">
-                                                <Link
-                                                    href={route('admin.products.toggleActive', p.id)}
-                                                    method="post"
-                                                    as="button"
-                                                    className={`px-3 py-1.5 rounded-xl font-semibold text-[11px] transition-all cursor-pointer ${
-                                                        p.is_active 
-                                                            ? 'bg-amber-100 hover:bg-amber-200 text-amber-900' 
-                                                            : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                                                    }`}
-                                                >
-                                                    {p.is_active ? 'Désactiver' : 'Activer'}
-                                                </Link>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setDeleteModal({ isOpen: true, product: p })}
-                                                    className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1 border border-rose-200"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5 text-rose-600" /> Supprimer
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={6} className="py-12 text-center text-[#8B8A83] text-xs">
-                                            Aucun produit trouvé.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                            ))}
+                        </Table>
+                    ) : <div className="p-6"><Empty Icon={Package} title="Aucun produit" text="Aucun produit ne correspond à ces filtres." /></div>}
+                    <Pagination page={products} label="produits" />
+                </Card>
             </div>
 
-            {/* MODERATION DELETE PRODUCT MODAL */}
-            </div>
-
-            <ModerationModal
-                isOpen={deleteModal.isOpen}
-                onClose={() => setDeleteModal({ isOpen: false, product: null })}
-                onConfirm={handleConfirmDelete}
-                type="product"
-                itemName={deleteModal.product?.title || ''}
-                targetInfo={deleteModal.product ? `Boutique : ${deleteModal.product.store?.name || 'N/A'} • Vendeur : ${deleteModal.product.store?.user?.email || 'N/A'}` : null}
-                isLoading={isDeleting}
-            />
+            <ModerationModal isOpen={!!target} onClose={() => setTarget(null)} onConfirm={remove} type="product" isLoading={busy}
+                itemName={target?.title || ''} targetInfo={target ? `Boutique : ${target.store?.name || '—'} · ${target.store?.user?.email || ''}` : null} />
         </AuthenticatedLayout>
     );
 }

@@ -26,8 +26,13 @@ class SyncWhatsappTemplates extends Command
         }
 
         $url = 'https://graph.facebook.com/'.config('services.whatsapp_cloud.version').'/'.$waba.'/message_templates';
-        $existing = collect(Http::withToken($token)->get($url, ['fields' => 'name,status,language,rejected_reason', 'limit' => 200])->json('data', []))
-            ->keyBy('name');
+        $first = Http::withToken($token)->get($url, ['fields' => 'name,status,language,rejected_reason', 'limit' => 200]);
+        if ($first->failed()) {
+            $this->error('Meta refuse la requête : '.($first->json('error.message') ?? 'HTTP '.$first->status()));
+
+            return self::FAILURE;
+        }
+        $existing = collect($first->json('data', []))->keyBy('name');
 
         if (! $this->option('status')) {
             foreach ($this->templates() as $tpl) {
@@ -76,14 +81,14 @@ class SyncWhatsappTemplates extends Command
                     ['Paul', 'BLK-CMD-AB12CD34EF', 'Chez Awa', 'en cours de livraison']),
                 $track('Voir ma commande'),
             ]),
-            $tpl('biolinko_rappel_paiement', 'UTILITY', [
-                $body('Bonjour {{1}}, votre commande {{2}} de {{3}} FCFA chez {{4}} vous attend toujours. Vos articles sont réservés : vous pouvez payer en un clic par MTN MoMo ou Orange Money.',
-                    ['Paul', 'BLK-CMD-AB12CD34EF', '10 300', 'Chez Awa']),
+            $tpl('biolinko_rappel_paiement_v2', 'UTILITY', [
+                $body('Bonjour {{1}}, votre commande {{2}} de {{3}} FCFA chez {{4}} est en attente de paiement. Vous pouvez la régler par MTN MoMo ou Orange Money depuis votre page de commande.',
+                    ['Paul', 'BLK-CMD-AB12CD34EF', '10 350', 'Chez Awa']),
                 $track('Payer ma commande'),
             ]),
-            $tpl('biolinko_vente_payee', 'UTILITY', [
-                $body('Nouvelle vente sur {{1}} : la commande {{2}} de {{3}} est payée. {{4}} FCFA ont été crédités sur votre portefeuille.',
-                    ['Chez Awa', 'BLK-CMD-AB12CD34EF', 'Paul', '10 000']),
+            $tpl('biolinko_vente_payee_v2', 'UTILITY', [
+                $body('Nouvelle vente sur {{1}} : la commande {{2}} de {{3}} est payée. {{4}} FCFA, commission déduite, seront disponibles le {{5}} sur votre portefeuille Biolinko.',
+                    ['Chez Awa', 'BLK-CMD-AB12CD34EF', 'Paul', '9 300', '06/11/2026']),
                 ['type' => 'BUTTONS', 'buttons' => [['type' => 'URL', 'text' => 'Voir mes commandes', 'url' => $base.'/seller/orders']]],
             ]),
             $tpl('biolinko_signalement', 'UTILITY', [
@@ -91,9 +96,9 @@ class SyncWhatsappTemplates extends Command
                     ['BLK-CMD-AB12CD34EF', 'Paul', 'Commande non reçue', '237699887766']),
                 ['type' => 'BUTTONS', 'buttons' => [['type' => 'URL', 'text' => 'Répondre', 'url' => $base.'/seller/orders']]],
             ]),
-            $tpl('biolinko_moderation', 'UTILITY', [
-                $body('Bonjour {{1}}, {{2}} Motif : {{3}}. Pour toute question : support@biolinko.link',
-                    ['Awa', 'Votre produit Robe wax a été retiré de la plateforme.', 'photo non conforme']),
+            $tpl('biolinko_moderation_v2', 'UTILITY', [
+                $body('Information sur votre compte Biolinko : {{1}}. Motif : {{2}}. Pour toute question, écrivez à support@biolinko.link.',
+                    ['votre produit Robe wax a été retiré', 'photo non conforme']),
             ]),
             $tpl('biolinko_campagne', 'MARKETING', [
                 $body('Bonjour {{1}}, {{2}} a un message pour vous : {{3}} Rendez-vous sur la boutique pour en profiter.',

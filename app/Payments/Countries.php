@@ -36,20 +36,21 @@ class Countries
     public static function formatPhone(string $code, string $raw): string
     {
         $c = self::get($code);
+        $lengths = (array) $c['digits'];
         $digits = preg_replace('/\D/', '', $raw);
         if (str_starts_with($digits, '00')) {
             $digits = substr($digits, 2);
         }
-        if (strlen($digits) === $c['digits'] + strlen($c['dial']) && str_starts_with($digits, $c['dial'])) {
+        if (str_starts_with($digits, $c['dial']) && in_array(strlen($digits) - strlen($c['dial']), $lengths, true)) {
             $digits = substr($digits, strlen($c['dial']));
         }
-        // Un 0 de tête en trop (ex. 0699…) est retiré ; en Côte d'Ivoire et au Bénin, il fait partie du numéro
-        if (strlen($digits) === $c['digits'] + 1 && str_starts_with($digits, '0')) {
+        // Un 0 de tête en trop (ex. 0699…) est retiré ; quand le 0 fait partie du numéro (Côte d'Ivoire), il est gardé
+        if (! in_array(strlen($digits), $lengths, true) && str_starts_with($digits, '0') && in_array(strlen($digits) - 1, $lengths, true)) {
             $digits = substr($digits, 1);
         }
 
-        if (strlen($digits) !== $c['digits']) {
-            throw new InvalidArgumentException("Numéro invalide pour le {$c['name']} : {$c['digits']} chiffres attendus après +{$c['dial']}.");
+        if (! in_array(strlen($digits), $lengths, true)) {
+            throw new InvalidArgumentException("Numéro invalide pour le {$c['name']} : ".implode(' ou ', $lengths)." chiffres attendus après +{$c['dial']}.");
         }
         if ($code === 'CM' && ! str_starts_with($digits, '6')) {
             throw new InvalidArgumentException('Seuls les numéros Mobile Money du Cameroun (+237 6XX XXX XXX) sont acceptés.');
@@ -74,11 +75,23 @@ class Countries
         return array_key_first($c['operators']);
     }
 
+    /** Minimum de commande dans la devise du pays. */
+    public static function minOrder(string $code): int
+    {
+        return (int) (config('payments.countries.'.strtoupper($code).'.min_order') ?? config('payments.min_order'));
+    }
+
+    /** Montant en unités mineures de la devise (ex. 10 GHS => 1000). */
+    public static function toMinorUnits(string $code, float $amount): int
+    {
+        return (int) round($amount * 10 ** (int) (config('payments.countries.'.strtoupper($code).'.decimals') ?? 0));
+    }
+
     public static function operatorLabel(string $operator): string
     {
         return [
             'MTN' => 'MTN MoMo', 'ORANGE' => 'Orange Money', 'MOOV' => 'Moov Money', 'AIRTEL' => 'Airtel Money',
-            'FREE' => 'Free Money', 'MPESA' => 'M-Pesa', 'VODACOM' => 'M-Pesa', 'TIGO' => 'Tigo Pesa', 'HALOTEL' => 'HaloPesa',
+            'FREE' => 'Free Money', 'MPESA' => 'M-Pesa', 'VODACOM' => 'M-Pesa', 'TELECEL' => 'Telecel Cash', 'AIRTELTIGO' => 'AirtelTigo Money',
         ][strtoupper($operator)] ?? $operator;
     }
 }

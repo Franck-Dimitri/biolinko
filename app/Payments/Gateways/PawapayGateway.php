@@ -28,7 +28,7 @@ class PawapayGateway implements PaymentGateway
                 'phoneNumber' => $payment['phone'],
                 'provider' => $this->provider($payment['country'], $payment['operator']),
             ]],
-            'amount' => (string) (int) $payment['amount'],
+            'amount' => $this->amount($payment['country'], $payment['amount']),
             'currency' => $payment['currency'],
             'clientReferenceId' => $payment['client_reference'] ?? null,
             'customerMessage' => $this->customerMessage($payment['description'] ?? null),
@@ -51,7 +51,7 @@ class PawapayGateway implements PaymentGateway
                 'phoneNumber' => $payout['phone'],
                 'provider' => $this->provider($payout['country'], $payout['operator']),
             ]],
-            'amount' => (string) (int) $payout['amount'],
+            'amount' => $this->amount($payout['country'], $payout['amount']),
             'currency' => $payout['currency'],
             'clientReferenceId' => $payout['client_reference'] ?? null,
             'customerMessage' => $this->customerMessage($payout['description'] ?? 'Retrait Biolinko'),
@@ -128,6 +128,18 @@ class PawapayGateway implements PaymentGateway
         $clean = mb_substr($clean, 0, 22);
 
         return strlen($clean) >= 4 ? $clean : null;
+    }
+
+    /** Montant en unités majeures, avec les décimales autorisées par la devise du pays (0 ou 2). */
+    private function amount(string $country, float $amount): string
+    {
+        // Montant entier envoyé sans décimales : certains opérateurs (M-Pesa RD Congo) les refusent
+        $decimals = (int) (Countries::get($country)['decimals'] ?? 0);
+        if ($decimals === 0 || floor($amount) == $amount) {
+            return (string) (int) round($amount);
+        }
+
+        return number_format($amount, $decimals, '.', '');
     }
 
     /** pawaPay refuse les champs vides : on les retire. */

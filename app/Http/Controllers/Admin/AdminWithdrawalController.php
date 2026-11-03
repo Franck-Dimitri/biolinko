@@ -44,7 +44,9 @@ class AdminWithdrawalController extends Controller
             'pending' => Withdrawal::where('status', 'pending')->count(),
             'completed' => Withdrawal::where('status', 'completed')->count(),
             'rejected' => Withdrawal::where('status', 'rejected')->count(),
-            'total_amount_paid' => (float) Withdrawal::where('status', 'completed')->sum('amount'),
+            'processing' => Withdrawal::where('status', 'processing')->count(),
+            'total_amount_paid' => (float) Withdrawal::where('status', 'completed')->sum('net_amount'),
+            'total_fees' => (float) Withdrawal::where('status', 'completed')->sum('fee'),
             'total_amount_pending' => (float) Withdrawal::where('status', 'pending')->sum('amount'),
         ];
 
@@ -70,10 +72,7 @@ class AdminWithdrawalController extends Controller
 
         // Paiement fait à la main hors plateforme : on enregistre seulement la validation
         if ($request->boolean('manual')) {
-            DB::transaction(function () use ($withdrawal) {
-                $withdrawal->update(['status' => 'completed', 'processed_at' => now()]);
-                $withdrawal->wallet?->decrement('balance_pending', (float) $withdrawal->amount);
-            });
+            $withdrawal->settle(true);
 
             return redirect()->back()->with('message', 'Retrait marqué comme payé.');
         }
@@ -116,13 +115,7 @@ class AdminWithdrawalController extends Controller
             return redirect()->back()->withErrors(['withdrawal' => 'Ce retrait a déjà été traité.']);
         }
 
-        DB::transaction(function () use ($withdrawal) {
-            if ($wallet = $withdrawal->wallet) {
-                $wallet->decrement('balance_pending', (float) $withdrawal->amount);
-                $wallet->increment('balance_available', (float) $withdrawal->amount);
-            }
-            $withdrawal->update(['status' => 'rejected', 'processed_at' => now()]);
-        });
+        $withdrawal->settle(false);
 
         return redirect()->back()->with('message', 'Retrait rejeté : le montant est revenu sur le solde du vendeur.');
     }

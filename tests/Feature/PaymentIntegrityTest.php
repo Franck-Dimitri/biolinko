@@ -155,9 +155,10 @@ test('un identifiant de pixel invalide est refusé', function () {
 });
 
 test('la relance n’envoie qu’un rappel, seulement pour un vendeur Growth', function () {
+    config(['services.whatsapp_cloud.token' => 'tok', 'services.whatsapp_cloud.phone_number_id' => '111', 'services.whatsapp_driver' => 'cloud']);
     $sent = 0;
     $this->mock(\App\Services\WhatsappGatewayService::class, function ($m) use (&$sent) {
-        $m->shouldReceive('send1ClickReminder')->andReturnUsing(function () use (&$sent) { $sent++; return ['success' => true]; });
+        $m->shouldReceive('sendPaymentReminder')->andReturnUsing(function () use (&$sent) { $sent++; return ['success' => true]; });
     });
     $this->order->forceFill(['created_at' => now()->subHours(2)])->save();
 

@@ -1,333 +1,146 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { 
-    ShieldCheck, Store, Users, ShoppingBag, Wallet, DollarSign, 
-    TrendingUp, ArrowUpRight, Clock, CheckCircle2, AlertCircle, LogOut,
-    Sparkles, ArrowRight, ExternalLink, Filter, Search, ChevronRight, BarChart3, Activity
-} from 'lucide-react';
+import { AlertTriangle, ArrowRight, Banknote, Crown, Package, ShieldAlert, ShoppingBag, Store, TrendingUp, Users, Wallet } from 'lucide-react';
+import { Badge, Card, CardHeader, Empty, PageHeader, Stat, dateTime, fcfa, reveal, shortDate } from '@/Components/Dashboard/UI';
+import { EASE_OUT } from '@/Components/Motion';
 
-export default function Dashboard({ metrics, planCounts = {}, recentStores, pendingWithdrawals }) {
-    const user = usePage().props.auth.user;
-    const planPrices = usePage().props.planPrices || {};
-    const formatPrice = (plan) => `${Number(planPrices[plan] || 0).toLocaleString('fr-FR')} FCFA/mois`;
-    const vendorLabel = (plan) => `${planCounts[plan] || 0} Vendeur${(planCounts[plan] || 0) > 1 ? 's' : ''}`;
+const PLAN_LABELS = [['starter', 'Starter'], ['pro', 'Pro'], ['growth', 'Growth'], ['business', 'Business']];
+const REVENUE_LINES = [
+    ['commissions', 'Commissions sur les ventes'],
+    ['client_fees', 'Frais de service clients'],
+    ['withdrawal_fees', 'Frais de retrait'],
+    ['subscriptions', 'Abonnements'],
+];
+const sum = (r) => REVENUE_LINES.reduce((a, [k]) => a + Number(r?.[k] || 0), 0);
 
-    const gmvChartData = [
-        { day: 'Lun', val: 140000 },
-        { day: 'Mar', val: 280000 },
-        { day: 'Mer', val: 210000 },
-        { day: 'Jeu', val: 450000 },
-        { day: 'Ven', val: 390000 },
-        { day: 'Sam', val: 580000 },
-        { day: 'Dim', val: 720000 },
-    ];
+// Tâche qui attend l'admin : nombre, libellé et lien vers l'écran concerné
+function Todo({ count, label, hint, href, Icon, tone = 'warning' }) {
+    const active = count > 0;
+    return (
+        <Link href={href} className={`group flex items-center gap-3 rounded-2xl border p-4 transition-colors ${active ? 'border-[#FFCC00]/60 bg-[#FFFBEA] hover:border-[#FFCC00]' : 'border-black/[0.06] bg-white hover:border-black/20'}`}>
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${active ? (tone === 'danger' ? 'bg-red-50 text-[#B91C1C]' : 'bg-[#FFCC00] text-[#141412]') : 'bg-[#F6F5F1] text-[#8B8A83]'}`}>
+                <Icon className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-medium text-[#141412]">{count} {label}</span>
+                <span className="block truncate text-[13px] text-[#8B8A83]">{hint}</span>
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0 text-[#8B8A83] transition-transform group-hover:translate-x-0.5" />
+        </Link>
+    );
+}
 
-    const maxGmv = Math.max(...gmvChartData.map(d => d.val));
+export default function Dashboard({ metrics = {}, revenue = {}, revenue30 = {}, chart = [], planCounts = {}, todo = {}, recentStores = [], pendingWithdrawals = [] }) {
+    const max = Math.max(...chart.map((d) => d.total), 1);
+    const sellers = PLAN_LABELS.reduce((a, [k]) => a + (planCounts[k] || 0), 0) || 1;
 
     return (
         <AuthenticatedLayout>
-            <Head title="Console d'Administration Super-Admin — BIOLINKO" />
+            <Head title="Vue d’ensemble, Administration Biolinko" />
+            <div className="space-y-6 pb-12">
+                <PageHeader title="Vue d’ensemble" sub="L’activité de la plateforme, ce qu’elle rapporte et ce qui attend une action." />
 
-            <div className="space-y-8 pb-12">
-                
-                {/* 1. PROMOTIONAL SUPER-ADMIN HERO BANNER */}
-                <motion.div 
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-6 sm:p-8 rounded-3xl bg-[#FFCC00] text-[#141412] shadow-xs border border-amber-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden"
-                >
-                    <div className="space-y-1 z-10">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#141412] text-white text-[11px] font-semibold">
-                            <ShieldCheck className="w-3.5 h-3.5 text-[#FFCC00]" /> SUPER-ADMIN CONSOLE
-                        </div>
-                        <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
-                            Supervision globale de la plateforme BIOLINKO SaaS
-                        </h2>
-                        <p className="text-xs text-[#141412] font-medium">
-                            Gérez l'ensemble des vendeurs, surveillez le chiffre d'affaires du réseau et validez les retraits Mobile Money.
-                        </p>
-                    </div>
-
-                    <div className="flex items-center gap-3 z-10">
-                        <Link
-                            href={route('seller.dashboard')}
-                            className="px-6 py-3 rounded-2xl bg-[#141412] text-white hover:bg-[#2B2A26] font-semibold text-xs shadow-xs transition-transform active:scale-95 whitespace-nowrap flex items-center gap-1.5"
-                        >
-                            <span>Espace Vendeur Test</span>
-                            <ArrowUpRight className="w-4 h-4 text-amber-400" />
-                        </Link>
-                    </div>
+                {/* À traiter */}
+                <motion.div {...reveal()} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <Todo count={todo.withdrawals || 0} label={`retrait${todo.withdrawals > 1 ? 's' : ''} à traiter`} hint={todo.withdrawals ? `${fcfa(todo.withdrawals_amount)} au total` : 'Rien en attente'} href={route('admin.withdrawals.index', { status: 'pending' })} Icon={Wallet} />
+                    <Todo count={todo.reports || 0} label={`signalement${todo.reports > 1 ? 's' : ''} en cours`} hint="Ventes gelées le temps d’un accord" href={route('admin.stores.index')} Icon={AlertTriangle} />
+                    <Todo count={todo.under_review?.length || 0} label={`vendeur${(todo.under_review?.length || 0) > 1 ? 's' : ''} sous contrôle`} hint={todo.under_review?.length ? todo.under_review.map((s) => s.name).join(', ') : '3 signalements ou plus'} href={route('admin.stores.index')} Icon={ShieldAlert} tone="danger" />
+                    <Todo count={todo.unpublished || 0} label={`boutique${todo.unpublished > 1 ? 's' : ''} non publiée${todo.unpublished > 1 ? 's' : ''}`} hint="Créées mais pas encore en ligne" href={route('admin.stores.index')} Icon={Store} />
                 </motion.div>
 
-                {/* 2. OVERVIEW SECTION & METRICS CARDS (EXACT STYLE FROM SCREENSHOT 2) */}
-                <div>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                        <h2 className="text-xl font-semibold text-[#141412] tracking-tight">Vue d'Ensemble Plateforme</h2>
-                        <div className="text-xs text-[#5F5E58] font-medium">
-                            Connecté en tant que <strong className="text-[#141412]">{user.name}</strong> ({user.email})
-                        </div>
-                    </div>
+                <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+                    {/* Revenus Biolinko */}
+                    <motion.section {...reveal(0.04)} className="relative overflow-hidden rounded-3xl bg-[#141412] p-7 text-white">
+                        <div aria-hidden className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#FFCC00]/20 blur-3xl" />
+                        <p className="relative text-[14px] text-white/60">Revenus Biolinko · 30 derniers jours</p>
+                        <p className="relative mt-2 text-[40px] font-medium tracking-[-0.03em] tabular-nums">{fcfa(sum(revenue30))}</p>
+                        <dl className="relative mt-5 space-y-2 border-t border-white/10 pt-4 text-[14px]">
+                            {REVENUE_LINES.map(([k, label]) => (
+                                <div key={k} className="flex justify-between gap-3 text-white/70"><dt>{label}</dt><dd className="tabular-nums text-white">{fcfa(revenue30[k])}</dd></div>
+                            ))}
+                        </dl>
+                        <p className="relative mt-4 text-[13px] text-white/50">Depuis le lancement : {fcfa(sum(revenue))} · avant frais de l’agrégateur</p>
+                    </motion.section>
 
-                    {/* 4 METRICS CARDS GRID (EXACT CAPTURE 2 CARD LAYOUT) */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                        
-                        {/* GMV Card */}
-                        <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                            <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                                <span>Volume Ventes (GMV)</span>
-                                <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
-                                    <TrendingUp className="w-4 h-4" />
-                                </div>
-                            </div>
-                            <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
-                                {Number(metrics?.totalGmv || 0).toLocaleString()} FCFA
-                            </div>
-                            <div className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-600">
-                                <span className="px-2 py-0.5 rounded-full bg-emerald-100 flex items-center gap-0.5 font-semibold">
-                                    <ArrowUpRight className="w-3 h-3" /> +58%
-                                </span>
-                                <span className="text-[#8B8A83]">Réseau Global</span>
-                            </div>
+                    {/* Ventes 30 jours */}
+                    <Card delay={0.06}>
+                        <CardHeader title="Volume de ventes" sub={`${fcfa(metrics.gmv_30)} sur 30 jours · ${metrics.orders_30 || 0} commande${metrics.orders_30 > 1 ? 's' : ''} payée${metrics.orders_30 > 1 ? 's' : ''}`} />
+                        <div className="mt-6 flex h-36 items-end gap-[3px]">
+                            {chart.map((d, i) => (
+                                <motion.span key={d.date} title={`${shortDate(d.date)} : ${fcfa(d.total)}`}
+                                    initial={{ height: 0 }} animate={{ height: `${d.total ? Math.max(6, (d.total / max) * 100) : 3}%` }} transition={{ duration: 0.6, delay: i * 0.01, ease: EASE_OUT }}
+                                    className={`flex-1 rounded-sm ${i === chart.length - 1 ? 'bg-[#FFCC00]' : 'bg-[#F2F1EC] hover:bg-[#E9E7E0]'}`} />
+                            ))}
                         </div>
-
-                        {/* SaaS Revenue Card */}
-                        <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                            <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                                <span>Revenus SaaS Plateforme</span>
-                                <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
-                                    <DollarSign className="w-4 h-4" />
-                                </div>
-                            </div>
-                            <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
-                                {Number(metrics?.totalSaasRevenue || 0).toLocaleString()} FCFA
-                            </div>
-                            <div className="flex items-center gap-1.5 text-[11px] font-medium text-amber-700">
-                                <span className="px-2 py-0.5 rounded-full bg-amber-100 font-semibold">Commission 3%</span>
-                                <span className="text-[#8B8A83]">Marge plateforme</span>
-                            </div>
-                        </div>
-
-                        {/* Active Stores Card */}
-                        <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                            <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                                <span>Boutiques &amp; Vendeurs</span>
-                                <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
-                                    <Store className="w-4 h-4" />
-                                </div>
-                            </div>
-                            <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
-                                {metrics?.totalStores || 0} boutique(s)
-                            </div>
-                            <div className="text-[11px] text-[#8B8A83] font-medium">
-                                {metrics?.totalVendors || 0} vendeur(s) enregistrés
-                            </div>
-                        </div>
-
-                        {/* Pending Withdrawals Card */}
-                        <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                            <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                                <span>Retraits MoMo en Attente</span>
-                                <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center">
-                                    <Wallet className="w-4 h-4" />
-                                </div>
-                            </div>
-                            <div className="text-2xl sm:text-3xl font-semibold text-rose-600">
-                                {metrics?.pendingWithdrawalsCount || 0} demande(s)
-                            </div>
-                            <div className="text-[11px] text-rose-600 font-semibold flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Action requise
-                            </div>
-                        </div>
-
-                    </div>
+                        <div className="mt-2 flex justify-between text-[12px] text-[#8B8A83]"><span>Il y a 30 jours</span><span>Aujourd’hui</span></div>
+                    </Card>
                 </div>
 
-                {/* 3. CHARTS & GRAPHS SECTION (VOLUMES DE VENTES & MARGES) */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
-                    {/* GMV GRAPHIC CHART (2 COLUMNS) */}
-                    <div className="lg:col-span-2 bg-white rounded-3xl border border-black/[0.08] p-6 space-y-6 shadow-xs">
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                                <h3 className="text-base font-semibold text-[#141412] flex items-center gap-2">
-                                    <BarChart3 className="w-5 h-5 text-amber-500" />
-                                    <span>Progression des Ventes Réseau (GMV)</span>
-                                </h3>
-                                <p className="text-xs text-[#5F5E58] font-medium">Volume des transactions traitées en FCFA par jour</p>
-                            </div>
-                            <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-semibold uppercase">
-                                En Direct
-                            </span>
-                        </div>
-
-                        {/* VISUAL CHART BARS */}
-                        <div className="pt-6 pb-2 px-2 flex items-end justify-between gap-3 h-48 border-b border-black/[0.05]">
-                            {gmvChartData.map((item, idx) => {
-                                const heightPercent = Math.max(15, Math.round((item.val / maxGmv) * 100));
-                                return (
-                                    <div key={idx} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
-                                        <div className="text-[10px] font-semibold text-[#5F5E58] opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {item.val.toLocaleString()}
-                                        </div>
-                                        <div 
-                                            style={{ height: `${heightPercent}%` }}
-                                            className="w-full rounded-2xl bg-gradient-to-t from-amber-400 to-[#FFCC00] group-hover:from-amber-500 group-hover:to-amber-300 transition-all shadow-2xs relative"
-                                        />
-                                        <span className="text-[11px] font-semibold text-[#5F5E58] mt-2">{item.day}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* SAAS REVENUE MARGIN BREAKDOWN CARD (1 COLUMN) */}
-                    <div className="bg-white rounded-3xl border border-black/[0.08] p-6 space-y-6 shadow-xs flex flex-col justify-between">
-                        <div className="space-y-4">
-                            <h3 className="text-base font-semibold text-[#141412] flex items-center gap-2">
-                                <DollarSign className="w-5 h-5 text-amber-600" />
-                                <span>Répartition des Abonnements</span>
-                            </h3>
-
-                            <div className="space-y-3 text-xs font-medium">
-                                <div className="p-3 rounded-2xl bg-[#F6F5F1] border border-black/[0.05] flex items-center justify-between">
-                                    <span className="text-[#5F5E58]">Plan Starter (Gratuit)</span>
-                                    <span className="font-semibold text-[#141412]">{vendorLabel('starter')}</span>
-                                </div>
-                                <div className="p-3 rounded-2xl bg-amber-50/60 border border-amber-100 flex items-center justify-between">
-                                    <span className="text-amber-900 font-semibold">Plan Pro ({formatPrice('pro')})</span>
-                                    <span className="font-semibold text-amber-900">{vendorLabel('pro')}</span>
-                                </div>
-                                <div className="p-3 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] flex items-center justify-between">
-                                    <span className="text-[#141412] font-semibold">Plan Growth ({formatPrice('growth')})</span>
-                                    <span className="font-semibold text-[#141412]">{vendorLabel('growth')}</span>
-                                </div>
-                                <div className="p-3 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] flex items-center justify-between">
-                                    <span className="text-[#141412] font-semibold">Plan Business ({formatPrice('business')})</span>
-                                    <span className="font-semibold text-[#141412]">{vendorLabel('business')}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <Link
-                            href={route('admin.subscriptions.index')}
-                            className="w-full py-3 rounded-2xl bg-[#141412] hover:bg-[#141412] text-white font-semibold text-xs text-center transition-all shadow-xs"
-                        >
-                            Gérer les Abonnements SaaS
-                        </Link>
-                    </div>
-
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+                    <Stat label="Vendeurs" value={metrics.sellers ?? 0} hint={`+${metrics.new_sellers ?? 0} ces 30 jours`} Icon={Users} delay={0.08} />
+                    <Stat label="Boutiques en ligne" value={`${metrics.stores_published ?? 0} / ${metrics.stores ?? 0}`} Icon={Store} delay={0.09} />
+                    <Stat label="Produits" value={metrics.products ?? 0} Icon={Package} delay={0.1} />
+                    <Stat label="Ventes depuis le lancement" value={fcfa(metrics.gmv)} hint={`${metrics.orders_paid ?? 0} commandes payées`} Icon={TrendingUp} delay={0.11} />
                 </div>
 
-                {/* 4. TABLES SECTION */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    
-                    {/* RECENT STORES TABLE */}
-                    <div className="bg-white rounded-3xl border border-black/[0.08] p-6 space-y-4 shadow-xs">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-base font-semibold text-[#141412] flex items-center gap-2">
-                                <Store className="w-4 h-4 text-amber-700" />
-                                <span>Boutiques Récemment Créées</span>
-                            </h3>
-                            <span className="text-xs text-[#8B8A83] font-medium">{recentStores?.length || 0} affichée(s)</span>
-                        </div>
-
-                        {recentStores && recentStores.length > 0 ? (
-                            <div className="space-y-3">
-                                {recentStores.map((st) => (
-                                    <div key={st.id} className="p-4 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] flex items-center justify-between gap-3 text-xs">
-                                        <div className="truncate">
-                                            <div className="font-semibold text-[#141412] truncate flex items-center gap-1.5">
-                                                <span>{st.name}</span>
-                                                <span className={`w-2 h-2 rounded-full ${st.is_published ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                                            </div>
-                                            <div className="text-amber-700 font-mono text-[11px] truncate">biolinko.link/{st.slug}</div>
-                                            <div className="text-[10px] text-[#8B8A83]">Vendeur: {st.user?.name || 'Inconnu'} ({st.plan_type || 'starter'})</div>
-                                        </div>
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            <Link
-                                                href={route('admin.stores.toggleStatus', st.id)}
-                                                method="post"
-                                                as="button"
-                                                className={`px-3 py-1.5 rounded-xl font-semibold text-[11px] transition-all cursor-pointer ${
-                                                    st.is_published 
-                                                        ? 'bg-amber-100 hover:bg-amber-200 text-amber-900' 
-                                                        : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                                                }`}
-                                            >
-                                                {st.is_published ? 'Masquer' : 'Publier'}
-                                            </Link>
-                                            <a
-                                                href={`/${st.slug}`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="px-3 py-1.5 rounded-xl bg-[#141412] hover:bg-[#2B2A26] text-white font-semibold text-[11px] transition-all flex items-center gap-1"
-                                            >
-                                                <span>Vitrine</span>
-                                                <ExternalLink className="w-3 h-3 text-amber-400" />
-                                            </a>
-                                        </div>
+                <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+                    {/* Répartition des plans */}
+                    <Card delay={0.12}>
+                        <CardHeader title="Formules des vendeurs" action={<Link href={route('admin.subscriptions.index')} className="text-[13px] text-[#5F5E58] hover:text-[#141412]">Abonnements</Link>} />
+                        <ul className="mt-5 space-y-3">
+                            {PLAN_LABELS.map(([k, label]) => (
+                                <li key={k}>
+                                    <div className="flex justify-between text-[14px]"><span className="flex items-center gap-2 text-[#141412]">{k !== 'starter' && <Crown className="h-3.5 w-3.5 text-[#B45309]" />}{label}</span><span className="tabular-nums text-[#5F5E58]">{planCounts[k] || 0}</span></div>
+                                    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#F2F1EC]">
+                                        <motion.div initial={{ width: 0 }} animate={{ width: `${((planCounts[k] || 0) / sellers) * 100}%` }} transition={{ duration: 0.6, ease: EASE_OUT }} className={`h-full rounded-full ${k === 'starter' ? 'bg-[#D4D3CD]' : 'bg-[#FFCC00]'}`} />
                                     </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </Card>
+
+                    {/* Nouvelles boutiques */}
+                    <Card delay={0.13} padded={false}>
+                        <div className="p-5 pb-0"><CardHeader title="Nouvelles boutiques" action={<Link href={route('admin.stores.index')} className="text-[13px] text-[#5F5E58] hover:text-[#141412]">Tout voir</Link>} /></div>
+                        {recentStores.length ? (
+                            <ul className="mt-3 divide-y divide-black/[0.05]">
+                                {recentStores.map((s) => (
+                                    <li key={s.id} className="flex items-center gap-3 px-5 py-3">
+                                        <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F6F5F1]">
+                                            {s.logo_url ? <img src={s.logo_url} alt="" className="h-full w-full object-cover" /> : <Store className="h-4 w-4 text-[#8B8A83]" />}
+                                        </span>
+                                        <span className="min-w-0 flex-1">
+                                            <span className="block truncate text-[14px] text-[#141412]">{s.name || 'Sans nom'}</span>
+                                            <span className="block truncate text-[12px] text-[#8B8A83]">{s.user?.email} · {shortDate(s.created_at)}</span>
+                                        </span>
+                                        <Badge tone={s.is_published ? 'success' : 'neutral'}>{s.is_published ? 'En ligne' : 'Brouillon'}</Badge>
+                                    </li>
                                 ))}
-                            </div>
-                        ) : (
-                            <div className="text-xs text-[#8B8A83] p-8 text-center bg-[#F6F5F1] rounded-2xl">
-                                Aucune boutique créée pour le moment.
-                            </div>
-                        )}
-                    </div>
+                            </ul>
+                        ) : <div className="p-5"><Empty Icon={Store} title="Aucune boutique" text="Les nouvelles boutiques apparaîtront ici." /></div>}
+                    </Card>
 
-                    {/* PENDING WITHDRAWALS TABLE */}
-                    <div className="bg-white rounded-3xl border border-black/[0.08] p-6 space-y-4 shadow-xs">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-base font-semibold text-[#141412] flex items-center gap-2">
-                                <Wallet className="w-4 h-4 text-rose-600" />
-                                <span>Demandes de Retrait MoMo</span>
-                            </h3>
-                            <span className="text-xs text-rose-600 font-semibold">{pendingWithdrawals?.length || 0} en attente</span>
-                        </div>
-
-                        {pendingWithdrawals && pendingWithdrawals.length > 0 ? (
-                            <div className="space-y-3">
+                    {/* Retraits en attente */}
+                    <Card delay={0.14} padded={false}>
+                        <div className="p-5 pb-0"><CardHeader title="Retraits à traiter" action={<Link href={route('admin.withdrawals.index')} className="text-[13px] text-[#5F5E58] hover:text-[#141412]">Tout voir</Link>} /></div>
+                        {pendingWithdrawals.length ? (
+                            <ul className="mt-3 divide-y divide-black/[0.05]">
                                 {pendingWithdrawals.map((w) => (
-                                    <div key={w.id} className="p-4 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                                        <div>
-                                            <div className="font-semibold text-[#141412] text-sm">{Number(w.amount).toLocaleString()} FCFA</div>
-                                            <div className="text-[#5F5E58] text-[11px]">Boutique : <strong className="text-[#141412]">{w.wallet?.store?.name || 'N/A'}</strong></div>
-                                            <div className="text-[10px] text-[#8B8A83]">MoMo ({w.operator || 'ORANGE'}): {w.phone_number}</div>
-                                        </div>
-
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            <Link
-                                                href={route('admin.withdrawals.approve', w.id)}
-                                                method="post"
-                                                as="button"
-                                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] shadow-2xs transition-all cursor-pointer"
-                                            >
-                                                Approuver
-                                            </Link>
-                                            <Link
-                                                href={route('admin.withdrawals.reject', w.id)}
-                                                method="post"
-                                                as="button"
-                                                className="px-3 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 font-semibold text-[11px] transition-all cursor-pointer"
-                                            >
-                                                Rejeter
-                                            </Link>
-                                        </div>
-                                    </div>
+                                    <li key={w.id} className="flex items-center justify-between gap-3 px-5 py-3 text-[14px]">
+                                        <span className="min-w-0">
+                                            <span className="block truncate text-[#141412]">{w.wallet?.store?.name || 'Boutique'}</span>
+                                            <span className="block text-[12px] text-[#8B8A83]">{w.operator === 'ORANGE' ? 'Orange Money' : 'MTN MoMo'} · {dateTime(w.created_at)}</span>
+                                        </span>
+                                        <span className="shrink-0 tabular-nums text-[#141412]">{fcfa(w.amount)}</span>
+                                    </li>
                                 ))}
-                            </div>
-                        ) : (
-                            <div className="text-xs text-emerald-600 p-8 text-center bg-emerald-50/50 rounded-2xl font-medium border border-emerald-100">
-                                Toutes les demandes de retrait sont traitées !
-                            </div>
-                        )}
-                    </div>
-
+                            </ul>
+                        ) : <div className="p-5"><Empty Icon={Banknote} title="Aucun retrait en attente" text="Les demandes des vendeurs apparaîtront ici." /></div>}
+                    </Card>
                 </div>
 
+                <p className="flex items-center gap-2 text-[13px] text-[#8B8A83]"><ShoppingBag className="h-4 w-4" /> Les montants des abonnements excluent les paiements simulés.</p>
             </div>
         </AuthenticatedLayout>
     );

@@ -25,19 +25,18 @@ class MarketingController extends Controller
 
         $since = now()->subDays(30);
         $before = now()->subDays(60);
-        $paidStatuses = ['paid', 'in_delivery', 'delivered'];
 
         $orders = Order::where('store_id', $store->id)->where('is_manual', false)->where('created_at', '>=', $before)->get();
         $current = $orders->where('created_at', '>=', $since);
         $previous = $orders->where('created_at', '<', $since);
 
-        $revenue = (float) $current->whereIn('status', $paidStatuses)->sum('price_vendor');
-        $previousRevenue = (float) $previous->whereIn('status', $paidStatuses)->sum('price_vendor');
-        $paidCount = $current->whereIn('status', $paidStatuses)->count();
-        $pending = $current->where('status', 'pending');
+        $revenue = (float) $current->where('payment_status', 'paid')->sum('price_vendor');
+        $previousRevenue = (float) $previous->where('payment_status', 'paid')->sum('price_vendor');
+        $paidCount = $current->where('payment_status', 'paid')->count();
+        $pending = $current->where('status', 'pending')->where('payment_status', 'pending');
 
         $topProducts = OrderItem::select('product_title', DB::raw('SUM(quantity) as qty'), DB::raw('SUM(total_price_vendor) as revenue'))
-            ->whereHas('order', fn ($q) => $q->where('store_id', $store->id)->whereIn('status', $paidStatuses)->where('created_at', '>=', $since))
+            ->whereHas('order', fn ($q) => $q->where('store_id', $store->id)->paid()->where('created_at', '>=', $since))
             ->groupBy('product_title')->orderByDesc('revenue')->limit(5)->get();
 
         $customers = $store->customers()->get();

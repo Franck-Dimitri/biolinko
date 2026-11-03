@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Copy, Eye, Link2, Minus, Package, Plus, ShoppingBag, Trash2, TrendingUp } from 'lucide-react';
 import { WhatsappIcon } from '@/Components/BrandIcons';
-import { Badge, Button, SubPage, Empty, Field, PageHeader, SearchInput, Stat, Tabs, fcfa, fieldClass, reveal, shortDate } from '@/Components/Dashboard/UI';
+import { Badge, Button, SubPage, Empty, Field, PageHeader, PlanLock, SearchInput, Stat, Tabs, fcfa, fieldClass, reveal, shortDate } from '@/Components/Dashboard/UI';
 
 const linkUrl = (code) => `${window.location.origin}/pay/${code}`;
 
@@ -82,7 +82,7 @@ function NewLinkDialog({ open, onClose, products }) {
                             })}
                             {!list.length && <li className="p-6 text-center text-[14px] text-[#8B8A83]">Aucun produit.</li>}
                         </ul>
-                        {errors?.items && <p className="mt-1.5 text-[13px] text-[#B91C1C]">Choisissez au moins un produit.</p>}
+                        {errors?.items && <p className="mt-1.5 text-[13px] text-[#B91C1C]">{/required|obligatoire/i.test(errors.items) ? 'Choisissez au moins un produit.' : errors.items}</p>}
                     </div>
                 </div>
 
@@ -167,10 +167,12 @@ function LinkCard({ link, index }) {
     );
 }
 
-export default function Index({ smartLinks = [], products = [], stats }) {
+export default function Index({ smartLinks = [], products = [], stats, maxActiveLinks = null }) {
     const [creating, setCreating] = useState(false);
     const [tab, setTab] = useState('active');
     const active = useMemo(() => smartLinks.filter((l) => linkState(l)[0] === 'Actif'), [smartLinks]);
+    // Limite du plan atteinte : on bloque avant que le vendeur ne remplisse le formulaire
+    const atLimit = maxActiveLinks !== null && smartLinks.filter((l) => l.is_active).length >= maxActiveLinks;
     const inactive = smartLinks.filter((l) => linkState(l)[0] !== 'Actif');
     const views = smartLinks.reduce((a, l) => a + (l.views_count || 0), 0);
     const shown = tab === 'active' ? active : inactive;
@@ -181,7 +183,8 @@ export default function Index({ smartLinks = [], products = [], stats }) {
             <NewLinkDialog open={creating} onClose={() => setCreating(false)} products={products} />
             <div className="space-y-6 pb-12" hidden={creating}>
                 <PageHeader title="Liens de paiement" sub="Vendez un produit ou un pack avec un simple lien, sans passer par la boutique."
-                    actions={<Button variant="primary" onClick={() => setCreating(true)} disabled={!products.length}><Plus className="h-4 w-4" /> Nouveau lien</Button>} />
+                    actions={<Button variant="primary" onClick={() => setCreating(true)} disabled={!products.length || atLimit}><Plus className="h-4 w-4" /> Nouveau lien</Button>} />
+                {atLimit && <PlanLock plan="Pro" text={`Votre plan permet ${maxActiveLinks} liens de paiement actifs. Désactivez-en un ou passez au plan supérieur pour en créer d’autres.`} />}
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <Stat label="Liens actifs" value={active.length} hint={`${smartLinks.length} au total`} Icon={Link2} delay={0.03} />
@@ -197,7 +200,7 @@ export default function Index({ smartLinks = [], products = [], stats }) {
                 ) : (
                     <Empty Icon={Link2} title={tab === 'active' ? 'Aucun lien actif' : 'Rien ici'}
                         text={products.length ? 'Créez un lien pour un produit ou un pack à prix réduit, puis partagez-le sur WhatsApp.' : 'Ajoutez d’abord des produits à votre catalogue.'}
-                        action={tab === 'active' && products.length > 0 && <Button variant="primary" onClick={() => setCreating(true)}><Plus className="h-4 w-4" /> Nouveau lien</Button>} />
+                        action={tab === 'active' && products.length > 0 && !atLimit && <Button variant="primary" onClick={() => setCreating(true)}><Plus className="h-4 w-4" /> Nouveau lien</Button>} />
                 )}
             </div>
         </AuthenticatedLayout>

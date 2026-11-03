@@ -169,11 +169,20 @@
             </td>
             <td style="width: 48%;">
                 <table class="totals">
-                    <tr><td class="muted">Sous-total</td><td class="num">{{ $money($order->price_vendor) }}</td></tr>
+                    <tr><td class="muted">Sous-total</td><td class="num">{{ $money($order->subtotal ?? $order->price_vendor) }}</td></tr>
+                    @if ((float) $order->discount_amount > 0)
+                        <tr><td class="muted">Remise (code {{ $order->promo_code }})</td><td class="num">−{{ $money($order->discount_amount) }}</td></tr>
+                    @endif
+                    @if ((float) $order->delivery_fee > 0)
+                        <tr><td class="muted">Livraison</td><td class="num">{{ $money($order->delivery_fee) }}</td></tr>
+                    @endif
                     @if ($fees > 0)
                         <tr><td class="muted">Frais de service</td><td class="num">{{ $money($fees) }}</td></tr>
                     @endif
-                    <tr class="grand"><td>{{ $isPaid ? 'Total payé' : 'Total à payer' }}</td><td class="num">{{ $money($order->total_client) }}</td></tr>
+                    <tr class="grand"><td>{{ (float) $order->balance_due > 0 ? ($isPaid ? 'Acompte payé' : 'Acompte à payer') : ($isPaid ? 'Total payé' : 'Total à payer') }}</td><td class="num">{{ $money($order->total_client) }}</td></tr>
+                    @if ((float) $order->balance_due > 0)
+                        <tr><td class="muted">{{ $order->balance_collected_at ? 'Solde réglé à la livraison' : 'Solde à régler à la livraison' }}</td><td class="num">{{ $money($order->balance_due) }}</td></tr>
+                    @endif
                 </table>
                 <div class="muted small" style="text-align: right; margin-top: 4px; padding-right: 10px;">Montants en francs CFA (XAF).</div>
             </td>

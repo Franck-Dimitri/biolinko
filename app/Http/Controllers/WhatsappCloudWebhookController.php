@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Services\WhatsappGatewayService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -57,7 +59,7 @@ class WhatsappCloudWebhookController extends Controller
                     $name = collect($value['contacts'] ?? [])->firstWhere('wa_id', $message['from'])['profile']['name'] ?? 'Client';
 
                     try {
-                        app(WhatsappWebhookController::class)->respondToCustomer($from, $name, $gateway);
+                        $this->respondToCustomer($from, $name, $gateway);
                     } catch (\Throwable $e) {
                         Log::warning('WhatsApp Cloud auto-reply failed', ['error' => $e->getMessage()]);
                     }
@@ -67,5 +69,48 @@ class WhatsappCloudWebhookController extends Controller
 
         // Meta renvoie le webhook tant qu'il ne reçoit pas 200
         return response()->json(['status' => 'ok']);
+    }
+
+    private function respondToCustomer(string $phone, string $pushName, WhatsappGatewayService $gateway): void
+    {
+        // Une seule réponse automatique par numéro et par jour : pas de ping-pong avec un client qui écrit plusieurs fois
+        if (! Cache::add('wa_autoreply_'.$phone, true, now()->addDay())) {
+            return;
+        }
+
+        // Extract the last 8 digits of the phone number to reliably match database formats
+        $shortPhone = substr($phone, -8);
+
+        $order = Order::with('store.user')
+            ->where('customer_phone', 'LIKE', "%{$shortPhone}%")
+            ->latest()
+            ->first();
+
+        if ($order && $order->store) {
+            $store = $order->store;
+            $vendorPhone = $store->phone_whatsapp ?: ($store->user->phone ?? null);
+            $trackingUrl = route('order.track', $order->tracking_code);
+
+            $reply = "👋 Bonjour *{$pushName}* !\n\n"
+                . "Merci pour votre message. Je suis le bot d'assistance automatique de *Biolinko*.\n\n"
+                . "📦 Concernant votre commande *#{$order->tracking_code}* chez *{$store->name}* :\n"
+                . "👉 *Suivre votre livraison en direct :*\n{$trackingUrl}\n\n";
+
+            if ($vendorPhone) {
+                $reply .= "💬 Pour échanger directement avec votre vendeur *{$store->name}*, vous pouvez le joindre ici : {$vendorPhone}\n\n";
+            }
+
+            $reply .= "L'équipe Biolinko reste à votre entière disposition ! ✨\n"
+                . "_Biolinko — ".preg_replace('#^https?://#', '', config('app.url'))."_";
+        } else {
+            $reply = "👋 Bonjour *{$pushName}* !\n\n"
+                . "Merci d'avoir contacté le service officiel de notifications *Biolinko*.\n\n"
+                . "Nous avons bien reçu votre message. Pour suivre une commande en cours ou créer votre boutique en ligne avec encaissement Mobile Money, rendez-vous sur :\n"
+                . "👉 ".config('app.url')."\n\n"
+                . "Pour contacter le support officiel : support@biolinko.link\n"
+                . "Belle journée ! ✨";
+        }
+
+        $gateway->sendMessage($phone, $reply);
     }
 }

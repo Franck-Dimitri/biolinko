@@ -1,670 +1,239 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-    ArrowLeft, User, Mail, Phone, MessageSquare, ExternalLink, 
-    Shield, Ban, CheckCircle2, AlertTriangle, Package, ShoppingBag, 
-    DollarSign, Wallet, Calendar, Clock, Eye, Sparkles, Crown, 
-    MapPin, Tag, Store as StoreIcon, Globe, RefreshCw, Check, Trash2, ShieldAlert
-} from 'lucide-react';
 import { toast } from 'sonner';
+import { AlertTriangle, Ban, Crown, ExternalLink, Eye, EyeOff, Mail, Package, Phone, ShieldCheck, ShoppingBag, Store, Trash2, Wallet } from 'lucide-react';
 import ModerationModal from '@/Components/Admin/ModerationModal';
+import { Badge, Button, Card, CardHeader, Empty, Field, OrderStatus, PageHeader, Stat, Table, Tabs, dateTime, fcfa, fieldClass, shortDate } from '@/Components/Dashboard/UI';
 
-export default function UserShow({ vendor, stats }) {
-    const store = vendor.store;
-    const [activeTab, setActiveTab] = useState('products'); // 'products' | 'orders' | 'store_info'
-    const [selectedPlan, setSelectedPlan] = useState(vendor.plan || 'starter');
-    const [isUpdatingPlan, setIsUpdatingPlan] = useState(false);
+const PLANS = [['starter', 'Starter'], ['pro', 'Pro'], ['growth', 'Growth'], ['business', 'Business']];
+const REPORT_STATUS = { open: ['Ouvert', 'warning'], answered: ['Vendeur a répondu', 'info'], resolved: ['Résolu', 'success'], released: ['Clos', 'neutral'] };
+const WITHDRAWAL_STATUS = { pending: ['En attente', 'warning'], processing: ['Virement en cours', 'info'], completed: ['Payé', 'success'], rejected: ['Rejeté', 'danger'] };
+const SUB_SOURCE = { admin: 'Attribué par l’admin', simulation: 'Paiement simulé', mercypay: 'Mercy Pay', pawapay: 'pawaPay', hrskills: 'HR-Skills' };
 
-    // Format money helper
-    const formatFCFA = (amount) => {
-        return Number(amount || 0).toLocaleString('fr-FR') + ' FCFA';
-    };
-
-    // Handle Plan Update
-    const handlePlanChange = (newPlan) => {
-        setSelectedPlan(newPlan);
-        setIsUpdatingPlan(true);
-        router.post(route('admin.users.plan', vendor.id), {
-            plan: newPlan,
-        }, {
+// Changement de formule par l'admin : plan + durée, avec échéance réelle
+function PlanBox({ vendor, daysRemaining }) {
+    const [plan, setPlan] = useState(vendor.plan || 'starter');
+    const [months, setMonths] = useState(1);
+    const [busy, setBusy] = useState(false);
+    const submit = () => {
+        setBusy(true);
+        router.post(route('admin.users.plan', vendor.id), { plan, months }, {
             preserveScroll: true,
-            onSuccess: () => {
-                setIsUpdatingPlan(false);
-                toast.success(`Plan du vendeur mis à jour vers ${newPlan.toUpperCase()} !`);
-            },
-            onError: () => {
-                setIsUpdatingPlan(false);
-                toast.error('Échec de la mise à jour du plan.');
-            },
+            onSuccess: () => toast.success('Formule mise à jour.'),
+            onFinish: () => setBusy(false),
         });
     };
 
-    // Moderation modal state
-    const [moderationModal, setModerationModal] = useState({
-        isOpen: false,
-        type: 'product', // 'product' | 'store' | 'user'
-        itemName: '',
-        targetInfo: null,
-        targetId: null,
-    });
-    const [isSubmittingModeration, setIsSubmittingModeration] = useState(false);
+    return (
+        <Card>
+            <CardHeader title="Formule" sub={vendor.plan && vendor.plan !== 'starter'
+                ? `${(vendor.plan || '').replace(/^./, (c) => c.toUpperCase())} jusqu’au ${shortDate(vendor.subscription_expires_at)}${daysRemaining !== null ? ` · ${daysRemaining} j restants` : ''}`
+                : 'Starter, gratuit'} />
+            <div className="mt-4 grid grid-cols-2 gap-2">
+                {PLANS.map(([id, label]) => (
+                    <button key={id} type="button" aria-pressed={plan === id} onClick={() => setPlan(id)}
+                        className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-[14px] transition-colors ${plan === id ? 'border-[#141412] bg-[#FFFBEA] font-medium' : 'border-black/10 hover:border-black/30'}`}>
+                        {id !== 'starter' && <Crown className="h-3.5 w-3.5 text-[#B45309]" />}{label}
+                    </button>
+                ))}
+            </div>
+            {plan !== 'starter' && (
+                <div className="mt-3">
+                    <Field label="Durée offerte">
+                        <select value={months} onChange={(e) => setMonths(Number(e.target.value))} className={fieldClass}>
+                            {[1, 3, 6, 12].map((m) => <option key={m} value={m}>{m} mois</option>)}
+                        </select>
+                    </Field>
+                </div>
+            )}
+            <Button variant="primary" className="mt-4 w-full" disabled={busy} onClick={submit}>
+                {plan === 'starter' ? 'Repasser au Starter' : `Attribuer ${months} mois de ${PLANS.find(([k]) => k === plan)[1]}`}
+            </Button>
+            <p className="mt-2 text-[12px] text-[#8B8A83]">Sans paiement : l’opération est notée dans l’historique des abonnements.</p>
+        </Card>
+    );
+}
 
-    const openModerationModal = (type, itemName, targetId, targetInfo = null) => {
-        setModerationModal({
-            isOpen: true,
-            type,
-            itemName,
-            targetId,
-            targetInfo,
-        });
+export default function Show({ vendor, stats = {}, reports = [], withdrawals = [], subscriptions = [], daysRemaining = null }) {
+    const store = vendor.store;
+    const [tab, setTab] = useState('products');
+    const [moderation, setModeration] = useState(null); // { type, id, name, info }
+    const [busy, setBusy] = useState(false);
+
+    const confirm = ({ reason }) => {
+        const { type, id } = moderation;
+        const done = { preserveScroll: true, onSuccess: () => { toast.success('Action effectuée, le vendeur a été prévenu.'); setModeration(null); }, onFinish: () => setBusy(false) };
+        setBusy(true);
+        if (type === 'product') router.delete(route('admin.products.destroy', id), { data: { reason }, ...done });
+        else if (type === 'store') router.post(route('admin.stores.moderate', id), { reason, action: 'suspend' }, done);
+        else router.post(route('admin.users.toggleBan', id), { reason }, done);
     };
 
-    const closeModerationModal = () => {
-        setModerationModal((prev) => ({ ...prev, isOpen: false }));
-    };
-
-    const handleConfirmModeration = ({ reason, action }) => {
-        setIsSubmittingModeration(true);
-
-        if (moderationModal.type === 'product') {
-            router.delete(route('admin.products.destroy', moderationModal.targetId), {
-                data: { reason },
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsSubmittingModeration(false);
-                    closeModerationModal();
-                    toast.success(`Le produit "${moderationModal.itemName}" a été supprimé et le vendeur a été notifié.`);
-                },
-                onError: (errs) => {
-                    setIsSubmittingModeration(false);
-                    toast.error(errs?.reason || 'Erreur lors de la suppression du produit.');
-                },
-            });
-        } else if (moderationModal.type === 'store') {
-            router.post(route('admin.stores.moderate', moderationModal.targetId), {
-                action: action || 'suspend',
-                reason,
-            }, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsSubmittingModeration(false);
-                    closeModerationModal();
-                    toast.success(`Action effectuée sur la vitrine "${moderationModal.itemName}". Le vendeur a été notifié.`);
-                },
-                onError: (errs) => {
-                    setIsSubmittingModeration(false);
-                    toast.error(errs?.reason || 'Erreur lors de la modération de la vitrine.');
-                },
-            });
-        } else if (moderationModal.type === 'user') {
-            router.post(route('admin.users.toggleBan', moderationModal.targetId), {
-                reason,
-            }, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsSubmittingModeration(false);
-                    closeModerationModal();
-                    toast.success(`Le compte de ${moderationModal.itemName} a été banni et notifié par email et WhatsApp.`);
-                },
-                onError: (errs) => {
-                    setIsSubmittingModeration(false);
-                    toast.error(errs?.user || 'Erreur lors du bannissement.');
-                },
-            });
-        }
-    };
-
-    // Clean WhatsApp phone link
-    const cleanPhone = vendor.phone_whatsapp ? vendor.phone_whatsapp.replace(/[^0-9]/g, '') : null;
-    const waLink = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('237') ? cleanPhone : '237' + cleanPhone}` : null;
+    const products = store?.products || [];
+    const orders = store?.orders || [];
 
     return (
         <AuthenticatedLayout>
-            <Head title={`Fiche Vendeur : ${vendor.name} — Administration BIOLINKO`} />
-            <div hidden={moderationModal.isOpen}>
+            <Head title={`${vendor.name}, Administration Biolinko`} />
+            <div hidden={!!moderation} className="space-y-6 pb-12">
+                <PageHeader title={vendor.name} onBack={() => router.visit(route('admin.users.index'))} backLabel="Retour aux vendeurs"
+                    sub={<span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                        <span className="flex items-center gap-1.5"><Mail className="h-4 w-4" />{vendor.email}</span>
+                        {vendor.phone_whatsapp && <span className="flex items-center gap-1.5"><Phone className="h-4 w-4" />{vendor.phone_whatsapp}</span>}
+                        <span>Inscrit le {shortDate(vendor.created_at)}</span>
+                        {vendor.is_banned && <Badge tone="danger">Banni</Badge>}
+                        {vendor.role === 'admin' && <Badge tone="info"><ShieldCheck className="h-3.5 w-3.5" /> Admin</Badge>}
+                    </span>}
+                    actions={vendor.role !== 'admin' && (vendor.is_banned
+                        ? <Button onClick={() => router.post(route('admin.users.toggleBan', vendor.id), {}, { preserveScroll: true })}>Réactiver le compte</Button>
+                        : <Button variant="danger" onClick={() => setModeration({ type: 'user', id: vendor.id, name: vendor.name, info: vendor.email })}><Ban className="h-4 w-4" /> Bannir</Button>)} />
 
-            <div className="space-y-8 pb-16">
-                {/* BACK LINK & TITLE */}
-                <div className="flex items-center justify-between gap-4">
-                    <Link
-                        href={route('admin.users.index')}
-                        className="inline-flex items-center gap-2 text-xs font-semibold text-[#5F5E58] hover:text-[#141412] transition cursor-pointer"
-                    >
-                        <ArrowLeft className="w-4 h-4" /> Retour à la liste des vendeurs &amp; utilisateurs
-                    </Link>
-
-                    <div className="flex items-center gap-2">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-semibold ${
-                            vendor.is_banned ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'
-                        }`}>
-                            {vendor.is_banned ? 'Compte Banni' : 'Compte Actif'}
-                        </span>
-                        <span className="px-3 py-1 rounded-full bg-[#F6F5F1] text-[#141412] text-[10px] font-semibold">
-                            Rôle : {vendor.role || 'seller'}
-                        </span>
+                {reports.some((r) => ['open', 'answered'].includes(r.status)) || reports.length >= 3 ? (
+                    <div className="flex gap-3 rounded-2xl border border-[#F59E0B]/50 bg-[#FFFBEB] p-4 text-[14px] text-[#141412]">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#B45309]" />
+                        <p>{reports.length} signalement{reports.length > 1 ? 's' : ''} client{reports.length >= 3 ? ' : ce vendeur est sous contrôle, vérifiez ses retraits avant de les valider.' : '.'}</p>
                     </div>
+                ) : null}
+
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+                    <Stat label="Ventes encaissées" value={fcfa(stats.total_revenue)} hint={`${stats.orders_breakdown?.paid ?? 0} payées · ${stats.delivered_count ?? 0} livrées`} Icon={ShoppingBag} />
+                    <Stat label="Commissions Biolinko" value={fcfa(stats.commission_paid)} Icon={Crown} delay={0.03} />
+                    <Stat label="Solde disponible" value={fcfa(stats.wallet_available)} hint={`${fcfa(stats.wallet_held)} en attente · ${fcfa(stats.wallet_pending)} en retrait`} Icon={Wallet} delay={0.06} />
+                    <Stat label="Produits" value={`${stats.active_products_count ?? 0} / ${stats.products_count ?? 0}`} hint="visibles / total" Icon={Package} delay={0.09} />
                 </div>
 
-                {/* VENDOR PROFILE HEADER CARD */}
-                <div className="p-6 sm:p-8 rounded-3xl bg-white border border-black/[0.08] shadow-sm space-y-6">
-                    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-black/[0.05]">
-                        {/* Identity Info */}
-                        <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-900 font-semibold text-2xl flex items-center justify-center shadow-xs">
-                                {vendor.name ? vendor.name.charAt(0).toUpperCase() : 'U'}
-                            </div>
-                            <div className="space-y-1">
-                                <div className="flex items-center gap-2.5">
-                                    <h1 className="text-xl sm:text-2xl font-medium tracking-[-0.03em] text-[#141412]">
-                                        {vendor.name}
-                                    </h1>
-                                    <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-[#141412] text-[10px] font-semibold uppercase">
-                                        Plan {vendor.plan || 'starter'}
-                                    </span>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#5F5E58] font-medium">
-                                    <span className="flex items-center gap-1">
-                                        <Mail className="w-3.5 h-3.5 text-[#8B8A83]" /> {vendor.email}
-                                    </span>
-                                    {vendor.phone_whatsapp && (
-                                        <span className="flex items-center gap-1 text-emerald-700 font-mono font-semibold">
-                                            <Phone className="w-3.5 h-3.5 text-emerald-600" /> {vendor.phone_whatsapp}
-                                        </span>
-                                    )}
-                                    <span className="flex items-center gap-1">
-                                        <Calendar className="w-3.5 h-3.5 text-[#8B8A83]" /> Inscrit le {new Date(vendor.created_at).toLocaleDateString('fr-FR')}
-                                    </span>
-                                </div>
-                            </div>
+                <div className="grid items-start gap-4 xl:grid-cols-[1fr_340px]">
+                    <Card padded={false}>
+                        <div className="border-b border-black/[0.06] p-4">
+                            <Tabs id="vendor" value={tab} onChange={setTab} tabs={[['products', `Produits (${products.length})`], ['orders', 'Commandes'], ['reports', `Signalements (${reports.length})`], ['money', 'Retraits & abonnements']]} />
                         </div>
 
-                        {/* Top Action Buttons */}
-                        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
-                            {waLink && (
-                                <a
-                                    href={waLink}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="px-4 py-2 rounded-xl bg-[#25D366] hover:bg-emerald-600 text-[#141412] text-xs font-semibold flex items-center gap-1.5 shadow-xs transition"
-                                >
-                                    <MessageSquare className="w-3.5 h-3.5" /> Écrire sur WhatsApp
-                                </a>
-                            )}
-
-                            {store && (
-                                <>
-                                    <a
-                                        href={`/${store.slug}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="px-4 py-2 rounded-xl bg-[#F2F1EC] hover:bg-[#E9E7E0] text-[#141412] text-xs font-semibold flex items-center gap-1.5 transition"
-                                    >
-                                        <ExternalLink className="w-3.5 h-3.5" /> Voir sa vitrine
-                                    </a>
-
-                                    {store.is_published ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => openModerationModal('store', store.name, store.id, `Vitrine: biolinko.link/${store.slug}`)}
-                                            className="px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900"
-                                        >
-                                            <ShieldAlert className="w-3.5 h-3.5" /> Modérer / Masquer vitrine
-                                        </button>
-                                    ) : (
-                                        <Link
-                                            href={route('admin.users.toggleStore', vendor.id)}
-                                            method="post"
-                                            as="button"
-                                            className="px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-900"
-                                        >
-                                            <CheckCircle2 className="w-3.5 h-3.5" /> Publier la vitrine
-                                        </Link>
-                                    )}
-                                </>
-                            )}
-
-                            {vendor.is_banned ? (
-                                <Link
-                                    href={route('admin.users.toggleBan', vendor.id)}
-                                    method="post"
-                                    as="button"
-                                    className="px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                >
-                                    <CheckCircle2 className="w-3.5 h-3.5" /> Réactiver le compte
-                                </Link>
-                            ) : (
-                                <button
-                                    type="button"
-                                    onClick={() => openModerationModal('user', vendor.name, vendor.id, `Email: ${vendor.email}`)}
-                                    className="px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800"
-                                >
-                                    <Ban className="w-3.5 h-3.5" /> Bannir le compte
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Change Plan Bar */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#F6F5F1] border border-black/[0.08] text-xs">
-                        <div className="flex items-center gap-2">
-                            <Crown className="w-4 h-4 text-amber-500" />
-                            <span className="font-semibold text-[#141412]">Changer le Plan SaaS du Vendeur :</span>
-                            <span className="text-[#5F5E58] font-medium">Attribuez un plan supérieur instantanément</span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            {['starter', 'pro', 'growth', 'business'].map((p) => (
-                                <button
-                                    key={p}
-                                    onClick={() => handlePlanChange(p)}
-                                    disabled={isUpdatingPlan || vendor.plan === p}
-                                    className={`px-3 py-1.5 rounded-xl uppercase font-semibold text-[10px] transition-all cursor-pointer ${
-                                        vendor.plan === p
-                                            ? 'bg-[#141412] text-white shadow-xs'
-                                            : 'bg-white text-[#3D3C37] hover:bg-[#E9E7E0] border border-black/[0.08]'
-                                    }`}
-                                >
-                                    {p}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* 4 FINANCIAL & BUSINESS METRICS CARDS */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    {/* CA Total Encaissé */}
-                    <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-2.5">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Chiffre d'Affaires (CA)</span>
-                            <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center">
-                                <DollarSign className="w-4 h-4 text-amber-700" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
-                            {formatFCFA(stats?.total_revenue)}
-                        </div>
-                        <div className="text-[11px] text-[#8B8A83] font-medium">
-                            Gains nets : <strong className="text-[#3D3C37]">{formatFCFA(stats?.vendor_earnings)}</strong>
-                        </div>
-                    </div>
-
-                    {/* Solde Portefeuille Disponible */}
-                    <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-2.5">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Portefeuille Vendeur</span>
-                            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                                <Wallet className="w-4 h-4 text-emerald-600" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-emerald-600">
-                            {formatFCFA(stats?.wallet_available)}
-                        </div>
-                        <div className="text-[11px] text-[#8B8A83] font-medium">
-                            En attente : <strong className="text-[#3D3C37]">{formatFCFA(stats?.wallet_pending)}</strong>
-                        </div>
-                    </div>
-
-                    {/* Total Commandes */}
-                    <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-2.5">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Commandes Boutique</span>
-                            <div className="w-8 h-8 rounded-xl bg-[#F6F5F1] text-[#141412] flex items-center justify-center">
-                                <ShoppingBag className="w-4 h-4 text-[#141412]" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
-                            {stats?.total_orders || 0} commande(s)
-                        </div>
-                        <div className="text-[11px] text-emerald-600 font-semibold">
-                            {stats?.orders_breakdown?.paid || 0} payée(s) • {stats?.orders_breakdown?.delivered || 0} livrée(s)
-                        </div>
-                    </div>
-
-                    {/* Produits au Catalogue */}
-                    <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-2.5">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Catalogue Produits</span>
-                            <div className="w-8 h-8 rounded-xl bg-[#F6F5F1] text-[#141412] flex items-center justify-center">
-                                <Package className="w-4 h-4 text-[#141412]" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
-                            {stats?.products_count || 0} produit(s)
-                        </div>
-                        <div className="text-[11px] text-[#8B8A83] font-medium">
-                            {stats?.active_products_count || 0} actif(s) en boutique
-                        </div>
-                    </div>
-                </div>
-
-                {/* TABS NAVIGATION */}
-                <div className="bg-white rounded-3xl border border-black/[0.08] shadow-sm overflow-hidden">
-                    <div className="flex border-b border-black/[0.08] text-xs font-semibold px-6 pt-4">
-                        <button
-                            onClick={() => setActiveTab('products')}
-                            className={`pb-4 px-4 flex items-center gap-2 border-b-2 transition cursor-pointer ${
-                                activeTab === 'products'
-                                    ? 'border-[#2B2A26] text-[#141412]'
-                                    : 'border-transparent text-[#8B8A83] hover:text-[#3D3C37]'
-                            }`}
-                        >
-                            <Package className="w-4 h-4" /> Catalogue Produits ({stats?.products_count || 0})
-                        </button>
-
-                        <button
-                            onClick={() => setActiveTab('orders')}
-                            className={`pb-4 px-4 flex items-center gap-2 border-b-2 transition cursor-pointer ${
-                                activeTab === 'orders'
-                                    ? 'border-[#2B2A26] text-[#141412]'
-                                    : 'border-transparent text-[#8B8A83] hover:text-[#3D3C37]'
-                            }`}
-                        >
-                            <ShoppingBag className="w-4 h-4" /> Activité &amp; Commandes Récentes ({stats?.total_orders || 0})
-                        </button>
-
-                        <button
-                            onClick={() => setActiveTab('store_info')}
-                            className={`pb-4 px-4 flex items-center gap-2 border-b-2 transition cursor-pointer ${
-                                activeTab === 'store_info'
-                                    ? 'border-[#2B2A26] text-[#141412]'
-                                    : 'border-transparent text-[#8B8A83] hover:text-[#3D3C37]'
-                            }`}
-                        >
-                            <StoreIcon className="w-4 h-4" /> Paramètres Vitrine &amp; Marque
-                        </button>
-                    </div>
-
-                    <div className="p-6">
-                        {/* TAB 1: PRODUCTS CATALOG */}
-                        {activeTab === 'products' && (
-                            <div>
-                                {store?.products && store.products.length > 0 ? (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left border-collapse text-xs">
-                                            <thead>
-                                                <tr className="bg-[#F6F5F1] border-b border-black/[0.08] text-[#5F5E58] text-[10px] font-semibold">
-                                                    <th className="py-3 px-4">Produit</th>
-                                                    <th className="py-3 px-4">Prix Vendeur</th>
-                                                    <th className="py-3 px-4">Promotion</th>
-                                                    <th className="py-3 px-4">Stock</th>
-                                                    <th className="py-3 px-4">Variantes</th>
-                                                    <th className="py-3 px-4">Statut</th>
-                                                    <th className="py-3 px-4 text-right">Actions Modération</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-black/[0.06] font-medium">
-                                                {store.products.map((prod) => (
-                                                    <tr key={prod.id} className="hover:bg-[#F6F5F1]/80 transition-colors">
-                                                        <td className="py-3 px-4">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-10 h-10 rounded-xl bg-[#F2F1EC] border border-black/[0.08] overflow-hidden shrink-0 flex items-center justify-center">
-                                                                    {prod.image_url ? (
-                                                                        <img src={prod.image_url} alt={prod.title} className="w-full h-full object-cover" />
-                                                                    ) : (
-                                                                        <Package className="w-5 h-5 text-[#8B8A83]" />
-                                                                    )}
-                                                                </div>
-                                                                <div>
-                                                                    <div className="font-semibold text-[#141412] text-sm">{prod.title}</div>
-                                                                    <div className="text-[#8B8A83] text-[10px] font-mono">/{prod.slug}</div>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-3 px-4 font-semibold text-[#141412]">
-                                                            {formatFCFA(prod.price_vendor)}
-                                                        </td>
-                                                        <td className="py-3 px-4">
-                                                            {prod.is_promo && prod.promo_price ? (
-                                                                <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-semibold">
-                                                                    {formatFCFA(prod.promo_price)}
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-[#8B8A83] italic text-[11px]">—</span>
-                                                            )}
-                                                        </td>
-                                                        <td className="py-3 px-4 font-semibold text-[#3D3C37]">
-                                                            {prod.stock} unité(s)
-                                                        </td>
-                                                        <td className="py-3 px-4 text-[#5F5E58]">
-                                                            {prod.variants?.length > 0 ? (
-                                                                <span className="text-[#3D3C37] font-semibold">{prod.variants.length} option(s)</span>
-                                                            ) : (
-                                                                <span className="text-[#8B8A83] italic">Unique</span>
-                                                            )}
-                                                        </td>
-                                                        <td className="py-3 px-4">
-                                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
-                                                                prod.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-[#F2F1EC] text-[#5F5E58]'
-                                                            }`}>
-                                                                {prod.is_active ? 'Actif' : 'Inactif'}
-                                                            </span>
-                                                        </td>
-                                                        <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
-                                                            <Link
-                                                                href={route('admin.products.toggleActive', prod.id)}
-                                                                method="post"
-                                                                as="button"
-                                                                className={`px-2.5 py-1 rounded-lg font-semibold text-[10px] transition cursor-pointer ${
-                                                                    prod.is_active 
-                                                                        ? 'bg-amber-100 hover:bg-amber-200 text-amber-900' 
-                                                                        : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                                                                }`}
-                                                            >
-                                                                {prod.is_active ? 'Désactiver' : 'Activer'}
-                                                            </Link>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => openModerationModal('product', prod.title, prod.id, `Réf: /${prod.slug} • Prix: ${formatFCFA(prod.price_vendor)}`)}
-                                                                className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-[10px] transition cursor-pointer inline-flex items-center gap-1 border border-rose-200"
-                                                            >
-                                                                <Trash2 className="w-3 h-3 text-rose-600" /> Supprimer
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ) : (
-                                    <div className="py-12 text-center text-[#8B8A83] text-xs space-y-2">
-                                        <Package className="w-10 h-10 text-[#8B8A83] mx-auto" />
-                                        <div className="font-semibold text-[#3D3C37]">Aucun produit au catalogue</div>
-                                        <p className="text-[11px]">Ce vendeur n'a pas encore ajouté d'articles dans sa boutique.</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* TAB 2: RECENT ORDERS */}
-                        {activeTab === 'orders' && (
-                            <div>
-                                {store?.orders && store.orders.length > 0 ? (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left border-collapse text-xs">
-                                            <thead>
-                                                <tr className="bg-[#F6F5F1] border-b border-black/[0.08] text-[#5F5E58] text-[10px] font-semibold">
-                                                    <th className="py-3 px-4">Réf. Commande</th>
-                                                    <th className="py-3 px-4">Client</th>
-                                                    <th className="py-3 px-4">Destination</th>
-                                                    <th className="py-3 px-4">Montant Total</th>
-                                                    <th className="py-3 px-4">Paiement</th>
-                                                    <th className="py-3 px-4">Statut Livraison</th>
-                                                    <th className="py-3 px-4">Date</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-black/[0.06] font-medium">
-                                                {store.orders.map((ord) => (
-                                                    <tr key={ord.id} className="hover:bg-[#F6F5F1]/80 transition-colors">
-                                                        <td className="py-3 px-4 font-mono font-semibold text-[#141412]">
-                                                            <a
-                                                                href={route('order.track', ord.tracking_code)}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                className="text-amber-700 hover:underline flex items-center gap-1"
-                                                            >
-                                                                #{ord.tracking_code}
-                                                                <ExternalLink className="w-3 h-3" />
-                                                            </a>
-                                                        </td>
-                                                        <td className="py-3 px-4">
-                                                            <div className="font-semibold text-[#141412]">{ord.customer_name}</div>
-                                                            <div className="text-[#8B8A83] text-[10px] font-mono">{ord.customer_phone}</div>
-                                                        </td>
-                                                        <td className="py-3 px-4 text-[#5F5E58]">
-                                                            {ord.city || 'N/A'} {ord.address_details ? `(${ord.address_details})` : ''}
-                                                        </td>
-                                                        <td className="py-3 px-4 font-semibold text-[#141412]">
-                                                            {formatFCFA(ord.total_client)}
-                                                        </td>
-                                                        <td className="py-3 px-4">
-                                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
-                                                                ord.payment_status === 'paid'
-                                                                    ? 'bg-emerald-100 text-emerald-800'
-                                                                    : 'bg-amber-100 text-amber-800'
-                                                            }`}>
-                                                                {ord.payment_status === 'paid' ? 'Payé' : 'En attente'}
-                                                            </span>
-                                                        </td>
-                                                        <td className="py-3 px-4">
-                                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
-                                                                ord.status === 'delivered'
-                                                                    ? 'bg-emerald-100 text-emerald-800'
-                                                                    : ord.status === 'in_delivery'
-                                                                        ? 'bg-[#F6F5F1] text-[#141412]'
-                                                                        : 'bg-[#F2F1EC] text-[#3D3C37]'
-                                                            }`}>
-                                                                {ord.status}
-                                                            </span>
-                                                        </td>
-                                                        <td className="py-3 px-4 text-[#8B8A83] text-[11px]">
-                                                            {new Date(ord.created_at).toLocaleDateString('fr-FR')}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ) : (
-                                    <div className="py-12 text-center text-[#8B8A83] text-xs space-y-2">
-                                        <ShoppingBag className="w-10 h-10 text-[#8B8A83] mx-auto" />
-                                        <div className="font-semibold text-[#3D3C37]">Aucune commande enregistrée</div>
-                                        <p className="text-[11px]">Cette boutique n'a pas encore enregistré de ventes.</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* TAB 3: STORE INFO & BRANDING */}
-                        {activeTab === 'store_info' && (
-                            <div>
-                                {store ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-xs">
-                                        <div className="space-y-4">
-                                            <h4 className="font-semibold text-[#141412] text-sm border-b border-black/[0.05] pb-2">
-                                                Identité &amp; Configuration Vitrine
-                                            </h4>
-
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <label className="text-[#8B8A83] font-medium">Nom de la vitrine</label>
-                                                    <div className="font-semibold text-[#141412] text-sm">{store.name}</div>
-                                                </div>
-
-                                                <div>
-                                                    <label className="text-[#8B8A83] font-medium">Lien public officiel</label>
-                                                    <div className="font-mono text-amber-700 font-semibold">
-                                                        biolinko.link/{store.slug}
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <label className="text-[#8B8A83] font-medium">Statut de visibilité</label>
-                                                    <div>
-                                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
-                                                            store.is_published ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                                                        }`}>
-                                                            {store.is_published ? 'En ligne (Publique)' : 'Brouillon (Masquée)'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <label className="text-[#8B8A83] font-medium">Catégorie</label>
-                                                    <div className="font-semibold text-[#141412]">{store.category || 'Général'}</div>
-                                                </div>
-
-                                                <div>
-                                                    <label className="text-[#8B8A83] font-medium">Bandeau d'annonce supérieur</label>
-                                                    <div className="font-medium text-[#3D3C37]">{store.announcement_header || 'Non configuré'}</div>
-                                                </div>
-
-                                                <div>
-                                                    <label className="text-[#8B8A83] font-medium">Horaires d'ouverture</label>
-                                                    <div className="font-medium text-[#3D3C37]">{store.opening_hours || 'Non renseigné'}</div>
-                                                </div>
+                        {tab === 'products' && (products.length ? (
+                            <Table head={[['Produit'], ['Prix', 'text-right'], ['Stock', 'text-right'], ['Statut'], ['', 'w-28']]}>
+                                {products.map((p) => (
+                                    <tr key={p.id}>
+                                        <td className="px-4 py-3">
+                                            <span className="flex items-center gap-3">
+                                                <span className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#F6F5F1]">{p.image_url && <img src={p.image_url} alt="" className="h-full w-full object-cover" />}</span>
+                                                <span className="max-w-[260px] truncate text-[#141412]">{p.title}</span>
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-right tabular-nums">{fcfa(p.is_promo && p.promo_price ? p.promo_price : p.price_vendor)}</td>
+                                        <td className="px-4 py-3 text-right tabular-nums">{p.stock}</td>
+                                        <td className="px-4 py-3"><Badge tone={p.is_active ? 'success' : 'neutral'}>{p.is_active ? 'Visible' : 'Masqué'}</Badge></td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex justify-end gap-1">
+                                                <Link href={route('admin.products.toggleActive', p.id)} method="post" as="button" preserveScroll aria-label={p.is_active ? 'Masquer' : 'Rendre visible'}
+                                                    className="flex h-8 w-8 items-center justify-center rounded-full text-[#5F5E58] hover:bg-[#F2F1EC]">{p.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Link>
+                                                <button type="button" aria-label="Supprimer" onClick={() => setModeration({ type: 'product', id: p.id, name: p.title, info: store?.name })}
+                                                    className="flex h-8 w-8 items-center justify-center rounded-full text-[#B91C1C] hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
                                             </div>
-                                        </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </Table>
+                        ) : <div className="p-6"><Empty Icon={Package} title="Aucun produit" text="Ce vendeur n’a pas encore ajouté de produit." /></div>)}
 
-                                        <div className="space-y-4">
-                                            <h4 className="font-semibold text-[#141412] text-sm border-b border-black/[0.05] pb-2">
-                                                Visuels &amp; Description
-                                            </h4>
+                        {tab === 'orders' && (orders.length ? (
+                            <Table head={[['Commande'], ['Client'], ['Date'], ['Montant', 'text-right'], ['Statut']]}>
+                                {orders.map((o) => (
+                                    <tr key={o.id}>
+                                        <td className="px-4 py-3"><a href={route('order.track', o.tracking_code)} target="_blank" rel="noreferrer" className="font-mono text-[13px] text-[#141412] hover:underline">{o.tracking_code}</a></td>
+                                        <td className="px-4 py-3">{o.customer_name}</td>
+                                        <td className="px-4 py-3 text-[#5F5E58]">{shortDate(o.created_at)}</td>
+                                        <td className="px-4 py-3 text-right tabular-nums">{fcfa(o.total_client)}</td>
+                                        <td className="px-4 py-3"><OrderStatus status={o.status} /></td>
+                                    </tr>
+                                ))}
+                            </Table>
+                        ) : <div className="p-6"><Empty Icon={ShoppingBag} title="Aucune commande" text="Les 25 dernières commandes s’affichent ici." /></div>)}
 
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <label className="text-[#8B8A83] font-medium">Logo de la boutique</label>
-                                                    <div className="mt-1 w-16 h-16 rounded-2xl bg-[#F2F1EC] border border-black/[0.08] overflow-hidden flex items-center justify-center">
-                                                        {store.logo_url ? (
-                                                            <img src={store.logo_url} alt="Logo" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <StoreIcon className="w-8 h-8 text-[#8B8A83]" />
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <label className="text-[#8B8A83] font-medium">Description</label>
-                                                    <p className="text-[#3D3C37] leading-relaxed font-medium bg-[#F6F5F1] p-3 rounded-xl border border-black/[0.08]">
-                                                        {store.description || 'Aucune description rédigée.'}
-                                                    </p>
-                                                </div>
-
-                                                <div>
-                                                    <label className="text-[#8B8A83] font-medium">Couleur Thème Principale</label>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className="w-5 h-5 rounded-full border border-black/15" style={{ backgroundColor: store.theme_color || '#FFCC00' }} />
-                                                        <span className="font-mono text-[11px] text-[#5F5E58]">{store.theme_color || '#FFCC00'}</span>
-                                                    </div>
-                                                </div>
+                        {tab === 'reports' && (reports.length ? (
+                            <ul className="divide-y divide-black/[0.05]">
+                                {reports.map((r) => {
+                                    const [label, tone] = REPORT_STATUS[r.status] || REPORT_STATUS.open;
+                                    return (
+                                        <li key={r.id} className="space-y-2 p-4 text-[14px]">
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                <span className="text-[#141412]">{r.reason_label} · <span className="font-mono text-[13px]">{r.order?.tracking_code}</span></span>
+                                                <Badge tone={tone}>{label}</Badge>
                                             </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="py-12 text-center text-[#8B8A83] text-xs">
-                                        Aucune boutique associée à ce compte vendeur.
-                                    </div>
-                                )}
+                                            <p className="text-[#3D3C37] [overflow-wrap:anywhere]">« {r.message} »</p>
+                                            {r.seller_response && <p className="rounded-xl bg-[#F6F5F1] p-3 text-[#3D3C37] [overflow-wrap:anywhere]"><span className="text-[#8B8A83]">Réponse du vendeur : </span>{r.seller_response}</p>}
+                                            <p className="text-[12px] text-[#8B8A83]">{dateTime(r.created_at)} · client {r.customer_phone}</p>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        ) : <div className="p-6"><Empty Icon={AlertTriangle} title="Aucun signalement" text="Aucun client n’a signalé de problème." /></div>)}
+
+                        {tab === 'money' && (
+                            <div className="space-y-6 p-4">
+                                <section>
+                                    <h3 className="mb-2 text-[14px] text-[#8B8A83]">Retraits</h3>
+                                    {withdrawals.length ? (
+                                        <ul className="divide-y divide-black/[0.05] rounded-2xl border border-black/[0.06]">
+                                            {withdrawals.map((w) => {
+                                                const [label, tone] = WITHDRAWAL_STATUS[w.status] || WITHDRAWAL_STATUS.pending;
+                                                return (
+                                                    <li key={w.id} className="flex items-center justify-between gap-3 px-4 py-3 text-[14px]">
+                                                        <span><span className="block tabular-nums text-[#141412]">{fcfa(w.amount)}{Number(w.fee) > 0 && <span className="text-[13px] text-[#8B8A83]"> · net {fcfa(w.net_amount)}</span>}</span><span className="text-[12px] text-[#8B8A83]">{w.phone_number} · {dateTime(w.created_at)}</span></span>
+                                                        <Badge tone={tone}>{label}</Badge>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    ) : <p className="text-[14px] text-[#8B8A83]">Aucun retrait.</p>}
+                                </section>
+                                <section>
+                                    <h3 className="mb-2 text-[14px] text-[#8B8A83]">Abonnements</h3>
+                                    {subscriptions.length ? (
+                                        <ul className="divide-y divide-black/[0.05] rounded-2xl border border-black/[0.06]">
+                                            {subscriptions.map((s) => (
+                                                <li key={s.id} className="flex items-center justify-between gap-3 px-4 py-3 text-[14px]">
+                                                    <span><span className="block text-[#141412]">{(s.plan || '').replace(/^./, (c) => c.toUpperCase())} · {s.billing_cycle} mois</span><span className="text-[12px] text-[#8B8A83]">{SUB_SOURCE[s.payment_provider] || 'Mobile Money'} · {dateTime(s.created_at)}</span></span>
+                                                    <span className="text-right"><span className="block tabular-nums">{fcfa(s.amount)}</span><Badge tone={s.payment_status === 'paid' ? 'success' : s.payment_status === 'failed' ? 'danger' : 'warning'}>{s.payment_status === 'paid' ? 'Payé' : s.payment_status === 'failed' ? 'Échoué' : 'En attente'}</Badge></span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : <p className="text-[14px] text-[#8B8A83]">Aucun abonnement.</p>}
+                                </section>
                             </div>
                         )}
+                    </Card>
+
+                    <div className="space-y-4">
+                        {vendor.role !== 'admin' && <PlanBox vendor={vendor} daysRemaining={daysRemaining} />}
+
+                        <Card>
+                            <CardHeader title="Boutique" />
+                            {store ? (
+                                <div className="mt-4 space-y-3 text-[14px]">
+                                    <div className="flex items-center gap-3">
+                                        <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F6F5F1]">{store.logo_url ? <img src={store.logo_url} alt="" className="h-full w-full object-cover" /> : <Store className="h-5 w-5 text-[#8B8A83]" />}</span>
+                                        <span className="min-w-0"><span className="block truncate font-medium text-[#141412]">{store.name}</span><span className="block truncate text-[13px] text-[#8B8A83]">biolinko.link/{store.slug}</span></span>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Badge tone={store.is_published ? 'success' : 'neutral'}>{store.is_published ? 'En ligne' : 'Brouillon'}</Badge>
+                                        {stats.hold_days && <Badge>Délai de retrait : {stats.hold_days} j</Badge>}
+                                    </div>
+                                    {store.city_location && <p className="text-[#5F5E58]">{store.city_location}</p>}
+                                    <div className="flex flex-wrap gap-2 pt-1">
+                                        <Button size="sm" href={`/${store.slug}`} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /> Voir</Button>
+                                        {store.is_published
+                                            ? <Button size="sm" onClick={() => setModeration({ type: 'store', id: store.id, name: store.name, info: `biolinko.link/${store.slug}` })}><EyeOff className="h-4 w-4" /> Suspendre</Button>
+                                            : <Button size="sm" href={route('admin.users.toggleStore', vendor.id)} method="post" as="button" preserveScroll><Eye className="h-4 w-4" /> Republier</Button>}
+                                    </div>
+                                </div>
+                            ) : <p className="mt-3 text-[14px] text-[#8B8A83]">Pas encore de boutique.</p>}
+                        </Card>
                     </div>
                 </div>
             </div>
 
-            {/* REUSABLE MODERATION MODAL */}
-            </div>
-
-            <ModerationModal
-                isOpen={moderationModal.isOpen}
-                onClose={closeModerationModal}
-                onConfirm={handleConfirmModeration}
-                type={moderationModal.type}
-                itemName={moderationModal.itemName}
-                targetInfo={moderationModal.targetInfo}
-                isLoading={isSubmittingModeration}
-            />
+            <ModerationModal isOpen={!!moderation} onClose={() => setModeration(null)} onConfirm={confirm} type={moderation?.type || 'user'} isLoading={busy}
+                itemName={moderation?.name || ''} targetInfo={moderation?.info} />
         </AuthenticatedLayout>
     );
 }

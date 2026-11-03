@@ -71,9 +71,7 @@ class OrderController extends Controller
             ->where('status', 'delivered')
             ->count();
 
-        $totalRevenue = Order::where('store_id', $store->id)
-            ->whereIn('status', ['paid', 'in_delivery', 'delivered'])
-            ->sum('price_vendor');
+        $totalRevenue = Order::where('store_id', $store->id)->paid()->sum('price_vendor');
 
         return Inertia::render('Orders/Index', [
             'store' => $store,
@@ -123,6 +121,8 @@ class OrderController extends Controller
 
         $order->update([
             'status' => $validated['status'],
+            // Livrée = le livreur a encaissé le solde de l'acompte
+            'balance_collected_at' => $validated['status'] === 'delivered' && (float) $order->balance_due > 0 ? ($order->balance_collected_at ?? now()) : $order->balance_collected_at,
         ]);
 
         // Send real-time WhatsApp shipping / delivery notification to customer
@@ -132,7 +132,7 @@ class OrderController extends Controller
             Log::warning('WhatsApp notifyOrderShippingUpdate failed', ['order_id' => $order->id, 'err' => $e->getMessage()]);
         }
 
-        return back()->with('message', 'Statut de la commande mis à jour et notification WhatsApp envoyée !');
+        return back()->with('message', 'Statut de la commande mis à jour.');
 
     }
 

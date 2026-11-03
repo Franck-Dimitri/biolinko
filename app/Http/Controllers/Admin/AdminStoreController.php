@@ -18,44 +18,35 @@ class AdminStoreController extends Controller
     public function index(Request $request): Response
     {
         $search = trim($request->query('search', ''));
-        $planFilter = $request->query('plan', 'all');
+        $status = $request->query('status', 'all'); // all | published | draft | reported
 
-        $query = Store::with(['user', 'wallet'])
-            ->withCount(['products', 'orders']);
+        $query = Store::with(['user:id,name,email,plan,subscription_expires_at,is_banned', 'wallet'])
+            ->withCount(['products', 'orders', 'reports']);
 
-        if (!empty($search)) {
+        if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('slug', 'like', "%{$search}%")
-                  ->orWhereHas('user', function ($uq) use ($search) {
-                      $uq->where('name', 'like', "%{$search}%")
-                         ->orWhere('email', 'like', "%{$search}%");
-                  });
+                    ->orWhere('slug', 'like', "%{$search}%")
+                    ->orWhereHas('user', fn ($uq) => $uq->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"));
             });
         }
 
-        if ($planFilter !== 'all') {
-            $query->where('plan_type', $planFilter);
-        }
-
-        $stores = $query->latest()->paginate(15)->withQueryString();
-
-        $metrics = [
-            'total' => Store::count(),
-            'published' => Store::where('is_published', true)->count(),
-            'starter' => Store::where('plan_type', 'starter')->count(),
-            'pro' => Store::where('plan_type', 'pro')->count(),
-            'growth' => Store::where('plan_type', 'growth')->count(),
-            'business' => Store::where('plan_type', 'business')->count(),
-        ];
+        match ($status) {
+            'published' => $query->where('is_published', true),
+            'draft' => $query->where('is_published', false),
+            'reported' => $query->has('reports'),
+            default => null,
+        };
 
         return Inertia::render('Admin/Stores/Index', [
-            'stores' => $stores,
-            'metrics' => $metrics,
-            'filters' => [
-                'search' => $search,
-                'plan' => $planFilter,
+            'stores' => $query->latest()->paginate(15)->withQueryString(),
+            'metrics' => [
+                'total' => Store::count(),
+                'published' => Store::where('is_published', true)->count(),
+                'draft' => Store::where('is_published', false)->count(),
+                'reported' => Store::has('reports')->count(),
             ],
+            'filters' => ['search' => $search, 'status' => $status],
         ]);
     }
 
@@ -73,19 +64,13 @@ class AdminStoreController extends Controller
     {
         $validated = $request->validate([
             'plan_type' => ['required', 'string', 'in:starter,pro,growth,business'],
+            'months' => ['nullable', 'integer', 'in:1,3,6,12'],
         ]);
 
-        $store->update([
-            'plan_type' => $validated['plan_type'],
-        ]);
+        abort_unless($store->user, 404);
+        $store->user->grantPlan($validated['plan_type'], (int) ($validated['months'] ?? 1));
 
-        if ($store->user) {
-            $store->user->update([
-                'plan' => $validated['plan_type'],
-            ]);
-        }
-
-        return redirect()->back()->with('message', "Plan de la boutique {$store->name} mis à jour vers " . strtoupper($validated['plan_type']) . " !");
+        return redirect()->back()->with('message', "Plan de la boutique {$store->name} mis à jour : ".ucfirst($validated['plan_type']).'.');
     }
 
     /**
@@ -95,7 +80,7 @@ class AdminStoreController extends Controller
     {
         $request->validate([
             'reason' => ['required', 'string', 'min:5', 'max:1000'],
-            'action' => ['required', 'string', 'in:suspend,delete'],
+            'action' => ['nullable', 'string', 'in:suspend'], // suspension réversible uniquement : une boutique peut avoir des fonds et des commandes en cours
         ]);
 
         $reason = $request->input('reason');
@@ -109,7 +94,7 @@ class AdminStoreController extends Controller
             try {
                 Mail::to($seller->email)->send(new ModerationNotificationMail(
                     $seller,
-                    $action === 'delete' ? 'store_suspended' : 'store_suspended',
+                    'store_suspended',
                     $storeName,
                     $reason
                 ));
@@ -135,6 +120,6 @@ class AdminStoreController extends Controller
             'is_published' => false,
         ]);
 
-        return redirect()->back()->with('message', "La vitrine {$storeName} a été suspendue et le vendeur a été notifié par email et WhatsApp.");
+        return redirect()->back()->with('message', "La vitrine {$storeName} a été suspendue et le vendeur a été notifié par e-mail.");
     }
 }

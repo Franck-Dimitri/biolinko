@@ -101,7 +101,7 @@ function ProductEditor({ product, onClose, limits }) {
 
                     <div className="grid gap-3 sm:grid-cols-3">
                         <Field label="Prix" error={errors.price_vendor}>
-                            <div className="relative"><input required type="number" min="0" value={data.price_vendor} onChange={(e) => setData('price_vendor', e.target.value)} className={`${fieldClass} pr-14`} /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-[#8B8A83]">FCFA</span></div>
+                            <div className="relative"><input aria-label="Prix" required type="number" min="0" value={data.price_vendor} onChange={(e) => setData('price_vendor', e.target.value)} className={`${fieldClass} pr-14`} /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-[#8B8A83]">FCFA</span></div>
                         </Field>
                         <Field label="Stock" error={errors.stock}><input required type="number" min="0" value={data.stock} onChange={(e) => setData('stock', e.target.value)} className={fieldClass} /></Field>
                         <Field label="Quantité min." error={errors.min_order_quantity}><input required type="number" min="1" value={data.min_order_quantity} onChange={(e) => setData('min_order_quantity', e.target.value)} className={fieldClass} /></Field>

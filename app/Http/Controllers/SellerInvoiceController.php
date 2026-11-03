@@ -73,21 +73,19 @@ class SellerInvoiceController extends Controller
             $query->where('is_manual', false);
         }
         // Une facture n'existe que si elle est manuelle ou payée : les commandes en ligne impayées n'en sont pas
-        $query->where(fn ($q) => $q->where('is_manual', true)->orWhereNotNull('invoice_number')->orWhereIn('status', ['paid', 'in_delivery', 'delivered']));
+        $query->where(fn ($q) => $q->where('is_manual', true)->orWhereNotNull('invoice_number')->orWhere('payment_status', 'paid'));
 
         $invoices = $query->latest()->paginate(12)->withQueryString();
 
         $allOrders = Order::where('store_id', $store->id)->get();
 
-        $paidOrders = $allOrders->filter(function ($o) {
-            return in_array($o->status, ['paid', 'PAID', 'in_delivery', 'delivered']);
-        });
+        $paidOrders = $allOrders->where('payment_status', 'paid');
 
         $onlinePaidOrders = $paidOrders->filter(fn($o) => !$o->is_manual);
         $manualPaidOrders = $paidOrders->filter(fn($o) => $o->is_manual);
 
         // À encaisser : factures manuelles émises mais pas encore réglées
-        $pendingOrders = $allOrders->filter(fn ($o) => $o->is_manual && $o->status === 'pending');
+        $pendingOrders = $allOrders->filter(fn ($o) => $o->is_manual && $o->payment_status === 'pending' && $o->status === 'pending');
 
         $stats = [
             'total_invoices' => $paidOrders->count() + $pendingOrders->count(),
@@ -161,8 +159,9 @@ class SellerInvoiceController extends Controller
                 'customer_name' => $validated['customer_name'],
                 'customer_phone' => $validated['customer_phone'],
                 'customer_email' => $validated['customer_email'] ?? null,
-                'city' => $customer->city,
-                'address_details' => $validated['delivery_address'] ?? null,
+                // Ville et adresse sont facultatives sur une facture, mais obligatoires en base
+                'city' => $customer->city ?: '',
+                'address_details' => $validated['delivery_address'] ?? '',
                 'price_vendor' => $total,
                 'saas_margin' => 0,
                 'api_fee' => 0,
@@ -238,29 +237,18 @@ class SellerInvoiceController extends Controller
             abort(403);
         }
 
-        // 1. Send WhatsApp 1-Click Reminder
-        $whatsappSuccess = false;
+        // Le rappel WhatsApp part du téléphone du vendeur ; ici, le rappel par e-mail
+        if (! $order->customer_email) {
+            return back()->withErrors(['status' => 'Ce client n’a pas d’adresse e-mail.']);
+        }
+
         try {
-            $res = app(\App\Services\WhatsappGatewayService::class)->send1ClickReminder($order);
-            $whatsappSuccess = $res['success'] ?? false;
+            $this->invoiceService->sendOrderInvoiceEmails($order);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning('WhatsApp 1-Click reminder failed', ['order_id' => $order->id, 'err' => $e->getMessage()]);
+            return back()->withErrors(['status' => 'L’e-mail de rappel n’a pas pu être envoyé.']);
         }
 
-        // 2. Send Email Reminder (backup if email provided)
-        if ($order->customer_email) {
-            try {
-                $this->invoiceService->sendOrderInvoiceEmails($order);
-            } catch (\Exception $e) {
-                // Ignore
-            }
-        }
-
-        $msg = $whatsappSuccess 
-            ? "Relance WhatsApp envoyée avec succès au client ({$order->customer_phone}) !" 
-            : "Relance effectuée avec succès au client !";
-
-        return redirect()->back()->with('message', $msg);
+        return back()->with('message', 'Rappel envoyé par e-mail à '.$order->customer_email.'.');
     }
 
 

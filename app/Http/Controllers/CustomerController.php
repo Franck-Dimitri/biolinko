@@ -30,9 +30,7 @@ class CustomerController extends Controller
         })->count();
 
         // 3rd Card: Total Amount of Completed/Delivered Sales
-        $completedSalesRevenue = (float) Order::where('store_id', $store->id)
-            ->whereIn('status', ['paid', 'delivered', 'completed'])
-            ->sum('price_vendor');
+        $completedSalesRevenue = (float) Order::where('store_id', $store->id)->paid()->sum('price_vendor');
 
         // Total Revenue across all customer pivots for Average Order Value
         $totalRevenueFromCustomers = $customers->sum(function ($c) {
@@ -49,7 +47,8 @@ class CustomerController extends Controller
         // Abandoned Carts / Pending Orders
         $abandonedOrders = Order::with('items')
             ->where('store_id', $store->id)
-            ->whereIn('status', ['pending'])
+            ->where('status', 'pending')->where('payment_status', 'pending')
+            ->where(fn ($q) => $q->where('is_manual', false)->orWhereNull('is_manual'))
             ->latest()
             ->take(20)
             ->get();
@@ -142,7 +141,8 @@ class CustomerController extends Controller
             'title' => $validated['title'],
             'message_template' => $validated['message_template'],
             'recipients_count' => $recipientsCount,
-            'sent_count' => $recipientsCount,
+            // En 1 clic, c'est le vendeur qui envoie : rien n'est compté comme envoyé par Biolinko
+            'sent_count' => \App\Services\WhatsappGatewayService::automatic() ? $recipientsCount : 0,
             'status' => 'completed',
             'recipients_json' => $validated['recipients'],
             'attached_products_json' => $validated['attached_products'] ?? [],
@@ -150,9 +150,8 @@ class CustomerController extends Controller
             'completed_at' => now(),
         ]);
 
-        // Attempt gateway send via WhatsappGatewayService
         $gatewayService = app(\App\Services\WhatsappGatewayService::class);
-        $instanceName = 'store_' . $store->id;
+        $cloud = $gatewayService->cloud();
 
         // Lien joint au message : produit, pack ou boutique
         $baseUrl = rtrim($request->getSchemeAndHttpHost(), '/');
@@ -183,14 +182,10 @@ class CustomerController extends Controller
                 );
 
                 // API officielle : une campagne est un message marketing, il passe par un modèle approuvé
-                if ($cloud = $gatewayService->cloud()) {
-                    $cloud->sendTemplate($gatewayService->formatPhone($phone), 'biolinko_campagne', [$prenom, $store->name, $text]);
-                } else {
-                    $gatewayService->sendMessage($phone, $text, $instanceName);
-                }
+                $cloud?->sendTemplate($gatewayService->formatPhone($phone), 'biolinko_campagne', [$prenom, $store->name, $text]);
             }
         }
 
-        return redirect()->back()->with('message', 'Campagne WhatsApp 1-Clic exécutée avec succès !');
+        return redirect()->back()->with('message', $cloud ? 'Campagne envoyée.' : 'Campagne prête : envoyez chaque message depuis votre WhatsApp.');
     }
 }

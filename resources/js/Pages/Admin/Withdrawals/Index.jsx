@@ -1,234 +1,113 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-    Wallet, Search, ShieldCheck, CheckCircle2, XCircle, Clock, AlertCircle, ExternalLink, ArrowUpRight
-} from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { AlertTriangle, Banknote, Check, CheckCircle2, Clock, Hand, Send, Wallet, X } from 'lucide-react';
+import { OperatorLogo } from '@/Components/Landing/Illustrations';
+import { Badge, Button, Card, Empty, PageHeader, Pagination, SearchInput, Stat, Tabs, dateTime, fcfa } from '@/Components/Dashboard/UI';
 
-export default function WithdrawalsIndex({ withdrawals, metrics, filters }) {
-    const [search, setSearch] = useState(filters?.search || '');
-    const [status, setStatus] = useState(filters?.status || 'all');
+const STATUS = { pending: ['À traiter', 'warning'], processing: ['Virement en cours', 'info'], completed: ['Payé', 'success'], rejected: ['Rejeté, remboursé', 'danger'] };
 
-    const handleSearch = (e) => {
-        e.preventDefault();
-        router.get(route('admin.withdrawals.index'), { search, status }, { preserveState: true });
+// Une demande de retrait : montant net, destinataire, et les actions possibles tant qu'elle est en attente
+function Row({ w }) {
+    const [confirm, setConfirm] = useState(null); // 'transfer' | 'manual' | 'reject'
+    const [busy, setBusy] = useState(false);
+    const store = w.wallet?.store;
+    const [label, tone] = STATUS[w.status] || STATUS.pending;
+    const reviewed = (store?.reports_count || 0) >= 3;
+
+    const act = (kind) => {
+        setBusy(true);
+        const url = kind === 'reject' ? route('admin.withdrawals.reject', w.id) : route('admin.withdrawals.approve', w.id);
+        router.post(url, kind === 'manual' ? { manual: 1 } : {}, {
+            preserveScroll: true,
+            onSuccess: () => toast.success(kind === 'reject' ? 'Retrait rejeté, le montant est rendu au vendeur.' : kind === 'manual' ? 'Retrait marqué comme payé.' : 'Virement envoyé à l’opérateur.'),
+            onFinish: () => { setBusy(false); setConfirm(null); },
+        });
     };
 
-    const handleStatusFilter = (newStatus) => {
-        setStatus(newStatus);
-        router.get(route('admin.withdrawals.index'), { search, status: newStatus }, { preserveState: true });
+    const text = {
+        transfer: `Envoyer ${fcfa(w.net_amount ?? w.amount)} par Mobile Money au ${w.phone_number} ?`,
+        manual: `Vous avez déjà envoyé ${fcfa(w.net_amount ?? w.amount)} au ${w.phone_number} vous-même ?`,
+        reject: `Rejeter ce retrait ? ${fcfa(w.amount)} retournent sur le solde du vendeur.`,
     };
 
     return (
+        <li className="space-y-3 p-4">
+            <div className="flex flex-wrap items-center gap-4">
+                <OperatorLogo op={w.operator} className="h-10 w-10 shrink-0" />
+                <div className="min-w-0 flex-1">
+                    <p className="text-[15px] text-[#141412]"><span className="font-medium tabular-nums">{fcfa(w.net_amount ?? w.amount)}</span> à envoyer au <span className="tabular-nums">{w.phone_number}</span></p>
+                    <p className="text-[13px] text-[#8B8A83]">
+                        {store ? <Link href={route('admin.users.show', store.user?.id || 0)} className="hover:underline">{store.name}</Link> : 'Boutique'}
+                        {' · '}demandé {dateTime(w.created_at)}
+                        {Number(w.fee) > 0 && <> · retrait {fcfa(w.amount)}, frais {fcfa(w.fee)}</>}
+                    </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    {reviewed && <Badge tone="danger"><AlertTriangle className="h-3.5 w-3.5" /> Sous contrôle · {store.reports_count} signalements</Badge>}
+                    <Badge tone={tone}>{label}</Badge>
+                </div>
+            </div>
+
+            {w.status === 'pending' && !confirm && (
+                <div className="flex flex-wrap gap-2 sm:pl-14">
+                    <Button size="sm" variant="primary" onClick={() => setConfirm('manual')}><Hand className="h-4 w-4" /> Marquer payé</Button>
+                    <Button size="sm" onClick={() => setConfirm('transfer')}><Send className="h-4 w-4" /> Virer automatiquement</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setConfirm('reject')}><X className="h-4 w-4" /> Rejeter</Button>
+                </div>
+            )}
+            {confirm && (
+                <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-[#F6F5F1] p-3 text-[14px] sm:ml-14">
+                    <span className="flex-1 text-[#141412]">{text[confirm]}</span>
+                    <Button size="sm" variant={confirm === 'reject' ? 'danger' : 'dark'} disabled={busy} onClick={() => act(confirm)}><Check className="h-4 w-4" /> Confirmer</Button>
+                    <Button size="sm" onClick={() => setConfirm(null)}>Annuler</Button>
+                </div>
+            )}
+            {w.status === 'processing' && <p className="text-[13px] text-[#5F5E58] sm:pl-14">En attente de la confirmation de l’opérateur, mise à jour automatique.</p>}
+        </li>
+    );
+}
+
+export default function Index({ withdrawals, metrics = {}, filters = {} }) {
+    const [search, setSearch] = useState(filters.search || '');
+    const first = useRef(true);
+    const list = withdrawals?.data || [];
+
+    useEffect(() => {
+        if (first.current) { first.current = false; return; }
+        const t = setTimeout(() => router.get(route('admin.withdrawals.index'), { search, status: filters.status }, { preserveState: true, replace: true }), 350);
+        return () => clearTimeout(t);
+    }, [search]);
+
+    const setStatus = (status) => router.get(route('admin.withdrawals.index'), { search, status }, { preserveState: true, replace: true });
+
+    return (
         <AuthenticatedLayout>
-            <Head title="Gestion des Retraits Mobile Money — Administration BIOLINKO" />
+            <Head title="Retraits, Administration Biolinko" />
+            <div className="space-y-6 pb-12">
+                <PageHeader title="Retraits" sub="Les demandes des vendeurs vers leur Mobile Money. Le montant affiché est le net à envoyer, frais déduits." />
 
-            <div className="space-y-8 pb-12">
-                {/* HERO BANNER */}
-                <div className="p-6 sm:p-8 rounded-3xl bg-[#FFCC00] text-[#141412] shadow-xs border border-amber-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#141412] text-white text-[11px] font-semibold">
-                            <Wallet className="w-3.5 h-3.5 text-[#FFCC00]" /> GESTION DES RETRAITS MOBILE MONEY
-                        </div>
-                        <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
-                            Demandes de Virement Vendeurs ({metrics?.pending || 0} en attente)
-                        </h2>
-                        <p className="text-xs text-[#141412] font-medium">
-                            Approuvez et déclenchez les virements Payout vers les comptes MTN &amp; Orange Money des vendeurs.
-                        </p>
-                    </div>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+                    <Stat label="À traiter" value={metrics.pending ?? 0} hint={fcfa(metrics.total_amount_pending)} Icon={Clock} accent={(metrics.pending ?? 0) > 0} />
+                    <Stat label="Virements en cours" value={metrics.processing ?? 0} Icon={Send} delay={0.03} />
+                    <Stat label="Versé aux vendeurs" value={fcfa(metrics.total_amount_paid)} hint={`${metrics.completed ?? 0} retraits payés`} Icon={CheckCircle2} delay={0.06} />
+                    <Stat label="Frais de retrait perçus" value={fcfa(metrics.total_fees)} Icon={Banknote} delay={0.09} />
                 </div>
 
-                {/* 4 METRICS CARDS (EXACT CAPTURE 2 STYLE) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                    
-                    {/* Retraits en attente */}
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Retraits en Attente</span>
-                            <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center">
-                                <Wallet className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-rose-600">
-                            {metrics?.pending || 0} demande(s)
-                        </div>
-                        <div className="text-[11px] text-rose-600 font-semibold flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Total: {Number(metrics?.total_amount_pending || 0).toLocaleString()} FCFA
-                        </div>
+                <Card padded={false}>
+                    <div className="flex flex-col gap-3 border-b border-black/[0.06] p-4 lg:flex-row lg:items-center lg:justify-between">
+                        <Tabs id="wd-status" value={filters.status || 'all'} onChange={setStatus}
+                            tabs={[['all', 'Tous'], ['pending', 'À traiter'], ['processing', 'En cours'], ['completed', 'Payés'], ['rejected', 'Rejetés']]} />
+                        <SearchInput value={search} onChange={setSearch} placeholder="Boutique, numéro ou référence" className="lg:w-72" />
                     </div>
+                    {list.length
+                        ? <ul className="divide-y divide-black/[0.05]">{list.map((w) => <Row key={w.id} w={w} />)}</ul>
+                        : <div className="p-6"><Empty Icon={Wallet} title="Aucun retrait" text="Les demandes de retrait des vendeurs apparaîtront ici." /></div>}
+                    <Pagination page={withdrawals} label="retraits" />
+                </Card>
 
-                    {/* Payés */}
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Retraits Payés (Completed)</span>
-                            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-                                <CheckCircle2 className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-emerald-600">
-                            {Number(metrics?.total_amount_paid || 0).toLocaleString()} FCFA
-                        </div>
-                        <div className="text-[11px] text-emerald-600 font-semibold">
-                            {metrics?.completed || 0} virement(s) réussis
-                        </div>
-                    </div>
-
-                    {/* Total Demandes */}
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Volume Total Demandes</span>
-                            <div className="w-8 h-8 rounded-xl bg-amber-100/80 text-amber-900 flex items-center justify-center">
-                                <Clock className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-[#141412]">
-                            {metrics?.total || 0} demande(s)
-                        </div>
-                        <div className="text-[11px] text-[#8B8A83] font-medium">
-                            Historique plateforme
-                        </div>
-                    </div>
-
-                    {/* Rejetés */}
-                    <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-3">
-                        <div className="flex items-center justify-between text-xs font-medium text-[#5F5E58]">
-                            <span>Demandes Rejetées</span>
-                            <div className="w-8 h-8 rounded-xl bg-[#F2F1EC] text-[#3D3C37] flex items-center justify-center">
-                                <XCircle className="w-4 h-4" />
-                            </div>
-                        </div>
-                        <div className="text-2xl sm:text-3xl font-semibold text-[#3D3C37]">
-                            {metrics?.rejected || 0} rejet(s)
-                        </div>
-                        <div className="text-[11px] text-[#8B8A83] font-medium">
-                            Solde récrédité au vendeur
-                        </div>
-                    </div>
-
-                </div>
-
-                {/* SEARCH & FILTER BAR */}
-                <div className="p-4 bg-white rounded-3xl border border-black/[0.08] shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <form onSubmit={handleSearch} className="w-full sm:w-96 relative">
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Rechercher par numéro MoMo, boutique..."
-                            className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#F6F5F1] border border-black/[0.08] text-xs font-medium focus:border-amber-400 outline-none"
-                        />
-                        <Search className="w-4 h-4 text-[#8B8A83] absolute left-3 top-1/2 -translate-y-1/2" />
-                    </form>
-
-                    <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 text-xs font-semibold">
-                        {['all', 'pending', 'completed', 'rejected'].map((st) => (
-                            <button
-                                key={st}
-                                onClick={() => handleStatusFilter(st)}
-                                className={`px-3 py-1.5 rounded-xl uppercase transition-all cursor-pointer ${
-                                    status === st 
-                                        ? 'bg-[#141412] text-white font-semibold shadow-2xs' 
-                                        : 'bg-[#F2F1EC] text-[#5F5E58] hover:bg-[#E9E7E0]'
-                                }`}
-                            >
-                                {st === 'all' ? 'Tous les statuts' : st === 'pending' ? 'En Attente' : st === 'completed' ? 'Payés' : 'Rejetés'}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* WITHDRAWALS TABLE */}
-                <div className="bg-white rounded-3xl border border-black/[0.08] shadow-2xs overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse text-xs">
-                            <thead>
-                                <tr className="bg-[#F6F5F1] border-b border-black/[0.08] text-[#5F5E58] text-[10px] font-semibold">
-                                    <th className="py-4 px-6">Montant Demandé</th>
-                                    <th className="py-4 px-6">Boutique / Vendeur</th>
-                                    <th className="py-4 px-6">Compte Mobile Money</th>
-                                    <th className="py-4 px-6">Statut</th>
-                                    <th className="py-4 px-6 text-right">Actions Payout</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-black/[0.06] font-medium">
-                                {withdrawals.data && withdrawals.data.length > 0 ? (
-                                    withdrawals.data.map((w) => (
-                                        <tr key={w.id} className="hover:bg-[#F6F5F1]/80 transition-colors">
-                                            <td className="py-4 px-6">
-                                                <div className="font-semibold text-[#141412] text-sm">
-                                                    {Number(w.amount).toLocaleString()} FCFA
-                                                </div>
-                                                {Number(w.fee) > 0 && <div className="text-[11px] text-[#8B8A83]">Virement net : {Number(w.net_amount).toLocaleString()} FCFA · frais {Number(w.fee).toLocaleString()}</div>}
-                                                <div className="text-[10px] text-[#8B8A83]">Demande #{w.id}</div>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <div className="font-semibold text-[#141412]">{w.wallet?.store?.name || 'N/A'}</div>
-                                                <div className="text-[#8B8A83] text-[11px]">{w.wallet?.store?.user?.email}</div>
-                                                {(w.wallet?.store?.reports_count || 0) >= 3 && (
-                                                    <span className="mt-1 inline-flex rounded-full bg-[#FFF3C4] px-2 py-0.5 text-[11px] font-medium text-[#7A5B00]" title="Plusieurs clients ont signalé un problème : vérifiez avant de valider">
-                                                        Sous contrôle · {w.wallet.store.reports_count} signalements
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <div className="font-semibold text-[#141412]">{w.phone_number}</div>
-                                                <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-semibold text-[10px] uppercase">
-                                                    {w.operator || 'ORANGE'} MoMo
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold ${
-                                                    w.status === 'completed' 
-                                                        ? 'bg-emerald-100 text-emerald-800' 
-                                                        : w.status === 'rejected'
-                                                        ? 'bg-rose-100 text-rose-800'
-                                                        : 'bg-amber-100 text-amber-900'
-                                                }`}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${
-                                                        w.status === 'completed' ? 'bg-emerald-600' : w.status === 'rejected' ? 'bg-rose-600' : 'bg-amber-600'
-                                                    }`} />
-                                                    <span>{w.status === 'completed' ? 'Virement payé' : w.status === 'rejected' ? 'Rejeté et remboursé' : w.status === 'processing' ? 'Virement en cours' : 'En attente'}</span>
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-6 text-right space-x-2">
-                                                {w.status === 'pending' ? (
-                                                    <>
-                                                        <Link
-                                                            href={route('admin.withdrawals.approve', w.id)}
-                                                            method="post"
-                                                            as="button"
-                                                            className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] shadow-2xs transition-all cursor-pointer"
-                                                        >
-                                                            Approuver Payout
-                                                        </Link>
-                                                        <Link
-                                                            href={route('admin.withdrawals.reject', w.id)}
-                                                            method="post"
-                                                            as="button"
-                                                            className="px-3 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 font-semibold text-[11px] transition-all cursor-pointer"
-                                                        >
-                                                            Rejeter
-                                                        </Link>
-                                                    </>
-                                                ) : (
-                                                    <span className="text-[#8B8A83] text-[11px] italic">{w.status === 'processing' ? 'Confirmation de l’opérateur en attente' : 'Traité'}</span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan={5} className="py-12 text-center text-[#8B8A83] text-xs">
-                                            Aucune demande de retrait trouvée.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <p className="text-[13px] text-[#8B8A83]">« Marquer payé » : vous avez fait le virement vous-même depuis votre téléphone. « Virer automatiquement » : Biolinko l’envoie par l’agrégateur de paiement.</p>
             </div>
         </AuthenticatedLayout>
     );

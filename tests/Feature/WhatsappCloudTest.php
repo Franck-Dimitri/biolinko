@@ -34,7 +34,7 @@ test('une notification de paiement part en modèle approuvé, avec le bouton de 
         && $r['template']['name'] === 'biolinko_paiement_confirme'
         && $r['template']['language']['code'] === 'fr'
         && $r['template']['components'][1]['parameters'][0]['text'] === 'BLK-CMD-X1');
-    Http::assertSent(fn ($r) => $r['template']['name'] === 'biolinko_vente_payee' && $r['to'] === '237677000000');
+    Http::assertSent(fn ($r) => $r['template']['name'] === 'biolinko_vente_payee_v2' && $r['to'] === '237677000000');
 });
 
 test('Meta peut vérifier l’URL de rappel avec le bon jeton seulement', function () {

@@ -17,9 +17,9 @@ const NAV = [['#produit', 'Produit'], ['#demarrer', 'Comment ça marche'], ['#ta
 const pct = (n) => `${String(n ?? '').replace('.', ',')} %`;
 const planFeatures = (L, C = {}) => ({
     starter: [`Commission de ${pct(C.starter)} par vente`, `Jusqu'à ${L.starter?.products} produits`, `${L.starter?.smartlinks} liens de paiement`, 'Paiements MTN MoMo et Orange Money', 'Factures automatiques'],
-    pro: [`Commission réduite à ${pct(C.pro)}`, `Jusqu'à ${L.pro?.products} produits`, 'Tailles, couleurs et promotions', 'Factures à votre marque', 'Pixels Facebook et TikTok', `${L.pro?.smartlinks} liens de paiement`, '4 campagnes WhatsApp / mois'],
-    growth: ['Tout Pro, plus :', `Commission réduite à ${pct(C.growth)}`, `Jusqu'à ${L.growth?.products} produits`, 'Relance automatique des paniers', 'Liens de paiement illimités', '10 campagnes WhatsApp / mois', 'Support prioritaire'],
-    business: ['Tout Growth, plus :', `Commission réduite à ${pct(C.business)}`, 'Produits et stock illimités', 'Export comptable', '25 campagnes WhatsApp / mois', 'Conseiller dédié'],
+    pro: [`Commission réduite à ${pct(C.pro)}`, `Jusqu'à ${L.pro?.products} produits`, 'Tailles, couleurs et promotions', 'Factures à votre marque', 'Pixels Facebook et TikTok', `${L.pro?.smartlinks} liens de paiement`, '4 campagnes WhatsApp en 1 clic / mois'],
+    growth: ['Tout Pro, plus :', `Commission réduite à ${pct(C.growth)}`, `Jusqu'à ${L.growth?.products} produits`, 'Liens de paiement illimités', '10 campagnes WhatsApp en 1 clic / mois', 'Support prioritaire'],
+    business: ['Tout Growth, plus :', `Commission réduite à ${pct(C.business)}`, 'Produits et stock illimités', 'Export comptable', '25 campagnes WhatsApp en 1 clic / mois', 'Conseiller dédié'],
 });
 
 const PLANS = [
@@ -196,7 +196,7 @@ function Bento() {
                     </FeatureCard>
 
                     <FeatureCard className="lg:col-span-2" title="Factures et relances"
-                        text="Factures automatiques ou manuelles, envoyées par WhatsApp et e-mail, avec relance des impayés.">
+                        text="Factures automatiques ou manuelles, envoyées par e-mail, avec relance des impayés sur WhatsApp en 1 clic.">
                         <InvoiceMock />
                     </FeatureCard>
                     <FeatureCard className="lg:col-span-2" delay={0.06} title="Clients et campagnes WhatsApp"
@@ -225,7 +225,7 @@ function Bento() {
                         <CursorTag label="Vous" color="#FFFFFF" className="right-[14%] top-[66%] hidden sm:block" path={{ x: [0, -24, 0], y: [0, 10, 0] }} delay={1.2} />
                     </FeatureCard>
                     <FeatureCard className="lg:col-span-2" delay={0.08} title="Marketing et statistiques"
-                        text="Pixels Facebook, TikTok et Google, relance des paniers abandonnés, export de vos ventes.">
+                        text="Pixels Facebook, TikTok et Google, relance des commandes non payées, export de vos ventes.">
                         <StatsMock className="max-w-[300px]" />
                     </FeatureCard>
                 </div>
@@ -390,7 +390,7 @@ function Faq() {
             <div className="mx-auto grid max-w-[1200px] gap-12 px-5 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
                 <div>
                     <motion.h2 {...reveal()} className="text-[38px] font-medium leading-[1.05] tracking-[-0.03em] text-[#141412] sm:text-[52px]">Questions fréquentes</motion.h2>
-                    <motion.p {...reveal(0.1)} className="mt-4 text-[17px] text-[#5F5E58]">Une autre question ? L’équipe vous répond sur WhatsApp.</motion.p>
+                    <motion.p {...reveal(0.1)} className="mt-4 text-[17px] text-[#5F5E58]">Une autre question ? L’équipe vous répond par e-mail.</motion.p>
                 </div>
                 <ul className="divide-y divide-black/[0.08] border-y border-black/[0.08]">
                     {FAQ.map(([q, a], i) => {
