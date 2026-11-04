@@ -283,7 +283,7 @@ export default function Index({ upgradeHint = null, user, plans = [], history = 
                                 <p className="flex items-center gap-2 text-[16px] font-medium text-[#141412]">Prélèvement automatique <Badge tone={user.auto_renew ? 'success' : 'neutral'}>{user.auto_renew ? 'Activé' : 'Désactivé'}</Badge></p>
                                 <p className="mt-1 text-[14px] text-[#5F5E58]">
                                     {user.auto_renew
-                                        ? `À l’échéance, ${fcfa(current?.price)} sont prélevés sur votre solde pour renouveler 1 mois. Vous êtes prévenu par e-mail 3 jours avant. Solde disponible : ${fcfa(user.wallet_balance)}.`
+                                        ? `À l’échéance, ${fcfa(current?.price)} sont prélevés sur votre solde pour renouveler 1 mois. Vous êtes prévenu par e-mail 7, 4 et 2 jours avant. Solde disponible : ${fcfa(user.wallet_balance)}.`
                                         : 'Rien n’est prélevé : renouvelez vous-même avant l’échéance, par Mobile Money ou avec votre solde.'}
                                 </p>
                                 {user.auto_renew && user.wallet_balance < (current?.price || 0) && (

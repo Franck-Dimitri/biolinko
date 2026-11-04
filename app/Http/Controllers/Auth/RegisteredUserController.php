@@ -37,15 +37,22 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'phone_whatsapp' => 'nullable|string|max:50',
+            // WhatsApp obligatoire : alertes de ventes, assistance et suivi du compte
+            'phone_whatsapp' => ['required', 'string', 'max:50', function ($attr, $value, $fail) {
+                try {
+                    \App\Payments\Countries::formatPhone('CM', (string) $value);
+                } catch (\InvalidArgumentException $e) {
+                    $fail('Entrez un numéro WhatsApp camerounais valide (9 chiffres, ex. 6XX XX XX XX).');
+                }
+            }],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'terms' => ['accepted'],
-        ], ['terms.accepted' => 'Vous devez accepter les conditions d’utilisation et la politique de confidentialité.']);
+        ], ['phone_whatsapp.required' => 'Votre numéro WhatsApp est obligatoire : il sert à vous alerter de vos ventes.', 'terms.accepted' => 'Vous devez accepter les conditions d’utilisation et la politique de confidentialité.']);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'phone_whatsapp' => $request->phone_whatsapp,
+            'phone_whatsapp' => '+'.\App\Payments\Countries::formatPhone('CM', (string) $request->phone_whatsapp),
             'role' => 'seller',
             'plan' => 'starter',
             'password' => Hash::make($request->password),

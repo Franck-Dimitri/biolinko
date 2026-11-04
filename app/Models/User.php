@@ -61,6 +61,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'auto_renew',
         'renewal_reminded_for',
         'renewal_failed_for',
+        'renewal_reminder_stage',
         'email_otp',
         'email_otp_expires_at',
         'password',

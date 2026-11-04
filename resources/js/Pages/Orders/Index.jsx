@@ -26,7 +26,7 @@ const TIMELINE = [
 const RANK = { pending: 0, paid: 1, in_delivery: 2, delivered: 3 };
 
 function whatsappLink(order, store) {
-    let phone = (order.customer_phone || '').replace(/\D/g, '');
+    let phone = (order.customer_whatsapp || order.customer_phone || '').replace(/\D/g, '');
     if (phone.length === 9) phone = `237${phone}`;
     const track = `${window.location.origin}/track/${order.tracking_code}`;
     const hello = `Bonjour ${order.customer_name}, c’est ${store.name}.`;
@@ -155,7 +155,10 @@ function OrderPanel({ order, store, onClose }) {
                         <h3 className="text-[14px] text-[#8B8A83]">Client</h3>
                         <p className="mt-2 text-[16px] font-medium text-[#141412]">{order.customer_name}</p>
                         <ul className="mt-2 space-y-1.5 text-[14px] text-[#3D3C37]">
-                            <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-[#8B8A83]" /> {order.customer_phone}</li>
+                            <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-[#8B8A83]" /> {order.customer_phone} <span className="text-[13px] text-[#8B8A83]">(Mobile Money)</span></li>
+                            {order.customer_whatsapp && order.customer_whatsapp !== order.customer_phone && (
+                                <li className="flex items-center gap-2"><WhatsappIcon className="h-4 w-4 text-[#16A34A]" /> {order.customer_whatsapp} <span className="text-[13px] text-[#8B8A83]">(WhatsApp)</span></li>
+                            )}
                             {(order.city || order.address_details) && (
                                 <li className="flex items-start gap-2"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#8B8A83]" /> {[order.city, order.address_details].filter(Boolean).join(' · ')}</li>
                             )}

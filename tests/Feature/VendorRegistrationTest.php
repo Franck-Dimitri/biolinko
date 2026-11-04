@@ -9,7 +9,7 @@ test('new user registration automatically creates store and wallet and redirects
         'name' => 'Boutique Glamour',
         'email' => 'glamour@example.com',
         'password' => 'password123',
-        'password_confirmation' => 'password123',
+        'password_confirmation' => 'password123', 'phone_whatsapp' => '677445566',
         'terms' => '1',
     ]);
 

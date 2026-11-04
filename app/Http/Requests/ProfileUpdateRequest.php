@@ -18,7 +18,7 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'phone_whatsapp' => ['nullable', 'string', 'max:50'],
+            'phone_whatsapp' => ['required', 'string', 'max:50'],
             'email' => [
                 'required',
                 'string',

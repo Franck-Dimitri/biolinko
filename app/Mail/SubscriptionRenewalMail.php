@@ -14,7 +14,7 @@ class SubscriptionRenewalMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public User $user, public string $type, public float $amount, public float $balance)
+    public function __construct(public User $user, public string $type, public float $amount, public float $balance, public ?int $daysLeft = null)
     {
     }
 
@@ -25,7 +25,7 @@ class SubscriptionRenewalMail extends Mailable
         return new Envelope(subject: match ($this->type) {
             'renewed' => "Votre abonnement {$plan} est renouvelé",
             'failed' => "Action requise : renouvelez votre abonnement {$plan}",
-            default => "Votre abonnement {$plan} se renouvelle bientôt",
+            default => "Votre abonnement {$plan} se renouvelle dans {$this->daysLeft} jours",
         });
     }
 

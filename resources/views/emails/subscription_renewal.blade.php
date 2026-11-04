@@ -7,7 +7,7 @@
 Bonjour **{{ $user->name }}**,
 
 @if ($type === 'upcoming')
-Votre abonnement **{{ $plan }}** arrive à échéance le **{{ $date }}**.
+Votre abonnement **{{ $plan }}** arrive à échéance le **{{ $date }}**{{ $daysLeft ? ', dans '.$daysLeft.' jours' : '' }}.
 
 @if ($user->auto_renew)
 Ce jour-là, **{{ $money($amount) }}** seront prélevés automatiquement sur le solde de votre portefeuille Biolinko pour le renouveler d’un mois. Votre solde disponible aujourd’hui : **{{ $money($balance) }}**.

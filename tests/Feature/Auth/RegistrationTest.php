@@ -11,7 +11,7 @@ test('new users can register and are redirected to verification notice', functio
         'name' => 'Test User',
         'email' => 'test@example.com',
         'password' => 'password',
-        'password_confirmation' => 'password',
+        'password_confirmation' => 'password', 'phone_whatsapp' => '677445566',
         'terms' => '1',
     ]);
 

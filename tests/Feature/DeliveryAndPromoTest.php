@@ -200,3 +200,14 @@ test('le vendeur règle son acompte entre 20 et 90 %', function () {
     $this->actingAs($this->seller)->post(route('seller.deposit.update'), ['deposit_percent' => null])->assertSessionHasNoErrors();
     expect($this->store->fresh()->deposit_percent)->toBeNull();
 });
+
+test('le WhatsApp du client est enregistré : le même numéro par défaut, ou un autre', function () {
+    ($this->checkout)()->assertOk();
+    expect(Order::latest('id')->first()->customer_whatsapp)->toBe('237677123456');
+
+    ($this->checkout)(['customer_whatsapp' => '699 11 22 33'])->assertOk();
+    expect(Order::latest('id')->first()->customer_whatsapp)->toBe('237699112233')
+        ->and(\App\Models\Customer::where('phone', '237677123456')->first()->whatsapp)->toBe('237699112233');
+
+    ($this->checkout)(['customer_whatsapp' => '12'])->assertStatus(422)->assertJsonPath('errors.customer_whatsapp.0', 'Entrez un numéro WhatsApp valide (9 chiffres).');
+});

@@ -63,6 +63,7 @@ class CheckoutController extends Controller
                 'name' => $customer->name,
                 'delivery_address' => $customer->delivery_address,
                 'city' => $customer->city,
+                'whatsapp' => $customer->whatsapp,
             ],
         ]);
     }
@@ -301,6 +302,17 @@ class CheckoutController extends Controller
             }
         }
 
+        // WhatsApp du client (le vendeur le contacte pour la livraison) : par défaut le numéro Mobile Money
+        try {
+            $whatsapp = filled($validated['customer_whatsapp'] ?? null)
+                ? Countries::formatPhone($store->country ?: 'CM', $validated['customer_whatsapp'])
+                : $formattedPhone;
+        } catch (\InvalidArgumentException $e) {
+            $msg = 'Entrez un numéro WhatsApp valide (9 chiffres).';
+
+            return response()->json(['error' => $msg, 'errors' => ['customer_whatsapp' => [$msg]]], 422);
+        }
+
         $city = trim($validated['delivery_city'] ?? '') ?: $validated['delivery_address'];
 
         $deliveryFee = $store->deliveryFeeFor($city, $goods - $discount);
@@ -333,9 +345,7 @@ class CheckoutController extends Controller
         if (!empty($validated['customer_email'])) {
             $customer->email = $validated['customer_email'];
         }
-        if (!empty($validated['customer_whatsapp'])) {
-            $customer->whatsapp = $validated['customer_whatsapp'];
-        }
+        $customer->whatsapp = $whatsapp;
         $customer->delivery_address = $validated['delivery_address'];
         $customer->city = $city;
         $customer->save();
@@ -348,11 +358,6 @@ class CheckoutController extends Controller
         $trackingCode = 'BLK-CMD-' . strtoupper(Str::random(10));
 
         $extraNotes = [];
-        // Numéro WhatsApp noté seulement s'il diffère du numéro de paiement
-        $whatsappDigits = preg_replace('/\D/', '', (string) ($validated['customer_whatsapp'] ?? ''));
-        if ($whatsappDigits && $whatsappDigits !== $formattedPhone && '237'.$whatsappDigits !== $formattedPhone) {
-            $extraNotes[] = "WhatsApp: {$validated['customer_whatsapp']}";
-        }
         if (!empty($validated['notes'])) {
             $extraNotes[] = "Note: {$validated['notes']}";
         }
@@ -369,6 +374,7 @@ class CheckoutController extends Controller
             'customer_name' => $validated['customer_name'],
             'customer_phone' => $formattedPhone,
             'customer_email' => $validated['customer_email'] ?? null,
+            'customer_whatsapp' => $whatsapp,
             'city' => $city,
             'address_details' => $addressWithNotes,
             'price_vendor' => $priceVendorTotal,

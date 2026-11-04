@@ -155,7 +155,7 @@ export default function Index({ store, customers = [], top5Customers = [], aband
         const text = o.payment_status === 'failed'
             ? `Bonjour ${first}, c’est ${store.name}. Votre paiement pour ${items} n’a pas abouti. Votre commande vous attend : vous pouvez la payer en 1 clic ici ${window.location.origin}/track/${o.tracking_code}`
             : `Bonjour ${first}, c’est ${store.name}. Votre commande (${items}) n’est pas encore payée. Vous pouvez la régler en 1 clic ici ${window.location.origin}/track/${o.tracking_code}`;
-        return `https://wa.me/${waNumber(o.customer_phone)}?text=${encodeURIComponent(text)}`;
+        return `https://wa.me/${waNumber(o.customer_whatsapp || o.customer_phone)}?text=${encodeURIComponent(text)}`;
     };
 
     return (

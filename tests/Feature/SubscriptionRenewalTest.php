@@ -58,7 +58,7 @@ test('prélèvement désactivé : rien n’est prélevé', function () {
     $this->user->update(['subscription_expires_at' => now()->addMinutes(10), 'auto_renew' => false]);
     $this->artisan('subscriptions:renew');
     expect((float) $this->wallet->fresh()->balance_available)->toBe(10000.0);
-    Mail::assertSent(SubscriptionRenewalMail::class, fn ($m) => $m->type === 'upcoming');
+    Mail::assertNotSent(SubscriptionRenewalMail::class, fn ($m) => $m->type === 'renewed');
 });
 
 test('le vendeur active ou désactive le prélèvement', function () {
@@ -78,4 +78,34 @@ test('paiement manuel avec le solde : immédiat, refusé si le solde ne suffit p
     expect((float) $this->wallet->fresh()->balance_available)->toBe(3000.0);
 
     $this->actingAs($this->user)->get(route('seller.wallet.index'))->assertInertia(fn ($p) => $p->where('ledger.0.type', 'subscription')->where('ledger.0.amount', -7000));
+});
+
+test('rappels à J-7, J-4 et J-2, un seul par étape, puis prélèvement le jour J', function () {
+    $due = now()->addDays(7)->subHour();
+    $this->user->update(['subscription_expires_at' => $due]);
+    $stages = fn () => Mail::sent(SubscriptionRenewalMail::class)->map(fn ($m) => $m->daysLeft)->all();
+
+    $this->artisan('subscriptions:renew');
+    $this->artisan('subscriptions:renew');
+    expect($stages())->toBe([7]);
+
+    $this->travelTo($due->copy()->subDays(4)->addMinute());
+    $this->artisan('subscriptions:renew');
+    $this->artisan('subscriptions:renew');
+    expect($stages())->toBe([7, 4]);
+
+    $this->travelTo($due->copy()->subDays(2)->addMinute());
+    $this->artisan('subscriptions:renew');
+    expect($stages())->toBe([7, 4, 2]);
+    expect((float) $this->wallet->fresh()->balance_available)->toBe(10000.0);
+
+    $this->travelTo($due->copy()->subMinutes(10));
+    $this->artisan('subscriptions:renew');
+    expect((float) $this->wallet->fresh()->balance_available)->toBe(7500.0);
+    Mail::assertSent(SubscriptionRenewalMail::class, fn ($m) => $m->type === 'renewed');
+
+    // Nouvelle échéance : les rappels repartent
+    $this->travelTo($this->user->fresh()->subscription_expires_at->copy()->subDays(7)->addHours(2));
+    $this->artisan('subscriptions:renew');
+    expect(array_slice($stages(), -1))->toBe([7]);
 });

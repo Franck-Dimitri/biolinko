@@ -47,9 +47,10 @@ export default function Register({ intendedPlan = null }) {
                     </div>
 
                     <div>
-                        <label htmlFor="phone_whatsapp" className={labelClass}>Numéro WhatsApp <span className="font-normal text-[#8B8A83]">(alertes de ventes)</span></label>
-                        <input id="phone_whatsapp" type="tel" name="phone_whatsapp" value={data.phone_whatsapp} autoComplete="tel"
+                        <label htmlFor="phone_whatsapp" className={labelClass}>Numéro WhatsApp</label>
+                        <input id="phone_whatsapp" type="tel" inputMode="tel" name="phone_whatsapp" value={data.phone_whatsapp} required autoComplete="tel"
                             placeholder="+237 6XX XX XX XX" className={fieldClass} onChange={(e) => setData('phone_whatsapp', e.target.value)} />
+                        {!errors.phone_whatsapp && <p className="mt-1.5 text-[13px] text-[#8B8A83]">Pour vous alerter de chaque vente et vous assister.</p>}
                         <InputError message={errors.phone_whatsapp} className="mt-1.5" />
                     </div>
 

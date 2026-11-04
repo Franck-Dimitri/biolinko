@@ -88,6 +88,9 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
         delivery_city: hasZones ? zones[0].name : 'Douala', delivery_address: '', notes: '', operator: 'MTN',
     });
     const [operatorTouched, setOperatorTouched] = useState(false);
+    // WhatsApp du client : le même que le Mobile Money par défaut, sinon un autre numéro
+    const [sameWhatsapp, setSameWhatsapp] = useState(true);
+    const [whatsapp, setWhatsapp] = useState('');
     const [otherCity, setOtherCity] = useState(false);
     const [showExtras, setShowExtras] = useState(false);
     const [showSummary, setShowSummary] = useState(false);
@@ -154,6 +157,8 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
     const set = (field, value) => setForm((f) => ({ ...f, [field]: value }));
     const digits = form.customer_phone.replace(/\D/g, '');
     const phoneOk = digits.length === 9;
+    const waDigits = sameWhatsapp ? digits : whatsapp.replace(/\D/g, '');
+    const whatsappOk = waDigits.length === 9;
     const detailsOk = form.customer_name.trim().length > 1 && form.delivery_address.trim().length > 2 && form.delivery_city.trim();
 
     // Client qui a déjà commandé dans cette boutique : on pré-remplit son nom et son adresse.
@@ -173,6 +178,8 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                 }));
                 if (othersDelivered && c.city && c.city !== c.delivery_address && !CITIES.includes(c.city)) setOtherCity(true);
                 if (c.name) setWelcome(c.name.split(' ')[0]);
+                const wa = String(c.whatsapp || '').replace(/\D/g, '').replace(/^237/, '');
+                if (wa.length === 9 && wa !== digits) { setSameWhatsapp(false); setWhatsapp(formatLocalPhone(wa)); }
             })
             .catch(() => {});
     }, [digits, phoneOk]);
@@ -186,6 +193,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
         e.preventDefault();
         if (submitting || disabled || belowMin || notDelivered) return;
         if (!phoneOk) return setError('Entrez un numéro Mobile Money camerounais à 9 chiffres.');
+        if (!whatsappOk) return setError('Entrez votre numéro WhatsApp à 9 chiffres : le vendeur vous y contacte pour la livraison.');
         if (!detailsOk) return setError('Indiquez votre nom, votre ville et votre quartier pour la livraison.');
 
         setError('');
@@ -201,7 +209,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                 store_id: store.id,
                 ...form,
                 customer_phone: `237${digits}`,
-                customer_whatsapp: `+237${digits}`,
+                customer_whatsapp: `237${waDigits}`,
                 promo_code: promo?.code || null,
                 payment_mode: useDeposit ? 'deposit' : 'full',
                 ...payload,
@@ -297,6 +305,22 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                             })}
                         </div>
                         {phoneOk && !operatorTouched && <p className="-mt-2 text-sm text-[#5F5E58]">{operator.label} détecté d'après votre numéro.</p>}
+                        <div className="rounded-xl bg-[#F6F5F1] p-3.5">
+                            <label className="flex items-start gap-3 text-[15px] text-[#141412]">
+                                <input type="checkbox" checked={sameWhatsapp} onChange={(e) => setSameWhatsapp(e.target.checked)} className="mt-0.5 h-5 w-5 rounded border-black/25 text-[#141412] focus:ring-0" />
+                                <span>Ce numéro est aussi mon WhatsApp<span className="block text-sm text-[#5F5E58]">Le vendeur vous y contacte pour la livraison.</span></span>
+                            </label>
+                            {!sameWhatsapp && (
+                                <div className="mt-3">
+                                    <label htmlFor="co-whatsapp" className={labelClass}>Votre numéro WhatsApp</label>
+                                    <div className="flex gap-2">
+                                        <span className="flex h-12 items-center rounded-full border border-black/[0.08] bg-white px-3.5 text-[16px] text-[#5F5E58]">+237</span>
+                                        <input id="co-whatsapp" type="tel" inputMode="numeric" autoComplete="tel-national" placeholder="6XX XX XX XX" value={whatsapp}
+                                            onChange={(e) => setWhatsapp(formatLocalPhone(e.target.value))} className={fieldClass} />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </Step>
 
                     <Step n={2} title="Livraison" sub="Où le vendeur doit-il vous livrer ?" done={!!detailsOk} primaryColor={primaryColor} primaryTextColor={primaryTextColor} delay={0.06}>

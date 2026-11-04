@@ -266,6 +266,13 @@ export default function AuthenticatedLayout({ header, children }) {
                     </header>
                 )}
                 <main className="w-full overflow-x-hidden px-4 py-6 sm:px-8 sm:py-8 2xl:px-12">
+                    {/* Vendeur inscrit avant l'obligation : on lui demande son numéro WhatsApp */}
+                    {auth?.user?.role === 'seller' && !auth?.user?.phone_whatsapp && !route().current('profile.edit') && (
+                        <Link href={route('profile.edit')} className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-[#FFCC00]/60 bg-[#FFFBEA] p-4 text-[14px] text-[#141412]">
+                            <span>Ajoutez votre numéro WhatsApp : il sert à vous alerter de vos ventes et à vous assister.</span>
+                            <span className="shrink-0 font-medium underline underline-offset-4">Ajouter</span>
+                        </Link>
+                    )}
                     {children}
                 </main>
             </div>

@@ -59,6 +59,7 @@ class Order extends Model
         'balance_due',
         'balance_collected_at',
         'refunded_amount',
+        'customer_whatsapp',
     ];
 
     protected $casts = [

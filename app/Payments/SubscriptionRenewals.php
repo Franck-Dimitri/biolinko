@@ -16,8 +16,8 @@ use Illuminate\Support\Str;
  */
 class SubscriptionRenewals
 {
-    /** Jours avant l'échéance où le vendeur est prévenu du prélèvement. */
-    public const REMIND_DAYS = 3;
+    /** Rappels avant l'échéance (jours) ; le prélèvement a lieu le jour J. */
+    public const REMIND_STAGES = [7, 4, 2];
 
     /** Après l'échéance, on retente le prélèvement pendant ce délai (le temps que des ventes arrivent). */
     public const RETRY_DAYS = 3;
@@ -75,15 +75,17 @@ class SubscriptionRenewals
     {
         $counts = [0, 0, 0];
 
-        // 1. Rappel : l'échéance approche
+        // 1. Rappels à J-7, J-4 et J-2 : un seul e-mail par étape et par échéance
         User::whereNotIn('plan', ['starter'])->whereNotNull('subscription_expires_at')
-            ->whereBetween('subscription_expires_at', [now(), now()->addDays(static::REMIND_DAYS)])
+            ->whereBetween('subscription_expires_at', [now()->addHour(), now()->addDays(max(static::REMIND_STAGES))])
             ->each(function (User $u) use (&$counts) {
-                if ($u->renewal_reminded_for && $u->renewal_reminded_for->equalTo($u->subscription_expires_at)) {
+                $stage = static::stageFor($u->subscription_expires_at);
+                $sameDue = $u->renewal_reminded_for && $u->renewal_reminded_for->equalTo($u->subscription_expires_at);
+                if ($stage === null || ($sameDue && $u->renewal_reminder_stage !== null && $u->renewal_reminder_stage <= $stage)) {
                     return;
                 }
-                $this->mail($u, 'upcoming', static::cyclePrice($u->plan, 1));
-                $u->update(['renewal_reminded_for' => $u->subscription_expires_at]);
+                $this->mail($u, 'upcoming', static::cyclePrice($u->plan, 1), $stage);
+                $u->update(['renewal_reminded_for' => $u->subscription_expires_at, 'renewal_reminder_stage' => $stage]);
                 $counts[0]++;
             });
 
@@ -108,10 +110,19 @@ class SubscriptionRenewals
         return $counts;
     }
 
-    private function mail(User $user, string $type, float $amount): void
+    /** Étape de rappel atteinte : la plus proche de l'échéance parmi 7, 4 et 2 jours (null si plus de 7 jours). */
+    public static function stageFor(\DateTimeInterface $due): ?int
+    {
+        $daysLeft = now()->diffInHours($due, false) / 24;
+        $reached = array_filter(static::REMIND_STAGES, fn ($s) => $daysLeft <= $s);
+
+        return $reached ? min($reached) : null;
+    }
+
+    private function mail(User $user, string $type, float $amount, ?int $daysLeft = null): void
     {
         try {
-            Mail::to($user->email)->send(new SubscriptionRenewalMail($user, $type, $amount, static::balance($user)));
+            Mail::to($user->email)->send(new SubscriptionRenewalMail($user, $type, $amount, static::balance($user), $daysLeft));
         } catch (\Throwable $e) {
             Log::warning('Subscription renewal mail failed', ['user_id' => $user->id, 'err' => $e->getMessage()]);
         }

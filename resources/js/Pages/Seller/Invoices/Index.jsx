@@ -116,7 +116,7 @@ export default function Index({ invoices, stats, filters }) {
 
     const setStatus = (o, status) => router.patch(route('seller.invoices.updateStatus', o.id), { status }, { preserveScroll: true });
     const reminderLink = (o) => {
-        let phone = (o.customer_phone || '').replace(/\D/g, '');
+        let phone = (o.customer_whatsapp || o.customer_phone || '').replace(/\D/g, '');
         if (phone.length === 9) phone = `237${phone}`;
         const text = `Bonjour ${o.customer_name}, votre facture ${o.invoice_number || o.tracking_code} de ${fcfa(o.total_client)} est en attente de règlement.`;
         return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
