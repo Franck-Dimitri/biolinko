@@ -56,7 +56,7 @@ class StorefrontController extends Controller
             ->map(function ($product) {
                 $pv = (float) $product->price_vendor;
                 
-                if ($product->is_promo && $product->promo_price > 0) {
+                if ($product->promoActive()) {
                     $promoPv = (float) $product->promo_price;
                     $pb = $promoPv; // Promo Base Vendor Price
                     $originalPb = $pv; // Original Base Vendor Price
@@ -219,7 +219,7 @@ class StorefrontController extends Controller
 
         $store->products->transform(function ($p) {
             $pv = (float) $p->price_vendor;
-            if ($p->is_promo && $p->promo_price > 0) {
+            if ($p->promoActive()) {
                 $p->price_display = (float) $p->promo_price;
             } else {
                 $p->price_display = $pv;
@@ -228,7 +228,7 @@ class StorefrontController extends Controller
         });
 
         $pv = (float) $product->price_vendor;
-        if ($product->is_promo && $product->promo_price > 0) {
+        if ($product->promoActive()) {
             $promoPv = (float) $product->promo_price;
             $pb = $promoPv;
             $originalPb = $pv;

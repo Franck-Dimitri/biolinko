@@ -50,7 +50,7 @@ class SmartLinkController extends Controller
                 return [
                     'id' => $p->id,
                     'name' => $p->title,
-                    'price' => (float) ($p->is_promo && $p->promo_price ? $p->promo_price : $p->price_vendor),
+                    'price' => (float) ($p->promoActive() ? $p->promo_price : $p->price_vendor),
                     'original_price' => (float) $p->price_vendor,
                     'image_url' => $p->image_url,
                 ];
@@ -129,7 +129,7 @@ class SmartLinkController extends Controller
             }
 
             $qty = (int) $itemData['quantity'];
-            $unitPrice = (float) ($product->is_promo && $product->promo_price ? $product->promo_price : $product->price_vendor);
+            $unitPrice = (float) ($product->promoActive() ? $product->promo_price : $product->price_vendor);
             $lineSubtotal = $unitPrice * $qty;
             $subtotal += $lineSubtotal;
 

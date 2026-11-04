@@ -270,7 +270,7 @@ export default function Dashboard({ upgradeHint = null, totalNet = 0, store, wal
                                             <span className="block truncate text-[14px] text-[#141412]">{p.title}</span>
                                             <span className="text-[12px] text-[#8B8A83]">Stock : {p.stock}</span>
                                         </span>
-                                        <span className="shrink-0 text-[13px] tabular-nums text-[#141412]">{fcfa(p.is_promo && p.promo_price ? p.promo_price : p.price_vendor)}</span>
+                                        <span className="shrink-0 text-[13px] tabular-nums text-[#141412]">{fcfa(p.promo_active ? p.promo_price : p.price_vendor)}</span>
                                     </li>
                                 ))}
                                 <li className="pt-1 text-[13px] text-[#8B8A83]">Le classement apparaîtra après vos premières ventes.</li>

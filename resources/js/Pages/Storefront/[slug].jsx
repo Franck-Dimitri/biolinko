@@ -35,7 +35,7 @@ export default function ProductSlugShow({ store, product, isPreview = false, pro
 
     const soldOut = Number(product.stock) <= 0;
     const minQ = product.min_order_quantity || 1;
-    const isPromo = product.is_promo && Number(product.promo_price) > 0 && Number(product.promo_price) < Number(product.price_vendor);
+    const isPromo = product.promo_active;
 
     const handleAddToCart = (goToCart = false) => {
         cart.add({ ...product, image_url: images[0] }, quantity, selectedVariant);

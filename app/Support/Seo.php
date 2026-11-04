@@ -138,7 +138,7 @@ class Seo
             '@type' => 'Offer', 'url' => $url, 'price' => (string) round($price), 'priceCurrency' => $store->currency ?: 'XAF',
             'availability' => $inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
             'itemCondition' => 'https://schema.org/NewCondition',
-            'priceValidUntil' => $product->is_promo && $product->promo_end_at ? $product->promo_end_at->toDateString() : null,
+            'priceValidUntil' => $product->promoActive() && $product->promo_end_at ? $product->promo_end_at->toDateString() : null,
             'seller' => ['@type' => 'Organization', 'name' => $store->name, 'url' => static::url('/'.$store->slug)],
         ], fn ($v) => $v !== null);
 

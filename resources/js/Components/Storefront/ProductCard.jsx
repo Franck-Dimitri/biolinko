@@ -19,7 +19,7 @@ export function ProductImage({ src, alt, className = '' }) {
 
 export default function ProductCard({ product, storeSlug, primaryColor, primaryTextColor, onAdd, onWishlist, isWished = false, badge = null }) {
     const url = `/${storeSlug}/p/${product.slug}`;
-    const isPromo = product.is_promo && Number(product.promo_price) > 0 && Number(product.promo_price) < Number(product.price_vendor);
+    const isPromo = product.promo_active;
     const price = Math.ceil(isPromo ? Number(product.promo_price) : Number(product.price_vendor));
     const discount = isPromo ? Math.round(((product.price_vendor - product.promo_price) / product.price_vendor) * 100) : 0;
     const soldOut = product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0;

@@ -211,3 +211,13 @@ test('le WhatsApp du client est enregistré : le même numéro par défaut, ou u
 
     ($this->checkout)(['customer_whatsapp' => '12'])->assertStatus(422)->assertJsonPath('errors.customer_whatsapp.0', 'Entrez un numéro WhatsApp valide (9 chiffres).');
 });
+
+test('une promo terminée ou pas encore commencée n’est pas appliquée au paiement', function () {
+    $mk = fn ($start, $end) => \App\Models\Product::create(['store_id' => $this->store->id, 'title' => 'P'.uniqid(), 'slug' => 'p-'.uniqid(), 'price_vendor' => 10000,
+        'is_promo' => true, 'promo_price' => 8000, 'promo_start_at' => $start, 'promo_end_at' => $end, 'stock' => 5, 'is_active' => true]);
+
+    expect($mk(now()->subDays(5), now()->subDay())->price_display)->toBe(10000.0)   // terminée
+        ->and($mk(now()->addDay(), now()->addDays(5))->price_display)->toBe(10000.0) // pas commencée
+        ->and($mk(now()->subDay(), now())->price_display)->toBe(8000.0)              // dernier jour inclus
+        ->and($mk(null, null)->price_display)->toBe(8000.0);                         // sans dates
+});

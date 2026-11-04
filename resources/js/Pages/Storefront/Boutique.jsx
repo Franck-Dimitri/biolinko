@@ -105,7 +105,7 @@ export default function Boutique({ store, products = [], activeSmartLinks = [], 
         return matchesSearch && matchesCategory;
     });
 
-    const promoProducts = products.filter((p) => p.is_promo && Number(p.promo_price) > 0);
+    const promoProducts = products.filter((p) => p.promo_active);
     const nextPromoEnd = promoProducts
         .map((p) => (p.promo_end_at ? new Date(p.promo_end_at).getTime() : null))
         .filter((t) => t && t > Date.now())

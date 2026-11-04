@@ -249,7 +249,7 @@ class CheckoutController extends Controller
                 return back()->withErrors(['quantity' => $errMsg]);
             }
 
-            $currentPv = ($product->is_promo && $product->promo_price > 0) 
+            $currentPv = $product->promoActive() 
                 ? (float) $product->promo_price 
                 : (float) $product->price_vendor;
 

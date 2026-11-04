@@ -45,12 +45,38 @@ class Product extends Model
 
     protected $appends = [
         'price_display',
+        'promo_active',
     ];
+
+    /**
+     * Promo réellement en cours : activée, prix promo inférieur au prix normal, et date du jour
+     * comprise entre promo_start_at et promo_end_at (bornes incluses, chacune facultative).
+     * Seule source de vérité pour la vitrine ET le paiement.
+     */
+    public function promoActive(): bool
+    {
+        if (! $this->is_promo || (float) $this->promo_price <= 0 || (float) $this->promo_price >= (float) $this->price_vendor) {
+            return false;
+        }
+        $today = now()->startOfDay();
+        if ($this->promo_start_at && $this->promo_start_at->copy()->startOfDay()->gt($today)) {
+            return false;
+        }
+        if ($this->promo_end_at && $this->promo_end_at->copy()->startOfDay()->lt($today)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function getPromoActiveAttribute(): bool
+    {
+        return $this->promoActive();
+    }
 
     public function getPriceDisplayAttribute(): float
     {
-        $pv = (float) ($this->is_promo && $this->promo_price > 0 ? $this->promo_price : $this->price_vendor);
-        return (float) $pv;
+        return (float) ($this->promoActive() ? $this->promo_price : $this->price_vendor);
     }
 
     public function store(): BelongsTo

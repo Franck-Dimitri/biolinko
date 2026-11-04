@@ -23,7 +23,7 @@ export const whatsappUrl = (store, text) => {
 };
 
 const price = (p) => {
-    const promo = p.is_promo && Number(p.promo_price) > 0 && Number(p.promo_price) < Number(p.price_vendor);
+    const promo = p.promo_active;
     return Math.ceil(promo ? p.promo_price : p.price_vendor);
 };
 

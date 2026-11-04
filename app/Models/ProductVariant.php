@@ -51,7 +51,7 @@ class ProductVariant extends Model
 
         $targetProduct = $product ?? $this->product;
         if ($targetProduct) {
-            return (float) ($targetProduct->is_promo && $targetProduct->promo_price ? $targetProduct->promo_price : $targetProduct->price_vendor);
+            return (float) ($targetProduct->promoActive() ? $targetProduct->promo_price : $targetProduct->price_vendor);
         }
 
         return 0.00;

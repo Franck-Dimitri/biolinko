@@ -29,7 +29,7 @@ function readCart(storeId) {
 // Prix unitaire réellement facturé : variante > promo > prix normal.
 export function unitPrice(product, variant = null) {
     if (variant?.price && Number(variant.price) > 0) return Number(variant.price);
-    const isPromo = product.is_promo && Number(product.promo_price) > 0 && Number(product.promo_price) < Number(product.price_vendor);
+    const isPromo = Boolean(product.promo_active);
     return Number(isPromo ? product.promo_price : product.price_vendor);
 }
 
