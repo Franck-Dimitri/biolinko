@@ -59,7 +59,7 @@ Il ajoute ses articles au panier, puis remplit une seule page :
    - **tout payer maintenant** ;
    - ou **payer un acompte** (par exemple 30 %) maintenant, et **le reste en espèces au livreur**.
 
-Il voit un récapitulatif clair : articles, remise, livraison, frais de service, total. Il appuie sur **« Payer »** et reçoit une demande de paiement sur son téléphone, qu'il valide avec son code secret Mobile Money. C'est tout.
+Il voit un récapitulatif clair : articles, remise, livraison, frais de paiement, total. Il appuie sur **« Payer »** et reçoit une demande de paiement sur son téléphone, qu'il valide avec son code secret Mobile Money. C'est tout.
 
 ### Après le paiement
 Le client arrive sur une **page de suivi de sa commande**. Il y voit :
@@ -158,11 +158,11 @@ L'argent de ses ventes arrive dans son portefeuille Biolinko :
 ## Combien ça coûte ?
 
 ### Pour le client
-Il paie le prix des articles, plus la livraison s'il y en a une, plus **3,5 % de frais de service**. Ces frais couvrent le coût du paiement Mobile Money.
+Il paie le prix des articles, plus la livraison s'il y en a une, plus **3,5 % de frais de paiement**. Ces frais couvrent le coût du paiement Mobile Money : Biolinko n'en garde rien.
 
 ### Pour le vendeur
-- **Une commission sur chaque vente**, qui diminue avec le plan choisi. Elle porte sur les articles, **jamais sur la livraison**.
-- **3 % de frais** sur chaque retrait d'argent.
+- **Une seule commission sur chaque vente**, c'est la seule rémunération de Biolinko. Elle diminue avec le plan choisi. Elle porte sur les articles, **jamais sur la livraison**.
+- **Retraits gratuits** : il reçoit tout l'argent qu'il retire.
 - **Un abonnement mensuel**, sauf avec le plan gratuit.
 
 | Plan | Prix par mois | Commission par vente | Ce qu'il permet |

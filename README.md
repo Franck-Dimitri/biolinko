@@ -107,7 +107,7 @@ Tous les taux sont dans `config/payments.php`.
 
 | Élément | Valeur |
 |---|---|
-| Frais de service payés par le client | **3,5 %** du montant payé en ligne (livraison comprise) |
+| Frais de paiement payés par le client | **3,5 %** du montant payé en ligne (livraison comprise). Couvrent l'encaissement Mercy Pay, Biolinko n'en garde rien |
 | Commission Biolinko sur chaque vente | Starter **10 %** · Pro **7 %** · Growth **5 %** · Business **3 %** (seule rémunération, hors livraison) |
 | Assiette de la commission | Articles après remise. **Jamais sur la livraison** |
 | Frais de retrait vendeur | **Gratuit** (le virement Mercy Pay de 2 % est couvert par la commission), retrait minimum 1 000 FCFA |
@@ -241,7 +241,7 @@ Pour tester les paiements sans argent réel en local :
    - montant des articles, ou prix du pack ;
    - moins le **code promo** ;
    - plus la **livraison**, ce qui donne `price_vendor`, le montant du vendeur ;
-   - plus **3,5 %** de frais client, ce qui donne `total_client`, le montant payé en ligne.
+   - plus **3,5 %** de frais de paiement (client), ce qui donne `total_client`, le montant payé en ligne.
    - Avec l'**acompte**, seule une part est payée en ligne (`balance_due` correspond au solde dû au livreur).
 2. **Paiement confirmé** (`Order::markAsPaid`) :
    - la commission est figée selon le plan, sur les articles uniquement ;
@@ -251,7 +251,7 @@ Pour tester les paiements sans argent réel en local :
    - le net du vendeur part sur `balance_held` (en attente) ;
    - la facture est numérotée et envoyée par e-mail.
 3. **Délai de sécurité** (`funds:release`) : à son terme, la vente passe sur `balance_available`. Une vente signalée reste gelée.
-4. **Retrait** : 3 % de frais. Virement automatique par l'admin, ou marquage manuel.
+4. **Retrait** : gratuit pour le vendeur (`withdrawal_fee_percent = 0`), minimum 1 000 FCFA. Le virement Mercy Pay (2 %) est payé par la commission. Virement automatique par l'admin, ou marquage manuel.
 5. **Remboursement** (`OrderRefunds`) :
    - le montant maximum est la part payée en ligne pour le vendeur ;
    - la commission est rendue au prorata ;
@@ -329,28 +329,46 @@ Une file d'attente (`php artisan queue:work`) est conseillée en production pour
 
 ```
 app/
-  Console/Commands/      Tâches planifiées (voir §10)
-  Http/Controllers/      Vitrine, tunnel d'achat, espace vendeur ; Admin/ pour l'administration
-  Http/Middleware/       Rôles (role:seller, role:admin), plan minimum (plan:pro…), props Inertia partagées
-  Mail/                  E-mails (OTP, commandes, modération, renouvellement)
-  Models/                User, Store, Product, ProductVariant, Order, OrderItem, Customer, Wallet,
-                         Withdrawal, Subscription, SmartLink, PromoCode, Refund, StoreReview,
-                         OrderReport, WhatsappCampaign
-  Payments/              Abstraction des paiements (voir §6)
-  Services/              Factures PDF, export des ventes, WhatsApp
-  Support/Seo.php        Référencement
-config/payments.php      Frais, commissions, minimums, pays, agrégateurs
+  Console/Commands/          Tâches planifiées (voir §10)
+  Http/Controllers/
+    Account/                 Profil
+    Admin/                   Administration de la plateforme
+    Auth/                    Inscription, connexion, OTP
+    Seller/                  Espace vendeur (produits, commandes, portefeuille, abonnements, marketing…)
+    Storefront/              Vitrine, tunnel d'achat, suivi de commande, sitemap et robots
+    Webhooks/                Mercy Pay, pawaPay, HR-Skills Pay, WhatsApp Cloud
+  Http/Middleware/           Rôles (role:seller, role:admin), plan minimum (plan:pro…), props Inertia partagées
+  Mail/                      E-mails (OTP, commandes, modération, renouvellement)
+  Models/                    User, Store, Product, ProductVariant, Order, OrderItem, Customer, Wallet,
+                             Withdrawal, Subscription, SmartLink, PromoCode, Refund, StoreReview,
+                             OrderReport, WhatsappCampaign (à plat, convention Laravel)
+  Payments/
+    Gateways/                MercyPayGateway, PawapayGateway, HrSkillsGateway
+    Orders/                  OrderPayments (encaissement), OrderRefunds (remboursements)
+    Subscriptions/           SubscriptionPayments, SubscriptionRenewals (prélèvement auto, rappels)
+    PaymentManager, PaymentGateway, PaymentException, Countries
+  Services/
+    Payments/                HrSkillsPayService
+    Sales/                   OrderInvoiceService (factures PDF), SalesReportExporter
+    Whatsapp/                WhatsappCloudService, WhatsappGatewayService
+  Support/                   Seo, PlanIntent
+config/payments.php          Frais, commissions, minimums, pays, agrégateurs
 resources/js/
-  Pages/                 Pages Inertia (Storefront, SmartLink, OrderTracking, Seller, Admin, Auth…)
-  Components/Dashboard/  Kit d'interface des espaces vendeur et admin (UI.jsx, RefundBox…)
-  Components/Storefront/ Vitrine, panier, tunnel d'achat (CheckoutForm, OrderSummary), avis produit
-  Layouts/               AuthenticatedLayout (vendeur et admin), StorefrontLayout
-resources/views/         app.blade.php, partials/seo, e-mails, facture PDF
-routes/web.php           Toutes les routes (les routes de boutique /{slug} sont en dernier)
-tests/Feature/           Tests Pest
+  Pages/                     Pages Inertia (Storefront, SmartLink, OrderTracking, Seller, Admin, Auth…)
+  Components/UI/             Composants génériques (boutons, champs, Modal, Dropdown, Motion, BrandIcons, AppToaster)
+  Components/Dashboard/      Kit des espaces vendeur et admin (UI.jsx, RefundBox, ExportSalesModal…)
+  Components/Storefront/     Vitrine, panier, tunnel d'achat (CheckoutForm, OrderSummary), avis produit
+  Components/Landing/        Page d'accueil
+  Layouts/                   AuthenticatedLayout, StorefrontLayout, AuthShell, ErrorShell, LegalLayout
+resources/views/             app.blade.php, partials/seo, e-mails, facture PDF
+routes/web.php               Toutes les routes (les routes de boutique /{slug} sont en dernier)
+tests/Feature/               Tests Pest
+docs/brand/                  Charte graphique, logos SVG, motifs
 ```
 
 **Règles de conception à respecter :**
+- **Chaque fichier dans son module** : un nouveau contrôleur va dans le dossier de son espace (Seller, Storefront, Admin…), un composant réutilisable dans `Components/UI`.
+- **Notifications** : toujours `toast()` de sonner, affiché par `AppToaster` (pastille noire, une ligne, en haut à droite). Titre court, pas de description.
 - **Slugs réservés** (`User::RESERVED_SLUGS`) : aucune boutique ne peut prendre le nom d'une route de l'application.
 - **Une boutique et un portefeuille par vendeur**, créés dès l'inscription (`User::ensureStore()`).
 - **Un nouveau statut d'argent passe toujours par une méthode verrouillée du modèle**, jamais par une mise à jour directe.
@@ -418,6 +436,7 @@ Plus de 220 tests couvrent notamment :
    ```
 3. **`.env` de production** :
    - `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://biolinko.link`, `APP_LOCALE=fr` ;
+   - `SESSION_SECURE_COOKIE=true` (cookies uniquement en HTTPS) ;
    - `PAYMENT_DRIVER=mercypay` avec la clé `mp_live_…` et le `MERCYPAY_WEBHOOK_SECRET` ;
    - `SUBSCRIPTION_PAYMENT_MODE=live` ;
    - un vrai serveur d'e-mails, avec un expéditeur `@biolinko.link`.
@@ -434,11 +453,13 @@ Plus de 220 tests couvrent notamment :
 - **Secrets** : uniquement dans `.env`, jamais dans le code ni dans le dépôt.
 - **Webhooks** : signatures vérifiées, statut toujours redemandé à l'agrégateur, déduplication des événements.
 - **Montants** : toujours recalculés côté serveur (le panier envoyé par le navigateur n'est jamais cru).
-- **Limitation du nombre de requêtes** : paiement, codes promo, avis, signalements, remboursements.
+- **Limitation du nombre de requêtes** : paiement, vérification du statut de paiement, codes promo, avis, signalements, remboursements.
+- **Saisies du vendeur injectées dans une page** : couleurs limitées à `#RRGGBB`, police choisie dans une liste, identifiants de pixels vérifiés par expression régulière.
+- **Dossier `public/`** : ne doit contenir aucun fichier de test, capture ou secret. Tout ce qui s'y trouve est accessible sur Internet.
 - **Accès** :
   - chaque action vendeur vérifie que la commande, le code ou le produit appartient à **sa** boutique ;
   - les routes admin passent par `role:admin`.
-- **Données publiques** : la boutique n'expose ni l'e-mail ni le compte du vendeur (`Store::forPublic()`). La recherche de client au paiement est limitée au numéro exact et à la boutique concernée.
+- **Données publiques** : la boutique n'expose ni l'e-mail ni le compte du vendeur (`Store::forPublic()`). La recherche de client au paiement est limitée au numéro exact et à la boutique concernée, et ne renvoie que le nom et la ville (jamais l'adresse).
 - **CGU** : acceptation obligatoire et horodatée à l'inscription.
 
 ---
