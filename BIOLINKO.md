@@ -169,8 +169,8 @@ Il paie le prix des articles, plus la livraison s'il y en a une, plus **3,5 % de
 |---|---|---|---|
 | **Starter** | Gratuit | 10 % | 5 produits, 2 liens de paiement, 1 code promo, 1 campagne WhatsApp par mois |
 | **Pro** | 2 500 FCFA | 7 % | 30 produits, tailles et couleurs, promotions, pixels publicitaires, 5 codes promo, 4 campagnes par mois |
-| **Growth** | 7 000 FCFA | 4 % | 100 produits, liens et codes promo illimités, 10 campagnes par mois |
-| **Business** | 12 000 FCFA | 2 % | Produits illimités, export comptable, 25 campagnes par mois, conseiller dédié |
+| **Growth** | 7 000 FCFA | 5 % | 100 produits, liens et codes promo illimités, 10 campagnes par mois |
+| **Business** | 12 000 FCFA | 3 % | Produits illimités, export comptable, 25 campagnes par mois, conseiller dédié |
 
 Une commande payée en ligne doit faire **au moins 1 000 FCFA**.
 

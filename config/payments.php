@@ -27,8 +27,8 @@ return [
     'commission_percent' => [
         'starter' => 10,
         'pro' => 7,
-        'growth' => 4,
-        'business' => 2,
+        'growth' => 5,
+        'business' => 3,
     ],
 
     // Coût estimé de l'agrégateur (pour calculer la marge nette dans l'admin) : % encaissé / % viré

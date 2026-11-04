@@ -32,8 +32,8 @@ test('la commission dépend du plan du vendeur au moment du paiement', function 
 })->with([
     ['starter', 10.0, 9000.0],
     ['pro', 7.0, 9300.0],
-    ['growth', 4.0, 9600.0],
-    ['business', 2.0, 9800.0],
+    ['growth', 5.0, 9500.0],
+    ['business', 3.0, 9700.0],
 ]);
 
 test('les frais client sont de 3,5 %', function () {

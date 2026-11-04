@@ -32,7 +32,7 @@ const PLANS = [
 const FAQ = [
     ['Que puis-je faire avec Biolinko ?', 'Créer votre boutique en ligne, gérer votre catalogue et vos stocks, suivre vos commandes, envoyer des factures, garder un fichier client, lancer des campagnes WhatsApp, partager des liens de paiement et encaisser par Mobile Money.'],
     ['Quand est-ce que je reçois mon argent ?', 'Chaque vente payée apparaît tout de suite dans votre solde, puis devient retirable après un court délai de sécurité : 4 jours, puis 2 jours une fois que vous avez livré 10 commandes. Vous la retirez gratuitement vers MTN MoMo ou Orange Money.'],
-    ['Combien coûte chaque vente ?', 'Une seule commission, rien d’autre : 10 % en Starter, 7 % en Pro, 4 % en Growth et 2 % en Business. Pas de commission sur la livraison, et les retraits sont gratuits. L’acheteur paie 3,5 % de frais de paiement Mobile Money en plus de votre prix.'],
+    ['Combien coûte chaque vente ?', 'Une seule commission, rien d’autre : 10 % en Starter, 7 % en Pro, 5 % en Growth et 3 % en Business. Pas de commission sur la livraison, et les retraits sont gratuits. L’acheteur paie 3,5 % de frais de paiement Mobile Money en plus de votre prix.'],
     ['Mes clients doivent-ils installer une application ?', 'Non. Ils ouvrent votre lien, choisissent leurs articles et valident la demande de paiement sur leur téléphone.'],
     ['Puis-je utiliser mon logo et mes couleurs ?', 'Oui. Logo, couleurs, catégories et liens vers vos réseaux se règlent en quelques minutes depuis le tableau de bord.'],
     ['Puis-je changer de formule ou arrêter ?', 'Oui, sans engagement. Vous pouvez monter en gamme ou revenir au Starter gratuit à tout moment.'],
