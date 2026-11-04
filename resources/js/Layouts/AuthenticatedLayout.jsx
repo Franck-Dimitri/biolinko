@@ -81,7 +81,7 @@ function Sidebar({ user, store, onNavigate }) {
             <div className="flex h-16 shrink-0 items-center px-5">
                 <Link href={route('dashboard')} className="flex items-center gap-2" onClick={onNavigate}>
                     <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-[#FFCC00]">
-                        <img src="/images/brand/logo-noir.png" alt="" className="h-12 w-12 max-w-none" />
+                        <img src="/images/brand/logo-noir.svg" alt="" className="h-12 w-12 max-w-none" />
                     </span>
                     <span className="text-[18px] font-semibold tracking-tight text-[#141412]">Biolinko</span>
                     {user?.role === 'admin' && <span className="rounded-full bg-[#141412] px-2 py-0.5 text-[10px] font-medium text-white">Admin</span>}
@@ -227,7 +227,7 @@ export default function AuthenticatedLayout({ header, children }) {
             <div className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-black/[0.06] bg-white/90 px-4 backdrop-blur md:hidden">
                 <Link href={route('dashboard')} className="flex items-center gap-2">
                     <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-lg bg-[#FFCC00]">
-                        <img src="/images/brand/logo-noir.png" alt="" className="h-10 w-10 max-w-none" />
+                        <img src="/images/brand/logo-noir.svg" alt="" className="h-10 w-10 max-w-none" />
                     </span>
                     <span className="text-[17px] font-semibold tracking-tight">Biolinko</span>
                 </Link>

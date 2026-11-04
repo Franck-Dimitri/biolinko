@@ -4,7 +4,7 @@ import { Toaster } from 'sonner';
 import useCart from '@/Components/Storefront/useCart';
 import { MotionConfig } from 'framer-motion';
 import { Lock } from 'lucide-react';
-import { router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { initPixels, track } from '@/Components/Storefront/pixels';
 
@@ -42,13 +42,17 @@ export default function StorefrontLayout({
             {/* Sonner Toast Provider */}
             <Toaster position="top-center" richColors closeButton />
 
+            {/* Police choisie par le vendeur (Poppins est déjà chargée par la page) */}
+            {store?.font_family && store.font_family !== 'Poppins' && (
+                <Head><link head-key="store-font" rel="stylesheet" href={`https://fonts.googleapis.com/css2?family=${encodeURIComponent(store.font_family)}:wght@400;500;600;700&display=swap`} /></Head>
+            )}
             <style>{`
                 ${store?.border_radius_style === 'square' ? `
                     .rounded, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl {
                         border-radius: 4px !important;
                     }
                 ` : ''}
-                ${store?.font_family && store.font_family !== 'Inter' ? `
+                ${store?.font_family && store.font_family !== 'Poppins' ? `
                     body, button, input, textarea, select, h1, h2, h3, h4, h5, h6, span, p, div {
                         font-family: '${store.font_family}', system-ui, -apple-system, sans-serif !important;
                     }

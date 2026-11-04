@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <title>Motif Biolinko : grille fine (fond de la page d'accueil)</title>
+  <rect width="48" height="48" fill="#FFFFFF"/>
+  <path d="M0 .5H48M.5 0V48" stroke="#000" stroke-opacity=".04"/>
+</svg>

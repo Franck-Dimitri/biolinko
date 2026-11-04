@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="236 186 488 678" width="488" height="678" role="img" aria-label="Biolinko, proposition anneaux">
+  <title>Biolinko : proposition « deux anneaux » (sur fond blanc)</title>
+  <g fill="none" stroke-width="64">
+    <!-- anneau bas -->
+    <circle cx="492" cy="640" r="160" stroke="#141412"/>
+    <!-- anneau haut, par-dessus, avec liseré du fond pour l'entrelacement -->
+    <circle cx="472" cy="390" r="140" stroke="#FFFFFF" stroke-width="100"/>
+    <circle cx="472" cy="390" r="140" stroke="#141412"/>
+    <!-- à droite, l'anneau bas repasse par-dessus -->
+    <path d="M519.8 482.4 A160 160 0 0 1 599.1 521.1" stroke="#FFFFFF" stroke-width="100"/>
+    <path d="M512 481.9 A160 160 0 0 1 606 528" stroke="#141412"/>
+    <!-- fût et barres du B -->
+    <path d="M300 218 V832 M268 250 H472 M268 800 H492" stroke="#141412"/>
+  </g>
+</svg>

@@ -33,7 +33,7 @@ test('vendor can update store appearance including sections_json and benefits_js
         'category' => 'Mode & Accessoires',
         'theme_color' => '#059669',
         'accent_color' => '#10B981',
-        'font_family' => 'Outfit',
+        'font_family' => 'Roboto',
         'sections_json' => $sections,
         'benefits_json' => $benefits,
     ]);
@@ -43,10 +43,16 @@ test('vendor can update store appearance including sections_json and benefits_js
     $store->refresh();
     expect($store->name)->toBe('Ma Super Boutique Modifiée');
     expect($store->theme_color)->toBe('#059669');
-    expect($store->font_family)->toBe('Outfit');
+    expect($store->font_family)->toBe('Roboto');
     expect($store->sections_json)->toBeArray();
     expect($store->sections_json[3]['enabled'])->toBeFalse();
     expect($store->sections_json[4]['enabled'])->toBeFalse();
     expect($store->benefits_json)->toBeArray();
     expect($store->benefits_json[0]['title'])->toBe('Livraison 24h');
+});
+
+test('la police de la boutique est limitée aux polices proposées', function () {
+    $user = \App\Models\User::factory()->create(['role' => 'seller']);
+    $user->ensureStore();
+    $this->actingAs($user)->post(route('appearance.update'), ['name' => 'B', 'font_family' => "x'} body{display:none} '"])->assertSessionHasErrors('font_family');
 });

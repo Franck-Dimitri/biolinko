@@ -12,7 +12,7 @@ import { Badge, Button, Field, fieldClass } from '@/Components/Dashboard/UI';
 const TABS = [['identity', 'Identité'], ['style', 'Style'], ['home', 'Accueil'], ['sections', 'Sections'], ['contact', 'Contact'], ['reviews', 'Avis']];
 
 const COLORS = ['#FFCC00', '#1F6F5C', '#141412', '#B45309', '#BE123C', '#7C3AED', '#2563EB', '#0F766E'];
-const FONTS = [['Inter', 'Moderne et neutre'], ['Poppins', 'Rond et chaleureux'], ['Roboto', 'Classique et lisible']];
+const FONTS = [['Poppins', 'Rond et chaleureux, la police Biolinko (par défaut)'], ['Inter', 'Moderne et neutre'], ['Roboto', 'Classique et lisible']];
 const CATEGORIES = ['Mode et vêtements', 'Beauté et cosmétiques', 'Accessoires', 'Chaussures', 'Électronique', 'Alimentation', 'Maison et déco', 'Santé et bien-être', 'Enfants', 'Services', 'Autre'];
 
 // Sections affichées par la vitrine, dans l'ordre par défaut
@@ -123,7 +123,7 @@ export default function Index({ store, reviews = [], stats = {} }) {
     const [version, setVersion] = useState(Date.now());
     const form = useForm({
         name: store.name || '', slug: store.slug || '', category: store.category || '', description: store.description || '', about_text: store.about_text || '',
-        theme_color: store.theme_color || '#FFCC00', font_family: store.font_family || 'Inter', border_radius_style: store.border_radius_style || 'rounded',
+        theme_color: store.theme_color || '#FFCC00', font_family: store.font_family || 'Poppins', border_radius_style: store.border_radius_style || 'rounded',
         announcement_header: store.announcement_header || '', hero_badge_text: store.hero_badge_text || '', hero_title: store.hero_title || '',
         hero_subtitle: store.hero_subtitle || '', hero_cta_text: store.hero_cta_text || '',
         phone_whatsapp: store.phone_whatsapp || '', city_location: store.city_location || '', opening_hours: store.opening_hours || '',
@@ -165,7 +165,10 @@ export default function Index({ store, reviews = [], stats = {} }) {
 
     return (
         <AuthenticatedLayout>
-            <Head title="Apparence, Biolinko" />
+            <Head title="Apparence, Biolinko">
+                {/* Aperçu des polices proposées aux vendeurs */}
+                <link head-key="font-choices" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto:wght@400;500;700&display=swap" />
+            </Head>
             <div className="grid gap-6 pb-6 xl:grid-cols-[460px_1fr]">
                 {/* Éditeur */}
                 <div className="min-w-0">

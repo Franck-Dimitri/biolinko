@@ -14,7 +14,7 @@ Before designing, open one or two existing pages of the same area (e.g. `resourc
 - **Brand**: `#FFCC00` (`brand-yellow` / `bg-[#FFCC00]`), hover `#E6B800`, light `#FFF8D6`, dark `#18181B`. Yellow surfaces take dark text (`text-slate-950`).
 - **Neutrals**: text `slate-950` (titles), `slate-900/800/700` (body), `slate-500/400` (secondary/meta). Surfaces `bg-white`, `bg-slate-50`, `bg-slate-100`; dark blocks `bg-slate-950`.
 - **Status**: success `emerald-600` on `emerald-100`; warning/premium `amber-*`; danger `rose-600`.
-- **Fonts**: `font-sans` = Nunito (body); `font-display`/`font-heading` = Montserrat (titles). `font-mono` for counts, IDs, amounts in badges.
+- **Fonts**: Poppins only (`font-sans` = Poppins, loaded in `app.blade.php`). Titles Medium 500 with `tracking-[-0.03em]`, body Regular 400. Storefronts default to Poppins; sellers may pick Inter or Roboto (loaded on demand by `StorefrontLayout`). Full brand guide: `docs/brand/CHARTE.md`.
 - **Borders**: `border border-slate-200` or `border-slate-200/80`; separators `border-slate-100`.
 - **Radii**: inputs/buttons `rounded-xl`, cards `rounded-2xl`, hero/feature cards `rounded-3xl`, pills/avatars `rounded-full`.
 - **Shadows**: subtle by default (`shadow-2xs`, `shadow-xs`); `shadow-md` on hover; `shadow-2xl` only for overlays (drawers, modals).
@@ -55,7 +55,7 @@ Before designing, open one or two existing pages of the same area (e.g. `resourc
 These pages follow a lighter direction than the dashboards. Match `resources/js/Pages/Welcome.jsx`, `Pages/Storefront/*`, `Components/Storefront/*`:
 
 - **Colors**: `brand-yellow` (#FFCC00) as the brand, `brand-ink` (#2B2620, warm) for text instead of black, `brand-muted` for secondary text, `brand-cream` / `brand-sand` / `brand-yellowLight` for section backgrounds, `brand-line` for borders. **Avoid black blocks and black buttons**: primary buttons are yellow (or the seller's `theme_color`) with ink text; secondary buttons are white with a light ink border. Footers are `brand-sand`, not dark.
-- **Weights**: Nunito. H1 `font-extrabold` (landing hero only) or `font-bold`; section titles `font-bold`; card titles `font-semibold`/`font-medium`; body `font-normal`. No `font-black`, no uppercase tracking labels.
+- **Weights**: Poppins. H1 `font-extrabold` (landing hero only) or `font-bold`; section titles `font-bold`; card titles `font-semibold`/`font-medium`; body `font-normal`. No `font-black`, no uppercase tracking labels.
 - **Radii**: small and varied — `rounded-md` for buttons/inputs/badges, `rounded-lg` for cards and images, `rounded-xl` only for large hero frames. `rounded-full` only for avatars, story circles and floating WhatsApp button.
 - **Storefront theming**: use `contrastColor()` from `Components/Storefront/theme.js`; the seller color goes on CTAs, step numbers, active states.
 - **Reuse**: `Components/Storefront/ProductCard.jsx` (+ `ProductImage`, `productImage`) for every product grid; `Components/BrandIcons.jsx` for Instagram/TikTok/Facebook/WhatsApp (lucide v1 has no brand icons).

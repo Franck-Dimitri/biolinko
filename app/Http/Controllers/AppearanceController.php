@@ -39,7 +39,7 @@ class AppearanceController extends Controller
             'about_text' => ['nullable', 'string'],
             'theme_color' => ['required', 'string', 'max:20'],
             'accent_color' => ['nullable', 'string', 'max:20'],
-            'font_family' => ['nullable', 'string', 'max:50'],
+            'font_family' => ['nullable', 'in:Poppins,Inter,Roboto'],
             'border_radius_style' => ['nullable', 'string', 'max:20'],
             'theme_mode' => ['nullable', 'string', 'max:20'],
             'phone_whatsapp' => ['nullable', 'string', 'max:50'],

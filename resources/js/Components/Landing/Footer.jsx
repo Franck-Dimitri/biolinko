@@ -60,7 +60,7 @@ export default function Footer() {
                     <div className="max-w-[340px]">
                         <Link href="/" className="flex items-center gap-2">
                             <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-[#FFCC00]">
-                                <img src="/images/brand/logo-noir.png" alt="" className="h-12 w-12 max-w-none" />
+                                <img src="/images/brand/logo-noir.svg" alt="" className="h-12 w-12 max-w-none" />
                             </span>
                             <span className="text-[19px] font-semibold tracking-tight">Biolinko</span>
                         </Link>

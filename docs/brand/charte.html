@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Charte Biolinko</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --jaune:#FFCC00; --encre:#141412; --texte:#3D3C37; --gris:#5F5E58; --meta:#8B8A83; --sable:#F6F5F1; --creme:#FFFBEA; --ligne:rgba(0,0,0,.08); }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Poppins, Arial, sans-serif; color: var(--encre); background: #fff; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 48px 24px 80px; }
+  h1 { font-size: 44px; font-weight: 500; letter-spacing: -.03em; margin: 0 0 6px; }
+  h2 { font-size: 26px; font-weight: 500; letter-spacing: -.03em; margin: 64px 0 6px; }
+  p.sub { color: var(--gris); margin: 0 0 24px; font-size: 15px; }
+  .grid { display: grid; gap: 16px; }
+  .g2 { grid-template-columns: repeat(2, 1fr); } .g3 { grid-template-columns: repeat(3, 1fr); } .g4 { grid-template-columns: repeat(4, 1fr); } .g6 { grid-template-columns: repeat(6, 1fr); }
+  @media (max-width: 800px) { .g2, .g3, .g4, .g6 { grid-template-columns: 1fr 1fr; } }
+  .card { border: 1px solid var(--ligne); border-radius: 24px; padding: 24px; min-width: 0; }
+  .tile { border-radius: 24px; display: flex; align-items: center; justify-content: center; height: 220px; }
+  .tile img { max-height: 120px; max-width: 80%; }
+  .cap { font-size: 13px; color: var(--meta); margin-top: 10px; }
+  .sw { border-radius: 18px; overflow: hidden; border: 1px solid var(--ligne); }
+  .sw div:first-child { height: 96px; }
+  .sw div:last-child { padding: 10px 12px; font-size: 13px; }
+  .sw b { display: block; font-weight: 500; }
+  .sw code { color: var(--gris); font-size: 12px; }
+  .btn { display: inline-flex; align-items: center; height: 44px; padding: 0 20px; border-radius: 999px; font-weight: 500; font-size: 15px; margin: 0 8px 8px 0; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; margin: 0 6px 6px 0; }
+  .pat { height: 180px; border-radius: 24px; border: 1px solid var(--ligne); }
+  .verdict { background: var(--creme); border: 1px solid rgba(255,204,0,.5); border-radius: 24px; padding: 24px; font-size: 15px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <img src="logo-horizontal-noir.svg" alt="Biolinko" style="height:56px">
+  <h1 style="margin-top:28px">Charte graphique</h1>
+  <p class="sub">Couleurs, typographie, logo, fonds et motifs de Biolinko, tels qu'utilisés dans l'application après la refonte.</p>
+
+  <h2>Logo</h2>
+  <p class="sub">Un B formé de deux maillons de chaîne qui s'entrelacent : « bio » + « link ».</p>
+  <div class="grid g3">
+    <div><div class="tile" style="background:#fff;border:1px solid var(--ligne)"><img src="logo-horizontal-noir.svg" alt=""></div><div class="cap">Horizontal, encre sur clair (usage principal)</div></div>
+    <div><div class="tile" style="background:var(--creme)"><img src="logo-horizontal-jaune.svg" alt=""></div><div class="cap">Horizontal, symbole jaune et nom encre (fonds clairs, crème)</div></div>
+    <div><div class="tile" style="background:var(--encre)"><img src="logo-horizontal-blanc.svg" alt=""></div><div class="cap">Horizontal, blanc sur encre</div></div>
+    <div><div class="tile" style="background:#fff;border:1px solid var(--ligne)"><img src="logo-symbole-noir.svg" alt=""></div><div class="cap">Symbole seul, encre</div></div>
+    <div><div class="tile" style="background:var(--jaune)"><img src="logo-icone-jaune.svg" alt="" style="max-height:160px;border-radius:36px"></div><div class="cap">Icône d'application, favicon, avatar réseaux</div></div>
+    <div><div class="tile" style="background:#fff;border:1px solid var(--ligne)"><img src="logo-icone-encre.svg" alt="" style="max-height:160px;border-radius:36px"></div><div class="cap">Icône sombre (variante)</div></div>
+  </div>
+  <div class="grid g4" style="margin-top:16px">
+    <div class="card" style="display:flex;gap:18px;align-items:end">
+      <img src="logo-icone-jaune.svg" alt="" width="64" style="border-radius:14px"><img src="logo-icone-jaune.svg" alt="" width="32" style="border-radius:7px"><img src="logo-icone-jaune.svg" alt="" width="16" style="border-radius:4px">
+    </div>
+    <div class="card" style="grid-column:span 3;font-size:14px;color:var(--texte);line-height:1.6">
+      <b style="font-weight:500">Règles</b> · Zone de protection autour du logo : la largeur d'un trait du symbole, au minimum. · Taille minimum : 16 px pour l'icône, 24 px de haut pour le logo horizontal. · Ne pas déformer, incliner, ajouter d'ombre ni de contour. · Sur photo, utiliser l'icône (carré jaune) plutôt que le logo seul.
+    </div>
+  </div>
+
+  <h2>Le logo est-il bien ?</h2>
+  <div class="grid g2">
+    <div class="verdict">
+      <b style="font-weight:600">Oui, le concept est très bon, on le garde.</b> Le B dessiné par deux maillons dit exactement ce qu'est Biolinko (un lien qui relie le vendeur et ses clients), il est simple, mémorable et lisible jusqu'à 16 px.<br><br>
+      Ce qui n'allait pas, c'était le <b style="font-weight:600">fichier</b> : une image PNG avec un double trait gris à l'intérieur (invisible en petit, sale à l'impression) et aucune version vectorielle. Il est maintenant redessiné en SVG, en un seul aplat, dans toutes les déclinaisons ci-dessus.
+    </div>
+    <div class="card" style="display:flex;gap:24px;align-items:center">
+      <img src="proposition-logo-anneaux.svg" alt="Proposition alternative" style="height:180px">
+      <div style="font-size:14px;color:var(--texte);line-height:1.6"><b style="font-weight:500">Proposition alternative : « deux anneaux »</b><br>Un B dont les deux ventres sont deux anneaux entrelacés. Plus doux et plus « bijou », mais il se lit moins vite comme un B et ressemble à un 8 en petit. <b style="font-weight:500">Je recommande de garder le logo actuel.</b></div>
+    </div>
+  </div>
+
+  <h2>Couleurs</h2>
+  <p class="sub">Le jaune est l'accent de la marque, jamais une surface entière. Le texte est une encre chaude, pas du noir pur.</p>
+  <div class="grid g6">
+    <div class="sw"><div style="background:#FFCC00"></div><div><b>Jaune Biolinko</b><code>#FFCC00</code></div></div>
+    <div class="sw"><div style="background:#F5C400"></div><div><b>Jaune survol</b><code>#F5C400</code></div></div>
+    <div class="sw"><div style="background:#FFE58A"></div><div><b>Miel</b><code>#FFE58A</code></div></div>
+    <div class="sw"><div style="background:#FFF3C4"></div><div><b>Jaune pâle</b><code>#FFF3C4</code></div></div>
+    <div class="sw"><div style="background:#FFFBEA"></div><div><b>Crème</b><code>#FFFBEA</code></div></div>
+    <div class="sw"><div style="background:#7A5B00"></div><div><b>Or foncé (texte sur jaune pâle)</b><code>#7A5B00</code></div></div>
+    <div class="sw"><div style="background:#141412"></div><div><b>Encre</b><code>#141412</code></div></div>
+    <div class="sw"><div style="background:#3D3C37"></div><div><b>Texte courant</b><code>#3D3C37</code></div></div>
+    <div class="sw"><div style="background:#5F5E58"></div><div><b>Texte secondaire</b><code>#5F5E58</code></div></div>
+    <div class="sw"><div style="background:#8B8A83"></div><div><b>Méta, aides</b><code>#8B8A83</code></div></div>
+    <div class="sw"><div style="background:#F6F5F1"></div><div><b>Sable (panneaux)</b><code>#F6F5F1</code></div></div>
+    <div class="sw"><div style="background:#F2F1EC"></div><div><b>Sable foncé (onglets)</b><code>#F2F1EC</code></div></div>
+    <div class="sw"><div style="background:#FAFAF8"></div><div><b>Blanc cassé (survol)</b><code>#FAFAF8</code></div></div>
+    <div class="sw"><div style="background:#FFFFFF"></div><div><b>Blanc (fond)</b><code>#FFFFFF</code></div></div>
+    <div class="sw"><div style="background:#15803D"></div><div><b>Succès</b><code>#15803D · fond #DCFCE7</code></div></div>
+    <div class="sw"><div style="background:#B91C1C"></div><div><b>Erreur</b><code>#B91C1C · fond #FEF2F2</code></div></div>
+    <div class="sw"><div style="background:#1D4ED8"></div><div><b>Information</b><code>#1D4ED8 · fond #E0EAFF</code></div></div>
+    <div class="sw"><div style="background:#F5B800"></div><div><b>Étoiles d'avis</b><code>#F5B800</code></div></div>
+  </div>
+  <p class="cap">Bordures : noir à 6 % (cartes) ou 8 % (champs, séparateurs). Boutiques des vendeurs : leur propre couleur remplace le jaune sur les boutons, avec un texte noir ou blanc choisi automatiquement pour rester lisible.</p>
+
+  <h2>Typographie</h2>
+  <p class="sub">Une seule famille : Poppins (Google Fonts), pour tout, des titres aux chiffres.</p>
+  <div class="grid g2">
+    <div class="card">
+      <div style="font-size:44px;font-weight:500;letter-spacing:-.03em;line-height:1.1">Vendez en ligne,<br>encaissez en Mobile Money</div>
+      <div class="cap">Titre · Poppins Medium (500) · 28 à 44 px · interlettrage −0,03 em</div>
+      <div style="font-size:19px;font-weight:500;margin-top:24px">Titre de section</div>
+      <div class="cap">Poppins Medium · 17 à 20 px</div>
+      <div style="font-size:15px;color:var(--texte);margin-top:18px">Texte courant : votre boutique est prête, partagez votre lien sur WhatsApp.</div>
+      <div class="cap">Poppins Regular (400) · 14 à 16 px</div>
+      <div style="font-size:26px;font-weight:500;letter-spacing:-.02em;margin-top:18px;font-variant-numeric:tabular-nums">125 400 FCFA</div>
+      <div class="cap">Chiffres et montants · Medium · chiffres tabulaires · « FCFA » après le montant, espace fine entre milliers</div>
+    </div>
+    <div class="card">
+      <div style="font-size:64px;font-weight:600;letter-spacing:-.02em">Aa</div>
+      <div style="font-size:15px;line-height:2">
+        <span style="font-weight:400">Regular 400</span> · <span style="font-weight:500">Medium 500</span> · <span style="font-weight:600">SemiBold 600</span> · <span style="font-weight:700">Bold 700</span>
+      </div>
+      <div class="cap" style="line-height:1.7">Medium pour les titres et boutons, SemiBold pour le nom « Biolinko » et les montants à mettre en avant, Regular pour le texte. Éviter Black (900) et les titres en MAJUSCULES espacées. Le texte est en français, ton direct et chaleureux (« Mon panier », « Payer 12 500 FCFA »).</div>
+    </div>
+  </div>
+
+  <h2>Composants</h2>
+  <div class="card">
+    <span class="btn" style="background:#FFCC00">Payer 12 500 FCFA</span>
+    <span class="btn" style="background:#141412;color:#fff">Enregistrer</span>
+    <span class="btn" style="border:1px solid rgba(0,0,0,.1)">Annuler</span>
+    <span class="btn" style="border:1px solid #fecaca;color:#B91C1C">Rembourser</span>
+    <div style="margin-top:8px">
+      <span class="badge" style="background:#DCFCE7;color:#15803D">Payée</span><span class="badge" style="background:#FFF3C4;color:#7A5B00">En attente</span><span class="badge" style="background:#E0EAFF;color:#1D4ED8">En livraison</span><span class="badge" style="background:#FEF2F2;color:#B91C1C">Annulée</span><span class="badge" style="background:#FFCC00">Pro</span><span class="badge" style="background:#F2F1EC;color:#5F5E58">Brouillon</span>
+    </div>
+    <p class="cap" style="line-height:1.7">Boutons en pilule (entièrement arrondis) · cartes arrondies à 24 px avec bordure fine, sans ombre forte · champs arrondis à 12 px · icônes Lucide, trait fin · animations courtes et douces (apparition par léger glissement vers le haut, 0,35 s).</p>
+  </div>
+
+  <h2>Fonds et motifs</h2>
+  <div class="grid g4">
+    <div><div class="pat" style="background:#fff"></div><div class="cap">Blanc · fond par défaut</div></div>
+    <div><div class="pat" style="background:#F6F5F1"></div><div class="cap">Sable · panneaux, récapitulatifs</div></div>
+    <div><div class="pat" style="background:#FFFBEA"></div><div class="cap">Crème · mises en avant, alertes douces</div></div>
+    <div><div class="pat" style="background:linear-gradient(to bottom,#fff,#F6F5F1)"></div><div class="cap">Dégradé blanc → sable · bas de sections</div></div>
+    <div><div class="pat" style="background:url(motif-grille.svg)"></div><div class="cap">Grille fine · fond de la page d'accueil (<code>motif-grille.svg</code>)</div></div>
+    <div><div class="pat" style="background:url(motif-points.svg)"></div><div class="cap">Points · fonds discrets (<code>motif-points.svg</code>)</div></div>
+    <div><div class="pat" style="background:url(motif-maillons.svg);background-size:120px"></div><div class="cap">Maillons · papeterie, réseaux, packaging (<code>motif-maillons.svg</code>)</div></div>
+    <div><div class="pat" style="background:url(fond-orbites.svg) center/cover"></div><div class="cap">Orbites et halo miel · héros de la page d'accueil (<code>fond-orbites.svg</code>)</div></div>
+  </div>
+  <div style="margin-top:16px"><img src="../../public/images/brand/og-biolinko.jpg" alt="Image de partage" style="width:100%;max-width:600px;border-radius:24px;border:1px solid var(--ligne)"><div class="cap">Image de partage par défaut (WhatsApp, Facebook) · 1200 × 630 · <code>public/images/brand/og-biolinko.jpg</code></div></div>
+
+  <h2>À éviter</h2>
+  <div class="card" style="font-size:14px;color:var(--texte);line-height:1.8">
+    Grands aplats noirs ou boutons noirs sur les pages publiques (le noir est réservé aux actions secondaires de l'espace vendeur) · jaune en fond plein d'une page entière · texte blanc sur jaune (illisible) · plusieurs polices · ombres lourdes · fausses statistiques, faux avis ou photos de banque d'images trompeuses.
+  </div>
+</div>
+</body>
+</html>
