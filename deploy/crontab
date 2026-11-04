@@ -1,0 +1,7 @@
+# crontab de l'utilisateur www-data : sudo crontab -u www-data deploy/crontab
+# Sans cette ligne : pas de rappels/prélèvements d'abonnement, pas de libération des fonds,
+# pas d'expiration des commandes impayées, pas de synchronisation des paiements.
+* * * * * cd /var/www/biolinko/current && php artisan schedule:run >> /dev/null 2>&1
+
+# Sauvegarde de la base et des fichiers envoyés, chaque nuit à 3 h
+0 3 * * * /var/www/biolinko/current/deploy/scripts/backup.sh >> /var/www/biolinko/shared/storage/logs/backup.log 2>&1

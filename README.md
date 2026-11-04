@@ -425,6 +425,8 @@ Plus de 220 tests couvrent notamment :
 
 ## 14. Mise en production
 
+> Kit complet dans [`deploy/`](deploy/) : checklist pas à pas ([`deploy/CHECKLIST.md`](deploy/CHECKLIST.md)), `.env` de production, configuration Nginx, Supervisor (file d'attente + SSR), crontab, scripts de déploiement sans coupure et de sauvegarde.
+
 1. **Serveur** : PHP 8.3+, MySQL ou MariaDB, HTTPS, domaine `biolinko.link`.
 2. **Déploiement** :
    ```bash
