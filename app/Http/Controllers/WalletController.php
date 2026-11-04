@@ -65,6 +65,15 @@ class WalletController extends Controller
                 'status' => strtolower($w->status),
                 'date' => $w->created_at->toIso8601String(),
             ]))
+            ->merge(\App\Models\Subscription::where('user_id', $store->user_id)->where('payment_provider', 'wallet')->where('payment_status', 'paid')->get()->map(fn ($s) => [
+                'id' => 's'.$s->id,
+                'type' => 'subscription',
+                'label' => 'Abonnement '.ucfirst($s->plan),
+                'detail' => $s->billing_cycle.' mois · payé avec le solde',
+                'amount' => -1 * (float) $s->amount,
+                'status' => 'completed',
+                'date' => $s->created_at->toIso8601String(),
+            ]))
             ->sortByDesc('date')
             ->values()
             ->take(50);

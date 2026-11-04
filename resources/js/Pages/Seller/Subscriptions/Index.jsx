@@ -1,6 +1,6 @@
 import UpgradeHint from '@/Components/Dashboard/UpgradeHint';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
@@ -37,6 +37,7 @@ function PayDialog({ plan, cycle, setCycle, user, onClose, onStarted }) {
     const [operator, setOperator] = useState(null);
     const [busy, setBusy] = useState(false);
     const [showFeatures, setShowFeatures] = useState(false);
+    const [method, setMethod] = useState('momo');
     const detected = /^(237)?6(9|4|5[5-9])/.test(phone.replace(/\D/g, '')) ? 'ORANGE' : 'MTN';
     const op = operator || detected;
     useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, []);
@@ -56,7 +57,8 @@ function PayDialog({ plan, cycle, setCycle, user, onClose, onStarted }) {
         e.preventDefault();
         setBusy(true);
         try {
-            const { data } = await axios.post(route('seller.subscriptions.subscribe'), { plan: plan.id, phone_momo: phone, operator: op, cycle });
+            const { data } = await axios.post(route('seller.subscriptions.subscribe'), { plan: plan.id, method, phone_momo: method === 'momo' ? phone : null, operator: op, cycle });
+            if (data.paid) { toast.success(data.message); onClose(); router.reload(); return; }
             if (data.requires_ussd) onStarted(data);
         } catch (err) {
             toast.error(err.response?.data?.error || err.response?.data?.message || 'Le paiement n’a pas pu être lancé. Vérifiez le numéro.');
@@ -106,7 +108,22 @@ function PayDialog({ plan, cycle, setCycle, user, onClose, onStarted }) {
                         </div>
                     </Step>
 
-                    <Step n={2} title="Paiement Mobile Money">
+                    <Step n={2} title="Moyen de paiement">
+                        <div className="mb-4 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Moyen de paiement">
+                            {[['momo', 'Mobile Money', 'MTN MoMo ou Orange Money'], ['wallet', 'Mon solde', `${fcfa(user.wallet_balance)} disponibles`]].map(([id, label, sub]) => {
+                                const off = id === 'wallet' && user.wallet_balance < p.total;
+                                return (
+                                    <button key={id} type="button" role="radio" aria-checked={method === id} disabled={off} onClick={() => setMethod(id)}
+                                        className={`rounded-xl border-2 p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${method === id ? 'border-[#141412] bg-[#FFFBEA]' : 'border-black/[0.08] hover:border-black/25'}`}>
+                                        <span className="block text-[15px] font-medium text-[#141412]">{label}</span>
+                                        <span className="block text-[13px] text-[#8B8A83]">{off ? `Solde insuffisant (${fcfa(user.wallet_balance)})` : sub}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {method === 'wallet' ? (
+                            <p className="rounded-xl bg-[#F6F5F1] p-3 text-[14px] text-[#5F5E58]">{fcfa(p.total)} seront prélevés sur votre solde disponible. Activation immédiate, sans validation sur le téléphone.</p>
+                        ) : (<>
                         <div className="grid grid-cols-2 gap-2">
                             {[['MTN', 'MTN MoMo'], ['ORANGE', 'Orange Money']].map(([id, label]) => (
                                 <button key={id} type="button" aria-pressed={op === id} onClick={() => setOperator(id)}
@@ -123,6 +140,7 @@ function PayDialog({ plan, cycle, setCycle, user, onClose, onStarted }) {
                                 </div>
                             </Field>
                         </div>
+                        </>)}
                     </Step>
                 </div>
 
@@ -139,9 +157,9 @@ function PayDialog({ plan, cycle, setCycle, user, onClose, onStarted }) {
                             {bonusDays > 0 && <div className="flex justify-between text-[#15803D]"><dt>Jours restants convertis</dt><dd className="tabular-nums">+{bonusDays} j offert{bonusDays > 1 ? 's' : ''}</dd></div>}
                             <div className="flex items-baseline justify-between pt-2 text-[#141412]"><dt className="font-medium">Total</dt><dd className="text-[24px] font-medium tracking-[-0.02em] tabular-nums">{fcfa(p.total)}</dd></div>
                         </dl>
-                        <p className="mt-1 text-[13px] text-[#8B8A83]">Actif jusqu’au {until} · sans renouvellement automatique</p>
-                        <Button variant="primary" size="lg" type="submit" className="mt-5 w-full" disabled={busy || phone.replace(/\D/g, '').length < 9}>
-                            {busy ? <RefreshCw className="h-4 w-4 animate-spin" /> : null} Payer {fcfa(p.total)}
+                        <p className="mt-1 text-[13px] text-[#8B8A83]">Actif jusqu’au {until}{user.auto_renew ? ' · puis renouvelé chaque mois avec votre solde (désactivable)' : ''}</p>
+                        <Button variant="primary" size="lg" type="submit" className="mt-5 w-full" disabled={busy || (method === 'momo' && phone.replace(/\D/g, '').length < 9)}>
+                            {busy ? <RefreshCw className="h-4 w-4 animate-spin" /> : null} {method === 'wallet' ? `Payer ${fcfa(p.total)} avec mon solde` : `Payer ${fcfa(p.total)}`}
                         </Button>
                         <button type="button" onClick={onClose} className="mt-2 w-full py-2 text-[14px] text-[#5F5E58] hover:text-[#141412]">Annuler</button>
                     </div>
@@ -220,7 +238,7 @@ export default function Index({ upgradeHint = null, user, plans = [], history = 
             )}
             <PaymentWait payment={payment} onClose={() => setPayment(null)} />
             <div className="space-y-6 pb-12" hidden={!!selected || !!payment}>
-                <PageHeader title="Abonnement" sub="−15 % en payant pour 1 an, −20 % pour 2 ans. Sans renouvellement automatique." />
+                <PageHeader title="Abonnement" sub="−15 % en payant pour 1 an, −20 % pour 2 ans. Payez par Mobile Money ou avec le solde de votre portefeuille." />
                 <UpgradeHint hint={upgradeHint} compact />
 
                 {simulation && (
@@ -257,6 +275,25 @@ export default function Index({ upgradeHint = null, user, plans = [], history = 
                         {isPaid && <Button variant="primary" onClick={() => setSelected(current)}>{user.is_active ? 'Prolonger' : 'Renouveler'}</Button>}
                     </div>
                 </Card>
+
+                {isPaid && (
+                    <Card>
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0">
+                                <p className="flex items-center gap-2 text-[16px] font-medium text-[#141412]">Prélèvement automatique <Badge tone={user.auto_renew ? 'success' : 'neutral'}>{user.auto_renew ? 'Activé' : 'Désactivé'}</Badge></p>
+                                <p className="mt-1 text-[14px] text-[#5F5E58]">
+                                    {user.auto_renew
+                                        ? `À l’échéance, ${fcfa(current?.price)} sont prélevés sur votre solde pour renouveler 1 mois. Vous êtes prévenu par e-mail 3 jours avant. Solde disponible : ${fcfa(user.wallet_balance)}.`
+                                        : 'Rien n’est prélevé : renouvelez vous-même avant l’échéance, par Mobile Money ou avec votre solde.'}
+                                </p>
+                                {user.auto_renew && user.wallet_balance < (current?.price || 0) && (
+                                    <p className="mt-2 text-[13px] text-[#7A5B00]">Solde actuel insuffisant : il sera complété par vos ventes, sinon payez par Mobile Money avant l’échéance.</p>
+                                )}
+                            </div>
+                            <Button onClick={() => router.post(route('seller.subscriptions.autoRenew'), {}, { preserveScroll: true })}>{user.auto_renew ? 'Désactiver' : 'Activer'}</Button>
+                        </div>
+                    </Card>
+                )}
 
                 {/* Plans */}
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">

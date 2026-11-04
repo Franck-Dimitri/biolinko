@@ -170,7 +170,7 @@ export default function Index({ ledger = [], monthly = [], pendingWithdrawals = 
                 <Card padded={false} delay={0.12}>
                     <div className="flex flex-col gap-3 border-b border-black/[0.06] p-4 sm:flex-row sm:items-center sm:justify-between">
                         <h2 className="px-1 text-[17px] font-medium text-[#141412]">Mouvements</h2>
-                        <Tabs id="ledger" value={filter} onChange={setFilter} tabs={[['all', 'Tout'], ['sale', 'Ventes'], ['withdrawal', 'Retraits']]} />
+                        <Tabs id="ledger" value={filter} onChange={setFilter} tabs={[['all', 'Tout'], ['sale', 'Ventes'], ['withdrawal', 'Retraits'], ['subscription', 'Abonnements']]} />
                     </div>
                     {rows.length ? (
                         <ul className="divide-y divide-black/[0.05]">

@@ -137,6 +137,8 @@ class SubscriptionController extends Controller
                 'max_products' => $user->getPlanMaxProducts(),
                 'products_count' => $store ? $store->products()->count() : 0,
                 // Jours offerts si le vendeur passe à ce plan (conversion des jours restants)
+                'auto_renew' => (bool) $user->auto_renew,
+                'wallet_balance' => \App\Payments\SubscriptionRenewals::balance($user),
                 'conversion_days' => collect(['pro', 'growth', 'business'])->mapWithKeys(fn ($p) => [$p => $user->planConversionDays($p)]),
             ],
             'plans' => $plans,
@@ -153,7 +155,8 @@ class SubscriptionController extends Controller
     {
         $validated = $request->validate([
             'plan' => ['required', 'string', 'in:starter,pro,growth,business'],
-            'phone_momo' => ['required', 'string', 'max:50'],
+            'method' => ['nullable', 'in:momo,wallet'],
+            'phone_momo' => ['required_unless:method,wallet', 'nullable', 'string', 'max:50'],
             'operator' => ['nullable', 'string', 'in:MTN,ORANGE,mtn,orange'],
             'cycle' => ['nullable', 'integer', 'in:1,12,24'],
         ]);
@@ -186,6 +189,20 @@ class SubscriptionController extends Controller
         };
 
         $totalPrice = (int) round($monthlyPrice * $cycleMonths * (1.0 - $discountRate));
+
+        // Paiement avec le solde du portefeuille : immédiat, sans demande sur le téléphone
+        if (($validated['method'] ?? 'momo') === 'wallet') {
+            try {
+                $sub = app(\App\Payments\SubscriptionRenewals::class)->payWithWallet($user, $targetPlan, $cycleMonths);
+            } catch (PaymentException $e) {
+                return response()->json(['error' => $e->getMessage()], 422);
+            }
+
+            return response()->json([
+                'success' => true, 'requires_ussd' => false, 'paid' => true,
+                'message' => 'Abonnement '.ucfirst($targetPlan).' activé jusqu’au '.$user->fresh()->subscription_expires_at->format('d/m/Y').'. '.number_format((float) $sub->amount, 0, ',', ' ').' FCFA prélevés sur votre solde.',
+            ]);
+        }
 
         // Validate Cameroon MoMo phone number
         try {
@@ -304,5 +321,16 @@ class SubscriptionController extends Controller
             'paid' => true,
             'message' => 'Abonnement '.ucfirst($subscription->plan).' activé pour '.$months.' mois !',
         ]);
+    }
+
+    /** Active ou désactive le prélèvement automatique sur le portefeuille à l'échéance. */
+    public function toggleAutoRenew(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $user = $request->user()->refresh();
+        $user->update(['auto_renew' => ! $user->auto_renew]);
+
+        return back()->with('message', $user->auto_renew
+            ? 'Prélèvement automatique activé : votre abonnement sera renouvelé avec le solde de votre portefeuille.'
+            : 'Prélèvement automatique désactivé : vous renouvellerez vous-même, par Mobile Money ou avec votre solde.');
     }
 }

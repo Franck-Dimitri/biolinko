@@ -170,6 +170,7 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
     // Subscriptions Management
     Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('seller.subscriptions.index');
     Route::post('/subscriptions/subscribe', [SubscriptionController::class, 'subscribe'])->name('seller.subscriptions.subscribe');
+    Route::post('/subscriptions/auto-renew', [SubscriptionController::class, 'toggleAutoRenew'])->name('seller.subscriptions.autoRenew');
     Route::get('/subscriptions/status/{reference}', [SubscriptionController::class, 'checkStatus'])->name('seller.subscriptions.status');
 });
 

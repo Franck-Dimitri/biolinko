@@ -12,3 +12,4 @@ Artisan::command('inspire', function () {
 \Illuminate\Support\Facades\Schedule::command('orders:remind-unpaid')->everyFifteenMinutes()->withoutOverlapping();
 \Illuminate\Support\Facades\Schedule::command('funds:release')->everyFifteenMinutes()->withoutOverlapping();
 \Illuminate\Support\Facades\Schedule::command('payments:sync')->everyFiveMinutes()->withoutOverlapping();
+\Illuminate\Support\Facades\Schedule::command('subscriptions:renew')->hourly()->withoutOverlapping();
