@@ -167,10 +167,10 @@ Il paie le prix des articles, plus la livraison s'il y en a une, plus **3,5 % de
 
 | Plan | Prix par mois | Commission par vente | Ce qu'il permet |
 |---|---|---|---|
-| **Starter** | Gratuit | 7 % | 5 produits, 2 liens de paiement, 1 code promo, 1 campagne WhatsApp par mois |
-| **Pro** | 2 500 FCFA | 4 % | 30 produits, tailles et couleurs, promotions, pixels publicitaires, 5 codes promo, 4 campagnes par mois |
-| **Growth** | 7 000 FCFA | 2,5 % | 100 produits, liens et codes promo illimités, 10 campagnes par mois |
-| **Business** | 12 000 FCFA | 1,5 % | Produits illimités, export comptable, 25 campagnes par mois, conseiller dédié |
+| **Starter** | Gratuit | 10 % | 5 produits, 2 liens de paiement, 1 code promo, 1 campagne WhatsApp par mois |
+| **Pro** | 2 500 FCFA | 7 % | 30 produits, tailles et couleurs, promotions, pixels publicitaires, 5 codes promo, 4 campagnes par mois |
+| **Growth** | 7 000 FCFA | 4 % | 100 produits, liens et codes promo illimités, 10 campagnes par mois |
+| **Business** | 12 000 FCFA | 2 % | Produits illimités, export comptable, 25 campagnes par mois, conseiller dédié |
 
 Une commande payée en ligne doit faire **au moins 1 000 FCFA**.
 
@@ -180,11 +180,11 @@ Une commande payée en ligne doit faire **au moins 1 000 FCFA**.
 
 Exemple : une robe à 10 000 FCFA, livrée à Douala pour 1 000 FCFA, chez un vendeur en plan Starter.
 
-1. Le client paie **11 385 FCFA** : 10 000 de robe, 1 000 de livraison et 385 de frais de service.
-2. Biolinko garde sa commission de 7 % sur la robe, soit **700 FCFA**.
-3. Le vendeur reçoit **10 300 FCFA** (robe moins la commission, plus la livraison) dans son portefeuille, **en attente**.
+1. Le client paie **11 385 FCFA** : 10 000 de robe, 1 000 de livraison et 385 de frais de paiement Mobile Money.
+2. Biolinko garde sa commission de 10 % sur la robe, soit **1 000 FCFA**.
+3. Le vendeur reçoit **10 000 FCFA** (robe moins la commission, plus la livraison) dans son portefeuille, **en attente**.
 4. Après le délai de sécurité de 4 jours (2 jours pour les vendeurs qui ont déjà livré au moins 10 commandes), l'argent devient **disponible**.
-5. Le vendeur le retire vers son Mobile Money, moins 3 % de frais de retrait.
+5. Le vendeur le retire vers son Mobile Money, gratuitement : le retrait ne coûte rien.
 
 Si le client signale un problème, l'argent reste bloqué jusqu'à ce que le problème soit réglé. Si le client est remboursé, l'argent lui est renvoyé et la commission Biolinko est annulée en proportion.
 

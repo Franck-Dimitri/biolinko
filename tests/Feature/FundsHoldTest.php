@@ -51,7 +51,7 @@ test('l’argent devient retirable à la fin du délai', function () {
     $this->travel(5)->days();
     $this->artisan('funds:release');
     $wallet = Wallet::first();
-    expect((float) $wallet->balance_available)->toBe(9300.0);
+    expect((float) $wallet->balance_available)->toBe(9000.0);
     expect((float) $wallet->balance_held)->toBe(0.0);
     expect($order->fresh()->funds_released_at)->not->toBeNull();
 });
@@ -69,7 +69,7 @@ test('un signalement gèle la vente jusqu’à ce que le client indique que c’
 
     $this->post(route('order.report.resolve', $order->tracking_code));
     expect($order->report->fresh()->status)->toBe('resolved');
-    expect((float) Wallet::first()->balance_available)->toBe(9300.0);
+    expect((float) Wallet::first()->balance_available)->toBe(9000.0);
 });
 
 test('sans réaction du client 3 jours après la réponse du vendeur, la vente est libérée', function () {
@@ -87,7 +87,7 @@ test('sans réaction du client 3 jours après la réponse du vendeur, la vente e
     $this->travel(4)->days();
     $this->artisan('funds:release');
     expect($order->report->fresh()->status)->toBe('released');
-    expect((float) Wallet::first()->balance_available)->toBe(9300.0);
+    expect((float) Wallet::first()->balance_available)->toBe(9000.0);
 });
 
 test('on ne peut signaler qu’une fois, et seulement pendant le délai', function () {

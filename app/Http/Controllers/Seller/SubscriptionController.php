@@ -39,7 +39,8 @@ class SubscriptionController extends Controller
                 'price' => 0,
                 'tagline' => 'Pour faire vos premières ventes',
                 'features' => [
-                    'Commission de '.$pct($C['starter']).' par vente',
+                    'Commission de '.$pct($C['starter']).' par vente, tout compris',
+                    'Retraits gratuits, livraison sans commission',
                     "Jusqu’à {$L['starter']['products']} produits, {$L['starter']['stock']} articles en stock",
                     "{$L['starter']['images']} photos par produit, {$L['starter']['smartlinks']} liens de paiement actifs",
                     'Boutique en ligne et lien unique',

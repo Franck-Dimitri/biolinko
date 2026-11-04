@@ -30,25 +30,25 @@ test('la commission dépend du plan du vendeur au moment du paiement', function 
     expect($order->sellerNet())->toBe($net);
     expect((float) $this->wallet->fresh()->balance_held)->toBe($net);
 })->with([
-    ['starter', 7.0, 9300.0],
-    ['pro', 4.0, 9600.0],
-    ['growth', 2.5, 9750.0],
-    ['business', 1.5, 9850.0],
+    ['starter', 10.0, 9000.0],
+    ['pro', 7.0, 9300.0],
+    ['growth', 4.0, 9600.0],
+    ['business', 2.0, 9800.0],
 ]);
 
 test('les frais client sont de 3,5 %', function () {
     expect(Order::clientFee(10000))->toBe(350.0);
 });
 
-test('un retrait prélève 3 % et le vendeur reçoit le net', function () {
+test('un retrait est gratuit : le vendeur reçoit tout le montant', function () {
     $this->wallet->update(['balance_available' => 10000]);
 
     $this->actingAs($this->seller)->post(route('wallet.withdraw'), ['amount' => 10000, 'payment_operator' => 'MTN', 'phone' => '677000000'])
         ->assertSessionHasNoErrors();
 
     $w = Withdrawal::first();
-    expect((float) $w->fee)->toBe(300.0);
-    expect((float) $w->net_amount)->toBe(9700.0);
+    expect((float) $w->fee)->toBe(0.0);
+    expect((float) $w->net_amount)->toBe(10000.0);
     expect((float) $this->wallet->fresh()->balance_available)->toBe(0.0);
     expect((float) $this->wallet->fresh()->balance_pending)->toBe(10000.0);
 });
@@ -113,5 +113,5 @@ test('le chiffre d’affaires du tableau de bord compte aussi les commandes livr
 
     $props = $this->actingAs($this->seller)->get('/seller/dashboard')->viewData('page')['props'];
     expect((float) $props['totalRevenue'])->toBe(10000.0);
-    expect((float) $props['totalNet'])->toBe(9300.0);
+    expect((float) $props['totalNet'])->toBe(9000.0);
 });

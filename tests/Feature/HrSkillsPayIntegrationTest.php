@@ -81,5 +81,5 @@ test('webhook handles payment succeeded and credits vendor wallet', function () 
     expect($order->status)->toBe('paid');
 
     $wallet->refresh();
-    expect((float) $wallet->balance_held)->toBe(13950.0); // 15 000 − 7 % de commission, retirable après le délai de sécurité
+    expect((float) $wallet->balance_held)->toBe(13500.0); // 15 000 − 10 % de commission, retirable après le délai de sécurité
 });

@@ -283,7 +283,7 @@ export default function Show({ order, store, canReport = false, reportReasons = 
                         <div className="flex justify-between text-[#5F5E58]"><dt>Articles</dt><dd className="tabular-nums">{formatFcfa(order.subtotal ?? order.price_vendor)}</dd></div>
                         {Number(order.discount_amount) > 0 && <div className="flex justify-between text-[#15803D]"><dt>Code {order.promo_code}</dt><dd className="tabular-nums">−{formatFcfa(order.discount_amount)}</dd></div>}
                         {Number(order.delivery_fee) > 0 && <div className="flex justify-between text-[#5F5E58]"><dt>Livraison</dt><dd className="tabular-nums">{formatFcfa(order.delivery_fee)}</dd></div>}
-                        <div className="flex justify-between text-[#5F5E58]"><dt>Frais de service</dt><dd className="tabular-nums">{formatFcfa(Number(order.saas_margin) + Number(order.api_fee || 0))}</dd></div>
+                        <div className="flex justify-between text-[#5F5E58]"><dt>Frais de paiement</dt><dd className="tabular-nums">{formatFcfa(Number(order.saas_margin) + Number(order.api_fee || 0))}</dd></div>
                         <div className="flex items-baseline justify-between pt-1 text-[#141412]">
                             <dt className="font-semibold">{awaitingPayment || cancelled ? 'Total' : 'Total payé'}</dt>
                             <dd className="text-xl font-bold tabular-nums">{formatFcfa(order.total_client)}</dd>

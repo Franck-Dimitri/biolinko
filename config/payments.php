@@ -20,15 +20,15 @@ return [
     'min_order' => 1000,
 
     // Frais prélevés sur chaque retrait du vendeur
-    'withdrawal_fee_percent' => 3,
+    'withdrawal_fee_percent' => 0, // Retraits gratuits : le virement Mercy Pay (2 %) est couvert par la commission
     'min_withdrawal' => 1000,
 
     // Commission Biolinko sur chaque vente, selon le plan du vendeur au moment du paiement
     'commission_percent' => [
-        'starter' => 7,
-        'pro' => 4,
-        'growth' => 2.5,
-        'business' => 1.5,
+        'starter' => 10,
+        'pro' => 7,
+        'growth' => 4,
+        'business' => 2,
     ],
 
     // Coût estimé de l'agrégateur (pour calculer la marge nette dans l'admin) : % encaissé / % viré

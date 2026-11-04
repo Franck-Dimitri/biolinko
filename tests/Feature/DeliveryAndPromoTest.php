@@ -84,9 +84,9 @@ test('la commission ne porte pas sur la livraison et le code n’est compté qu�
     $o->markAsPaid();
     $o->refresh();
 
-    // Articles 8 000 (après remise) × 7 % Starter = 560 ; livraison 1 000 exclue
-    expect((float) $o->commission_amount)->toBe(560.0)
-        ->and($o->sellerNet())->toBe(8440.0)
+    // Articles 8 000 (après remise) × 10 % Starter = 800 ; livraison 1 000 exclue
+    expect((float) $o->commission_amount)->toBe(800.0)
+        ->and($o->sellerNet())->toBe(8200.0)
         ->and($promo->fresh()->used_count)->toBe(1);
 });
 
@@ -172,10 +172,10 @@ test('acompte : le client paie une partie en ligne, le reste au livreur, la comm
 
     $o->markAsPaid();
     $o->refresh();
-    // Commission Starter 7 % sur 20 000 d'articles = 1 400, prélevée sur l'acompte
-    expect((float) $o->commission_amount)->toBe(1400.0)
-        ->and($o->sellerNet())->toBe(4900.0)
-        ->and((float) Wallet::where('store_id', $this->store->id)->first()->balance_held)->toBe(4900.0);
+    // Commission Starter 10 % sur 20 000 d’articles = 2 000, prélevée sur l'acompte
+    expect((float) $o->commission_amount)->toBe(2000.0)
+        ->and($o->sellerNet())->toBe(4300.0)
+        ->and((float) Wallet::where('store_id', $this->store->id)->first()->balance_held)->toBe(4300.0);
 
     $o->update(['status' => 'paid']);
     $this->actingAs($this->seller)->patch(route('orders.updateStatus', $o), ['status' => 'delivered']);

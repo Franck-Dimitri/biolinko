@@ -252,7 +252,7 @@ export function InvoiceMock({ className = '' }) {
             <p className="mt-1 font-mono text-[10px] text-[#8B8A83]">BLK-CMD-7Q2KX9</p>
             <div className="mt-3 space-y-1.5 text-[11px] text-[#5F5E58]">
                 <div className="flex justify-between"><span>1 × Robe pagne</span><span className="tabular-nums">18 000</span></div>
-                <div className="flex justify-between"><span>Frais de service</span><span className="tabular-nums">540</span></div>
+                <div className="flex justify-between"><span>Frais de paiement</span><span className="tabular-nums">540</span></div>
                 <div className="flex justify-between border-t border-black/5 pt-1.5 font-semibold text-[#141412]"><span>Total</span><span className="tabular-nums">18 540 FCFA</span></div>
             </div>
             <div className="mt-3 flex items-center gap-2 text-[10px] text-[#8B8A83]">

@@ -63,7 +63,7 @@ export default function OrderSummary({ items, subtotal, fee, total, discount = 0
                     <div className="flex justify-between text-[#15803D]"><dt>Code {promo.code}</dt><dd className="tabular-nums">−{formatFcfa(promo.discount)}</dd></div>
                 )}
                 <div className="flex justify-between text-[#5F5E58]"><dt className="flex items-center gap-1.5"><Truck className="h-4 w-4" /> Livraison</dt><dd className="tabular-nums">{delivery === undefined || delivery === null ? 'À convenir avec le vendeur' : delivery > 0 ? formatFcfa(delivery) : <span className="text-[#15803D]">Offerte</span>}</dd></div>
-                <div className="flex justify-between text-[#5F5E58]"><dt>Frais de service ({String(feePercent).replace('.', ',')} %)</dt><dd className="tabular-nums">{formatFcfa(fee)}</dd></div>
+                <div className="flex justify-between text-[#5F5E58]"><dt>Frais de paiement ({String(feePercent).replace('.', ',')} %)</dt><dd className="tabular-nums">{formatFcfa(fee)}</dd></div>
                 <div className="flex items-baseline justify-between pt-2 text-[#141412]">
                     <dt className="font-semibold">{balance > 0 ? 'À payer maintenant' : 'Total à payer'}</dt>
                     <motion.dd key={total} initial={{ opacity: 0.4, y: 4 }} animate={{ opacity: 1, y: 0 }} className="text-xl font-bold tabular-nums">{formatFcfa(total)}</motion.dd>

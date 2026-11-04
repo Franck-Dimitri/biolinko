@@ -57,7 +57,7 @@ export default function RefundBox({ order, endpoint, admin = false }) {
 
             {open && (
                 <form onSubmit={submit} className="mt-4 space-y-4">
-                    <Field label="Montant à rembourser" error={errors.amount} hint={`Maximum ${fcfa(refundable)}. Les frais de service payés par le client ne sont pas remboursés.`}>
+                    <Field label="Montant à rembourser" error={errors.amount} hint={`Maximum ${fcfa(refundable)}. Les frais de paiement payés par le client ne sont pas remboursés.`}>
                         <div className="relative">
                             <input type="number" min="1" max={refundable} inputMode="numeric" className={`${fieldClass} pr-16`} value={data.amount} onChange={(e) => setData('amount', e.target.value)} />
                             <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[14px] font-medium text-[#5F5E58]">FCFA</span>

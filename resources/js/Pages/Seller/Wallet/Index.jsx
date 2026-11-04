@@ -12,7 +12,7 @@ import { EASE_OUT } from '@/Components/UI/Motion';
 
 const STATUS = { completed: ['Effectué', 'success'], held: ['En attente', 'neutral'], pending: ['En cours', 'warning'], processing: ['Virement en cours', 'info'], rejected: ['Rejeté', 'danger'] };
 
-function WithdrawDialog({ open, onClose, available, min, feePercent = 3, defaultPhone }) {
+function WithdrawDialog({ open, onClose, available, min, feePercent = 0, defaultPhone }) {
     const { errors } = usePage().props;
     const [amount, setAmount] = useState('');
     const [operator, setOperator] = useState('MTN');
@@ -68,7 +68,9 @@ function WithdrawDialog({ open, onClose, available, min, feePercent = 3, default
 
                 <div className="rounded-2xl bg-[#F6F5F1] p-4 text-[14px] text-[#5F5E58]">
                     <div className="flex justify-between"><span>Montant retiré</span><span className="tabular-nums">{fcfa(value)}</span></div>
-                    <div className="mt-1 flex justify-between"><span>Frais de retrait ({String(feePercent).replace('.', ',')} %)</span><span className="tabular-nums">−{fcfa(fee)}</span></div>
+                    {fee > 0
+                        ? <div className="mt-1 flex justify-between"><span>Frais de retrait ({String(feePercent).replace('.', ',')} %)</span><span className="tabular-nums">−{fcfa(fee)}</span></div>
+                        : <div className="mt-1 flex justify-between"><span>Frais de retrait</span><span className="font-medium text-[#15803D]">Gratuit</span></div>}
                     <div className="mt-2 flex justify-between border-t border-black/[0.08] pt-2 text-[#141412]"><span>Vous recevez</span><strong className="font-medium tabular-nums">{fcfa(Math.max(0, value - fee))}</strong></div>
                 </div>
 
@@ -92,7 +94,7 @@ export default function Index({ ledger = [], monthly = [], pendingWithdrawals = 
     return (
         <AuthenticatedLayout>
             <Head title="Portefeuille, Biolinko" />
-            <WithdrawDialog open={open} onClose={() => setOpen(false)} available={available} min={min} feePercent={metrics?.withdrawal_fee_percent ?? 3} defaultPhone={defaultPhone} />
+            <WithdrawDialog open={open} onClose={() => setOpen(false)} available={available} min={min} feePercent={metrics?.withdrawal_fee_percent ?? 0} defaultPhone={defaultPhone} />
             <div className="space-y-6 pb-12" hidden={open}>
                 <PageHeader title="Portefeuille" sub="Vos revenus, votre solde et vos retraits vers Mobile Money." />
 

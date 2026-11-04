@@ -103,7 +103,7 @@ function NewLinkDialog({ open, onClose, products }) {
                         <div className="flex justify-between text-[#5F5E58]"><dt>Sous-total</dt><dd className="tabular-nums">{fcfa(subtotal)}</dd></div>
                         {off > 0 && <div className="flex justify-between text-[#15803D]"><dt>Remise</dt><dd className="tabular-nums">−{fcfa(off)}</dd></div>}
                         <div className="flex justify-between pt-1 text-[17px] font-medium text-[#141412]"><dt>Prix du lien</dt><dd className="tabular-nums">{fcfa(total)}</dd></div>
-                        <p className="pt-1 text-[12px] text-[#8B8A83]">Le client paie ce prix + {String(usePage().props.payments?.client_fee_percent ?? 3.5).replace('.', ',')} % de frais de service.</p>
+                        <p className="pt-1 text-[12px] text-[#8B8A83]">Le client paie ce prix + {String(usePage().props.payments?.client_fee_percent ?? 3.5).replace('.', ',')} % de frais de paiement Mobile Money.</p>
                     </dl>
                     <Button variant="primary" type="submit" className="w-full" disabled={busy || !Object.keys(items).length || !title}><Link2 className="h-4 w-4" /> Créer le lien</Button>
                 </div>

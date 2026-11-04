@@ -237,7 +237,7 @@ class Order extends Model
     /** Frais de service ajoutés au prix pour le client (arrondis à l'unité supérieure). */
     /**
      * Part payée en ligne quand le client choisit l'acompte : au moins le minimum de paiement en ligne,
-     * jamais plus que la commande. Couvre toujours la commission (acompte ≥ 20 %, commission ≤ 7 %).
+     * jamais plus que la commande. Couvre toujours la commission (acompte ≥ 20 %, commission ≤ 10 %).
      */
     public static function depositFor(float $vendorAmount, int $percent, float $minOnline): float
     {

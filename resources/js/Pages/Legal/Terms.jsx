@@ -35,14 +35,14 @@ const sections = [
     },
     {
         id: 'paiements',
-        title: 'Paiements et frais de service',
+        title: 'Paiements et frais',
         body: (
             <>
                 <p>Les acheteurs paient par Mobile Money (MTN Mobile Money et Orange Money au Cameroun). Le paiement est confirmé lorsque l’acheteur valide la demande sur son téléphone.</p>
                 <ul>
-                    <li>Des <strong>frais de service de 3,5 %</strong> sont ajoutés au montant payé par l’acheteur.</li>
-                    <li>Sur chaque vente payée, Biolinko prélève une <strong>commission</strong> sur le prix fixé par le vendeur, selon sa formule au moment du paiement : <strong>7 %</strong> (Starter), <strong>4 %</strong> (Pro), <strong>2,5 %</strong> (Growth) et <strong>1,5 %</strong> (Business). Le montant net est indiqué sur chaque commande.</li>
-                    <li>Chaque retrait vers Mobile Money supporte des <strong>frais de 3 %</strong>, déduits du montant retiré. Si le virement échoue, la totalité est rendue au solde du vendeur.</li>
+                    <li>Des <strong>frais de paiement Mobile Money de 3,5 %</strong> sont ajoutés au montant payé par l’acheteur. Ils couvrent les frais de l’opérateur de paiement.</li>
+                    <li>Sur chaque vente payée, Biolinko prélève une <strong>commission</strong> sur le prix fixé par le vendeur, selon sa formule au moment du paiement : <strong>10 %</strong> (Starter), <strong>7 %</strong> (Pro), <strong>4 %</strong> (Growth) et <strong>2 %</strong> (Business). Cette commission est la seule rémunération de Biolinko sur la vente : elle ne porte pas sur les frais de livraison, qui reviennent entièrement au vendeur. Le montant net est indiqué sur chaque commande.</li>
+                    <li>Les retraits vers Mobile Money sont <strong>gratuits</strong> : le vendeur reçoit la totalité du montant retiré. Si le virement échoue, la totalité est rendue au solde du vendeur.</li>
                     <li>Les sommes encaissées sont créditées sur le solde Biolinko du vendeur. Chaque vente devient retirable après un <strong>délai de sécurité de 4 jours</strong> suivant le paiement, réduit à <strong>2 jours</strong> une fois que la boutique a livré 10 commandes. Le vendeur peut ensuite en demander le retrait vers son numéro Mobile Money.</li>
                     <li>Pendant ce délai, l’acheteur peut <strong>signaler un problème</strong> depuis la page de suivi de sa commande. La vente concernée reste alors en attente le temps que le vendeur et l’acheteur trouvent une solution entre eux. Elle est libérée dès que l’acheteur indique que le problème est résolu, ou automatiquement si l’acheteur ne réagit pas dans les 3 jours suivant la réponse du vendeur. Biolinko ne tranche pas les litiges entre vendeurs et acheteurs.</li>
                     <li>Une boutique qui reçoit des signalements répétés peut voir ses retraits vérifiés plus attentivement, suspendus, ou son compte fermé en cas d’abus manifeste.</li>

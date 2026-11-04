@@ -52,7 +52,7 @@ test('le webhook Mercy Pay signé valide la commande, une seule fois', function 
     $send(hash_hmac('sha256', $body, 'whsec'))->assertOk();
     $send(hash_hmac('sha256', $body, 'whsec'))->assertOk()->assertJson(['status' => 'duplicate']);
     expect($order->fresh()->payment_status)->toBe('paid');
-    expect((float) Wallet::first()->balance_held)->toBe(9300.0);
+    expect((float) Wallet::first()->balance_held)->toBe(9000.0);
 });
 
 test('un virement Mercy Pay refusé rend l’argent au vendeur', function () {

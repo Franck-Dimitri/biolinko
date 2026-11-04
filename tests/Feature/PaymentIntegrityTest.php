@@ -31,7 +31,7 @@ test('un paiement validé deux fois ne crédite qu’une fois', function () {
     expect($this->order->markAsPaid())->toBeTrue();
     expect($this->order->fresh()->markAsPaid())->toBeFalse();
 
-    expect((float) Wallet::first()->balance_held)->toBe(18600.0); // 20 000 − 7 % de commission Starter, en attente pendant le délai
+    expect((float) Wallet::first()->balance_held)->toBe(18000.0); // 20 000 − 10 % de commission Starter, en attente pendant le délai
     expect((float) Wallet::first()->balance_available)->toBe(0.0);
     expect($this->product->fresh()->stock)->toBe(3);
     $pivot = $this->store->customers()->first()->pivot;

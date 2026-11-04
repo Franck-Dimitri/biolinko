@@ -21,7 +21,7 @@ beforeEach(function () {
         'payment_phone' => '237677123456', 'payment_operator' => 'MTN', 'city' => 'Douala', 'address_details' => 'Akwa',
         'price_vendor' => 10000, 'saas_margin' => 350, 'api_fee' => 0, 'total_client' => 10350, 'status' => 'pending', 'payment_status' => 'pending',
     ]);
-    $this->order->markAsPaid(); // Starter 7 % : commission 700, 9 300 en attente
+    $this->order->markAsPaid(); // Starter 10 % : commission 1 000, 9 000 en attente
     $this->order->refresh();
 });
 
@@ -36,7 +36,7 @@ test('remboursement total : virement au client, vendeur débité, commission ren
         ->assertSessionHasNoErrors();
 
     $r = Refund::first();
-    expect((float) $r->amount)->toBe(10000.0)->and((float) $r->commission_refunded)->toBe(700.0)->and((float) $r->seller_debit)->toBe(9300.0)
+    expect((float) $r->amount)->toBe(10000.0)->and((float) $r->commission_refunded)->toBe(1000.0)->and((float) $r->seller_debit)->toBe(9000.0)
         ->and($r->status)->toBe('processing');
     $o = $this->order->fresh();
     expect($o->payment_status)->toBe('refunded')->and($o->status)->toBe('cancelled')->and((float) $o->commission_amount)->toBe(0.0);
@@ -52,12 +52,12 @@ test('remboursement partiel : la commission est rendue au prorata et la vente re
     $this->actingAs($this->seller)->post(route('orders.refund', $this->order), ['amount' => 4000, 'reason' => 'Un article manquant']);
 
     $o = $this->order->fresh();
-    expect($o->payment_status)->toBe('paid')->and((float) $o->refunded_amount)->toBe(4000.0)->and((float) $o->commission_amount)->toBe(420.0)
-        ->and($o->sellerNet())->toBe(5580.0)
-        ->and((float) $this->wallet->fresh()->balance_held)->toBe(5580.0);
+    expect($o->payment_status)->toBe('paid')->and((float) $o->refunded_amount)->toBe(4000.0)->and((float) $o->commission_amount)->toBe(600.0)
+        ->and($o->sellerNet())->toBe(5400.0)
+        ->and((float) $this->wallet->fresh()->balance_held)->toBe(5400.0);
 
     $o->releaseFunds();
-    expect((float) $this->wallet->fresh()->balance_available)->toBe(5580.0)->and((float) $this->wallet->fresh()->balance_held)->toBe(0.0);
+    expect((float) $this->wallet->fresh()->balance_available)->toBe(5400.0)->and((float) $this->wallet->fresh()->balance_held)->toBe(0.0);
 });
 
 test('un virement échoué remet tout en place', function () {
@@ -67,8 +67,8 @@ test('un virement échoué remet tout en place', function () {
 
     $o = $this->order->fresh();
     expect($o->payment_status)->toBe('paid')->and($o->status)->toBe('paid')->and((float) $o->refunded_amount)->toBe(0.0)
-        ->and((float) $o->commission_amount)->toBe(700.0)
-        ->and((float) $this->wallet->fresh()->balance_held)->toBe(9300.0);
+        ->and((float) $o->commission_amount)->toBe(1000.0)
+        ->and((float) $this->wallet->fresh()->balance_held)->toBe(9000.0);
 });
 
 test('un refus immédiat de l’agrégateur annule le remboursement', function () {

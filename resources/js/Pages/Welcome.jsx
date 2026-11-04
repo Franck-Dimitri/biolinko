@@ -16,7 +16,7 @@ const NAV = [['#produit', 'Produit'], ['#demarrer', 'Comment ça marche'], ['#ta
 // Les nombres viennent de User::PLAN_LIMITS (props partagées) pour rester exacts
 const pct = (n) => `${String(n ?? '').replace('.', ',')} %`;
 const planFeatures = (L, C = {}) => ({
-    starter: [`Commission de ${pct(C.starter)} par vente`, `Jusqu'à ${L.starter?.products} produits`, `${L.starter?.smartlinks} liens de paiement`, 'Paiements MTN MoMo et Orange Money', 'Factures automatiques'],
+    starter: [`Commission de ${pct(C.starter)} par vente, tout compris`, `Retraits gratuits`, `Jusqu'à ${L.starter?.products} produits`, `${L.starter?.smartlinks} liens de paiement`, 'Paiements MTN MoMo et Orange Money', 'Factures automatiques'],
     pro: [`Commission réduite à ${pct(C.pro)}`, `Jusqu'à ${L.pro?.products} produits`, 'Tailles, couleurs et promotions', 'Factures à votre marque', 'Pixels Facebook et TikTok', `${L.pro?.smartlinks} liens de paiement`, '4 campagnes WhatsApp en 1 clic / mois'],
     growth: ['Tout Pro, plus :', `Commission réduite à ${pct(C.growth)}`, `Jusqu'à ${L.growth?.products} produits`, 'Liens de paiement illimités', '10 campagnes WhatsApp en 1 clic / mois', 'Support prioritaire'],
     business: ['Tout Growth, plus :', `Commission réduite à ${pct(C.business)}`, 'Produits et stock illimités', 'Export comptable', '25 campagnes WhatsApp en 1 clic / mois', 'Conseiller dédié'],
@@ -31,8 +31,8 @@ const PLANS = [
 
 const FAQ = [
     ['Que puis-je faire avec Biolinko ?', 'Créer votre boutique en ligne, gérer votre catalogue et vos stocks, suivre vos commandes, envoyer des factures, garder un fichier client, lancer des campagnes WhatsApp, partager des liens de paiement et encaisser par Mobile Money.'],
-    ['Quand est-ce que je reçois mon argent ?', 'Chaque vente payée apparaît tout de suite dans votre solde, puis devient retirable après un court délai de sécurité : 4 jours, puis 2 jours une fois que vous avez livré 10 commandes. Vous la retirez vers MTN MoMo ou Orange Money (3 % de frais de retrait).'],
-    ['Combien coûte chaque vente ?', 'L’acheteur paie 3,5 % de frais de service en plus de votre prix. De votre côté, Biolinko prélève une commission qui baisse avec votre formule : 7 % en Starter, 4 % en Pro, 2,5 % en Growth et 1,5 % en Business.'],
+    ['Quand est-ce que je reçois mon argent ?', 'Chaque vente payée apparaît tout de suite dans votre solde, puis devient retirable après un court délai de sécurité : 4 jours, puis 2 jours une fois que vous avez livré 10 commandes. Vous la retirez gratuitement vers MTN MoMo ou Orange Money.'],
+    ['Combien coûte chaque vente ?', 'Une seule commission, rien d’autre : 10 % en Starter, 7 % en Pro, 4 % en Growth et 2 % en Business. Pas de commission sur la livraison, et les retraits sont gratuits. L’acheteur paie 3,5 % de frais de paiement Mobile Money en plus de votre prix.'],
     ['Mes clients doivent-ils installer une application ?', 'Non. Ils ouvrent votre lien, choisissent leurs articles et valident la demande de paiement sur leur téléphone.'],
     ['Puis-je utiliser mon logo et mes couleurs ?', 'Oui. Logo, couleurs, catégories et liens vers vos réseaux se règlent en quelques minutes depuis le tableau de bord.'],
     ['Puis-je changer de formule ou arrêter ?', 'Oui, sans engagement. Vous pouvez monter en gamme ou revenir au Starter gratuit à tout moment.'],
@@ -377,7 +377,7 @@ function Pricing({ auth }) {
                         );
                     })}
                 </div>
-                <p className="mt-6 text-[14px] text-[#8B8A83]">Toutes les formules : {pct(pay.client_fee_percent)} de frais de service payés par l’acheteur, {pct(pay.withdrawal_fee_percent)} de frais par retrait. Sans engagement.</p>
+                <p className="mt-6 text-[14px] text-[#8B8A83]">Toutes les formules : retraits gratuits, aucune commission sur la livraison. L’acheteur paie {pct(pay.client_fee_percent)} de frais de paiement Mobile Money. Sans engagement.</p>
             </div>
         </section>
     );

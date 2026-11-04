@@ -177,7 +177,7 @@
                         <tr><td class="muted">Livraison</td><td class="num">{{ $money($order->delivery_fee) }}</td></tr>
                     @endif
                     @if ($fees > 0)
-                        <tr><td class="muted">Frais de service</td><td class="num">{{ $money($fees) }}</td></tr>
+                        <tr><td class="muted">Frais de paiement</td><td class="num">{{ $money($fees) }}</td></tr>
                     @endif
                     <tr class="grand"><td>{{ (float) $order->balance_due > 0 ? ($isPaid ? 'Acompte payé' : 'Acompte à payer') : ($isPaid ? 'Total payé' : 'Total à payer') }}</td><td class="num">{{ $money($order->total_client) }}</td></tr>
                     @if ((float) $order->balance_due > 0)
