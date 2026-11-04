@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Heart, Package, Plus } from 'lucide-react';
-import { EASE_OUT } from '@/Components/Motion';
+import { EASE_OUT } from '@/Components/UI/Motion';
 
 export function productImage(product) {
     return product?.image_url || product?.images?.[0] || null;

@@ -1,5 +1,5 @@
 import { Clock, SearchX, ServerCrash, ShieldAlert, Wrench } from 'lucide-react';
-import ErrorShell from '@/Components/ErrorShell';
+import ErrorShell from '@/Layouts/ErrorShell';
 
 const ERRORS = {
     404: [SearchX, 'Page introuvable', 'La page que vous cherchez n’existe pas ou a été déplacée.'],

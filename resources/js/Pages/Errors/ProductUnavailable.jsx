@@ -1,5 +1,5 @@
 import { PackageSearch } from 'lucide-react';
-import ErrorShell from '@/Components/ErrorShell';
+import ErrorShell from '@/Layouts/ErrorShell';
 
 export default function ProductUnavailable({ store }) {
     const storeName = store?.name || 'la boutique';

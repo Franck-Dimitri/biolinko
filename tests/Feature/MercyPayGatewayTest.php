@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
     config(['payments.mercypay.key' => 'mp_sandbox_test', 'payments.mercypay.webhook_secret' => 'whsec', 'payments.driver' => 'mercypay', 'payments.payout_driver' => 'mercypay']);
-    $this->mock(\App\Services\WhatsappGatewayService::class)->shouldIgnoreMissing();
+    $this->mock(\App\Services\Whatsapp\WhatsappGatewayService::class)->shouldIgnoreMissing();
 });
 
 test('un paiement part chez Mercy Pay au bon format, avec l’idempotence', function () {

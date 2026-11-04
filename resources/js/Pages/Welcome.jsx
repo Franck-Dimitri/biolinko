@@ -2,7 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { ArrowRight, BarChart3, Check, Megaphone, Menu, Package, Plus, Receipt, ShoppingBag, Store, Users, Wallet, X } from 'lucide-react';
-import { EASE_OUT } from '@/Components/Motion';
+import { EASE_OUT } from '@/Components/UI/Motion';
 import Footer from '@/Components/Landing/Footer';
 import Countries from '@/Components/Landing/Countries';
 import {

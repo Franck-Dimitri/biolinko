@@ -6,9 +6,9 @@ use App\Models\Order;
 use App\Models\Refund;
 use App\Models\Subscription;
 use App\Models\Withdrawal;
-use App\Payments\OrderPayments;
+use App\Payments\Orders\OrderPayments;
 use App\Payments\PaymentManager;
-use App\Payments\SubscriptionPayments;
+use App\Payments\Subscriptions\SubscriptionPayments;
 use Illuminate\Console\Command;
 
 /**

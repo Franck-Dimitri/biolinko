@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Payments\SubscriptionRenewals;
+use App\Payments\Subscriptions\SubscriptionRenewals;
 use Illuminate\Console\Command;
 
 class RenewSubscriptions extends Command

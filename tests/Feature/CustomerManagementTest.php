@@ -72,7 +72,8 @@ test('customer lookup API endpoint returns saved customer profile', function () 
 
     $this->get(route('checkout.lookupCustomer', ['phone' => '674455667', 'store_id' => $store->id]))
         ->assertOk()
-        ->assertJson(['found' => true, 'customer' => ['name' => 'Bob Testeur', 'delivery_address' => 'Yaoundé Bastos']])
+        ->assertJson(['found' => true, 'customer' => ['name' => 'Bob Testeur']])
+        ->assertJsonMissingPath('customer.delivery_address')
         ->assertJsonMissingPath('customer.email');
 
     // Une autre boutique, ou un numéro partiel, ne révèle rien

@@ -9,25 +9,25 @@ use App\Http\Controllers\Admin\AdminTransactionController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminWalletController;
 use App\Http\Controllers\Admin\AdminWithdrawalController;
-use App\Http\Controllers\AppearanceController;
-use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\HrSkillsPayWebhookController;
-use App\Http\Controllers\MarketingController;
-use App\Http\Controllers\OrderController;
-use App\Http\Controllers\OrderTrackingController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\SalesReportController;
-use App\Http\Controllers\SellerInvoiceController;
-use App\Http\Controllers\SmartLinkController;
-use App\Http\Controllers\SellingController;
-use App\Http\Controllers\StoreController;
-use App\Http\Controllers\StorefrontController;
-use App\Http\Controllers\SubscriptionController;
-use App\Http\Controllers\ToolPluginController;
-use App\Http\Controllers\WalletController;
+use App\Http\Controllers\Seller\AppearanceController;
+use App\Http\Controllers\Storefront\CheckoutController;
+use App\Http\Controllers\Seller\CustomerController;
+use App\Http\Controllers\Seller\DashboardController;
+use App\Http\Controllers\Webhooks\HrSkillsPayWebhookController;
+use App\Http\Controllers\Seller\MarketingController;
+use App\Http\Controllers\Seller\OrderController;
+use App\Http\Controllers\Storefront\OrderTrackingController;
+use App\Http\Controllers\Seller\ProductController;
+use App\Http\Controllers\Account\ProfileController;
+use App\Http\Controllers\Seller\SalesReportController;
+use App\Http\Controllers\Seller\SellerInvoiceController;
+use App\Http\Controllers\Seller\SmartLinkController;
+use App\Http\Controllers\Seller\SellingController;
+use App\Http\Controllers\Seller\StoreController;
+use App\Http\Controllers\Storefront\StorefrontController;
+use App\Http\Controllers\Seller\SubscriptionController;
+use App\Http\Controllers\Seller\ToolPluginController;
+use App\Http\Controllers\Seller\WalletController;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -171,7 +171,7 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
     Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('seller.subscriptions.index');
     Route::post('/subscriptions/subscribe', [SubscriptionController::class, 'subscribe'])->name('seller.subscriptions.subscribe');
     Route::post('/subscriptions/auto-renew', [SubscriptionController::class, 'toggleAutoRenew'])->name('seller.subscriptions.autoRenew');
-    Route::get('/subscriptions/status/{reference}', [SubscriptionController::class, 'checkStatus'])->name('seller.subscriptions.status');
+    Route::get('/subscriptions/status/{reference}', [SubscriptionController::class, 'checkStatus'])->middleware('throttle:30,1')->name('seller.subscriptions.status');
 });
 
 // Shared User Profile Routes
@@ -182,19 +182,19 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Webhook Endpoints (CSRF Exempted in bootstrap/app.php)
-Route::post('/api/webhooks/mercypay', [\App\Http\Controllers\MercyPayWebhookController::class, 'handle'])->name('webhooks.mercypay');
-Route::post('/api/webhooks/pawapay/deposits', [\App\Http\Controllers\PawapayWebhookController::class, 'deposits'])->name('webhooks.pawapay.deposits');
-Route::post('/api/webhooks/pawapay/payouts', [\App\Http\Controllers\PawapayWebhookController::class, 'payouts'])->name('webhooks.pawapay.payouts');
-Route::post('/api/webhooks/pawapay/refunds', [\App\Http\Controllers\PawapayWebhookController::class, 'refunds'])->name('webhooks.pawapay.refunds');
+Route::post('/api/webhooks/mercypay', [\App\Http\Controllers\Webhooks\MercyPayWebhookController::class, 'handle'])->name('webhooks.mercypay');
+Route::post('/api/webhooks/pawapay/deposits', [\App\Http\Controllers\Webhooks\PawapayWebhookController::class, 'deposits'])->name('webhooks.pawapay.deposits');
+Route::post('/api/webhooks/pawapay/payouts', [\App\Http\Controllers\Webhooks\PawapayWebhookController::class, 'payouts'])->name('webhooks.pawapay.payouts');
+Route::post('/api/webhooks/pawapay/refunds', [\App\Http\Controllers\Webhooks\PawapayWebhookController::class, 'refunds'])->name('webhooks.pawapay.refunds');
 Route::post('/api/webhooks/hrskills-pay', [HrSkillsPayWebhookController::class, 'handle'])->name('webhooks.hrskills-pay');
-Route::get('/api/webhooks/whatsapp-cloud', [\App\Http\Controllers\WhatsappCloudWebhookController::class, 'verify'])->name('webhooks.whatsapp-cloud.verify');
-Route::post('/api/webhooks/whatsapp-cloud', [\App\Http\Controllers\WhatsappCloudWebhookController::class, 'handle'])->name('webhooks.whatsapp-cloud');
+Route::get('/api/webhooks/whatsapp-cloud', [\App\Http\Controllers\Webhooks\WhatsappCloudWebhookController::class, 'verify'])->name('webhooks.whatsapp-cloud.verify');
+Route::post('/api/webhooks/whatsapp-cloud', [\App\Http\Controllers\Webhooks\WhatsappCloudWebhookController::class, 'handle'])->name('webhooks.whatsapp-cloud');
 
 // Public Client Fast Checkout & Order Tracking & Customer Lookup
 Route::get('/checkout/lookup-customer', [CheckoutController::class, 'lookupCustomer'])->middleware('throttle:20,1')->name('checkout.lookupCustomer');
 Route::post('/checkout/promo', [CheckoutController::class, 'checkPromo'])->middleware('throttle:20,1')->name('checkout.promo');
 Route::post('/checkout', [CheckoutController::class, 'process'])->middleware('throttle:10,1')->name('checkout.process');
-Route::get('/checkout/status/{reference}', [CheckoutController::class, 'checkStatus'])->name('checkout.status');
+Route::get('/checkout/status/{reference}', [CheckoutController::class, 'checkStatus'])->middleware('throttle:30,1')->name('checkout.status');
 Route::get('/track/{tracking_code}', [OrderTrackingController::class, 'show'])->name('order.track');
 Route::get('/track/{tracking_code}/facture', [OrderTrackingController::class, 'invoice'])->middleware('throttle:20,1')->name('order.invoice');
 Route::post('/track/{tracking_code}/report', [OrderTrackingController::class, 'report'])->middleware('throttle:3,1')->name('order.report');
@@ -209,8 +209,8 @@ Route::get('/{store_slug}/pay/sl/{code}', [SmartLinkController::class, 'showPubl
 Route::post('/pay/{code}/checkout', [SmartLinkController::class, 'processPublicCheckout'])->middleware('throttle:10,1')->name('smartlink.checkout');
 
 // Référencement : plan du site et robots.txt (avant les routes de boutique)
-Route::get('/sitemap.xml', [\App\Http\Controllers\SeoController::class, 'sitemap'])->name('seo.sitemap');
-Route::get('/robots.txt', [\App\Http\Controllers\SeoController::class, 'robots'])->name('seo.robots');
+Route::get('/sitemap.xml', [\App\Http\Controllers\Storefront\SeoController::class, 'sitemap'])->name('seo.sitemap');
+Route::get('/robots.txt', [\App\Http\Controllers\Storefront\SeoController::class, 'robots'])->name('seo.robots');
 
 // Public Legal Pages (Terms, Privacy, Cookies)
 Route::get('/conditions-generales', function () {

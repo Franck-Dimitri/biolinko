@@ -211,12 +211,12 @@ class Order extends Model
         if ($paid) {
             $this->refresh();
             try {
-                app(\App\Services\OrderInvoiceService::class)->sendOrderInvoiceEmails($this);
+                app(\App\Services\Sales\OrderInvoiceService::class)->sendOrderInvoiceEmails($this);
             } catch (\Throwable $e) {
                 Log::warning('Invoice emails failed', ['order_id' => $this->id, 'err' => $e->getMessage()]);
             }
             try {
-                app(\App\Services\WhatsappGatewayService::class)->notifyOrderPaid($this);
+                app(\App\Services\Whatsapp\WhatsappGatewayService::class)->notifyOrderPaid($this);
             } catch (\Throwable $e) {
                 Log::warning('WhatsApp notifyOrderPaid failed', ['order_id' => $this->id, 'err' => $e->getMessage()]);
             }

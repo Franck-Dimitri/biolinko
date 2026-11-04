@@ -1,4 +1,4 @@
-import { WhatsappIcon } from '@/Components/BrandIcons';
+import { WhatsappIcon } from '@/Components/UI/BrandIcons';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';

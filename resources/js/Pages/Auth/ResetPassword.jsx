@@ -1,5 +1,5 @@
-import InputError from '@/Components/InputError';
-import AuthShell, { fieldClass, labelClass, primaryButtonClass } from '@/Components/AuthShell';
+import InputError from '@/Components/UI/InputError';
+import AuthShell, { fieldClass, labelClass, primaryButtonClass } from '@/Layouts/AuthShell';
 import { Head, useForm } from '@inertiajs/react';
 import { ArrowRight, Loader2 } from 'lucide-react';
 

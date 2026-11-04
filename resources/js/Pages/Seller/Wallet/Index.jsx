@@ -8,7 +8,7 @@ import { OperatorLogo } from '@/Components/Landing/Illustrations';
 import {
     Badge, Button, Card, CardHeader, SubPage, Empty, Field, PageHeader, Stat, Tabs, dateTime, fcfa, fieldClass, reveal,
 } from '@/Components/Dashboard/UI';
-import { EASE_OUT } from '@/Components/Motion';
+import { EASE_OUT } from '@/Components/UI/Motion';
 
 const STATUS = { completed: ['Effectué', 'success'], held: ['En attente', 'neutral'], pending: ['En cours', 'warning'], processing: ['Virement en cours', 'info'], rejected: ['Rejeté', 'danger'] };
 

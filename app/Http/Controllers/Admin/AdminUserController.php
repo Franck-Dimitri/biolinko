@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\ModerationNotificationMail;
 use App\Models\User;
-use App\Services\WhatsappGatewayService;
+use App\Services\Whatsapp\WhatsappGatewayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;

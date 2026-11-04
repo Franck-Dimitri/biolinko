@@ -1,6 +1,6 @@
 import HeaderBoutique from '@/Components/Storefront/HeaderBoutique';
 import FooterBoutique from '@/Components/Storefront/FooterBoutique';
-import { Toaster } from 'sonner';
+import AppToaster from '@/Components/UI/AppToaster';
 import useCart from '@/Components/Storefront/useCart';
 import { MotionConfig } from 'framer-motion';
 import { Lock } from 'lucide-react';
@@ -40,7 +40,7 @@ export default function StorefrontLayout({
         <MotionConfig reducedMotion="user">
         <div className="min-h-screen bg-white text-[#141412] font-poppins antialiased flex flex-col justify-between selection:bg-brand-honey selection:text-brand-ink">
             {/* Sonner Toast Provider */}
-            <Toaster position="top-center" richColors closeButton />
+            <AppToaster />
 
             {/* Police choisie par le vendeur (Poppins est déjà chargée par la page) */}
             {store?.font_family && store.font_family !== 'Poppins' && (

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { EASE_OUT } from '@/Components/Motion';
+import { EASE_OUT } from '@/Components/UI/Motion';
 import { OperatorLogo } from '@/Components/Landing/Illustrations';
 
 // Le paiement est ouvert au Cameroun (HrSkillsPayService : pays CM, devise XAF).

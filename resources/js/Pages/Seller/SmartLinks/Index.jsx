@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Copy, Eye, Link2, Minus, Package, Plus, ShoppingBag, Trash2, TrendingUp } from 'lucide-react';
-import { WhatsappIcon } from '@/Components/BrandIcons';
+import { WhatsappIcon } from '@/Components/UI/BrandIcons';
 import { Badge, Button, SubPage, Empty, Field, PageHeader, PlanLock, SearchInput, Stat, Tabs, fcfa, fieldClass, reveal, shortDate } from '@/Components/Dashboard/UI';
 
 const linkUrl = (code) => `${window.location.origin}/pay/${code}`;

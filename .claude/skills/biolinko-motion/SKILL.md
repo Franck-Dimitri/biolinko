@@ -26,7 +26,7 @@ Lists: stagger with `transition={{ delay: index * 0.05 }}` or variants with `sta
 
 ## Public pages: shared motion primitives
 
-Landing and storefront pages use `resources/js/Components/Motion.jsx` — reuse it instead of hand-writing variants:
+Landing and storefront pages use `resources/js/Components/UI/Motion.jsx` — reuse it instead of hand-writing variants:
 
 - `Reveal` (fade + rise on scroll, once), `Stagger` + `StaggerItem` (cascades), `Parallax` (scroll-linked translate; give the child extra height/negative margin so no gap shows), `Marquee` (infinite strip, pauses on hover), `CountUp` (number tween in view), `EASE_OUT`.
 - Wrap page roots in `<MotionConfig reducedMotion="user">` (done in `Welcome` and `StorefrontLayout`).

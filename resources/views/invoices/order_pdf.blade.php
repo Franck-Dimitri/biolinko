@@ -1,7 +1,7 @@
 @php
     $store = $order->store;
     $seller = $store?->user;
-    $accent = $store->theme_color ?? '#141412';
+    $accent = preg_match('/^#[0-9A-Fa-f]{6}$/', (string) ($store->theme_color ?? '')) ? $store->theme_color : '#141412';
     $number = $order->invoice_number ?: $order->tracking_code;
     $issued = $order->invoice_issued_at ?? $order->paid_at ?? $order->created_at;
     $isPaid = $order->payment_status === 'paid' || in_array($order->status, ['paid', 'in_delivery', 'delivered'], true);

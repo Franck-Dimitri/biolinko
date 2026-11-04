@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform } from 'framer-motion';
 import { BarChart3, Check, Link2, Package, Receipt, ShoppingBag, Smartphone, Store, Users, Wallet } from 'lucide-react';
-import { FacebookIcon, InstagramIcon, TiktokIcon, WhatsappIcon } from '@/Components/BrandIcons';
-import { EASE_OUT } from '@/Components/Motion';
+import { FacebookIcon, InstagramIcon, TiktokIcon, WhatsappIcon } from '@/Components/UI/BrandIcons';
+import { EASE_OUT } from '@/Components/UI/Motion';
 
 /* Illustrations de la landing : de vraies interfaces Biolinko construites en HTML, animées sobrement. */
 

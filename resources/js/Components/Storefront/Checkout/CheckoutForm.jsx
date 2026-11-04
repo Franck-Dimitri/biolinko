@@ -3,7 +3,7 @@ import axios from 'axios';
 import { usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, Check, ChevronDown, Lock, RefreshCw, ShieldCheck, Sparkles, Tag, X } from 'lucide-react';
-import { EASE_OUT } from '@/Components/Motion';
+import { EASE_OUT } from '@/Components/UI/Motion';
 import { formatFcfa, serviceFee, useServiceFeePercent } from '@/Components/Storefront/useCart';
 import { contrastColor } from '@/Components/Storefront/theme';
 import PaymentStatus from '@/Components/Storefront/Checkout/PaymentStatus';
@@ -48,20 +48,20 @@ function readSaved() {
     try { return JSON.parse(localStorage.getItem(CUSTOMER_KEY) || '{}') || {}; } catch (e) { return {}; }
 }
 
-const fieldClass = 'h-12 w-full rounded-full border border-black/[0.08] bg-white px-3.5 text-[16px] text-[#141412] placeholder:text-[#5F5E58]/60 focus:border-black/40 focus:ring-0';
+const fieldClass = 'h-10 w-full rounded-full border border-black/[0.08] bg-white px-3.5 text-sm text-[#141412] placeholder:text-[#5F5E58]/60 focus:border-black/40 focus:ring-0';
 const labelClass = 'mb-1.5 block text-sm font-medium text-[#141412]';
 
 function Step({ n, title, sub, done, primaryColor, primaryTextColor, children, delay = 0 }) {
     return (
         <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: EASE_OUT, delay }}
-            className="space-y-5 rounded-3xl border border-black/[0.08] bg-white p-5 sm:p-6">
+            className="space-y-5 rounded-2xl border border-black/[0.08] bg-white p-4 sm:p-5">
             <header className="flex items-center gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-semibold"
                     style={done ? { backgroundColor: '#16A34A', color: '#fff' } : { backgroundColor: primaryColor, color: primaryTextColor }}>
                     {done ? <Check className="h-4 w-4" /> : n}
                 </span>
                 <div className="min-w-0">
-                    <h2 className="text-lg font-semibold text-[#141412]">{title}</h2>
+                    <h2 className="text-base font-semibold text-[#141412]">{title}</h2>
                     {sub && <p className="text-sm text-[#5F5E58]">{sub}</p>}
                 </div>
             </header>
@@ -247,12 +247,12 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
 
     return (
         <>
-            <form onSubmit={submit} noValidate className="grid items-start gap-6 pb-28 lg:grid-cols-12 lg:gap-8 lg:pb-0">
+            <form onSubmit={submit} noValidate className="grid items-start gap-6 pb-28 lg:grid-cols-12 lg:gap-6 lg:pb-0">
                 {summary && (
                     <div className="lg:order-2 lg:col-span-5 lg:sticky lg:top-24">
                         {/* Mobile : récapitulatif replié pour garder le formulaire en vue */}
                         <button type="button" onClick={() => setShowSummary((v) => !v)} aria-expanded={showSummary}
-                            className="flex w-full items-center justify-between rounded-3xl border border-black/[0.08] bg-[#F6F5F1] px-4 py-3.5 text-[15px] text-[#141412] lg:hidden">
+                            className="flex w-full items-center justify-between rounded-2xl border border-black/[0.08] bg-[#F6F5F1] px-4 py-3.5 text-sm text-[#141412] lg:hidden">
                             <span className="flex items-center gap-2 font-medium">
                                 <ChevronDown className={`h-4 w-4 transition-transform ${showSummary ? 'rotate-180' : ''}`} />
                                 {showSummary ? 'Masquer le récapitulatif' : 'Voir le récapitulatif'}
@@ -274,7 +274,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                     <AnimatePresence>
                         {welcome && (
                             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                                className="flex items-center gap-2 rounded-xl bg-[#FFF8D6] px-4 py-3 text-[15px] text-[#141412]">
+                                className="flex items-center gap-2 rounded-xl bg-[#FFF8D6] px-4 py-3 text-sm text-[#141412]">
                                 <Sparkles className="h-4 w-4 shrink-0" /> Content de vous revoir, {welcome} ! Vos informations sont pré-remplies.
                             </motion.div>
                         )}
@@ -284,10 +284,10 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                         <div>
                             <label htmlFor="co-phone" className="sr-only">Numéro Mobile Money</label>
                             <div className="flex gap-2">
-                                <span className="flex h-14 items-center rounded-full border border-black/[0.08] bg-[#F6F5F1] px-3.5 text-[17px] text-[#5F5E58]">+237</span>
+                                <span className="flex h-11 items-center rounded-full border border-black/[0.08] bg-[#F6F5F1] px-3.5 text-[15px] text-[#5F5E58]">+237</span>
                                 <input id="co-phone" type="tel" inputMode="numeric" autoComplete="tel-national" required autoFocus={!form.customer_phone}
                                     placeholder="6XX XX XX XX" value={form.customer_phone} onChange={(e) => onPhone(e.target.value)}
-                                    className={`${fieldClass} h-14 text-[19px] tracking-wide`} />
+                                    className={`${fieldClass} h-11 text-base tracking-wide`} />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Opérateur Mobile Money">
@@ -298,7 +298,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                                         onClick={() => { set('operator', op.id); setOperatorTouched(true); }}
                                         className={`relative flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors ${on ? 'border-black/70 bg-[#F6F5F1]' : 'border-black/[0.08] hover:border-black/25'}`}>
                                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold" style={{ backgroundColor: op.bg, color: op.fg }}>{op.short}</span>
-                                        <span className="min-w-0 text-[15px] font-medium leading-tight text-[#141412]">{op.label}</span>
+                                        <span className="min-w-0 text-sm font-medium leading-tight text-[#141412]">{op.label}</span>
                                         {on && <motion.span layoutId="op-check" className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#141412]"><Check className="h-3 w-3 text-white" /></motion.span>}
                                     </motion.button>
                                 );
@@ -306,7 +306,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                         </div>
                         {phoneOk && !operatorTouched && <p className="-mt-2 text-sm text-[#5F5E58]">{operator.label} détecté d'après votre numéro.</p>}
                         <div className="rounded-xl bg-[#F6F5F1] p-3.5">
-                            <label className="flex items-start gap-3 text-[15px] text-[#141412]">
+                            <label className="flex items-start gap-3 text-sm text-[#141412]">
                                 <input type="checkbox" checked={sameWhatsapp} onChange={(e) => setSameWhatsapp(e.target.checked)} className="mt-0.5 h-5 w-5 rounded border-black/25 text-[#141412] focus:ring-0" />
                                 <span>Ce numéro est aussi mon WhatsApp<span className="block text-sm text-[#5F5E58]">Le vendeur vous y contacte pour la livraison.</span></span>
                             </label>
@@ -314,7 +314,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                                 <div className="mt-3">
                                     <label htmlFor="co-whatsapp" className={labelClass}>Votre numéro WhatsApp</label>
                                     <div className="flex gap-2">
-                                        <span className="flex h-12 items-center rounded-full border border-black/[0.08] bg-white px-3.5 text-[16px] text-[#5F5E58]">+237</span>
+                                        <span className="flex h-10 items-center rounded-full border border-black/[0.08] bg-white px-3.5 text-sm text-[#5F5E58]">+237</span>
                                         <input id="co-whatsapp" type="tel" inputMode="numeric" autoComplete="tel-national" placeholder="6XX XX XX XX" value={whatsapp}
                                             onChange={(e) => setWhatsapp(formatLocalPhone(e.target.value))} className={fieldClass} />
                                     </div>
@@ -335,7 +335,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                                     const on = !otherCity && form.delivery_city === c;
                                     return (
                                         <button key={c} type="button" aria-pressed={on} onClick={() => { setOtherCity(false); set('delivery_city', c); }}
-                                            className={`h-10 rounded-xl border px-3.5 text-[15px] transition-colors ${on ? 'border-transparent font-semibold' : 'border-black/[0.08] text-[#141412] hover:border-black/30'}`}
+                                            className={`h-10 rounded-xl border px-3.5 text-sm transition-colors ${on ? 'border-transparent font-semibold' : 'border-black/[0.08] text-[#141412] hover:border-black/30'}`}
                                             style={on ? { backgroundColor: primaryColor, color: primaryTextColor } : undefined}>
                                             {c}
                                             {hasZones && (() => { const f = deliveryFor(store, c, subtotal - discount); return <span className="ml-1.5 text-[13px] font-normal opacity-75">{f > 0 ? `+${Number(f).toLocaleString('fr-FR')} F` : 'gratuit'}</span>; })()}
@@ -343,7 +343,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                                     );
                                 })}
                                 {othersDelivered && <button type="button" aria-pressed={otherCity} onClick={() => { setOtherCity(true); set('delivery_city', ''); }}
-                                    className={`h-10 rounded-xl border px-3.5 text-[15px] transition-colors ${otherCity ? 'border-black/60 bg-[#F6F5F1] font-semibold text-[#141412]' : 'border-black/[0.08] text-[#141412] hover:border-black/30'}`}>
+                                    className={`h-10 rounded-xl border px-3.5 text-sm transition-colors ${otherCity ? 'border-black/60 bg-[#F6F5F1] font-semibold text-[#141412]' : 'border-black/[0.08] text-[#141412] hover:border-black/30'}`}>
                                     Autre ville
                                     {hasZones && <span className="ml-1.5 text-[13px] font-normal opacity-75">{Number(store.delivery_other_fee) > 0 ? `+${Number(store.delivery_other_fee).toLocaleString('fr-FR')} F` : 'gratuit'}</span>}
                                 </button>}
@@ -372,15 +372,15 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                                 </div>
                             </div>
                         ) : (
-                            <button type="button" onClick={() => setShowExtras(true)} className="text-[15px] font-medium text-[#141412] underline underline-offset-4">
+                            <button type="button" onClick={() => setShowExtras(true)} className="text-sm font-medium text-[#141412] underline underline-offset-4">
                                 + Ajouter un e-mail ou une note au vendeur
                             </button>
                         )}
                     </Step>
 
                     {depositPercent > 0 && depositAmount < vendorAmount && (
-                        <div className="space-y-3 rounded-3xl border border-black/[0.08] bg-white p-5" role="radiogroup" aria-label="Mode de paiement">
-                            <h2 className="text-lg font-semibold text-[#141412]">Comment voulez-vous payer ?</h2>
+                        <div className="space-y-3 rounded-2xl border border-black/[0.08] bg-white p-5" role="radiogroup" aria-label="Mode de paiement">
+                            <h2 className="text-base font-semibold text-[#141412]">Comment voulez-vous payer ?</h2>
                             {[
                                 ['full', 'Tout payer maintenant', `${formatFcfa(vendorAmount + serviceFee(vendorAmount, feePercent))} en Mobile Money`],
                                 ['deposit', `Acompte de ${depositPercent} %, le reste à la livraison`, `${formatFcfa(depositAmount + serviceFee(depositAmount, feePercent))} maintenant, puis ${formatFcfa(vendorAmount - depositAmount)} en espèces au livreur`],
@@ -390,7 +390,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                                     <button key={key} type="button" role="radio" aria-checked={on} onClick={() => setPayMode(key)}
                                         className={`flex w-full items-start gap-3 rounded-xl border-2 p-3.5 text-left transition-colors ${on ? 'border-black/70 bg-[#F6F5F1]' : 'border-black/[0.08] hover:border-black/25'}`}>
                                         <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${on ? 'border-[#141412]' : 'border-black/25'}`}>{on && <span className="h-2.5 w-2.5 rounded-full bg-[#141412]" />}</span>
-                                        <span className="min-w-0"><span className="block text-[15px] font-medium text-[#141412]">{label}</span><span className="block text-sm text-[#5F5E58]">{sub}</span></span>
+                                        <span className="min-w-0"><span className="block text-sm font-medium text-[#141412]">{label}</span><span className="block text-sm text-[#5F5E58]">{sub}</span></span>
                                     </button>
                                 );
                             })}
@@ -398,10 +398,10 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                     )}
 
                     {allowPromo && (
-                        <div className="rounded-3xl border border-black/[0.08] bg-white p-5">
+                        <div className="rounded-2xl border border-black/[0.08] bg-white p-5">
                             {promo ? (
                                 <div className="flex items-center justify-between gap-3">
-                                    <span className="flex min-w-0 items-center gap-2 text-[15px] text-[#15803D]"><Tag className="h-4 w-4 shrink-0" /> Code <strong className="font-mono">{promo.code}</strong> appliqué : −{formatFcfa(promo.discount)}</span>
+                                    <span className="flex min-w-0 items-center gap-2 text-sm text-[#15803D]"><Tag className="h-4 w-4 shrink-0" /> Code <strong className="font-mono">{promo.code}</strong> appliqué : −{formatFcfa(promo.discount)}</span>
                                     <button type="button" onClick={() => setPromo(null)} aria-label="Retirer le code promo" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#5F5E58] hover:bg-[#F6F5F1]"><X className="h-4 w-4" /></button>
                                 </div>
                             ) : promoOpen ? (
@@ -413,14 +413,14 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                                             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyPromo(); } }}
                                             className={`${fieldClass} font-mono uppercase`} />
                                         <button type="button" onClick={() => applyPromo()} disabled={promoLoading || !promoInput}
-                                            className="h-12 shrink-0 rounded-full border border-black/[0.12] px-5 text-[15px] font-medium text-[#141412] disabled:opacity-50">
+                                            className="h-10 shrink-0 rounded-full border border-black/[0.12] px-5 text-sm font-medium text-[#141412] disabled:opacity-50">
                                             {promoLoading ? '…' : 'Appliquer'}
                                         </button>
                                     </div>
                                     {promoError && <p className="mt-2 text-[14px] text-[#B91C1C]">{promoError}</p>}
                                 </div>
                             ) : (
-                                <button type="button" onClick={() => setPromoOpen(true)} className="flex items-center gap-2 text-[15px] font-medium text-[#141412] underline underline-offset-4">
+                                <button type="button" onClick={() => setPromoOpen(true)} className="flex items-center gap-2 text-sm font-medium text-[#141412] underline underline-offset-4">
                                     <Tag className="h-4 w-4" /> J’ai un code promo
                                 </button>
                             )}
@@ -430,7 +430,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                     <AnimatePresence>
                         {error && (
                             <motion.p initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} role="alert"
-                                className="flex items-start gap-2 rounded-xl bg-red-50 px-4 py-3 text-[15px] text-[#B91C1C]">
+                                className="flex items-start gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-[#B91C1C]">
                                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {error}
                             </motion.p>
                         )}
@@ -449,7 +449,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                             </p>
                         )}
                         <motion.button type="submit" disabled={submitting || disabled || belowMin || notDelivered} whileTap={{ scale: 0.98 }}
-                            className="flex h-14 w-full items-center justify-center gap-2 rounded-full text-[17px] font-semibold shadow-[0_12px_24px_-14px_rgba(43,38,32,0.5)] disabled:opacity-60"
+                            className="flex h-11 w-full items-center justify-center gap-2 rounded-full text-[15px] font-semibold shadow-[0_12px_24px_-14px_rgba(43,38,32,0.5)] disabled:opacity-60"
                             style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
                             {submitting ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Lock className="h-5 w-5" />} {payLabel}
                         </motion.button>

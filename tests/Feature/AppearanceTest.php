@@ -56,3 +56,9 @@ test('la police de la boutique est limitée aux polices proposées', function ()
     $user->ensureStore();
     $this->actingAs($user)->post(route('appearance.update'), ['name' => 'B', 'font_family' => "x'} body{display:none} '"])->assertSessionHasErrors('font_family');
 });
+
+test('la couleur de la boutique doit être un code hexadécimal', function () {
+    $user = \App\Models\User::factory()->create(['role' => 'seller']);
+    $user->ensureStore();
+    $this->actingAs($user)->post(route('appearance.update'), ['name' => 'B', 'theme_color' => 'red;}body{x'])->assertSessionHasErrors('theme_color');
+});

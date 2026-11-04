@@ -1,4 +1,4 @@
-import AuthShell from '@/Components/AuthShell';
+import AuthShell from '@/Layouts/AuthShell';
 
 // Pages d'authentification secondaires (mot de passe oublié, vérification e-mail…) : même habillage que la connexion.
 export default function GuestLayout({ children, title, subtitle }) {

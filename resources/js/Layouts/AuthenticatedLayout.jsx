@@ -1,7 +1,8 @@
 import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
+import AppToaster from '@/Components/UI/AppToaster';
 import {
     ArrowUpRight, Truck, BarChart3, ChevronDown, Copy, CreditCard, Crown, FileText, LayoutDashboard, Link2, LogOut, Megaphone,
     Menu, Package, Palette, PackageCheck, Settings, ShieldCheck, Store, Users, Wallet, Wrench, X,
@@ -221,7 +222,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
     return (
         <div className="min-h-screen bg-[#FAFAF8] font-poppins text-[#141412] antialiased">
-            <Toaster position="top-right" richColors closeButton />
+            <AppToaster />
 
             {/* Barre mobile */}
             <div className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-black/[0.06] bg-white/90 px-4 backdrop-blur md:hidden">

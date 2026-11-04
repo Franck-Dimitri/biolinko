@@ -1,4 +1,4 @@
-import LegalLayout, { Note } from '@/Components/LegalLayout';
+import LegalLayout, { Note } from '@/Layouts/LegalLayout';
 
 const CONTACT = 'contact@biolinko.link';
 

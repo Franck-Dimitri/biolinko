@@ -3,7 +3,7 @@
 use App\Models\Order;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\WhatsappGatewayService;
+use App\Services\Whatsapp\WhatsappGatewayService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 
@@ -56,7 +56,7 @@ test('sans configuration, aucun appel n’est fait', function () {
     config(['services.whatsapp_cloud.token' => null]);
     Http::fake();
 
-    $res = app(\App\Services\WhatsappCloudService::class)->sendText('237699887766', 'Bonjour');
+    $res = app(\App\Services\Whatsapp\WhatsappCloudService::class)->sendText('237699887766', 'Bonjour');
 
     expect($res['success'])->toBeFalse();
     Http::assertNothingSent();

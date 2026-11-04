@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     config(['app.url' => 'https://biolinko.link']);
-    $this->mock(\App\Services\WhatsappGatewayService::class)->shouldIgnoreMissing();
+    $this->mock(\App\Services\Whatsapp\WhatsappGatewayService::class)->shouldIgnoreMissing();
     $this->seller = User::factory()->create();
     $this->store = Store::create(['user_id' => $this->seller->id, 'name' => 'Wax Shop', 'slug' => 'wax-shop', 'is_published' => true, 'city_location' => 'Douala', 'category' => 'Mode']);
     Wallet::create(['store_id' => $this->store->id]);

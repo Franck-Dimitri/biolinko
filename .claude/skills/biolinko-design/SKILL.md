@@ -58,7 +58,7 @@ These pages follow a lighter direction than the dashboards. Match `resources/js/
 - **Weights**: Poppins. H1 `font-extrabold` (landing hero only) or `font-bold`; section titles `font-bold`; card titles `font-semibold`/`font-medium`; body `font-normal`. No `font-black`, no uppercase tracking labels.
 - **Radii**: small and varied — `rounded-md` for buttons/inputs/badges, `rounded-lg` for cards and images, `rounded-xl` only for large hero frames. `rounded-full` only for avatars, story circles and floating WhatsApp button.
 - **Storefront theming**: use `contrastColor()` from `Components/Storefront/theme.js`; the seller color goes on CTAs, step numbers, active states.
-- **Reuse**: `Components/Storefront/ProductCard.jsx` (+ `ProductImage`, `productImage`) for every product grid; `Components/BrandIcons.jsx` for Instagram/TikTok/Facebook/WhatsApp (lucide v1 has no brand icons).
+- **Reuse**: `Components/Storefront/ProductCard.jsx` (+ `ProductImage`, `productImage`) for every product grid; `Components/UI/BrandIcons.jsx` for Instagram/TikTok/Facebook/WhatsApp (lucide v1 has no brand icons).
 - **Real store fields**: `city_location`, `instagram_link`, `tiktok_link`, `facebook_link` (not `city` / `*_url`). Products have no category column.
 - **Images**: real photos only (`public/images/landing/*.webp`, logos in `public/images/brand/`; `public/branding` is gitignored). No fake ratings, review counts or stock numbers. CC BY-SA photos must stay credited (landing footer « Crédits photos »).
 

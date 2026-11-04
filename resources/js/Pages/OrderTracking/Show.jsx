@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { AlertCircle, AlertTriangle, ArrowLeft, Check, Clock, Copy, MapPin, Package, Printer, Smartphone, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 import StorefrontLayout from '@/Layouts/StorefrontLayout';
-import { WhatsappIcon } from '@/Components/BrandIcons';
+import { WhatsappIcon } from '@/Components/UI/BrandIcons';
 import { ProductImage } from '@/Components/Storefront/ProductCard';
 import { contrastColor } from '@/Components/Storefront/theme';
 import { formatFcfa } from '@/Components/Storefront/useCart';

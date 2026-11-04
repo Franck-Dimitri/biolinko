@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, BadgeCheck, Clock, FileText, MapPin, Package, Search, ShieldCheck, Star, Tag, Truck } from 'lucide-react';
-import { EASE_OUT } from '@/Components/Motion';
-import { FacebookIcon, InstagramIcon, TiktokIcon, WhatsappIcon } from '@/Components/BrandIcons';
+import { EASE_OUT } from '@/Components/UI/Motion';
+import { FacebookIcon, InstagramIcon, TiktokIcon, WhatsappIcon } from '@/Components/UI/BrandIcons';
 import { OperatorLogo } from '@/Components/Landing/Illustrations';
 import ProductCard, { ProductImage, productImage } from '@/Components/Storefront/ProductCard';
 import { formatFcfa } from '@/Components/Storefront/useCart';

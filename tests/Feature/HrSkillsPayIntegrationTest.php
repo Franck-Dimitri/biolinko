@@ -4,7 +4,7 @@ use App\Models\Order;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Wallet;
-use App\Services\HrSkillsPayService;
+use App\Services\Payments\HrSkillsPayService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 

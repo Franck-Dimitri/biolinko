@@ -1,5 +1,5 @@
 import { ShieldAlert, Sparkles, Store } from 'lucide-react';
-import ErrorShell from '@/Components/ErrorShell';
+import ErrorShell from '@/Layouts/ErrorShell';
 
 export default function StoreUnavailable({ reason = 'not_found', storeName, slug }) {
     const config = {

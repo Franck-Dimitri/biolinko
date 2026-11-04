@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import LegalLayout, { Note } from '@/Components/LegalLayout';
+import LegalLayout, { Note } from '@/Layouts/LegalLayout';
 
 const sections = [
     {

@@ -3,7 +3,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Megaphone, Repeat, Send, ShoppingCart, TrendingUp, Users } from 'lucide-react';
-import { WhatsappIcon } from '@/Components/BrandIcons';
+import { WhatsappIcon } from '@/Components/UI/BrandIcons';
 import {
     Badge, Button, Card, CardHeader, SubPage, Empty, Field, PageHeader, PlanLock, SearchInput, Stat, Table, Tabs,
     fcfa, fieldClass, shortDate,

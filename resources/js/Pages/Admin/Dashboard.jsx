@@ -3,7 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, ArrowRight, Banknote, Crown, Package, ShieldAlert, ShoppingBag, Store, TrendingUp, Users, Wallet } from 'lucide-react';
 import { Badge, Card, CardHeader, Empty, PageHeader, Stat, dateTime, fcfa, reveal, shortDate } from '@/Components/Dashboard/UI';
-import { EASE_OUT } from '@/Components/Motion';
+import { EASE_OUT } from '@/Components/UI/Motion';
 
 const PLAN_LABELS = [['starter', 'Starter'], ['pro', 'Pro'], ['growth', 'Growth'], ['business', 'Business']];
 const REVENUE_LINES = [

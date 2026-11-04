@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Order;
-use App\Services\WhatsappGatewayService;
+use App\Services\Whatsapp\WhatsappGatewayService;
 use Illuminate\Console\Command;
 
 /**

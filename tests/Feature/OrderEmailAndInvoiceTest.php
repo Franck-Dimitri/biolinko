@@ -3,7 +3,7 @@
 use App\Models\Order;
 use App\Models\Store;
 use App\Models\User;
-use App\Services\OrderInvoiceService;
+use App\Services\Sales\OrderInvoiceService;
 use App\Mail\VendorOtpVerificationMail;
 use App\Mail\OrderNotificationToVendorMail;
 use App\Mail\OrderConfirmationToCustomerMail;

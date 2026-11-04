@@ -3,7 +3,7 @@ import { Head } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { Crown, Percent, ShoppingBag, Wallet } from 'lucide-react';
 import { Card, CardHeader, Empty, PageHeader, Stat, Table, dateTime, fcfa, reveal } from '@/Components/Dashboard/UI';
-import { EASE_OUT } from '@/Components/Motion';
+import { EASE_OUT } from '@/Components/UI/Motion';
 
 const LINES = [
     ['commissions', 'Commissions sur les ventes', 'bg-[#141412]'],

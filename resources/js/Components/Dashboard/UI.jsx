@@ -2,7 +2,7 @@ import { Link, router } from '@inertiajs/react';
 import { cloneElement, isValidElement, useEffect, useId } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, X } from 'lucide-react';
-import { EASE_OUT } from '@/Components/Motion';
+import { EASE_OUT } from '@/Components/UI/Motion';
 
 /*
  * Kit d'interface du tableau de bord : une seule source pour les couleurs et les formes.

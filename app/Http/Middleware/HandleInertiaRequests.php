@@ -39,7 +39,7 @@ class HandleInertiaRequests extends Middleware
             'appUrl' => $request->getSchemeAndHttpHost() ?: config('app.url'),
             'planPrices' => User::PLAN_PRICES,
             'planLimits' => User::PLAN_LIMITS,
-            'whatsappAutomatic' => \App\Services\WhatsappGatewayService::automatic(),
+            'whatsappAutomatic' => \App\Services\Whatsapp\WhatsappGatewayService::automatic(),
             // Frais et commissions (config/payments.php) affichés sur la landing, la caisse et le tableau de bord
             'payments' => [
                 'client_fee_percent' => config('payments.client_fee_percent'),

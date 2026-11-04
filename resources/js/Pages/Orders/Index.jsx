@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { AlertTriangle, ArrowRight, Clock, Copy, Download, FileText, MapPin, PackageCheck, Phone, ShoppingBag, Truck, Wallet, X } from 'lucide-react';
-import ExportSalesModal from '@/Components/ExportSalesModal';
+import ExportSalesModal from '@/Components/Dashboard/ExportSalesModal';
 import RefundBox from '@/Components/Dashboard/RefundBox';
-import { WhatsappIcon } from '@/Components/BrandIcons';
+import { WhatsappIcon } from '@/Components/UI/BrandIcons';
 import {
     Badge, Button, Card, Empty, OrderStatus, PageHeader, SubPage, SearchInput, Stat, Table, Tabs, dateTime, fcfa, shortDate,
 } from '@/Components/Dashboard/UI';

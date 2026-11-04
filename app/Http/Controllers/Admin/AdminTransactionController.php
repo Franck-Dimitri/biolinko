@@ -61,7 +61,7 @@ class AdminTransactionController extends Controller
     /**
      * Rembourse le client par virement Mobile Money (total ou partiel).
      */
-    public function refund(Request $request, Order $order, \App\Payments\OrderRefunds $refunds): RedirectResponse
+    public function refund(Request $request, Order $order, \App\Payments\Orders\OrderRefunds $refunds): RedirectResponse
     {
         // Admin : arbitrage d'un litige
         $data = $request->validate([

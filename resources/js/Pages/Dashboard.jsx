@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import {
     ArrowRight, ArrowUpRight, Check, Eye, FileText, Link2, MessageCircle, Package, PackageCheck, Palette, Plus, Rocket, ShoppingBag, TrendingUp, Wallet,
 } from 'lucide-react';
-import { EASE_OUT } from '@/Components/Motion';
+import { EASE_OUT } from '@/Components/UI/Motion';
 
 const fcfa = (n) => `${Math.round(Number(n) || 0).toLocaleString('fr-FR')} FCFA`;
 

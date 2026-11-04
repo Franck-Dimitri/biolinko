@@ -2,7 +2,7 @@ import { router } from '@inertiajs/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { BadgeCheck, Star } from 'lucide-react';
-import { Reveal } from '@/Components/Motion';
+import { Reveal } from '@/Components/UI/Motion';
 
 const input = 'h-12 w-full rounded-xl border border-black/[0.1] bg-white px-3.5 text-[16px] text-[#141412] placeholder:text-[#5F5E58]/60 focus:border-black/40 focus:ring-0';
 

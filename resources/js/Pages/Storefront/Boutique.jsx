@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import StorefrontLayout from '@/Layouts/StorefrontLayout';
 import { ArrowLeft, ArrowRight, Eye, ShoppingBag, Star, Trash2, X } from 'lucide-react';
-import { EASE_OUT } from '@/Components/Motion';
-import { WhatsappIcon } from '@/Components/BrandIcons';
+import { EASE_OUT } from '@/Components/UI/Motion';
+import { WhatsappIcon } from '@/Components/UI/BrandIcons';
 import { contrastColor } from '@/Components/Storefront/theme';
 import useCart, { formatFcfa } from '@/Components/Storefront/useCart';
 import CheckoutForm from '@/Components/Storefront/Checkout/CheckoutForm';
@@ -191,13 +191,13 @@ export default function Boutique({ store, products = [], activeSmartLinks = [], 
             <AnimatePresence mode="wait">
                 {activeSectionTab === 'cart' ? (
                     <motion.div key="cart" {...pageMotion}>
-                        <Container className="space-y-8 py-10">
+                        <Container className="space-y-6 py-8">
                             <div className="flex flex-wrap items-end justify-between gap-3">
                                 <div>
                                     <button type="button" onClick={() => setActiveSectionTab('all')} className="mb-3 inline-flex items-center gap-1.5 text-[14px] text-[#5F5E58] hover:text-[#141412]">
                                         <ArrowLeft className="h-4 w-4" /> Continuer mes achats
                                     </button>
-                                    <h1 className="text-[34px] font-medium tracking-[-0.03em] text-[#141412] sm:text-[40px]">Finaliser ma commande</h1>
+                                    <h1 className="text-2xl font-medium tracking-[-0.02em] text-[#141412] sm:text-[28px]">Finaliser ma commande</h1>
                                 </div>
                                 {cart.items.length > 0 && (
                                     <button type="button" onClick={() => { cart.clear(); toast('Panier vidé'); }} className="inline-flex items-center gap-1.5 text-[14px] text-[#B91C1C] hover:underline">

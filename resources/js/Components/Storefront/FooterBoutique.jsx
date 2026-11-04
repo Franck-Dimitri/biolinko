@@ -1,5 +1,5 @@
 import { Clock, MapPin, Store } from 'lucide-react';
-import { FacebookIcon, InstagramIcon, TiktokIcon, WhatsappIcon } from '@/Components/BrandIcons';
+import { FacebookIcon, InstagramIcon, TiktokIcon, WhatsappIcon } from '@/Components/UI/BrandIcons';
 import { OperatorLogo } from '@/Components/Landing/Illustrations';
 import { contrastColor } from '@/Components/Storefront/theme';
 

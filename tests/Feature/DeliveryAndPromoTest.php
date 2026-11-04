@@ -17,7 +17,7 @@ beforeEach(function () {
         'api.sandbox.pawapay.io/v2/deposits' => Http::response(['status' => 'ACCEPTED'], 200),
         '*' => Http::response([], 200),
     ]);
-    $this->mock(\App\Services\WhatsappGatewayService::class)->shouldIgnoreMissing();
+    $this->mock(\App\Services\Whatsapp\WhatsappGatewayService::class)->shouldIgnoreMissing();
 
     $this->seller = User::factory()->create();
     $this->store = Store::create([

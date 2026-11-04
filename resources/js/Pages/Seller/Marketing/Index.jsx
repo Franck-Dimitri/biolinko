@@ -3,7 +3,7 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { ArrowRight, Check, Copy, Link2, Megaphone, Percent, Repeat, ShoppingBag, Target, TrendingDown, TrendingUp, Users } from 'lucide-react';
-import { FacebookIcon, TiktokIcon, WhatsappIcon } from '@/Components/BrandIcons';
+import { FacebookIcon, TiktokIcon, WhatsappIcon } from '@/Components/UI/BrandIcons';
 import { Badge, Button, Card, CardHeader, Field, PageHeader, PlanLock, Stat, fcfa, fieldClass } from '@/Components/Dashboard/UI';
 
 function Action({ done, title, text, href, cta, Icon, highlight }) {
