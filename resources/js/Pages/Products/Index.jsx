@@ -9,14 +9,49 @@ import { Badge, Button, Empty, Field, PageHeader, SubPage, PlanLock, SearchInput
 
 const LOW_STOCK = 3;
 const isPromo = (p) => p.is_promo && Number(p.promo_price) > 0 && Number(p.promo_price) < Number(p.price_vendor);
-const blank = { title: '', description: '', price_vendor: '', stock: 10, min_order_quantity: 1, is_promo: false, promo_price: '', promo_start_at: '', promo_end_at: '', is_active: true, images_files: [], kept_images: [], variants: [] };
+const blank = { title: '', description: '', category: '', seo_title: '', seo_description: '', price_vendor: '', stock: 10, min_order_quantity: 1, is_promo: false, promo_price: '', promo_start_at: '', promo_end_at: '', is_active: true, images_files: [], kept_images: [], variants: [] };
 
-function ProductEditor({ product, onClose, limits }) {
+/** Aperçu et champs du résultat Google ; vides, Biolinko les remplit avec le nom, la description et le prix. */
+function SeoSection({ data, setData, errors, store }) {
+    const [open, setOpen] = useState(!!(data.seo_title || data.seo_description));
+    const price = Number(data.is_promo && data.promo_price ? data.promo_price : data.price_vendor) || 0;
+    const autoTitle = `${data.title || 'Nom du produit'} | ${store?.name || 'Ma boutique'}`;
+    const plain = String(data.description || '').replace(/\s+/g, ' ').trim();
+    const autoDesc = `${data.title || 'Ce produit'} à ${price.toLocaleString('fr-FR')} FCFA chez ${store?.name || 'ma boutique'}. ${plain}`.slice(0, 160);
+    const title = data.seo_title || autoTitle;
+    const desc = data.seo_description || autoDesc;
+    const counter = (v, max) => <span className={`text-[12px] tabular-nums ${v.length > max ? 'text-[#B91C1C]' : 'text-[#8B8A83]'}`}>{v.length}/{max}</span>;
+    return (
+        <section className="rounded-2xl border border-black/[0.08] p-4">
+            <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex w-full items-center justify-between text-left">
+                <span><span className="block text-[14px] font-medium text-[#141412]">Référencement Google</span><span className="text-[13px] text-[#8B8A83]">Comment ce produit apparaît sur Google et quand le lien est partagé.</span></span>
+                <span className="text-[13px] text-[#5F5E58] underline underline-offset-4">{open ? 'Masquer' : 'Personnaliser'}</span>
+            </button>
+            <div className="mt-4 rounded-xl bg-[#F6F5F1] p-3" aria-label="Aperçu Google">
+                <p className="truncate text-[12px] text-[#5F5E58]">biolinko.link › {store?.slug || 'boutique'} › p</p>
+                <p className="truncate text-[17px] leading-snug text-[#1a0dab]">{title.slice(0, 65)}{title.length > 65 ? '…' : ''}</p>
+                <p className="line-clamp-2 text-[13px] text-[#4d5156]">{desc.slice(0, 160)}</p>
+            </div>
+            {open && (
+                <div className="mt-4 space-y-4">
+                    <Field label="Titre sur Google" error={errors.seo_title} hint="Laissez vide pour utiliser « Nom du produit | Boutique ». Mettez les mots que vos clients tapent : « robe wax Douala ».">
+                        <div><input maxLength={70} value={data.seo_title} onChange={(e) => setData('seo_title', e.target.value)} placeholder={autoTitle} className={fieldClass} /><div className="mt-1 text-right">{counter(data.seo_title, 60)}</div></div>
+                    </Field>
+                    <Field label="Description sur Google" error={errors.seo_description} hint="1 à 2 phrases qui donnent envie de cliquer : matière, prix, livraison.">
+                        <div><textarea rows={3} maxLength={170} value={data.seo_description} onChange={(e) => setData('seo_description', e.target.value)} placeholder={autoDesc} className={`${fieldClass} h-auto py-3`} /><div className="mt-1 text-right">{counter(data.seo_description, 160)}</div></div>
+                    </Field>
+                </div>
+            )}
+        </section>
+    );
+}
+
+function ProductEditor({ product, onClose, limits, categories = [], store }) {
     const editing = !!product?.id;
     const starter = limits.plan === 'starter';
     const form = useForm(editing ? {
         ...blank,
-        title: product.title || '', description: product.description || '', price_vendor: product.price_vendor != null ? Number(product.price_vendor) : '', stock: product.stock ?? 0,
+        title: product.title || '', description: product.description || '', category: product.category || '', seo_title: product.seo_title || '', seo_description: product.seo_description || '', price_vendor: product.price_vendor != null ? Number(product.price_vendor) : '', stock: product.stock ?? 0,
         min_order_quantity: product.min_order_quantity || 1, is_promo: !!product.is_promo, promo_price: product.promo_price ? Number(product.promo_price) : '',
         promo_start_at: product.promo_start_at?.substring(0, 10) || '', promo_end_at: product.promo_end_at?.substring(0, 10) || '', is_active: !!product.is_active,
         kept_images: product.images?.length ? product.images : (product.image_url ? [product.image_url] : []),
@@ -99,6 +134,20 @@ function ProductEditor({ product, onClose, limits }) {
                         <textarea rows={4} value={data.description} onChange={(e) => setData('description', e.target.value)} placeholder="Matière, tailles, entretien, délai de livraison…" className={`${fieldClass} h-auto py-3`} />
                     </Field>
 
+                    <Field label="Catégorie (facultatif)" error={errors.category} hint="Vos clients filtrent la boutique par catégorie. Ex. Robes, Sacs, Bijoux.">
+                        <div>
+                            <input list="product-categories" maxLength={60} value={data.category} onChange={(e) => setData('category', e.target.value)} placeholder="Ex. Robes" className={fieldClass} />
+                            <datalist id="product-categories">{categories.map((c) => <option key={c} value={c} />)}</datalist>
+                            {categories.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {categories.map((c) => (
+                                        <button key={c} type="button" onClick={() => setData('category', c)} className={`rounded-full border px-2.5 py-1 text-[12px] ${data.category === c ? 'border-[#141412] bg-[#141412] text-white' : 'border-black/10 text-[#5F5E58] hover:border-black/25'}`}>{c}</button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </Field>
+
                     <div className="grid gap-3 sm:grid-cols-3">
                         <Field label="Prix" error={errors.price_vendor}>
                             <div className="relative"><input aria-label="Prix" required type="number" min="0" value={data.price_vendor} onChange={(e) => setData('price_vendor', e.target.value)} className={`${fieldClass} pr-14`} /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-[#8B8A83]">FCFA</span></div>
@@ -146,6 +195,7 @@ function ProductEditor({ product, onClose, limits }) {
                         <span><span className="block text-[15px] font-medium text-[#141412]">Visible sur la boutique</span><span className="text-[13px] text-[#8B8A83]">Décochez pour le masquer sans le supprimer.</span></span>
                         <input type="checkbox" checked={data.is_active} onChange={(e) => setData('is_active', e.target.checked)} className="h-5 w-5 rounded border-black/20 text-[#141412] focus:ring-0" />
                     </label>
+                    <SeoSection data={data} setData={setData} errors={errors} store={store} />
                 </form>
 
                 <div className="mt-8 flex justify-end gap-2 border-t border-black/[0.06] pt-6">
@@ -236,7 +286,7 @@ export default function Index({ store, products = [], metrics, planLimits }) {
     return (
         <AuthenticatedLayout>
             <Head title="Produits, Biolinko" />
-            {editing && <ProductEditor key={editing.id || 'new'} product={editing} limits={limits} onClose={() => setEditing(null)} />}
+            {editing && <ProductEditor key={editing.id || 'new'} product={editing} limits={limits} store={store} categories={[...new Set(products.map((p) => p.category).filter(Boolean))].sort()} onClose={() => setEditing(null)} />}
             <div className="space-y-6 pb-12" hidden={!!editing}>
                 <PageHeader title="Produits" sub="Votre catalogue, vos prix, vos stocks et vos promotions."
                     actions={<Button variant="primary" onClick={() => setEditing({})} disabled={atLimit}><Plus className="h-4 w-4" /> Nouveau produit</Button>} />

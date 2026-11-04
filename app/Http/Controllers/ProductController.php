@@ -77,6 +77,9 @@ class ProductController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'category' => ['nullable', 'string', 'max:60'],
+            'seo_title' => ['nullable', 'string', 'max:70'],
+            'seo_description' => ['nullable', 'string', 'max:170'],
             'price_vendor' => ['required', 'numeric', 'min:1'],
             'stock' => ['required', 'integer', 'min:0'],
             'min_order_quantity' => ['required', 'integer', 'min:1'],
@@ -132,6 +135,9 @@ class ProductController extends Controller
             'title' => $validated['title'],
             'slug' => $slug,
             'description' => $validated['description'] ?? null,
+            'category' => filled($validated['category'] ?? null) ? trim($validated['category']) : null,
+            'seo_title' => $validated['seo_title'] ?? null,
+            'seo_description' => $validated['seo_description'] ?? null,
             'price_vendor' => $validated['price_vendor'],
             'stock' => $validated['stock'],
             'min_order_quantity' => $validated['min_order_quantity'] ?? 1,
@@ -184,6 +190,9 @@ class ProductController extends Controller
         $validated = $request->validate([
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'category' => ['nullable', 'string', 'max:60'],
+            'seo_title' => ['nullable', 'string', 'max:70'],
+            'seo_description' => ['nullable', 'string', 'max:170'],
             'price_vendor' => ['sometimes', 'required', 'numeric', 'min:1'],
             'stock' => ['sometimes', 'required', 'integer', 'min:0'],
             'min_order_quantity' => ['nullable', 'integer', 'min:1'],
@@ -250,6 +259,11 @@ class ProductController extends Controller
 
         if (array_key_exists('title', $validated)) {
             $updateData['title'] = $validated['title'];
+        }
+        foreach (['category', 'seo_title', 'seo_description'] as $field) {
+            if (array_key_exists($field, $validated)) {
+                $updateData[$field] = filled($validated[$field]) ? trim($validated[$field]) : null;
+            }
         }
         if (array_key_exists('description', $validated)) {
             $updateData['description'] = $validated['description'];

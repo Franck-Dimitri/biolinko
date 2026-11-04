@@ -45,13 +45,20 @@ class CustomerController extends Controller
             ->values();
 
         // Abandoned Carts / Pending Orders
+        // Paniers à relancer : non payés depuis moins de 7 jours, sauf si le client a payé une commande depuis
+        $paidAfter = Order::where('store_id', $store->id)->paid()->get(['customer_phone', 'created_at']);
         $abandonedOrders = Order::with('items')
             ->where('store_id', $store->id)
-            ->where('status', 'pending')->where('payment_status', 'pending')
-            ->where(fn ($q) => $q->where('is_manual', false)->orWhereNull('is_manual'))
+            ->recoverable()
             ->latest()
-            ->take(20)
-            ->get();
+            ->take(40)
+            ->get()
+            ->reject(fn ($o) => $paidAfter->contains(fn ($p) => $p->customer_phone === $o->customer_phone && $p->created_at->gt($o->created_at)))
+            ->values();
+
+        // Paniers récupérés ce mois : payés après une relance du vendeur
+        $recovered = Order::where('store_id', $store->id)->paid()->whereNotNull('payment_reminded_at')
+            ->whereColumn('paid_at', '>=', 'payment_reminded_at')->where('paid_at', '>=', now()->startOfMonth());
 
         // Products & SmartLinks for WhatsApp Broadcast Attachment
         $products = Product::where('store_id', $store->id)
@@ -80,6 +87,7 @@ class CustomerController extends Controller
                 'remaining_campaigns' => max(0, $whatsappQuota['max_campaigns_per_month'] - $usedCampaignsThisMonth),
             ]),
             'campaignsHistory' => $campaignsHistory,
+            'recovery' => ['count' => (clone $recovered)->count(), 'amount' => (float) $recovered->sum('price_vendor')],
             'metrics' => [
                 'totalCustomers' => $totalCustomers,
                 'repeatCustomersCount' => $repeatCustomersCount,
@@ -187,5 +195,14 @@ class CustomerController extends Controller
         }
 
         return redirect()->back()->with('message', $cloud ? 'Campagne envoyée.' : 'Campagne prête : envoyez chaque message depuis votre WhatsApp.');
+    }
+
+    /** Le vendeur a ouvert la relance WhatsApp de ce panier : on la date pour mesurer les paniers récupérés. */
+    public function markReminded(Request $request, Order $order)
+    {
+        abort_unless($order->store_id === $request->user()->store?->id, 403);
+        $order->update(['payment_reminded_at' => now()]);
+
+        return back();
     }
 }

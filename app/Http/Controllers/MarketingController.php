@@ -33,7 +33,8 @@ class MarketingController extends Controller
         $revenue = (float) $current->where('payment_status', 'paid')->sum('price_vendor');
         $previousRevenue = (float) $previous->where('payment_status', 'paid')->sum('price_vendor');
         $paidCount = $current->where('payment_status', 'paid')->count();
-        $pending = $current->where('status', 'pending')->where('payment_status', 'pending');
+        // Mêmes paniers que l'onglet « Paniers à relancer » (non payés ou paiement échoué, moins de 7 jours)
+        $pending = Order::where('store_id', $store->id)->recoverable()->get();
 
         $topProducts = OrderItem::select('product_title', DB::raw('SUM(quantity) as qty'), DB::raw('SUM(total_price_vendor) as revenue'))
             ->whereHas('order', fn ($q) => $q->where('store_id', $store->id)->paid()->where('created_at', '>=', $since))
@@ -69,6 +70,18 @@ class MarketingController extends Controller
                 'campaigns_quota' => $quota['max_campaigns_per_month'],
             ],
             'topProducts' => $topProducts,
+            'seo' => [
+                'seo_title' => $store->seo_title ?? '',
+                'seo_description' => $store->seo_description ?? '',
+                'indexed_products' => Product::where('store_id', $store->id)->where('is_active', true)->count(),
+                'missing_category' => Product::where('store_id', $store->id)->where('is_active', true)->whereNull('category')->count(),
+                'short_description' => Product::where('store_id', $store->id)->where('is_active', true)
+                    ->where(fn ($q) => $q->whereNull('description')->orWhereRaw('LENGTH(description) < 80'))->count(),
+                'missing_photo' => Product::where('store_id', $store->id)->where('is_active', true)->whereNull('image_url')
+                    ->where(fn ($q) => $q->whereNull('images')->orWhere('images', '[]'))->count(),
+                'reviews' => $store->reviews()->where('is_featured', true)->count(),
+                'published' => (bool) $store->is_published,
+            ],
             'marketing' => [
                 'facebook_pixel_id' => $store->facebook_pixel_id ?? '',
                 'tiktok_pixel_id' => $store->tiktok_pixel_id ?? '',
@@ -101,5 +114,21 @@ class MarketingController extends Controller
         }
 
         return redirect()->back()->with('success', 'Paramètres marketing et pixels mis à jour avec succès.');
+    }
+
+    /** Titre et description de la boutique sur Google : ouvert à tous les plans. */
+    public function updateSeo(Request $request): RedirectResponse
+    {
+        $store = $request->user()->store;
+        abort_unless($store, 404);
+
+        $data = $request->validate([
+            'seo_title' => ['nullable', 'string', 'max:70'],
+            'seo_description' => ['nullable', 'string', 'max:170'],
+        ]);
+        $store->update(array_map(fn ($v) => filled($v) ? trim($v) : null, $data));
+        \Illuminate\Support\Facades\Cache::forget('seo.sitemap');
+
+        return back()->with('success', 'Référencement de la boutique enregistré.');
     }
 }

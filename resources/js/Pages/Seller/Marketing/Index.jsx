@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { ArrowRight, Check, Copy, Link2, Megaphone, Percent, Repeat, ShoppingBag, Target, TrendingDown, TrendingUp, Users } from 'lucide-react';
@@ -21,7 +21,49 @@ function Action({ done, title, text, href, cta, Icon, highlight }) {
     );
 }
 
-export default function Index({ store, user, stats = {}, topProducts = [], marketing }) {
+function SeoCard({ store, seo }) {
+    const { data, setData, post, processing, errors } = useForm({ seo_title: seo.seo_title || '', seo_description: seo.seo_description || '' });
+    const place = store.city_location ? ` à ${store.city_location}` : '';
+    const autoTitle = `${store.name}${store.category ? ` : ${store.category}${place}` : place}`;
+    const autoDesc = (store.description || `${store.name} : boutique en ligne${place}. Paiement sécurisé MTN MoMo et Orange Money, livraison.`).slice(0, 160);
+    const checks = [
+        [seo.published, 'Boutique publiée', 'Une boutique en brouillon n’apparaît pas sur Google.'],
+        [seo.missing_photo === 0, 'Chaque produit a une photo', `${seo.missing_photo} produit(s) sans photo : Google Images et l’aperçu WhatsApp en ont besoin.`],
+        [seo.short_description === 0, 'Descriptions détaillées', `${seo.short_description} produit(s) avec une description de moins de 80 caractères. Décrivez matière, tailles, usage.`],
+        [seo.missing_category === 0, 'Produits classés en catégories', `${seo.missing_category} produit(s) sans catégorie.`],
+        [seo.reviews > 0, 'Au moins un avis client', 'Les étoiles peuvent s’afficher sous votre produit dans Google.'],
+    ];
+    const score = checks.filter(([ok]) => ok).length;
+    return (
+        <Card delay={0.16}>
+            <CardHeader title="Référencement Google" sub={`${seo.indexed_products} produit(s) proposés à Google · ${score}/${checks.length} bonnes pratiques`} />
+            <ul className="mt-4 space-y-2">
+                {checks.map(([ok, label, fix]) => (
+                    <li key={label} className="flex items-start gap-2.5 text-[14px]">
+                        <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${ok ? 'bg-[#DCFCE7] text-[#15803D]' : 'bg-[#FFF3C4] text-[#7A5B00]'}`}>{ok ? <Check className="h-3 w-3" /> : '!'}</span>
+                        <span><span className="text-[#141412]">{label}</span>{!ok && <span className="block text-[13px] text-[#8B8A83]">{fix}</span>}</span>
+                    </li>
+                ))}
+            </ul>
+            <form onSubmit={(e) => { e.preventDefault(); post(route('seller.seo.update'), { preserveScroll: true, onSuccess: () => toast.success('Référencement enregistré') }); }} className="mt-6 space-y-4 border-t border-black/[0.06] pt-5">
+                <div className="rounded-xl bg-[#F6F5F1] p-3" aria-label="Aperçu Google">
+                    <p className="truncate text-[12px] text-[#5F5E58]">biolinko.link › {store.slug}</p>
+                    <p className="truncate text-[17px] leading-snug text-[#1a0dab]">{(data.seo_title || autoTitle).slice(0, 65)}</p>
+                    <p className="line-clamp-2 text-[13px] text-[#4d5156]">{(data.seo_description || autoDesc).slice(0, 160)}</p>
+                </div>
+                <Field label="Titre de la boutique sur Google" error={errors.seo_title} hint={`Facultatif. Mettez ce que vos clients cherchent, ex. « Pagnes et robes wax à Douala ». ${data.seo_title.length}/60`}>
+                    <input maxLength={70} value={data.seo_title} onChange={(e) => setData('seo_title', e.target.value)} placeholder={autoTitle} className={fieldClass} />
+                </Field>
+                <Field label="Description sur Google" error={errors.seo_description} hint={`Facultatif. ${data.seo_description.length}/160`}>
+                    <textarea rows={3} maxLength={170} value={data.seo_description} onChange={(e) => setData('seo_description', e.target.value)} placeholder={autoDesc} className={`${fieldClass} h-auto py-3`} />
+                </Field>
+                <div className="flex justify-end"><Button variant="primary" type="submit" disabled={processing}>Enregistrer</Button></div>
+            </form>
+        </Card>
+    );
+}
+
+export default function Index({ store, user, stats = {}, topProducts = [], marketing, seo }) {
     const { errors } = usePage().props;
     const [pixels, setPixels] = useState(marketing);
     const [saving, setSaving] = useState(false);
@@ -42,7 +84,7 @@ export default function Index({ store, user, stats = {}, topProducts = [], marke
             done: stats.abandoned_count === 0, highlight: true, Icon: Repeat,
             title: stats.abandoned_count ? `Relancer ${stats.abandoned_count} commande${stats.abandoned_count > 1 ? 's' : ''} non payée${stats.abandoned_count > 1 ? 's' : ''}` : 'Aucune commande à relancer',
             text: stats.abandoned_count ? `${fcfa(stats.abandoned_value)} de ventes à récupérer par un simple message WhatsApp.` : 'Toutes vos commandes récentes ont été payées.',
-            href: stats.abandoned_count ? route('customers.index') : null, cta: 'Relancer',
+            href: stats.abandoned_count ? route('customers.index', { tab: 'abandoned' }) : null, cta: 'Relancer',
         },
         {
             done: stats.active_promos > 0, Icon: Percent,
@@ -146,6 +188,7 @@ export default function Index({ store, user, stats = {}, topProducts = [], marke
                             <div className="mt-4"><PlanLock plan="Pro" text="Connectez vos pixels publicitaires à partir du plan Pro." /></div>
                         )}
                     </Card>
+                    {seo && <SeoCard store={store} seo={seo} />}
                 </div>
             </div>
         </AuthenticatedLayout>

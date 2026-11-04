@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Store;
+use App\Support\Seo;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -89,13 +90,17 @@ class StorefrontController extends Controller
             $store->sections_json = Store::getDefaultSections();
         }
 
+        // Aperçu d'une boutique non publiée : jamais indexé
+        $meta = $store->is_published ? Seo::store($store, $products, $store->reviews) : Seo::noindex($store->name);
+
         return Inertia::render('Storefront/Boutique', [
             'store' => $store->forPublic(),
             'products' => $products,
             'activeSmartLinks' => $activeSmartLinks,
             'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
             'isPreview' => !$store->is_published && $isOwnerOrAdmin,
-        ]);
+            'seoTitle' => $meta['title'],
+        ])->withViewData(['meta' => $meta]);
     }
 
     public function submitReview(Request $request, string $slug)
@@ -110,7 +115,16 @@ class StorefrontController extends Controller
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'comment' => ['required', 'string', 'max:1000'],
             'tracking_code' => ['nullable', 'string', 'max:100'],
+            'product_id' => ['nullable', 'integer'],
         ]);
+
+        $product = null;
+        if (! empty($validated['product_id'])) {
+            $product = $store->products()->where('id', $validated['product_id'])->where('is_active', true)->first();
+            if (! $product) {
+                return back()->withErrors(['product_id' => 'Ce produit n’est plus disponible.']);
+            }
+        }
 
         $customerPhone = $request->input('customer_phone');
         $customerEmail = $request->input('customer_email');
@@ -118,8 +132,10 @@ class StorefrontController extends Controller
 
         $hasOrder = false;
         if ($trackingCode) {
+            // Achat vérifié : commande payée de cette boutique, contenant ce produit pour un avis produit
             $hasOrder = \App\Models\Order::where('store_id', $store->id)
-                ->where('tracking_code', $trackingCode)
+                ->where('tracking_code', $trackingCode)->paid()
+                ->when($product, fn ($q) => $q->whereHas('items', fn ($i) => $i->where('product_id', $product->id)))
                 ->exists();
         } elseif ($customerPhone) {
             $hasOrder = \App\Models\Order::where('store_id', $store->id)
@@ -137,6 +153,7 @@ class StorefrontController extends Controller
             'rating'        => $validated['rating'],
             'comment'       => $validated['comment'],
             'is_verified'   => $hasOrder, // acheteur vérifié uniquement s'il a déjà commandé
+            'product_id'    => $product?->id,
             'is_featured'   => true,
         ];
 
@@ -231,11 +248,20 @@ class StorefrontController extends Controller
         $product->price_client_total = $tc;
         $product->api_fee_unit = $tc - $pb;
 
+        $productReviews = $store->reviews()->where('product_id', $product->id)->where('is_featured', true)->latest()->take(30)
+            ->get(['id', 'customer_name', 'customer_city', 'rating', 'comment', 'is_verified', 'created_at']);
+        $rating = $productReviews->count() ? ['avg' => round($productReviews->avg('rating'), 1), 'count' => $productReviews->count()] : null;
+
+        $meta = $store->is_published ? Seo::product($store, $product, $productReviews) : Seo::noindex($product->title);
+
         return Inertia::render('Storefront/[slug]', [
             'store' => $store->forPublic(),
             'product' => $product,
+            'productReviews' => $productReviews,
+            'rating' => $rating,
             'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
             'isPreview' => !$store->is_published && $isOwnerOrAdmin,
-        ]);
+            'seoTitle' => $meta['title'],
+        ])->withViewData(['meta' => $meta]);
     }
 }

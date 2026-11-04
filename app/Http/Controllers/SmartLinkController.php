@@ -233,11 +233,17 @@ class SmartLinkController extends Controller
 
         $isValid = $smartLink->isValid();
 
+        // Aperçu WhatsApp : photo du premier article du pack
+        $firstProduct = \App\Models\Product::find(collect($smartLink->items)->first()['product_id'] ?? null);
+        $meta = $isValid
+            ? \App\Support\Seo::smartLink($smartLink->store, $smartLink, $firstProduct?->image_url ?: ($firstProduct?->images[0] ?? null))
+            : \App\Support\Seo::noindex("Offre indisponible | {$smartLink->store->name}");
+
         return Inertia::render('SmartLink/Show', [
             'smartLink' => $smartLink,
             'store' => $smartLink->store->forPublic(),
             'isValid' => $isValid,
-        ]);
+        ])->withViewData(['meta' => $meta]);
     }
 
     /**

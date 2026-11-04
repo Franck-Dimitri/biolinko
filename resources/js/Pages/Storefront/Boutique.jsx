@@ -27,7 +27,7 @@ const isEnabled = (sec) => sec && ![false, 'false', 0, '0'].includes(sec.enabled
 
 const slugify = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '-');
 
-export default function Boutique({ store, products = [], activeSmartLinks = [], isPreview = false }) {
+export default function Boutique({ store, products = [], activeSmartLinks = [], isPreview = false, seoTitle = null }) {
     const authUser = usePage().props.auth?.user;
     const isOwner = authUser && authUser.id === store.user_id;
     const cart = useCart(store.id);
@@ -37,9 +37,11 @@ export default function Boutique({ store, products = [], activeSmartLinks = [], 
     const theme = { color: primaryColor, text: primaryTextColor };
 
     const [activeSectionTab, setActiveSectionTab] = useState('all'); // 'all' | 'cart'
-    const [viewMode, setViewMode] = useState('home'); // 'home' | 'catalog'
+    // Lien vers une catégorie (?categorie=Robes, fil d'Ariane de la page produit) : catalogue filtré
+    const initialCategory = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('categorie') : null;
+    const [viewMode, setViewMode] = useState(initialCategory ? 'catalog' : 'home'); // 'home' | 'catalog'
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [selectedCategory, setSelectedCategory] = useState(initialCategory ? slugify(initialCategory) : 'all');
     const [wishlist, setWishlist] = useState([]);
 
     // Ouvre le panier directement via ?tab=cart (lien depuis la fiche produit)
@@ -175,7 +177,7 @@ export default function Boutique({ store, products = [], activeSmartLinks = [], 
             cartCount={cart.count}
             fullBleed
         >
-            <Head title={`${activeSectionTab === 'cart' ? 'Mon panier' : store.name}, boutique en ligne`} />
+            <Head title={activeSectionTab === 'cart' ? `Mon panier | ${store.name}` : (seoTitle || `${store.name} | Biolinko`)} />
 
             {isPreview && (
                 <Container className="pt-6">

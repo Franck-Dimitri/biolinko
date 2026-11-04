@@ -129,8 +129,8 @@ function CampaignDialog({ open, onClose, store, recipients, products, smartLinks
     );
 }
 
-export default function Index({ store, customers = [], top5Customers = [], abandonedOrders = [], products = [], smartLinks = [], metrics, whatsappQuota, campaignsHistory = [] }) {
-    const [tab, setTab] = useState('clients');
+export default function Index({ store, customers = [], top5Customers = [], abandonedOrders = [], products = [], smartLinks = [], metrics, whatsappQuota, campaignsHistory = [], recovery = { count: 0, amount: 0 } }) {
+    const [tab, setTab] = useState(() => (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab')) || 'clients');
     const [search, setSearch] = useState('');
     const [selected, setSelected] = useState([]);
     const [campaignOpen, setCampaignOpen] = useState(false);
@@ -151,7 +151,10 @@ export default function Index({ store, customers = [], top5Customers = [], aband
 
     const relance = (o) => {
         const items = (o.items || []).map((i) => i.product_title).join(', ');
-        const text = `Bonjour ${o.customer_name}, votre commande ${o.tracking_code} (${items}) chez ${store.name} n’est pas encore payée. Vous pouvez la régler ici : ${window.location.origin}/track/${o.tracking_code}`;
+        const first = String(o.customer_name || '').split(' ')[0];
+        const text = o.payment_status === 'failed'
+            ? `Bonjour ${first}, c’est ${store.name}. Votre paiement pour ${items} n’a pas abouti. Votre commande vous attend : vous pouvez la payer en 1 clic ici ${window.location.origin}/track/${o.tracking_code}`
+            : `Bonjour ${first}, c’est ${store.name}. Votre commande (${items}) n’est pas encore payée. Vous pouvez la régler en 1 clic ici ${window.location.origin}/track/${o.tracking_code}`;
         return `https://wa.me/${waNumber(o.customer_phone)}?text=${encodeURIComponent(text)}`;
     };
 
@@ -173,7 +176,7 @@ export default function Index({ store, customers = [], top5Customers = [], aband
 
                 <Tabs id="customers" value={tab} onChange={setTab} tabs={[
                     ['clients', 'Clients', customers.length],
-                    ['abandoned', 'Commandes non payées', abandonedOrders.length],
+                    ['abandoned', 'Paniers à relancer', abandonedOrders.length],
                     ['campaigns', 'Campagnes', campaignsHistory.length],
                 ]} />
 
@@ -242,7 +245,13 @@ export default function Index({ store, customers = [], top5Customers = [], aband
 
                 {tab === 'abandoned' && (
                     <Card padded={false}>
-                        <div className="border-b border-black/[0.06] p-5"><CardHeader title="Commandes non payées" sub="Le client a commandé mais n’a pas validé le paiement. Une relance suffit souvent." /></div>
+                        <div className="flex flex-col gap-3 border-b border-black/[0.06] p-5 sm:flex-row sm:items-start sm:justify-between">
+                            <CardHeader title="Paniers à relancer" sub="Le client a commandé mais n’a pas payé, ou son paiement a échoué. Il peut payer en 1 clic depuis votre message pendant 7 jours." />
+                            <div className="shrink-0 rounded-2xl bg-[#DCFCE7] px-4 py-2.5 text-[13px] text-[#15803D]">
+                                <span className="block text-[18px] font-medium tabular-nums">{recovery.count} récupéré{recovery.count > 1 ? 's' : ''}</span>
+                                ce mois · {fcfa(recovery.amount)}
+                            </div>
+                        </div>
                         {abandonedOrders.length ? (
                             <ul className="divide-y divide-black/[0.05]">
                                 {abandonedOrders.map((o) => (
@@ -250,9 +259,16 @@ export default function Index({ store, customers = [], top5Customers = [], aband
                                         <div className="min-w-0 flex-1">
                                             <p className="text-[15px] text-[#141412]">{o.customer_name} <span className="font-mono text-[13px] text-[#8B8A83]">· {o.tracking_code}</span></p>
                                             <p className="truncate text-[13px] text-[#8B8A83]">{(o.items || []).map((i) => i.product_title).join(', ')} · {shortDate(o.created_at)}</p>
+                                            <p className="mt-1 flex flex-wrap gap-1.5">
+                                                {o.payment_status === 'failed' ? <Badge tone="danger">Paiement échoué</Badge> : <Badge tone="warning">Non payé</Badge>}
+                                                {o.payment_reminded_at && <Badge>Relancé le {shortDate(o.payment_reminded_at)}</Badge>}
+                                            </p>
                                         </div>
                                         <span className="shrink-0 tabular-nums text-[15px] text-[#141412]">{fcfa(o.total_client)}</span>
-                                        <Button size="sm" href={relance(o)} target="_blank" rel="noreferrer"><WhatsappIcon className="h-4 w-4 text-[#16A34A]" /> Relancer</Button>
+                                        <Button size="sm" href={relance(o)} target="_blank" rel="noreferrer"
+                                            onClick={() => router.post(route('customers.abandoned.reminded', o.id), {}, { preserveScroll: true, preserveState: true })}>
+                                            <WhatsappIcon className="h-4 w-4 text-[#16A34A]" /> {o.payment_reminded_at ? 'Relancer à nouveau' : 'Relancer'}
+                                        </Button>
                                     </li>
                                 ))}
                             </ul>

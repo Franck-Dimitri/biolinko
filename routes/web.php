@@ -39,7 +39,7 @@ Route::get('/', function () {
         'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
-    ]);
+    ])->withViewData(['meta' => \App\Support\Seo::landing()]);
 });
 
 // Smart Dashboard Redirector based on user role
@@ -148,6 +148,7 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
 
     // Customers Directory
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+    Route::post('/customers/abandoned/{order}/reminded', [CustomerController::class, 'markReminded'])->name('customers.abandoned.reminded');
     Route::post('/customers/campaign', [CustomerController::class, 'storeCampaign'])->name('customers.campaign.store');
 
     // Livraison & codes promo
@@ -161,6 +162,7 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
     // Marketing & Pixels
     Route::get('/marketing', [MarketingController::class, 'index'])->name('seller.marketing.index');
     Route::post('/marketing', [MarketingController::class, 'update'])->name('seller.marketing.update');
+    Route::post('/marketing/seo', [MarketingController::class, 'updateSeo'])->name('seller.seo.update');
 
     // Outils & Plugins
     Route::get('/tools', [ToolPluginController::class, 'index'])->name('seller.tools.index');
@@ -204,9 +206,13 @@ Route::get('/store/{store_slug}/pay/sl/{code}', [SmartLinkController::class, 'sh
 Route::get('/{store_slug}/pay/sl/{code}', [SmartLinkController::class, 'showPublicByStore']);
 Route::post('/pay/{code}/checkout', [SmartLinkController::class, 'processPublicCheckout'])->middleware('throttle:10,1')->name('smartlink.checkout');
 
+// Référencement : plan du site et robots.txt (avant les routes de boutique)
+Route::get('/sitemap.xml', [\App\Http\Controllers\SeoController::class, 'sitemap'])->name('seo.sitemap');
+Route::get('/robots.txt', [\App\Http\Controllers\SeoController::class, 'robots'])->name('seo.robots');
+
 // Public Legal Pages (Terms, Privacy, Cookies)
 Route::get('/conditions-generales', function () {
-    return Inertia::render('Legal/Terms');
+    return Inertia::render('Legal/Terms')->withViewData(['meta' => \App\Support\Seo::page('Conditions générales', 'Conditions générales d’utilisation et de vente de Biolinko, la plateforme de boutiques en ligne payées en Mobile Money.', '/conditions-generales')]);
 })->name('legal.terms');
 
 Route::get('/terms', function () {
@@ -214,7 +220,7 @@ Route::get('/terms', function () {
 });
 
 Route::get('/politique-de-confidentialite', function () {
-    return Inertia::render('Legal/Privacy');
+    return Inertia::render('Legal/Privacy')->withViewData(['meta' => \App\Support\Seo::page('Politique de confidentialité', 'Comment Biolinko collecte, utilise et protège les données des vendeurs et de leurs clients.', '/politique-de-confidentialite')]);
 })->name('legal.privacy');
 
 Route::get('/privacy', function () {
@@ -222,7 +228,7 @@ Route::get('/privacy', function () {
 });
 
 Route::get('/politique-des-cookies', function () {
-    return Inertia::render('Legal/Cookies');
+    return Inertia::render('Legal/Cookies')->withViewData(['meta' => \App\Support\Seo::page('Politique des cookies', 'Les cookies utilisés sur Biolinko et comment les gérer.', '/politique-des-cookies')]);
 })->name('legal.cookies');
 
 Route::get('/cookies', function () {

@@ -54,6 +54,8 @@ class Store extends Model
         'delivery_other_fee',
         'delivery_free_from',
         'deposit_percent',
+        'seo_title',
+        'seo_description',
     ];
 
     protected $casts = [

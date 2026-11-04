@@ -111,7 +111,7 @@ function ReportSection({ order, canReport, reasons, primaryColor, primaryTextCol
     );
 }
 
-export default function Show({ order, store, canReport = false, reportReasons = {} }) {
+export default function Show({ order, store, canReport = false, reportReasons = {}, canPay = false }) {
     const primaryColor = store?.theme_color || '#FFCC00';
     const primaryTextColor = contrastColor(primaryColor);
     const [checking, setChecking] = useState(false);
@@ -133,6 +133,8 @@ export default function Show({ order, store, canReport = false, reportReasons = 
 
     const cancelled = order.status === 'cancelled' || order.payment_status === 'failed';
     const awaitingPayment = !cancelled && stepIndex(order) < 0;
+    // Paiement échoué mais commande encore récupérable (relance du vendeur) : le client peut réessayer
+    const retryable = cancelled && canPay;
     const current = stepIndex(order);
 
     // Paiement en attente : on interroge l'opérateur puis on recharge la page dès qu'il est confirmé.
@@ -173,7 +175,9 @@ export default function Show({ order, store, canReport = false, reportReasons = 
         )}`
         : null;
 
-    const header = cancelled
+    const header = retryable
+        ? { icon: Smartphone, tone: 'bg-[#FFF8D6] text-[#141412]', title: 'Votre commande vous attend', sub: 'Le paiement précédent n’a pas abouti. Vous pouvez le relancer maintenant.' }
+        : cancelled
         ? { icon: AlertCircle, tone: 'bg-red-50 text-[#B91C1C]', title: 'Paiement non abouti', sub: "Votre commande n'a pas été payée. Vous pouvez la refaire depuis la boutique." }
         : awaitingPayment
             ? { icon: Smartphone, tone: 'bg-[#FFF8D6] text-[#141412]', title: 'En attente de votre paiement', sub: 'Payez par Mobile Money pour confirmer votre commande, cette page se met à jour toute seule.' }
@@ -211,7 +215,7 @@ export default function Show({ order, store, canReport = false, reportReasons = 
                         </button>
                     </div>
 
-                    {awaitingPayment && (
+                    {(awaitingPayment || retryable) && (
                         <div className="flex flex-col items-center gap-2 print:hidden">
                             <button type="button" onClick={payNow} disabled={paying} className="inline-flex h-11 w-full max-w-xs items-center justify-center gap-2 rounded-full px-5 font-semibold disabled:opacity-60" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
                                 <Smartphone className="h-4 w-4" /> {paying ? 'Envoi de la demande…' : `Payer ${formatFcfa(order.total_client)}`}

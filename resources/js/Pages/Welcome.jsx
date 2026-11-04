@@ -440,9 +440,7 @@ function FinalCta({ auth }) {
 export default function Welcome({ auth }) {
     return (
         <MotionConfig reducedMotion="user">
-            <Head title="Biolinko, la plateforme pour vendre en ligne">
-                <meta name="description" content="Boutique en ligne, commandes, factures, clients, marketing et paiements Mobile Money : tous les outils pour vendre en ligne au Cameroun." />
-            </Head>
+            <Head title="Biolinko : votre boutique en ligne payée en Mobile Money | Biolinko" />
             <div className="min-h-screen bg-white font-poppins text-[#141412] antialiased selection:bg-[#FFCC00]/60">
                 <Header auth={auth} />
                 <main>

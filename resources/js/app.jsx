@@ -8,7 +8,8 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    // Titres de référencement (« … | … ») déjà complets : pas de suffixe
+    title: (title) => (!title ? appName : title.includes(' | ') ? title : `${title} - ${appName}`),
     resolve: (name) =>
         resolvePageComponent(
             `./Pages/${name}.jsx`,

@@ -46,7 +46,7 @@ export default function SmartLinkShow({ smartLink, store, isValid }) {
 
     return (
         <StorefrontLayout store={store}>
-            <Head title={`${smartLink.title}, ${store.name}`} />
+            <Head title={`${smartLink.title} | ${store.name}`} />
 
             <div className="space-y-8">
                 <a href={`/${store.slug}`} className="inline-flex items-center gap-1.5 text-sm text-[#5F5E58] hover:text-[#141412]">

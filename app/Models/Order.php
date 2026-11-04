@@ -303,6 +303,28 @@ class Order extends Model
         });
     }
 
+    /** Jours pendant lesquels une commande non payée peut encore être payée (relance du vendeur). */
+    public const RECOVERABLE_DAYS = 7;
+
+    /**
+     * Panier récupérable : commande en ligne jamais payée (en attente ou paiement échoué/expiré),
+     * récente, et pas annulée par le vendeur.
+     */
+    public function isRecoverable(): bool
+    {
+        return ! $this->is_manual && ! $this->paid_at && (float) $this->refunded_amount === 0.0
+            && $this->created_at && $this->created_at->gt(now()->subDays(static::RECOVERABLE_DAYS))
+            && (($this->status === 'pending' && $this->payment_status === 'pending') || $this->payment_status === 'failed');
+    }
+
+    public function scopeRecoverable($query)
+    {
+        return $query->where(fn ($q) => $q->where('is_manual', false)->orWhereNull('is_manual'))
+            ->whereNull('paid_at')->where('refunded_amount', 0)
+            ->where('created_at', '>', now()->subDays(static::RECOVERABLE_DAYS))
+            ->where(fn ($q) => $q->where(fn ($q) => $q->where('status', 'pending')->where('payment_status', 'pending'))->orWhere('payment_status', 'failed'));
+    }
+
     /** Pendant le délai de sécurité, le client peut encore signaler un problème. */
     public function canBeReported(): bool
     {

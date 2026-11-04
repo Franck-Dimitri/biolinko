@@ -10,7 +10,8 @@ createServer((page) =>
     createInertiaApp({
         page,
         render: ReactDOMServer.renderToString,
-        title: (title) => `${title} - ${appName}`,
+        // Titres de référencement (« … | … ») déjà complets : pas de suffixe
+    title: (title) => (!title ? appName : title.includes(' | ') ? title : `${title} - ${appName}`),
         resolve: (name) =>
             resolvePageComponent(
                 `./Pages/${name}.jsx`,

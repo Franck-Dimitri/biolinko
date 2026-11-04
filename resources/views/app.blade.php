@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="fr">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title inertia>{{ config('app.name', 'BIOLINKO') }}</title>
+        <title inertia>{{ $meta['title'] ?? config('app.name', 'Biolinko') }}</title>
+        @include('partials.seo')
 
         <!-- Favicon -->
         <link rel="icon" type="image/x-icon" href="/branding/biolinko_black_on_yellow.ico">

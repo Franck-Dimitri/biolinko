@@ -9,8 +9,9 @@ import { EASE_OUT, Reveal, Stagger, StaggerItem } from '@/Components/Motion';
 import ProductCard, { ProductImage } from '@/Components/Storefront/ProductCard';
 import { contrastColor } from '@/Components/Storefront/theme';
 import useCart from '@/Components/Storefront/useCart';
+import ProductReviews from '@/Components/Storefront/ProductReviews';
 
-export default function ProductSlugShow({ store, product, isPreview = false }) {
+export default function ProductSlugShow({ store, product, isPreview = false, productReviews = [], rating = null, seoTitle = null }) {
     const authUser = usePage().props.auth?.user;
     const isOwner = authUser && authUser.id === store.user_id;
 
@@ -60,17 +61,12 @@ export default function ProductSlugShow({ store, product, isPreview = false }) {
             }
         } catch (e) { /* partage annulé */ }
     };
-
-    const reviewsList = store?.reviews || [];
-    const avgRating = reviewsList.length > 0
-        ? (reviewsList.reduce((acc, r) => acc + (r.rating || 5), 0) / reviewsList.length).toFixed(1)
-        : null;
     const relatedProducts = (store?.products || []).filter((p) => p.id !== product.id).slice(0, 4);
     const variantLabel = (v) => v.name || `${v.size || ''} ${v.color || ''}`.trim() || 'Option';
 
     return (
         <StorefrontLayout store={store} isOwner={isOwner} cartCount={cart.count}>
-            <Head title={`${product.title}, ${store.name}`} />
+            <Head title={seoTitle || `${product.title} | ${store.name}`} />
 
             <div className="space-y-16 pb-20 sm:pb-0">
                 {isPreview && (
@@ -114,10 +110,13 @@ export default function ProductSlugShow({ store, product, isPreview = false }) {
                         {/* Infos & achat */}
                         <Stagger gap={0.07} className="space-y-6 min-w-0">
                             <StaggerItem className="space-y-3 min-w-0">
+                                {product.category && (
+                                    <a href={`/${store.slug}?categorie=${encodeURIComponent(product.category)}`} className="inline-block text-sm text-[#5F5E58] hover:text-[#141412] hover:underline">{product.category}</a>
+                                )}
                                 <h1 className="break-words text-[34px] font-medium leading-[1.08] tracking-[-0.03em] text-[#141412] sm:text-[44px]">{product.title}</h1>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                                    {avgRating && (
-                                        <span className="flex items-center gap-1 text-[#141412]"><Star className="h-4 w-4 fill-[#F5B800] text-[#F5B800]" /> {avgRating} ({reviewsList.length} avis)</span>
+                                    {rating?.count > 0 && (
+                                        <a href="#avis" className="flex items-center gap-1 text-[#141412] hover:underline"><Star className="h-4 w-4 fill-[#F5B800] text-[#F5B800]" /> {String(rating.avg).replace('.', ',')} ({rating.count} avis)</a>
                                     )}
                                     {soldOut ? (
                                         <span className="text-[#B91C1C]">Épuisé</span>
@@ -212,25 +211,7 @@ export default function ProductSlugShow({ store, product, isPreview = false }) {
                     </div>
                 </div>
 
-                {reviewsList.length > 0 && (
-                    <section className="space-y-6">
-                        <Reveal className="flex items-end justify-between">
-                            <h2 className="text-[28px] font-medium tracking-[-0.03em] text-[#141412]">Avis clients</h2>
-                            <a href={`/${store.slug}#reviews`} className="text-[15px] font-medium text-[#141412] hover:underline shrink-0">Donner mon avis</a>
-                        </Reveal>
-                        <Stagger className="grid gap-5 md:grid-cols-3">
-                            {reviewsList.slice(0, 3).map((rev, idx) => (
-                                <StaggerItem key={rev.id || idx} className="space-y-3 rounded-3xl border border-black/[0.08] p-5 overflow-hidden">
-                                    <div className="flex gap-0.5">
-                                        {Array.from({ length: 5 }).map((_, s) => <Star key={s} className={`h-4 w-4 shrink-0 ${s < (rev.rating || 5) ? 'fill-[#F5B800] text-[#F5B800]' : 'text-black/10'}`} />)}
-                                    </div>
-                                    <p className="break-words leading-relaxed text-[#141412] line-clamp-4">{rev.comment}</p>
-                                    <div className="truncate text-sm text-[#5F5E58]" title={rev.customer_name || rev.name}>{rev.customer_name || rev.name}{(rev.customer_city || rev.city) ? `, ${rev.customer_city || rev.city}` : ''}</div>
-                                </StaggerItem>
-                            ))}
-                        </Stagger>
-                    </section>
-                )}
+                <ProductReviews store={store} product={product} reviews={productReviews} rating={rating} primaryColor={primaryColor} primaryTextColor={primaryTextColor} />
 
                 {relatedProducts.length > 0 && (
                     <section className="space-y-6">

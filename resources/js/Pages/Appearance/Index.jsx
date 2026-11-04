@@ -354,6 +354,7 @@ export default function Index({ store, reviews = [], stats = {} }) {
                                                         <Button size="sm" variant="ghost" onClick={() => deleteReview(r)} aria-label="Supprimer l’avis"><Trash2 className="h-4 w-4" /></Button>
                                                     </div>
                                                 </div>
+                                                {r.product && <p className="mt-1 text-[12px] text-[#8B8A83]">Avis sur « {r.product.title} »</p>}
                                                 <p className="mt-2 text-[14px] text-[#3D3C37]">{r.comment}</p>
                                             </li>
                                         ))}

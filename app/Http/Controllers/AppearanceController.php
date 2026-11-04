@@ -13,7 +13,7 @@ class AppearanceController extends Controller
 {
     public function index(Request $request): Response
     {
-        $store = $request->user()->store()->with(['reviews' => fn ($q) => $q->latest()])->first();
+        $store = $request->user()->store()->with(['reviews' => fn ($q) => $q->with('product:id,title')->latest()])->first();
         abort_unless($store, 404);
 
         return Inertia::render('Appearance/Index', [

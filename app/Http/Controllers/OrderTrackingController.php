@@ -25,6 +25,7 @@ class OrderTrackingController extends Controller
         return Inertia::render('OrderTracking/Show', [
             'order' => $order,
             'canReport' => $order->canBeReported() && ! $order->report,
+            'canPay' => $order->isRecoverable(),
             'reportReasons' => OrderReport::REASONS,
             'store' => $order->store->forPublic(),
         ]);
@@ -42,8 +43,13 @@ class OrderTrackingController extends Controller
 
         $order = Order::where('tracking_code', $tracking_code)->with(['store.user', 'items.product'])->firstOrFail();
 
-        if ($order->payment_status !== 'pending' || $order->status !== 'pending') {
+        if (! $order->isRecoverable()) {
             return response()->json(['error' => 'Cette commande ne peut plus être payée. Refaites-la depuis la boutique.'], 422);
+        }
+        // Paiement précédent échoué ou expiré : la commande redevient payable (relance du vendeur)
+        if ($order->payment_status === 'failed') {
+            Order::whereKey($order->id)->update(['status' => 'pending', 'payment_status' => 'pending']);
+            $order->refresh();
         }
         if (! $order->store->is_published || $order->store->user?->is_banned) {
             return response()->json(['error' => 'Cette boutique n’accepte pas de paiement pour le moment.'], 422);

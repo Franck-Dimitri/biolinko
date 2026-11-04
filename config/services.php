@@ -62,5 +62,8 @@ return [
         'public_url' => env('WHATSAPP_CLOUD_PUBLIC_URL', 'https://biolinko.link'),
     ],
 
+    // Validation du domaine dans Google Search Console (balise meta)
+    'google' => ['site_verification' => env('GOOGLE_SITE_VERIFICATION')],
+
 ];
 

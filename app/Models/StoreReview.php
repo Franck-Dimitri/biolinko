@@ -18,6 +18,7 @@ class StoreReview extends Model
         'comment',
         'is_verified',
         'is_featured',
+        'product_id',
     ];
 
     protected $casts = [
@@ -25,6 +26,11 @@ class StoreReview extends Model
         'is_verified' => 'boolean',
         'is_featured' => 'boolean',
     ];
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
 
     public function store(): BelongsTo
     {
