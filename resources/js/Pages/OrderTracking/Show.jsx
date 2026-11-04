@@ -197,9 +197,11 @@ export default function Show({ order, store, canReport = false, reportReasons = 
                     <a href={`/${store.slug}`} className="inline-flex items-center gap-1.5 text-sm text-[#5F5E58] hover:text-[#141412]">
                         <ArrowLeft className="h-4 w-4" /> Retour à la boutique
                     </a>
-                    <button type="button" onClick={() => window.print()} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-black/[0.08] px-3 text-sm font-medium text-[#141412] hover:border-black/30">
-                        <Printer className="h-4 w-4" /> Imprimer le reçu
-                    </button>
+                    {order.invoice_number && (
+                    <a href={route('order.invoice', order.tracking_code)} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-black/[0.08] px-3 text-sm font-medium text-[#141412] hover:border-black/30">
+                        <Printer className="h-4 w-4" /> Imprimer la facture
+                    </a>
+                    )}
                 </div>
 
                 <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 rounded-3xl border border-black/[0.08] bg-white p-5 sm:p-8">

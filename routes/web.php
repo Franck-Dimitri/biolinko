@@ -195,6 +195,7 @@ Route::post('/checkout/promo', [CheckoutController::class, 'checkPromo'])->middl
 Route::post('/checkout', [CheckoutController::class, 'process'])->middleware('throttle:10,1')->name('checkout.process');
 Route::get('/checkout/status/{reference}', [CheckoutController::class, 'checkStatus'])->name('checkout.status');
 Route::get('/track/{tracking_code}', [OrderTrackingController::class, 'show'])->name('order.track');
+Route::get('/track/{tracking_code}/facture', [OrderTrackingController::class, 'invoice'])->middleware('throttle:20,1')->name('order.invoice');
 Route::post('/track/{tracking_code}/report', [OrderTrackingController::class, 'report'])->middleware('throttle:3,1')->name('order.report');
 Route::post('/track/{tracking_code}/report/resolve', [OrderTrackingController::class, 'resolve'])->middleware('throttle:5,1')->name('order.report.resolve');
 Route::post('/track/{tracking_code}/pay', [OrderTrackingController::class, 'pay'])->middleware('throttle:5,1')->name('order.pay');

@@ -181,3 +181,15 @@ test('panier abandonné : trop ancien, annulé par le vendeur, ou client ayant p
     $paid->markAsPaid();
     $this->actingAs($this->seller)->get(route('customers.index'))->assertInertia(fn ($p) => $p->has('abandonedOrders', 0));
 });
+
+test('le client télécharge la vraie facture PDF depuis le suivi, seulement une fois payée', function () {
+    $order = Order::create(['tracking_code' => 'BLK-CMD-FACT', 'store_id' => $this->store->id, 'customer_name' => 'Awa', 'customer_phone' => '237677123456',
+        'city' => 'Douala', 'address_details' => 'Akwa', 'price_vendor' => 15000, 'saas_margin' => 525, 'api_fee' => 0, 'total_client' => 15525,
+        'status' => 'pending', 'payment_status' => 'pending']);
+    $this->get(route('order.invoice', 'BLK-CMD-FACT'))->assertNotFound();
+
+    $order->markAsPaid();
+    $res = $this->get(route('order.invoice', 'BLK-CMD-FACT'))->assertOk()->assertHeader('Content-Type', 'application/pdf');
+    expect(substr($res->getContent(), 0, 4))->toBe('%PDF');
+    $this->get(route('order.invoice', 'BLK-INCONNU'))->assertNotFound();
+});

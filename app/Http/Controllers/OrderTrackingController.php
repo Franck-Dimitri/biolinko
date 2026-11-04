@@ -136,4 +136,20 @@ class OrderTrackingController extends Controller
 
         return back()->with('success', 'Merci ! Le problème est marqué comme résolu.');
     }
+
+    /**
+     * Facture PDF de la commande pour le client (même document que celle du vendeur).
+     * Le numéro de suivi sert de clé d'accès, comme pour la page de suivi. Une facture n'existe qu'une fois la commande payée.
+     */
+    public function invoice(string $tracking_code, \App\Services\OrderInvoiceService $invoices)
+    {
+        $order = Order::where('tracking_code', $tracking_code)->with(['store', 'items'])->firstOrFail();
+        abort_unless($order->invoice_number, 404, 'La facture sera disponible une fois la commande payée.');
+
+        return response($invoices->generateInvoicePdf($order), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="Facture_'.$order->invoice_number.'.pdf"',
+            'X-Robots-Tag' => 'noindex, nofollow',
+        ]);
+    }
 }
