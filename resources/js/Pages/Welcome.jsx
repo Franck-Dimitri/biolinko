@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, MotionConfig, animate, motion, useInView, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion';
 import { ArrowRight, BarChart3, Check, HandCoins, Menu, Package, Repeat, ShieldCheck, Store, Truck, X } from 'lucide-react';
@@ -8,7 +8,6 @@ import Footer from '@/Components/Landing/Footer';
 import Countries from '@/Components/Landing/Countries';
 import ChannelStrip from '@/Components/Landing/ChannelStrip';
 import Faq from '@/Components/Landing/Faq';
-import HeroStory from '@/Components/Landing/HeroStory';
 import Features from '@/Components/Landing/Features';
 import { Eyebrow, RevealWords, Section, WRAP, reveal } from '@/Components/Landing/Frame';
 import Pricing from '@/Components/Landing/Pricing';
@@ -23,7 +22,7 @@ const H2 = 'text-[36px] font-medium leading-[1.05] tracking-[-0.03em] sm:text-[5
 
 /* ---------------------------------------------------------------- En-tête */
 
-function Header({ auth, lightHero = false }) {
+function Header({ auth }) {
     const [open, setOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const { scrollYProgress } = useScroll();
@@ -35,7 +34,7 @@ function Header({ auth, lightHero = false }) {
         return () => window.removeEventListener('scroll', onScroll);
     }, []);
     const cta = auth?.user ? route('dashboard') : route('register');
-    const light = scrolled || open || lightHero; // fond clair une fois sorti du hero sombre
+    const light = scrolled || open; // fond clair une fois sorti du hero sombre
 
     return (
         <motion.header initial={{ y: -24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6, ease: EASE_OUT }}
@@ -451,15 +450,13 @@ function FinalCta() {
 }
 
 export default function Welcome({ auth }) {
-    // Deux heros à comparer : /?hero=b affiche la variante claire « récit d'une vente »
-    const heroB = /[?&]hero=b\b/.test(usePage().url);
     return (
         <MotionConfig reducedMotion="user">
             <Head title="Biolinko : votre boutique en ligne payée en Mobile Money | Biolinko" />
             <div className="min-h-screen overflow-x-clip bg-white font-poppins text-[#141412] antialiased selection:bg-[#FFCC00]/60">
-                <Header auth={auth} lightHero={heroB} />
+                <Header auth={auth} />
                 <main>
-                    {heroB ? <HeroStory /> : <Hero />}
+                    <Hero />
                     <ChannelStrip />
                     <Pillars />
                     <AllFeatures />
