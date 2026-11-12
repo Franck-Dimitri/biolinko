@@ -108,7 +108,7 @@ Tous les taux sont dans `config/payments.php`.
 | Élément | Valeur |
 |---|---|
 | Frais de paiement payés par le client | **3,5 %** du montant payé en ligne (livraison comprise). Couvrent l'encaissement Mercy Pay, Biolinko n'en garde rien |
-| Commission Biolinko sur chaque vente | Starter **10 %** · Pro **7 %** · Growth **5 %** · Business **3 %** (seule rémunération, hors livraison) |
+| Commission Biolinko sur chaque vente | Starter **10 %** · Pro **8 %** · Growth **6 %** · Business **4 %** (seule rémunération, hors livraison) |
 | Assiette de la commission | Articles après remise. **Jamais sur la livraison** |
 | Frais de retrait vendeur | **Gratuit** (le virement Mercy Pay de 2 % est couvert par la commission), retrait minimum 1 000 FCFA |
 | Commande minimum payée en ligne | **1 000 FCFA** (équivalent fixé par pays) |

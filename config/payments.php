@@ -26,9 +26,9 @@ return [
     // Commission Biolinko sur chaque vente, selon le plan du vendeur au moment du paiement
     'commission_percent' => [
         'starter' => 10,
-        'pro' => 7,
-        'growth' => 5,
-        'business' => 3,
+        'pro' => 8,
+        'growth' => 6,
+        'business' => 4,
     ],
 
     // Coût estimé de l'agrégateur (pour calculer la marge nette dans l'admin) : % encaissé / % viré
