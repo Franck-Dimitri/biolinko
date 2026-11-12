@@ -19,6 +19,7 @@ const sections = [
                     <li><strong>Session et sécurité</strong> : maintiennent votre connexion au tableau de bord et protègent les formulaires contre les requêtes frauduleuses (jeton CSRF).</li>
                     <li><strong>Panier</strong> : conserve les articles ajoutés au panier d’une boutique (stockage local du navigateur).</li>
                     <li><strong>Coordonnées de commande</strong> : mémorisent votre nom et numéro pour pré-remplir vos prochaines commandes sur cet appareil (stockage local).</li>
+                    <li><strong>Choix faits sur la page d’accueil</strong> : la formule ou l’adresse de boutique choisies avant l’inscription sont gardées le temps de la session, pour vous les proposer à la création du compte.</li>
                 </ul>
             </>
         ),
@@ -68,7 +69,7 @@ export default function Cookies() {
         <LegalLayout
             title="Politique cookies"
             intro="Les cookies et le stockage utilisés sur Biolinko, à quoi ils servent et comment les contrôler."
-            updatedAt="25 octobre 2026"
+            updatedAt="12 novembre 2026"
             sections={sections}
         />
     );

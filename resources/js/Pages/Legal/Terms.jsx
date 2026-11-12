@@ -17,8 +17,9 @@ const sections = [
         title: 'Compte vendeur',
         body: (
             <>
-                <p>Pour ouvrir une boutique, le vendeur fournit des informations exactes (nom, e-mail, numéro WhatsApp) et valide son adresse e-mail.</p>
-                <p>Il est responsable de la confidentialité de ses identifiants : toute action réalisée depuis son compte est réputée faite par lui.</p>
+                <p>Pour ouvrir une boutique, le vendeur fournit des informations exactes : nom, adresse e-mail et <strong>numéro WhatsApp</strong> (obligatoire, il sert à l’alerter de ses ventes et à l’assister). Il confirme son adresse e-mail avec un code reçu par e-mail.</p>
+                <p>Chaque compte dispose d’une seule boutique, accessible à une adresse de la forme <strong>biolinko.link/nom-de-la-boutique</strong>. Une adresse choisie à l’inscription est attribuée si elle est libre ; à défaut, une adresse proche est proposée. Certaines adresses sont réservées au fonctionnement de la plateforme.</p>
+                <p>Le vendeur est responsable de la confidentialité de ses identifiants : toute action réalisée depuis son compte est réputée faite par lui.</p>
             </>
         ),
     },
@@ -52,6 +53,22 @@ const sections = [
         ),
     },
     {
+        id: 'commandes',
+        title: 'Commandes, livraison et remboursements',
+        body: (
+            <>
+                <ul>
+                    <li><strong>Commande :</strong> l’acheteur indique son nom, son numéro Mobile Money, son <strong>numéro WhatsApp</strong>, sa ville et son adresse de livraison. Il reçoit un lien de suivi et une facture établie au nom du vendeur.</li>
+                    <li><strong>Livraison :</strong> le vendeur fixe librement ses frais de livraison (par ville, livraison offerte à partir d’un montant, ou à convenir). Ces frais lui reviennent intégralement et ne supportent pas de commission.</li>
+                    <li><strong>Acompte :</strong> si le vendeur l’active, l’acheteur peut payer une partie en ligne et le reste en espèces au livreur. La commission porte sur la totalité de la vente et est prélevée sur la part payée en ligne.</li>
+                    <li><strong>Codes promo et promotions :</strong> les réductions sont définies par le vendeur, qui en fixe les conditions et la durée.</li>
+                    <li><strong>Remboursement :</strong> le vendeur peut rembourser tout ou partie d’une vente payée en ligne. Le montant est renvoyé sur le Mobile Money de l’acheteur et débité du solde du vendeur ; la commission correspondante est annulée en proportion. Les frais de paiement Mobile Money payés par l’acheteur ne sont pas remboursés.</li>
+                    <li><strong>Commandes impayées :</strong> une commande non payée peut faire l’objet de rappels, puis être annulée automatiquement après un délai.</li>
+                </ul>
+            </>
+        ),
+    },
+    {
         id: 'abonnements',
         title: 'Abonnements',
         body: (
@@ -60,7 +77,9 @@ const sections = [
                 <ul>
                     <li>Durées proposées : 1 mois, 1 an (−15 %) ou 2 ans (−20 %), payées en une fois par Mobile Money.</li>
                     <li>Un plan en cours peut être prolongé à tout moment : la nouvelle durée s’ajoute à l’échéance actuelle.</li>
-                    <li>L’abonnement n’est pas renouvelé automatiquement. À son échéance, la boutique repasse sur les limites du plan Starter.</li>
+                    <li><strong>Renouvellement automatique :</strong> par défaut, à l’échéance, un mois du même plan est payé automatiquement depuis le solde Biolinko du vendeur, s’il est suffisant. Le vendeur est prévenu <strong>7, 4 et 2 jours</strong> avant l’échéance.</li>
+                    <li>Le vendeur peut <strong>désactiver le renouvellement automatique</strong> à tout moment depuis son espace et payer lui-même, par Mobile Money ou avec son solde.</li>
+                    <li>Si le solde est insuffisant, le prélèvement est retenté pendant quelques jours. Sans paiement, la boutique repasse sur les limites du plan Starter, sans perte de ses données.</li>
                     <li>Les sommes payées pour une période commencée ne sont pas remboursables, sauf erreur de notre part.</li>
                 </ul>
             </>
@@ -79,6 +98,16 @@ const sections = [
                     <li>toute arnaque, hameçonnage ou usurpation d’identité.</li>
                 </ul>
                 <p>En cas de manquement, Biolinko peut suspendre la boutique, bloquer le compte et retenir à titre conservatoire les fonds liés aux ventes litigieuses.</p>
+            </>
+        ),
+    },
+    {
+        id: 'avis',
+        title: 'Avis clients',
+        body: (
+            <>
+                <p>Les acheteurs peuvent laisser un avis (note et commentaire) sur une boutique ou un produit. L’avis doit être sincère, porter sur une expérience réelle et respecter les règles de la section précédente.</p>
+                <p>Le vendeur peut mettre en avant ou retirer les avis publiés sur sa boutique. Biolinko peut supprimer un avis manifestement faux, injurieux ou illicite.</p>
             </>
         ),
     },
@@ -130,7 +159,7 @@ export default function Terms() {
         <LegalLayout
             title="Conditions d’utilisation"
             intro="Les règles qui encadrent l’utilisation de Biolinko par les vendeurs et les acheteurs."
-            updatedAt="26 octobre 2026"
+            updatedAt="12 novembre 2026"
             sections={sections}
         />
     );

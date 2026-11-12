@@ -11,15 +11,18 @@ const sections = [
                 <p>Biolinko collecte les informations nécessaires au fonctionnement de la plateforme : création de boutique, vente en ligne, encaissement et suivi des commandes.</p>
                 <p><strong>Vendeurs :</strong></p>
                 <ul>
-                    <li>nom, adresse e-mail, mot de passe (stocké sous forme chiffrée) et numéro WhatsApp ;</li>
+                    <li>nom, adresse e-mail (confirmée par un code), mot de passe (stocké sous forme hachée) et numéro WhatsApp ;</li>
                     <li>informations de la boutique : nom, logo, description, ville, produits, prix et stocks ;</li>
                     <li>numéro Mobile Money utilisé pour les retraits et les abonnements ;</li>
-                    <li>historique des ventes, factures, abonnements et retraits.</li>
+                    <li>historique des ventes, factures, remboursements, abonnements et retraits ;</li>
+                    <li>identifiants publicitaires que le vendeur choisit d’ajouter à sa boutique (pixels Meta, TikTok, Google).</li>
                 </ul>
                 <p><strong>Acheteurs :</strong></p>
                 <ul>
-                    <li>nom, numéro de téléphone Mobile Money, ville, adresse de livraison et, si vous le fournissez, e-mail ;</li>
-                    <li>commandes passées, montants et références de paiement.</li>
+                    <li>nom, numéro de téléphone Mobile Money, <strong>numéro WhatsApp</strong>, ville, adresse de livraison et, si vous le fournissez, e-mail ;</li>
+                    <li>commandes passées (y compris celles qui n’ont pas été payées), montants, références de paiement et éventuels remboursements ;</li>
+                    <li>avis laissés sur une boutique ou un produit (nom affiché, note, commentaire) ;</li>
+                    <li>signalements de problème et échanges avec le vendeur à ce sujet.</li>
                 </ul>
                 <p><strong>Données d’utilisation :</strong> pages consultées, actions effectuées sur la plateforme (ajout au panier, commandes, vues des liens de paiement), type d’appareil et de navigateur, adresse IP, journaux techniques et temps de chargement.</p>
             </>
@@ -33,7 +36,8 @@ const sections = [
                 <ul>
                     <li><strong>Fournir le service :</strong> afficher les boutiques, enregistrer les commandes, générer factures et reçus, permettre au vendeur de livrer.</li>
                     <li><strong>Traiter les paiements :</strong> transmettre la demande de paiement Mobile Money à notre prestataire de paiement et à l’opérateur, créditer le solde du vendeur, exécuter ses retraits.</li>
-                    <li><strong>Communiquer :</strong> envoyer les confirmations de commande, reçus et notifications par e-mail ou WhatsApp, et répondre aux demandes d’assistance.</li>
+                    <li><strong>Communiquer :</strong> envoyer les confirmations de commande, factures, liens de suivi et notifications par e-mail ou WhatsApp, les rappels de commande impayée et les rappels d’échéance d’abonnement, et répondre aux demandes d’assistance.</li>
+                    <li><strong>Faciliter vos prochains achats :</strong> lorsque vous recommandez dans la même boutique avec le même numéro, votre prénom et votre ville peuvent être pré-remplis. Votre adresse n’est jamais affichée dans ce cas.</li>
                     <li><strong>Sécuriser la plateforme :</strong> prévenir la fraude, les usurpations de numéros, les contenus illicites et les abus.</li>
                     <li><strong>Améliorer et optimiser la plateforme :</strong> voir la section suivante.</li>
                     <li><strong>Respecter nos obligations légales :</strong> comptabilité, fiscalité et réponses aux autorités compétentes.</li>
@@ -67,9 +71,10 @@ const sections = [
             <>
                 <p>Biolinko <strong>ne vend pas et ne loue pas</strong> vos données personnelles. Elles ne sont transmises qu’aux personnes et prestataires qui en ont besoin :</p>
                 <ul>
-                    <li><strong>Le vendeur</strong> chez qui vous commandez reçoit vos coordonnées et votre adresse pour traiter et livrer la commande. Il est responsable de l’usage qu’il en fait pour sa propre activité.</li>
-                    <li><strong>Notre prestataire de paiement</strong> et les <strong>opérateurs Mobile Money</strong> (MTN, Orange) reçoivent le numéro et le montant nécessaires au paiement.</li>
-                    <li><strong>Nos prestataires techniques</strong> (hébergement, envoi d’e-mails, messagerie WhatsApp) agissent sur nos instructions.</li>
+                    <li><strong>Le vendeur</strong> chez qui vous commandez reçoit vos coordonnées (nom, numéros, adresse) pour traiter et livrer la commande. Il peut aussi vous recontacter au sujet d’une commande non payée et vous envoyer ses nouveautés par WhatsApp. Il est responsable de l’usage qu’il fait de ces données pour sa propre activité ; vous pouvez lui demander à tout moment d’arrêter de vous écrire.</li>
+                    <li><strong>Notre prestataire de paiement</strong> et les <strong>opérateurs Mobile Money</strong> (MTN, Orange) reçoivent le numéro et le montant nécessaires au paiement, au retrait ou au remboursement.</li>
+                    <li><strong>Nos prestataires techniques</strong> (hébergement, envoi d’e-mails, messagerie WhatsApp officielle de Meta) agissent sur nos instructions.</li>
+                    <li><strong>Les services publicitaires</strong> (Meta, TikTok, Google) si le vendeur a activé leurs outils sur sa boutique : voir la <a href="/politique-des-cookies" className="underline underline-offset-2">politique cookies</a>.</li>
                     <li><strong>Les autorités</strong> lorsque la loi nous y oblige.</li>
                 </ul>
             </>
@@ -120,7 +125,7 @@ export default function Privacy() {
         <LegalLayout
             title="Politique de confidentialité"
             intro="Quelles données Biolinko collecte, pourquoi, avec qui elles sont partagées et comment vous gardez la main dessus."
-            updatedAt="25 octobre 2026"
+            updatedAt="12 novembre 2026"
             sections={sections}
         />
     );
