@@ -247,18 +247,19 @@ class User extends Authenticatable implements MustVerifyEmail
     /** Adresses déjà prises par l'application : une boutique ne peut pas s'appeler ainsi. */
     public const RESERVED_SLUGS = ['admin', 'seller', 'login', 'register', 'logout', 'dashboard', 'profile', 'track', 'pay', 'store', 'api',
         'checkout', 'verify-email', 'forgot-password', 'reset-password', 'confirm-password', 'password', 'email', 'storage', 'build', 'images',
-        'conditions-generales', 'politique-de-confidentialite', 'politique-des-cookies', 'privacy', 'terms', 'cookies', 'up', 'biolinko', 'sitemap', 'robots'];
+        'conditions-generales', 'politique-de-confidentialite', 'politique-des-cookies', 'privacy', 'terms', 'cookies', 'up', 'biolinko', 'sitemap', 'robots', 'boutique-disponible'];
 
     /**
      * Chaque vendeur a une boutique (en brouillon au départ) et un portefeuille : sans eux, aucune page vendeur ne fonctionne.
      */
-    public function ensureStore(): Store
+    /** @param  string|null  $preferredSlug  adresse réservée sur la landing (ShopIntent), sinon dérivée du nom */
+    public function ensureStore(?string $preferredSlug = null): Store
     {
         if ($this->store) {
             return $this->store;
         }
 
-        $base = Str::slug($this->name) ?: 'boutique';
+        $base = $preferredSlug ?: (Str::slug($this->name) ?: 'boutique');
         $slug = $base;
         $i = 2;
         while (in_array($slug, self::RESERVED_SLUGS, true) || Store::where('slug', $slug)->exists()) {
@@ -267,7 +268,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
         $store = Store::create([
             'user_id' => $this->id,
-            'name' => $this->name,
+            'name' => $preferredSlug ? \App\Support\ShopIntent::displayName($preferredSlug) : $this->name,
             'slug' => $slug,
             'phone_whatsapp' => $this->phone_whatsapp,
             'is_published' => false,

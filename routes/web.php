@@ -190,6 +190,13 @@ Route::post('/api/webhooks/hrskills-pay', [HrSkillsPayWebhookController::class, 
 Route::get('/api/webhooks/whatsapp-cloud', [\App\Http\Controllers\Webhooks\WhatsappCloudWebhookController::class, 'verify'])->name('webhooks.whatsapp-cloud.verify');
 Route::post('/api/webhooks/whatsapp-cloud', [\App\Http\Controllers\Webhooks\WhatsappCloudWebhookController::class, 'handle'])->name('webhooks.whatsapp-cloud');
 
+// Landing : l'adresse biolinko.link/<boutique> est-elle libre ?
+Route::get('/boutique-disponible', function (Request $request) {
+    $slug = \App\Support\ShopIntent::normalize($request->query('slug'));
+
+    return response()->json(['slug' => $slug, 'available' => $slug !== null && \App\Support\ShopIntent::isAvailable($slug)]);
+})->middleware('throttle:30,1')->name('shop.available');
+
 // Public Client Fast Checkout & Order Tracking & Customer Lookup
 Route::get('/checkout/lookup-customer', [CheckoutController::class, 'lookupCustomer'])->middleware('throttle:20,1')->name('checkout.lookupCustomer');
 Route::post('/checkout/promo', [CheckoutController::class, 'checkPromo'])->middleware('throttle:20,1')->name('checkout.promo');

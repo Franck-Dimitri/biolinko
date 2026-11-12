@@ -22,8 +22,11 @@ class RegisteredUserController extends Controller
      */
     public function create(Request $request): Response
     {
+        $shop = \App\Support\ShopIntent::remember($request);
+
         return Inertia::render('Auth/Register', [
             'intendedPlan' => PlanIntent::remember($request),
+            'intendedShop' => $shop ? ['slug' => $shop, 'available' => \App\Support\ShopIntent::isAvailable($shop)] : null,
         ]);
     }
 
@@ -59,7 +62,7 @@ class RegisteredUserController extends Controller
         ]);
         $user->forceFill(['terms_accepted_at' => now()])->save();
 
-        $user->ensureStore();
+        $user->ensureStore(\App\Support\ShopIntent::pull($request));
 
         // Le listener Registered appelle sendEmailVerificationNotification() → envoi de l'OTP
         event(new Registered($user));

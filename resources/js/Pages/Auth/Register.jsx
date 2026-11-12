@@ -4,7 +4,7 @@ import AuthShell, { fieldClass, labelClass, primaryButtonClass } from '@/Layouts
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowRight, Loader2 } from 'lucide-react';
 
-export default function Register({ intendedPlan = null }) {
+export default function Register({ intendedPlan = null, intendedShop = null }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
@@ -27,9 +27,16 @@ export default function Register({ intendedPlan = null }) {
             <AuthShell
                 title="Créez votre boutique"
                 subtitle={<>Déjà inscrit ? <Link href={route('login', intendedPlan ? { plan: intendedPlan } : {})} className="font-medium text-[#141412] underline underline-offset-4">Se connecter</Link></>}
-                footer={<>Votre boutique sera accessible à l’adresse <span className="font-medium text-[#141412]">biolinko.link/votre-boutique</span>.</>}
+                footer={<>Votre boutique sera accessible à l’adresse <span className="font-medium text-[#141412]">biolinko.link/{intendedShop?.slug || 'votre-boutique'}</span>.</>}
             >
                 <PlanIntentBanner plan={intendedPlan} action="Créez votre compte et validez votre e-mail :" />
+                {intendedShop && (
+                    <div className={`mb-6 rounded-2xl border p-4 text-sm ${intendedShop.available ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
+                        {intendedShop.available
+                            ? <>Votre adresse <strong className="font-semibold">biolinko.link/{intendedShop.slug}</strong> est réservée pendant votre inscription.</>
+                            : <>L’adresse <strong className="font-semibold">biolinko.link/{intendedShop.slug}</strong> est déjà prise : nous vous en proposerons une proche, modifiable ensuite.</>}
+                    </div>
+                )}
 
                 <form onSubmit={submit} className="space-y-4">
                     <div>
