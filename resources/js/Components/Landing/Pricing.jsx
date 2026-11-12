@@ -16,8 +16,8 @@ const planFeatures = (L) => ({
 
 const PLANS = [
     { id: 'starter', name: 'Starter', sub: 'Pour faire vos premières ventes' },
-    { id: 'pro', name: 'Pro', sub: 'Pour les commerçants actifs', highlight: true },
-    { id: 'growth', name: 'Growth', sub: 'Pour accélérer vos ventes' },
+    { id: 'pro', name: 'Pro', sub: 'Pour les commerçants actifs' },
+    { id: 'growth', name: 'Growth', sub: 'Pour accélérer vos ventes', highlight: true },
     { id: 'business', name: 'Business', sub: 'Pour les marques établies' },
 ];
 
@@ -107,7 +107,7 @@ export default function Pricing({ auth }) {
                                 className={`relative flex flex-col rounded-3xl p-7 ${p.highlight ? 'bg-[#141412] text-white' : 'border border-black/[0.08] bg-white text-[#141412]'}`}>
                                 <div className="flex items-center justify-between">
                                     <p className="text-[17px] font-medium">{p.name}</p>
-                                    {p.highlight && <span className="rounded-full bg-[#FFCC00] px-2.5 py-0.5 text-[12px] font-medium text-[#141412]">Le plus choisi</span>}
+                                    {p.highlight && <span className="rounded-full bg-[#FFCC00] px-2.5 py-0.5 text-[12px] font-medium text-[#141412]">Recommandé</span>}
                                 </div>
                                 <p className={`mt-1 text-[14px] ${p.highlight ? 'text-white/55' : 'text-[#5F5E58]'}`}>{p.sub}</p>
 

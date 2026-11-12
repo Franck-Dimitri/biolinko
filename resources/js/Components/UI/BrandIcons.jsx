@@ -16,3 +16,11 @@ export const FacebookIcon = ({ className = 'w-5 h-5', style }) => (
 export const WhatsappIcon = ({ className = 'w-5 h-5', style }) => (
     <svg {...base} className={className} style={style}><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z" /><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 .8a4 4 0 0 1-1.8-1.8l.8-1-1-2L9 9.5z" /></svg>
 );
+
+export const LinkedinIcon = ({ className = 'w-5 h-5', style }) => (
+    <svg {...base} className={className} style={style}><rect x="3" y="3" width="18" height="18" rx="3" /><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7" /></svg>
+);
+
+export const YoutubeIcon = ({ className = 'w-5 h-5', style }) => (
+    <svg {...base} className={className} style={style}><rect x="2.5" y="5.5" width="19" height="13" rx="4" /><path d="M10.5 9.5v5l4.5-2.5z" fill="currentColor" /></svg>
+);

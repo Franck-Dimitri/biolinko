@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUp, ChevronDown, Mail, MapPin } from 'lucide-react';
 import { EASE_OUT } from '@/Components/UI/Motion';
+import { FacebookIcon, InstagramIcon, LinkedinIcon, TiktokIcon, WhatsappIcon, YoutubeIcon } from '@/Components/UI/BrandIcons';
 
 export const PHOTO_CREDITS = [
     ['Robe pagne', 'ItunuIjila', 'CC BY-SA 4.0', 'A_BEAUTIFUL_Ankara_dress.jpg'],
@@ -17,6 +18,17 @@ export const PHOTO_CREDITS = [
 ];
 
 const CONTACT_EMAIL = 'contact@biolinko.link';
+
+// Réseaux sociaux de Biolinko : renseigner `href` quand les pages sont créées.
+// Tant qu'un lien est vide, l'icône s'affiche sans être cliquable.
+const SOCIALS = [
+    { name: 'WhatsApp', Icon: WhatsappIcon, href: '' },
+    { name: 'Instagram', Icon: InstagramIcon, href: '' },
+    { name: 'TikTok', Icon: TiktokIcon, href: '' },
+    { name: 'Facebook', Icon: FacebookIcon, href: '' },
+    { name: 'LinkedIn', Icon: LinkedinIcon, href: '' },
+    { name: 'YouTube', Icon: YoutubeIcon, href: '' },
+];
 const WRAP = 'relative mx-auto w-full max-w-[1320px] px-5 sm:px-8 lg:px-12';
 
 /** Pied de page de la landing et des pages légales : fond noir, colonnes de liens, grand logotype. */
@@ -64,6 +76,18 @@ export default function Footer() {
                         <ul className="mt-6 space-y-2.5 text-[14px] text-white/55">
                             <li className="flex items-center gap-2.5"><MapPin className="h-4 w-4 shrink-0" /> Douala, Cameroun</li>
                             <li><a href={`mailto:${CONTACT_EMAIL}`} className="flex items-center gap-2.5 hover:text-white"><Mail className="h-4 w-4 shrink-0" /> {CONTACT_EMAIL}</a></li>
+                        </ul>
+                        <ul className="mt-7 flex flex-wrap gap-2" aria-label="Biolinko sur les réseaux sociaux">
+                            {SOCIALS.map(({ name, Icon, href }) => {
+                                const cls = 'flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white/70 transition-colors';
+                                return (
+                                    <li key={name}>
+                                        {href
+                                            ? <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`Biolinko sur ${name}`} className={`${cls} hover:border-white/50 hover:bg-white hover:text-[#141412]`}><Icon className="h-[18px] w-[18px]" /></a>
+                                            : <span title={`${name} : bientôt`} aria-label={`${name} : bientôt`} className={`${cls} cursor-default opacity-70`}><Icon className="h-[18px] w-[18px]" /></span>}
+                                    </li>
+                                );
+                            })}
                         </ul>
                     </div>
 
