@@ -20,9 +20,18 @@ class SeoController extends Controller
         $xml = Cache::remember('seo.sitemap', now()->addHour(), function () {
             $urls = [
                 [Seo::url('/'), now(), '1.0'],
+                [Seo::url('/a-propos'), null, '0.6'],
+                [Seo::url('/contact'), null, '0.5'],
+                [Seo::url('/paiement-et-securite'), null, '0.6'],
+                [Seo::url('/programme-pilote'), null, '0.6'],
+                [Seo::url('/aide'), null, '0.7'],
                 [Seo::url('/conditions-generales'), null, '0.2'],
                 [Seo::url('/politique-de-confidentialite'), null, '0.2'],
+                [Seo::url('/mentions-legales'), null, '0.2'],
             ];
+            foreach (array_keys(\App\Support\HelpCenter::ARTICLES) as $slug) {
+                $urls[] = [Seo::url('/aide/'.$slug), null, '0.6'];
+            }
 
             Store::where('is_published', true)
                 ->whereHas('user', fn ($q) => $q->where('is_banned', false)->orWhereNull('is_banned'))

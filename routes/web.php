@@ -98,6 +98,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
 
     // 9. Paramètres Plateforme & API
     Route::get('/settings', [AdminSettingController::class, 'index'])->name('admin.settings.index');
+
+    // 10. Candidatures au programme pilote
+    Route::get('/pilote', [\App\Http\Controllers\Admin\AdminPilotController::class, 'index'])->name('admin.pilot.index');
+    Route::patch('/pilote/{application}', [\App\Http\Controllers\Admin\AdminPilotController::class, 'update'])->name('admin.pilot.update');
     Route::get('/settings/whatsapp-templates', [AdminSettingController::class, 'whatsappTemplates'])->name('admin.settings.whatsapp.templates');
     Route::post('/settings/whatsapp-test', [AdminSettingController::class, 'testWhatsappMessage'])->name('admin.settings.whatsapp.test');
 });
@@ -218,6 +222,18 @@ Route::post('/pay/{code}/checkout', [SmartLinkController::class, 'processPublicC
 // Référencement : plan du site et robots.txt (avant les routes de boutique)
 Route::get('/sitemap.xml', [\App\Http\Controllers\Storefront\SeoController::class, 'sitemap'])->name('seo.sitemap');
 Route::get('/robots.txt', [\App\Http\Controllers\Storefront\SeoController::class, 'robots'])->name('seo.robots');
+
+// Pages d'information du site public
+Route::controller(\App\Http\Controllers\Storefront\SiteController::class)->group(function () {
+    Route::get('/a-propos', 'about')->name('site.about');
+    Route::get('/contact', 'contact')->name('site.contact');
+    Route::get('/paiement-et-securite', 'security')->name('site.security');
+    Route::get('/aide', 'help')->name('site.help');
+    Route::get('/aide/{article}', 'helpArticle')->where('article', '[a-z0-9-]+')->name('site.help.article');
+    Route::get('/programme-pilote', 'pilot')->name('site.pilot');
+    Route::post('/programme-pilote', 'storePilot')->middleware('throttle:5,1')->name('site.pilot.store');
+    Route::get('/mentions-legales', 'legalNotice')->name('legal.notice');
+});
 
 // Public Legal Pages (Terms, Privacy, Cookies)
 Route::get('/conditions-generales', function () {

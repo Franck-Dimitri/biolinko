@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUp, ChevronDown, Mail, MapPin } from 'lucide-react';
 import { EASE_OUT } from '@/Components/UI/Motion';
@@ -17,17 +17,17 @@ export const PHOTO_CREDITS = [
     ['Haut kente', 'Nationaal Museum van Wereldculturen', 'CC BY-SA 3.0', 'Shirt_van_Afrikaanse_kente_stof-_Stichting_Nationaal_Museum_van_Wereldculturen_-_R-3633c.jpg'],
 ];
 
-const CONTACT_EMAIL = 'contact@biolinko.link';
+const DEFAULT_EMAIL = 'contact@biolinko.link';
 
-// Réseaux sociaux de Biolinko : renseigner `href` quand les pages sont créées.
+// Réseaux sociaux : les liens se règlent dans .env (BIOLINKO_SOCIAL_*, voir config/biolinko.php).
 // Tant qu'un lien est vide, l'icône s'affiche sans être cliquable.
 const SOCIALS = [
-    { name: 'WhatsApp', Icon: WhatsappIcon, href: '' },
-    { name: 'Instagram', Icon: InstagramIcon, href: '' },
-    { name: 'TikTok', Icon: TiktokIcon, href: '' },
-    { name: 'Facebook', Icon: FacebookIcon, href: '' },
-    { name: 'LinkedIn', Icon: LinkedinIcon, href: '' },
-    { name: 'YouTube', Icon: YoutubeIcon, href: '' },
+    { key: 'whatsapp', name: 'WhatsApp', Icon: WhatsappIcon },
+    { key: 'instagram', name: 'Instagram', Icon: InstagramIcon },
+    { key: 'tiktok', name: 'TikTok', Icon: TiktokIcon },
+    { key: 'facebook', name: 'Facebook', Icon: FacebookIcon },
+    { key: 'linkedin', name: 'LinkedIn', Icon: LinkedinIcon },
+    { key: 'youtube', name: 'YouTube', Icon: YoutubeIcon },
 ];
 const WRAP = 'relative mx-auto w-full max-w-[1320px] px-5 sm:px-8 lg:px-12';
 
@@ -35,6 +35,9 @@ const WRAP = 'relative mx-auto w-full max-w-[1320px] px-5 sm:px-8 lg:px-12';
 export default function Footer() {
     const [credits, setCredits] = useState(false);
     const year = new Date().getFullYear();
+    const site = usePage().props.site || {};
+    const links = site.socials || {};
+    const CONTACT_EMAIL = site.contact?.email || DEFAULT_EMAIL;
 
     const cols = [
         ['Produit', [
@@ -43,15 +46,19 @@ export default function Footer() {
             ['Tarifs', '/#tarifs'],
         ]],
         ['Ressources', [
+            ['Centre d’aide', route('site.help')],
+            ['Paiement et sécurité', route('site.security')],
             ['Pays couverts', '/#pays'],
             ['Questions fréquentes', '/#questions'],
-            ['Contact', `mailto:${CONTACT_EMAIL}`],
         ]],
-        ['Compte', [
+        ['Biolinko', [
+            ['À propos', route('site.about')],
+            ['Contact', route('site.contact')],
+            ['Programme pilote', route('site.pilot')],
             ['Se connecter', route('login')],
-            ['Créer un compte', route('register')],
         ]],
         ['Légal', [
+            ['Mentions légales', route('legal.notice')],
             ['Conditions d’utilisation', route('legal.terms')],
             ['Confidentialité', route('legal.privacy')],
             ['Cookies', route('legal.cookies')],
@@ -74,11 +81,12 @@ export default function Footer() {
                             La plateforme de commerce en ligne des vendeurs africains : boutique, commandes, livraison, factures, marketing et paiements Mobile Money.
                         </p>
                         <ul className="mt-6 space-y-2.5 text-[14px] text-white/55">
-                            <li className="flex items-center gap-2.5"><MapPin className="h-4 w-4 shrink-0" /> Douala, Cameroun</li>
+                            <li className="flex items-center gap-2.5"><MapPin className="h-4 w-4 shrink-0" /> {site.contact?.city || 'Douala, Cameroun'}</li>
                             <li><a href={`mailto:${CONTACT_EMAIL}`} className="flex items-center gap-2.5 hover:text-white"><Mail className="h-4 w-4 shrink-0" /> {CONTACT_EMAIL}</a></li>
                         </ul>
                         <ul className="mt-7 flex flex-wrap gap-2" aria-label="Biolinko sur les réseaux sociaux">
-                            {SOCIALS.map(({ name, Icon, href }) => {
+                            {SOCIALS.map(({ key, name, Icon }) => {
+                                const href = links[key];
                                 const cls = 'flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white/70 transition-colors';
                                 return (
                                     <li key={name}>

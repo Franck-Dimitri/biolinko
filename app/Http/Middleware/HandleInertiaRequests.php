@@ -41,6 +41,11 @@ class HandleInertiaRequests extends Middleware
             'planLimits' => User::PLAN_LIMITS,
             'whatsappAutomatic' => \App\Services\Whatsapp\WhatsappGatewayService::automatic(),
             // Frais et commissions (config/payments.php) affichés sur la landing, la caisse et le tableau de bord
+            // Contact et réseaux sociaux publics (config/biolinko.php)
+            'site' => [
+                'contact' => config('biolinko.contact'),
+                'socials' => array_filter(config('biolinko.socials', [])),
+            ],
             'payments' => [
                 'client_fee_percent' => config('payments.client_fee_percent'),
                 'withdrawal_fee_percent' => config('payments.withdrawal_fee_percent'),
@@ -58,6 +63,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => $request->session()->get('success'),
                 'warning' => $request->session()->get('warning'),
                 'error' => $request->session()->get('error'),
+                'pilot_sent' => $request->session()->get('pilot_sent'),
             ],
             'ziggy' => fn () => [
                 ...(new Ziggy)->toArray(),
