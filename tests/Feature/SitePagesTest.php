@@ -48,3 +48,16 @@ test('les adresses des pages du site sont réservées aux boutiques', function (
         expect(in_array($slug, User::RESERVED_SLUGS, true))->toBeTrue();
     }
 });
+
+test('un plan offert par l’admin (programme pilote) ne se renouvelle pas automatiquement', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+    $seller = User::factory()->create(['role' => 'seller']);
+    $seller->ensureStore();
+
+    $this->actingAs($admin)->post(route('admin.users.plan', $seller), ['plan' => 'growth', 'months' => 3])->assertRedirect();
+
+    $seller->refresh();
+    expect($seller->plan)->toBe('growth')
+        ->and($seller->subscription_expires_at->isSameDay(now()->addMonths(3)))->toBeTrue()
+        ->and((bool) $seller->auto_renew)->toBeFalse();
+});

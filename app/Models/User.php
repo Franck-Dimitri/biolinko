@@ -235,7 +235,9 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         $from = ($this->plan === $plan && $this->subscription_expires_at?->isFuture()) ? $this->subscription_expires_at : now();
-        $this->update(['plan' => $plan, 'subscription_expires_at' => $from->copy()->addMonths($months)]);
+        // Plan offert par l'admin (ex. programme pilote) : jamais de prélèvement automatique à la fin,
+        // le vendeur choisit lui-même de payer ou de revenir au Starter gratuit.
+        $this->update(['plan' => $plan, 'subscription_expires_at' => $from->copy()->addMonths($months), 'auto_renew' => false]);
         $this->store?->update(['plan_type' => $plan]);
 
         Subscription::create([
