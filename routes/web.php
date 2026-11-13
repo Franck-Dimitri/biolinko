@@ -72,6 +72,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
     Route::get('/users', [AdminUserController::class, 'index'])->name('admin.users.index');
     Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('admin.users.show');
     Route::post('/users/{user}/plan', [AdminUserController::class, 'updatePlan'])->name('admin.users.plan');
+    Route::post('/users/{user}/pilot', [AdminUserController::class, 'startPilot'])->name('admin.users.pilot');
     Route::post('/users/{user}/toggle-ban', [AdminUserController::class, 'toggleBan'])->name('admin.users.toggleBan');
     Route::post('/users/{user}/toggle-store', [AdminUserController::class, 'toggleStore'])->name('admin.users.toggleStore');
 

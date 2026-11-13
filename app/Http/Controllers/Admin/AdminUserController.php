@@ -116,6 +116,7 @@ class AdminUserController extends Controller
             'withdrawals' => $store && $store->wallet ? \App\Models\Withdrawal::where('wallet_id', $store->wallet->id)->latest()->take(15)->get() : [],
             'subscriptions' => \App\Models\Subscription::where('user_id', $user->id)->latest()->take(10)->get(),
             'daysRemaining' => $user->plan && $user->plan !== 'starter' ? $user->getDaysRemaining() : null,
+            'pilot' => \App\Support\PilotOffer::progress($user),
         ]);
     }
 
@@ -131,6 +132,17 @@ class AdminUserController extends Controller
         return redirect()->back()->with('message', $validated['plan'] === 'starter'
             ? "{$user->name} repasse au plan Starter."
             : "{$user->name} passe au plan ".ucfirst($validated['plan'])." jusqu’au ".$user->fresh()->subscription_expires_at->format('d/m/Y').'.');
+    }
+
+    /** Programme pilote : Growth offert 1 mois, prolongé automatiquement par paliers de ventes. */
+    public function startPilot(User $user): RedirectResponse
+    {
+        if ($user->isAdmin()) {
+            return redirect()->back()->withErrors(['user' => 'Un compte administrateur ne peut pas recevoir l’offre pilote.']);
+        }
+        \App\Support\PilotOffer::start($user);
+
+        return redirect()->back()->with('message', "Offre pilote activée pour {$user->name} : Growth jusqu’au ".$user->fresh()->subscription_expires_at->format('d/m/Y').'.');
     }
 
     public function toggleBan(Request $request, User $user, WhatsappGatewayService $whatsapp): RedirectResponse

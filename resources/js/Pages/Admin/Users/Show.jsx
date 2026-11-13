@@ -11,6 +11,24 @@ const REPORT_STATUS = { open: ['Ouvert', 'warning'], answered: ['Vendeur a répo
 const WITHDRAWAL_STATUS = { pending: ['En attente', 'warning'], processing: ['Virement en cours', 'info'], completed: ['Payé', 'success'], rejected: ['Rejeté', 'danger'] };
 const SUB_SOURCE = { admin: 'Attribué par l’admin', simulation: 'Paiement simulé', mercypay: 'Mercy Pay', pawapay: 'pawaPay', hrskills: 'HR-Skills' };
 
+// Programme pilote : Growth offert 1 mois, +1 mois par palier de 10 ventes payées dans l'app (3 mois max)
+function PilotBox({ vendor, pilot }) {
+    const [busy, setBusy] = useState(false);
+    const start = () => {
+        setBusy(true);
+        router.post(route('admin.users.pilot', vendor.id), {}, { preserveScroll: true, onSuccess: () => toast.success('Offre pilote activée.'), onFinish: () => setBusy(false) });
+    };
+    return (
+        <Card>
+            <CardHeader title="Programme pilote" sub={pilot
+                ? `${pilot.months_earned} / ${pilot.months_max} mois de Growth · ${pilot.paid} ventes payées${pilot.target ? ` · prochain mois à ${pilot.target}` : ''}`
+                : 'Growth offert 1 mois, puis +1 mois tous les 10 paiements dans l’app (3 mois au plus).'} />
+            {!pilot && <Button variant="primary" className="mt-4 w-full" disabled={busy} onClick={start}>Activer l’offre pilote</Button>}
+            <p className="mt-2 text-[12px] text-[#8B8A83]">Sans prélèvement à la fin : le vendeur choisit de payer ou revient au Starter.</p>
+        </Card>
+    );
+}
+
 // Changement de formule par l'admin : plan + durée, avec échéance réelle
 function PlanBox({ vendor, daysRemaining }) {
     const [plan, setPlan] = useState(vendor.plan || 'starter');
@@ -55,7 +73,7 @@ function PlanBox({ vendor, daysRemaining }) {
     );
 }
 
-export default function Show({ vendor, stats = {}, reports = [], withdrawals = [], subscriptions = [], daysRemaining = null }) {
+export default function Show({ vendor, stats = {}, reports = [], withdrawals = [], subscriptions = [], daysRemaining = null, pilot = null }) {
     const store = vendor.store;
     const [tab, setTab] = useState('products');
     const [moderation, setModeration] = useState(null); // { type, id, name, info }
@@ -204,6 +222,7 @@ export default function Show({ vendor, stats = {}, reports = [], withdrawals = [
                     </Card>
 
                     <div className="space-y-4">
+                        {vendor.role !== 'admin' && <PilotBox vendor={vendor} pilot={pilot} />}
                         {vendor.role !== 'admin' && <PlanBox vendor={vendor} daysRemaining={daysRemaining} />}
 
                         <Card>

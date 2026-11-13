@@ -127,7 +127,7 @@ function Onboarding({ store, checklist, percent, productsCount }) {
     );
 }
 
-export default function Dashboard({ upgradeHint = null, totalNet = 0, store, wallet, productsCount, ordersCount, totalRevenue, recentOrders = [], setupChecklist, completionPercentage, analytics }) {
+export default function Dashboard({ pilot = null, upgradeHint = null, totalNet = 0, store, wallet, productsCount, ordersCount, totalRevenue, recentOrders = [], setupChecklist, completionPercentage, analytics }) {
     const user = usePage().props.auth.user;
     const products = usePage().props.products || [];
     const dailySales = analytics?.dailySales || [];
@@ -162,6 +162,23 @@ export default function Dashboard({ upgradeHint = null, totalNet = 0, store, wal
                     </div>
                 </motion.div>
 
+                {pilot && (
+                    <div className="flex flex-col gap-3 rounded-2xl border border-[#FFCC00]/60 bg-[#FFFBEA] p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                            <p className="text-[15px] font-medium text-[#141412]">Programme pilote : formule Growth offerte jusqu’au {new Date(pilot.ends_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</p>
+                            <p className="text-[14px] text-[#5F5E58]">
+                                {pilot.target
+                                    ? `${pilot.paid} / ${pilot.target} commandes payées dans Biolinko : à ${pilot.target}, un mois de plus vous est offert (${pilot.months_earned} / ${pilot.months_max} mois).`
+                                    : `Vous avez obtenu les ${pilot.months_max} mois offerts. Merci de faire partie du pilote !`}
+                            </p>
+                        </div>
+                        {pilot.target && (
+                            <div className="h-2 w-full shrink-0 overflow-hidden rounded-full bg-white sm:w-40" role="progressbar" aria-valuenow={pilot.paid} aria-valuemax={pilot.target}>
+                                <div className="h-full rounded-full bg-[#141412]" style={{ width: `${Math.min(100, Math.round(((pilot.paid - (pilot.months_earned - 1) * pilot.step) / pilot.step) * 100))}%` }} />
+                            </div>
+                        )}
+                    </div>
+                )}
                 <UpgradeHint hint={upgradeHint} />
 
                 {!ready && store && <Onboarding store={store} checklist={setupChecklist} percent={completionPercentage} productsCount={productsCount} />}

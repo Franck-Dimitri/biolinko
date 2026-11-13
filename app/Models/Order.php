@@ -210,6 +210,12 @@ class Order extends Model
 
         if ($paid) {
             $this->refresh();
+            // Programme pilote : un palier de ventes payées dans l'app prolonge l'offre d'un mois
+            try {
+                \App\Support\PilotOffer::recordSale($this);
+            } catch (\Throwable $e) {
+                report($e);
+            }
             try {
                 app(\App\Services\Sales\OrderInvoiceService::class)->sendOrderInvoiceEmails($this);
             } catch (\Throwable $e) {

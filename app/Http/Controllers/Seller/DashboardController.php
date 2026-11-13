@@ -94,6 +94,7 @@ class DashboardController extends Controller
 
         return Inertia::render('Dashboard', [
             'upgradeHint' => $request->user()->upgradeSavings(),
+            'pilot' => \App\Support\PilotOffer::progress($request->user()),
             'store' => $store,
             'wallet' => $wallet,
             'products' => $products,
