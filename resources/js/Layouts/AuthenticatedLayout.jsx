@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import AppToaster from '@/Components/UI/AppToaster';
 import {
     ArrowUpRight, Truck, BarChart3, ChevronDown, Copy, CreditCard, Crown, FileText, LayoutDashboard, Link2, LogOut, Megaphone,
-    Menu, Package, Palette, PackageCheck, Settings, ShieldCheck, Store, Users, Wallet, Wrench, X,
+    Menu, Package, Palette, PackageCheck, Rocket, Settings, ShieldCheck, Store, Users, Wallet, Wrench, X,
 } from 'lucide-react';
 
 const SELLER_NAV = [
@@ -37,6 +37,7 @@ const ADMIN_NAV = [
         ['Boutiques', 'admin.stores.index', Store, ['admin.stores.*']],
         ['Vendeurs', 'admin.users.index', Users, ['admin.users.*']],
         ['Produits', 'admin.products.index', Package, ['admin.products.*']],
+        ['Programme pilote', 'admin.pilot.index', Rocket, ['admin.pilot.*']],
     ]],
     ['Finance', [
         ['Revenus', 'admin.wallet.index', CreditCard, ['admin.wallet.*']],
