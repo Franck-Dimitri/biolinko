@@ -17,50 +17,95 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Webhooks Mercy Pay : signature HMAC-SHA256 (X-MercyPay-Signature) vérifiée sur le corps brut,
- * puis statut redemandé à Mercy Pay avant d'agir. Chaque événement n'est traité qu'une fois.
+ * Webhooks Mercy Pay (docs.mercy-pay.com, novembre 2026).
+ *
+ * Signature : en-tête « MercyPay-Signature: t=<horodatage>,v1=<hex> », HMAC-SHA256 de « {t}.{corps brut} »
+ * avec le secret whsec_ de l'endpoint ; refusée si l'horodatage a plus de 5 minutes. Pendant une rotation
+ * de secret, plusieurs v1 peuvent être présents : un seul doit correspondre.
+ * Le contenu n'est jamais cru tel quel : on redemande le statut à Mercy Pay avant d'agir, une seule fois par événement.
  */
 class MercyPayWebhookController extends Controller
 {
+    private const TOLERANCE = 300;
+
     public function handle(Request $request, OrderPayments $orders, SubscriptionPayments $subscriptions, PaymentManager $payments): JsonResponse
     {
-        $secret = config('payments.mercypay.webhook_secret');
-        $received = (string) $request->header('X-MercyPay-Signature');
-
-        if (! $secret || ! hash_equals(hash_hmac('sha256', $request->getContent(), $secret), $received)) {
+        if (! $this->validSignature($request)) {
             Log::warning('Mercy Pay webhook: signature invalide');
 
             return response()->json(['error' => 'INVALID_SIGNATURE'], 401);
         }
 
-        $eventId = (string) $request->input('id');
-        if ($eventId && ! Cache::add('mercypay_evt_'.$eventId, true, now()->addDays(3))) {
+        $eventId = (string) ($request->input('id') ?: $request->header('MercyPay-Event-Id'));
+        if ($eventId && ! Cache::add('mercypay_evt_'.$eventId, true, now()->addDays(4))) {
             return response()->json(['status' => 'duplicate']);
         }
 
-        $type = (string) $request->input('type');
-        $uuid = (string) $request->input('data.uuid');
+        $type = (string) ($request->input('type') ?: $request->header('MercyPay-Event-Type'));
+        $data = (array) $request->input('data', []);
 
-        if (str_starts_with($type, 'payment.')) {
-            if ($order = Order::where('payment_reference', $uuid)->where('payment_provider', 'mercypay')->first()) {
+        if (str_starts_with($type, 'payment.') || $type === 'checkout_session.completed') {
+            // Paiement direct (pay_…) ou payé depuis la page hébergée (rattaché à sa session cs_…)
+            $refs = array_values(array_filter([
+                $data['id'] ?? null,
+                is_string($data['checkout_session'] ?? null) ? $data['checkout_session'] : ($data['checkout_session']['id'] ?? null),
+                is_string($data['payment'] ?? null) ? $data['payment'] : ($data['payment']['id'] ?? null),
+                $data['uuid'] ?? null, // anciens paiements
+            ]));
+
+            if ($refs && ($order = Order::whereIn('payment_reference', $refs)->where('payment_provider', 'mercypay')->first())) {
                 $orders->refresh($order);
-            } elseif ($subscription = Subscription::where('payment_reference', $uuid)->where('payment_provider', 'mercypay')->first()) {
+            } elseif ($refs && ($subscription = Subscription::whereIn('payment_reference', $refs)->where('payment_provider', 'mercypay')->first())) {
                 $subscriptions->refresh($subscription);
             }
         } elseif (str_starts_with($type, 'payout.')) {
-            if ($withdrawal = Withdrawal::where('payment_reference', $uuid)->where('payment_provider', 'mercypay')->first()) {
-                $status = $payments->driver('mercypay')->payoutStatus($uuid);
+            $id = (string) ($data['id'] ?? $data['uuid'] ?? '');
+            $operation = $id
+                ? (Withdrawal::where('payment_reference', $id)->where('payment_provider', 'mercypay')->first()
+                    ?? Refund::where('payment_reference', $id)->where('payment_provider', 'mercypay')->first())
+                : null;
+
+            if ($operation) {
+                $status = $payments->driver('mercypay')->payoutStatus($id);
                 if ($status['status'] !== 'PENDING') {
-                    $withdrawal->settle($status['status'] === 'SUCCESS', $status['transaction_id'] ?? null);
-                }
-            } elseif ($refund = Refund::where('payment_reference', $uuid)->where('payment_provider', 'mercypay')->first()) {
-                $status = $payments->driver('mercypay')->payoutStatus($uuid);
-                if ($status['status'] !== 'PENDING') {
-                    $refund->settle($status['status'] === 'SUCCESS', $status['transaction_id'] ?? null);
+                    $operation->settle($status['status'] === 'SUCCESS', $status['transaction_id'] ?? null);
                 }
             }
         }
 
         return response()->json(['status' => 'ok']);
+    }
+
+    private function validSignature(Request $request): bool
+    {
+        $secret = (string) config('payments.mercypay.webhook_secret');
+        $header = (string) $request->header('MercyPay-Signature');
+        if ($secret === '' || $header === '') {
+            return false;
+        }
+
+        $timestamp = null;
+        $signatures = [];
+        foreach (explode(',', $header) as $part) {
+            [$key, $value] = array_pad(explode('=', trim($part), 2), 2, '');
+            if ($key === 't') {
+                $timestamp = $value;
+            } elseif ($key === 'v1' && $value !== '') {
+                $signatures[] = $value;
+            }
+        }
+
+        if (! ctype_digit((string) $timestamp) || abs(time() - (int) $timestamp) > self::TOLERANCE || ! $signatures) {
+            return false;
+        }
+
+        $expected = hash_hmac('sha256', $timestamp.'.'.$request->getContent(), $secret);
+        foreach ($signatures as $signature) {
+            if (hash_equals($expected, $signature)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

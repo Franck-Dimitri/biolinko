@@ -41,6 +41,9 @@ return [
         'webhook_secret' => env('MERCYPAY_WEBHOOK_SECRET'),
         'base_url' => env('MERCYPAY_BASE_URL', 'https://mercy-pay.com'),
         'payout_fee_percent' => 2,
+        // direct (par défaut) : le client reste sur Biolinko, la demande part directement sur son téléphone
+        // hosted : redirection vers la page Mercy Pay (aux couleurs réglées dans « Image de marque »), non utilisé
+        'checkout' => env('MERCYPAY_CHECKOUT', 'direct'),
     ],
 
     'pawapay' => [

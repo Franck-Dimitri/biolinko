@@ -2,6 +2,7 @@
 
 namespace App\Payments\Subscriptions;
 
+use App\Payments\HostedCheckout;
 use App\Payments\PaymentManager;
 
 use App\Models\Subscription;
@@ -23,6 +24,27 @@ class SubscriptionPayments
         $gateway = $this->payments->driver();
         $reference = (string) Str::uuid();
         $subscription->update(['payment_provider' => $gateway->name(), 'payment_reference' => $reference]);
+
+        // Page de paiement hébergée aux couleurs Biolinko : retour sur la page Abonnement, qui vérifie le paiement
+        if ($gateway instanceof HostedCheckout && config('payments.'.$gateway->name().'.checkout') === 'hosted') {
+            $back = route('seller.subscriptions.index');
+            $result = $gateway->checkout([
+                'reference' => $reference,
+                'amount' => (int) $subscription->amount,
+                'currency' => 'XAF',
+                'country' => $country,
+                'description' => 'Abonnement Biolinko '.ucfirst($subscription->plan),
+                'payer_name' => $subscription->user?->name,
+                'payer_phone' => $phone ?: null,
+                'payer_email' => $subscription->user?->email,
+                'success_url' => $back.'?paiement='.$subscription->id,
+                'cancel_url' => $back,
+                'metadata' => ['subscription' => (string) $subscription->id, 'plan' => $subscription->plan],
+            ]);
+            $subscription->update(['payment_reference' => $result['reference']]);
+
+            return $result;
+        }
 
         $result = $gateway->deposit([
             'reference' => $reference,

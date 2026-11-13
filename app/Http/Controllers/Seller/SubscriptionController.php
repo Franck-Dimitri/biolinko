@@ -151,7 +151,18 @@ class SubscriptionController extends Controller
             // Plan choisi sur la landing (?plan=pro) : la page ouvre directement son paiement
             'intendedPlan' => in_array($request->query('plan'), ['pro', 'growth', 'business'], true) ? $request->query('plan') : null,
             'simulation' => $this->isSimulation(),
+            // Retour depuis la page de paiement hébergée (?paiement=<id>) : la page attend la confirmation
+            'returningPayment' => $this->returningPayment($request),
         ]);
+    }
+
+    private function returningPayment(Request $request): ?array
+    {
+        $sub = ctype_digit((string) $request->query('paiement'))
+            ? Subscription::where('user_id', $request->user()->id)->whereKey((int) $request->query('paiement'))->whereNotNull('payment_reference')->first()
+            : null;
+
+        return $sub ? ['reference' => $sub->payment_reference, 'amount' => (int) $sub->amount, 'plan_name' => ucfirst($sub->plan), 'hosted' => true] : null;
     }
 
     public function subscribe(Request $request): JsonResponse
@@ -263,6 +274,7 @@ class SubscriptionController extends Controller
             'success' => true,
             'requires_ussd' => true,
             'reference' => $result['reference'],
+            'checkout_url' => $result['checkout_url'] ?? null, // page de paiement hébergée
             'amount' => $totalPrice,
             'operator' => strtoupper($operatorChoice),
             'phone' => $formattedPhone,
