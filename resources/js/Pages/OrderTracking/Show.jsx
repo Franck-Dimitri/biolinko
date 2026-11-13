@@ -123,6 +123,7 @@ export default function Show({ order, store, canReport = false, reportReasons = 
         setPaying(true);
         try {
             const { data } = await axios.post(route('order.pay', order.tracking_code));
+            if (data.checkout_url) { window.location.href = data.checkout_url; return; }
             setPayment({ ...data, phone: data.phone ? `+${data.phone}` : '' });
         } catch (e) {
             toast.error(e.response?.data?.error || 'La demande de paiement a échoué. Réessayez.');

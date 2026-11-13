@@ -8,6 +8,7 @@ import { formatFcfa, serviceFee, useServiceFeePercent } from '@/Components/Store
 import { contrastColor } from '@/Components/Storefront/theme';
 import PaymentStatus from '@/Components/Storefront/Checkout/PaymentStatus';
 import { track } from '@/Components/Storefront/pixels';
+import { OperatorLogo } from '@/Components/Landing/Illustrations';
 
 const CUSTOMER_KEY = 'biolinko_cust_info';
 const DEFAULT_CITIES = ['Douala', 'Yaoundé', 'Bafoussam', 'Garoua', 'Bamenda', 'Kribi'];
@@ -27,10 +28,15 @@ function deliveryFor(store, city, goods) {
     return fee;
 }
 
-const OPERATORS = [
-    { id: 'MTN', label: 'MTN MoMo', short: 'MTN', bg: '#FFCC00', fg: '#2B2620' },
-    { id: 'ORANGE', label: 'Orange Money', short: 'OM', bg: '#FF7900', fg: '#FFFFFF' },
-];
+// Libellés et logos des moyens de paiement (les opérateurs proposés viennent de config/payments.php, par pays)
+const OPERATOR_INFO = {
+    MTN: { label: 'MTN Mobile Money', logo: 'MTN' },
+    ORANGE: { label: 'Orange Money', logo: 'ORANGE' },
+    AIRTEL: { label: 'Airtel Money', logo: 'AIRTEL' },
+    MOOV: { label: 'Moov Money', logo: 'MOOV' },
+    VODACOM: { label: 'M-Pesa', logo: 'MPESA' },
+    FREE: { label: 'Free Money', logo: null },
+};
 
 // Même règle que HrSkillsPayService::detectOperator (69, 64, 655-659 = Orange).
 export function detectOperator(rawPhone) {
@@ -83,14 +89,15 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
     const othersDelivered = !hasZones || (store?.delivery_other_fee !== null && store?.delivery_other_fee !== undefined);
     const CITIES = hasZones ? zones.map((z) => z.name) : DEFAULT_CITIES;
 
+    const operators = (usePage().props.payments?.operators?.[store?.country || 'CM'] || ['MTN', 'ORANGE']).filter((o) => OPERATOR_INFO[o]);
     const [form, setForm] = useState({
         customer_phone: '', customer_name: '', customer_email: '',
-        delivery_city: hasZones ? zones[0].name : 'Douala', delivery_address: '', notes: '', operator: 'MTN',
+        delivery_city: hasZones ? zones[0].name : 'Douala', delivery_address: '', notes: '', operator: '',
     });
     const [operatorTouched, setOperatorTouched] = useState(false);
-    // WhatsApp du client : le même que le Mobile Money par défaut, sinon un autre numéro
-    const [sameWhatsapp, setSameWhatsapp] = useState(true);
+    // WhatsApp du client (contact du vendeur) ; le numéro à débiter est le même par défaut
     const [whatsapp, setWhatsapp] = useState('');
+    const [samePhone, setSamePhone] = useState(true);
     const [otherCity, setOtherCity] = useState(false);
     const [showExtras, setShowExtras] = useState(false);
     const [showSummary, setShowSummary] = useState(false);
@@ -147,6 +154,9 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                 customer_phone: formatLocalPhone(saved.customer_phone),
                 operator: detectOperator(saved.customer_phone) || f.operator,
             }));
+            const wa = formatLocalPhone(saved.customer_whatsapp || saved.customer_phone);
+            setWhatsapp(wa);
+            if (saved.customer_whatsapp && saved.customer_whatsapp.replace(/\D/g, '') !== saved.customer_phone.replace(/\D/g, '')) setSamePhone(false);
             if (saved.delivery_city && !CITIES.includes(saved.delivery_city)) {
                 if (othersDelivered) setOtherCity(true); else saved.delivery_city = CITIES[0];
             }
@@ -155,17 +165,20 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
     }, []);
 
     const set = (field, value) => setForm((f) => ({ ...f, [field]: value }));
-    const digits = form.customer_phone.replace(/\D/g, '');
-    const phoneOk = digits.length === 9;
-    const waDigits = sameWhatsapp ? digits : whatsapp.replace(/\D/g, '');
+    const waDigits = whatsapp.replace(/\D/g, '');
     const whatsappOk = waDigits.length === 9;
+    // Numéro débité : celui du WhatsApp, sauf si le client en indique un autre
+    const digits = samePhone ? waDigits : form.customer_phone.replace(/\D/g, '');
+    const phoneOk = digits.length === 9;
+    const contactOk = form.customer_name.trim().length > 1 && whatsappOk;
+    const paymentOk = phoneOk && !!form.operator;
     const detailsOk = form.customer_name.trim().length > 1 && form.delivery_address.trim().length > 2 && form.delivery_city.trim();
 
     // Client qui a déjà commandé dans cette boutique : on pré-remplit son nom et son adresse.
     useEffect(() => {
-        if (!phoneOk || lookedUp.current === digits) return;
-        lookedUp.current = digits;
-        axios.get(route('checkout.lookupCustomer'), { params: { phone: `237${digits}`, store_id: store?.id } })
+        if (!whatsappOk || lookedUp.current === waDigits) return;
+        lookedUp.current = waDigits;
+        axios.get(route('checkout.lookupCustomer'), { params: { phone: `237${waDigits}`, store_id: store?.id } })
             .then(({ data }) => {
                 if (!data.found) return;
                 const c = data.customer;
@@ -178,28 +191,31 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                 }));
                 if (othersDelivered && c.city && c.city !== c.delivery_address && !CITIES.includes(c.city)) setOtherCity(true);
                 if (c.name) setWelcome(c.name.split(' ')[0]);
-                const wa = String(c.whatsapp || '').replace(/\D/g, '').replace(/^237/, '');
-                if (wa.length === 9 && wa !== digits) { setSameWhatsapp(false); setWhatsapp(formatLocalPhone(wa)); }
             })
             .catch(() => {});
-    }, [digits, phoneOk]);
+    }, [waDigits, whatsappOk]);
 
-    const onPhone = (value) => {
-        const formatted = formatLocalPhone(value);
-        setForm((f) => ({ ...f, customer_phone: formatted, operator: operatorTouched ? f.operator : (detectOperator(formatted) || f.operator) }));
-    };
+    // L'opérateur est proposé d'après le numéro débité, tant que le client ne l'a pas choisi lui-même
+    useEffect(() => {
+        if (operatorTouched || !phoneOk) return;
+        const guess = detectOperator(digits);
+        if (guess && operators.includes(guess)) setForm((f) => ({ ...f, operator: guess }));
+    }, [digits, phoneOk, operatorTouched]);
+
+    const onPhone = (value) => set('customer_phone', formatLocalPhone(value));
 
     const submit = async (e) => {
         e.preventDefault();
         if (submitting || disabled || belowMin || notDelivered) return;
-        if (!phoneOk) return setError('Entrez un numéro Mobile Money camerounais à 9 chiffres.');
-        if (!whatsappOk) return setError('Entrez votre numéro WhatsApp à 9 chiffres : le vendeur vous y contacte pour la livraison.');
-        if (!detailsOk) return setError('Indiquez votre nom, votre ville et votre quartier pour la livraison.');
+        if (!contactOk) return setError('Indiquez votre nom et votre numéro WhatsApp à 9 chiffres : le vendeur vous y contacte pour la livraison.');
+        if (!detailsOk) return setError('Indiquez votre ville et votre quartier pour la livraison.');
+        if (!form.operator) return setError('Choisissez votre moyen de paiement.');
+        if (!phoneOk) return setError('Entrez le numéro Mobile Money à débiter (9 chiffres).');
 
         setError('');
         setSubmitting(true);
         try {
-            localStorage.setItem(CUSTOMER_KEY, JSON.stringify({ ...form, notes: '', customer_phone: digits }));
+            localStorage.setItem(CUSTOMER_KEY, JSON.stringify({ ...form, notes: '', customer_phone: digits, customer_whatsapp: waDigits }));
         } catch (err) { /* stockage indisponible */ }
 
         track('InitiateCheckout', { value: total });
@@ -214,6 +230,8 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                 payment_mode: useDeposit ? 'deposit' : 'full',
                 ...payload,
             });
+            // Page de paiement Mercy Pay aux couleurs Biolinko : le client revient ensuite sur le suivi de sa commande
+            if (data.checkout_url) { onPaid?.(); window.location.href = data.checkout_url; return; }
             if (data.reference || data.tracking_code) {
                 setPayment({
                     reference: data.reference || data.tracking_code,
@@ -221,7 +239,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                     redirect_url: data.redirect_url,
                     amount: data.amount || total,
                     operator: data.operator || form.operator,
-                    phone: `+237 ${form.customer_phone}`,
+                    phone: `+237 ${formatLocalPhone(digits)}`,
                 });
             } else if (data.redirect_url) {
                 onPaid?.();
@@ -242,8 +260,9 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
     const summaryNode = typeof summary === 'function' ? summary({ fee, total, promo, delivery: delivery ?? undefined, balance }) : summary;
     // Sous le minimum, on déplie le récapitulatif (replié sur téléphone) pour que la quantité soit modifiable
     useEffect(() => { if (belowMin) setShowSummary(true); }, [belowMin]);
-    const payLabel = submitting ? 'Envoi de la demande…' : useDeposit ? `Payer l’acompte de ${formatFcfa(total)}` : `Payer ${formatFcfa(total)}`;
-    const operator = OPERATORS.find((o) => o.id === form.operator) || OPERATORS[0];
+    const hosted = Boolean(usePage().props.payments?.hosted_checkout);
+    const payLabel = submitting ? (hosted ? 'Ouverture du paiement…' : 'Envoi de la demande…') : useDeposit ? `Payer l’acompte de ${formatFcfa(total)}` : `Payer ${formatFcfa(total)}`;
+    const operatorLabel = OPERATOR_INFO[form.operator]?.label;
 
     return (
         <>
@@ -280,54 +299,24 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                         )}
                     </AnimatePresence>
 
-                    <Step n={1} title="Votre numéro Mobile Money" sub="Vous recevrez la demande de paiement sur ce numéro" done={phoneOk} primaryColor={primaryColor} primaryTextColor={primaryTextColor}>
-                        <div>
-                            <label htmlFor="co-phone" className="sr-only">Numéro Mobile Money</label>
-                            <div className="flex gap-2">
-                                <span className="flex h-11 items-center rounded-full border border-black/[0.08] bg-[#F6F5F1] px-3.5 text-[15px] text-[#5F5E58]">+237</span>
-                                <input id="co-phone" type="tel" inputMode="numeric" autoComplete="tel-national" required autoFocus={!form.customer_phone}
-                                    placeholder="6XX XX XX XX" value={form.customer_phone} onChange={(e) => onPhone(e.target.value)}
-                                    className={`${fieldClass} h-11 text-base tracking-wide`} />
+                    <Step n={1} title="Vos coordonnées" sub="Le vendeur vous contacte sur WhatsApp pour la livraison" done={contactOk} primaryColor={primaryColor} primaryTextColor={primaryTextColor}>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label htmlFor="co-name" className={labelClass}>Nom complet</label>
+                                <input id="co-name" type="text" autoComplete="name" required autoFocus={!form.customer_name} placeholder="Ex. Awa Mbarga" value={form.customer_name} onChange={(e) => set('customer_name', e.target.value)} className={fieldClass} />
                             </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Opérateur Mobile Money">
-                            {OPERATORS.map((op) => {
-                                const on = form.operator === op.id;
-                                return (
-                                    <motion.button key={op.id} type="button" role="radio" aria-checked={on} whileTap={{ scale: 0.98 }}
-                                        onClick={() => { set('operator', op.id); setOperatorTouched(true); }}
-                                        className={`relative flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors ${on ? 'border-black/70 bg-[#F6F5F1]' : 'border-black/[0.08] hover:border-black/25'}`}>
-                                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold" style={{ backgroundColor: op.bg, color: op.fg }}>{op.short}</span>
-                                        <span className="min-w-0 text-sm font-medium leading-tight text-[#141412]">{op.label}</span>
-                                        {on && <motion.span layoutId="op-check" className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#141412]"><Check className="h-3 w-3 text-white" /></motion.span>}
-                                    </motion.button>
-                                );
-                            })}
-                        </div>
-                        {phoneOk && !operatorTouched && <p className="-mt-2 text-sm text-[#5F5E58]">{operator.label} détecté d'après votre numéro.</p>}
-                        <div className="rounded-xl bg-[#F6F5F1] p-3.5">
-                            <label className="flex items-start gap-3 text-sm text-[#141412]">
-                                <input type="checkbox" checked={sameWhatsapp} onChange={(e) => setSameWhatsapp(e.target.checked)} className="mt-0.5 h-5 w-5 rounded border-black/25 text-[#141412] focus:ring-0" />
-                                <span>Ce numéro est aussi mon WhatsApp<span className="block text-sm text-[#5F5E58]">Le vendeur vous y contacte pour la livraison.</span></span>
-                            </label>
-                            {!sameWhatsapp && (
-                                <div className="mt-3">
-                                    <label htmlFor="co-whatsapp" className={labelClass}>Votre numéro WhatsApp</label>
-                                    <div className="flex gap-2">
-                                        <span className="flex h-10 items-center rounded-full border border-black/[0.08] bg-white px-3.5 text-sm text-[#5F5E58]">+237</span>
-                                        <input id="co-whatsapp" type="tel" inputMode="numeric" autoComplete="tel-national" placeholder="6XX XX XX XX" value={whatsapp}
-                                            onChange={(e) => setWhatsapp(formatLocalPhone(e.target.value))} className={fieldClass} />
-                                    </div>
+                            <div>
+                                <label htmlFor="co-whatsapp" className={labelClass}>Numéro WhatsApp</label>
+                                <div className="flex gap-2">
+                                    <span className="flex h-10 items-center rounded-full border border-black/[0.08] bg-[#F6F5F1] px-3.5 text-sm text-[#5F5E58]">+237</span>
+                                    <input id="co-whatsapp" type="tel" inputMode="numeric" autoComplete="tel-national" required placeholder="6XX XX XX XX" value={whatsapp}
+                                        onChange={(e) => setWhatsapp(formatLocalPhone(e.target.value))} className={`${fieldClass} tracking-wide`} />
                                 </div>
-                            )}
+                            </div>
                         </div>
                     </Step>
 
                     <Step n={2} title="Livraison" sub="Où le vendeur doit-il vous livrer ?" done={!!detailsOk} primaryColor={primaryColor} primaryTextColor={primaryTextColor} delay={0.06}>
-                        <div>
-                            <label htmlFor="co-name" className={labelClass}>Nom complet</label>
-                            <input id="co-name" type="text" autoComplete="name" required placeholder="Ex. Awa Mbarga" value={form.customer_name} onChange={(e) => set('customer_name', e.target.value)} className={fieldClass} />
-                        </div>
                         <div>
                             <span className={labelClass}>Ville</span>
                             <div className="flex flex-wrap gap-2">
@@ -378,24 +367,69 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                         )}
                     </Step>
 
-                    {depositPercent > 0 && depositAmount < vendorAmount && (
-                        <div className="space-y-3 rounded-2xl border border-black/[0.08] bg-white p-5" role="radiogroup" aria-label="Mode de paiement">
-                            <h2 className="text-base font-semibold text-[#141412]">Comment voulez-vous payer ?</h2>
-                            {[
-                                ['full', 'Tout payer maintenant', `${formatFcfa(vendorAmount + serviceFee(vendorAmount, feePercent))} en Mobile Money`],
-                                ['deposit', `Acompte de ${depositPercent} %, le reste à la livraison`, `${formatFcfa(depositAmount + serviceFee(depositAmount, feePercent))} maintenant, puis ${formatFcfa(vendorAmount - depositAmount)} en espèces au livreur`],
-                            ].map(([key, label, sub]) => {
-                                const on = payMode === key;
-                                return (
-                                    <button key={key} type="button" role="radio" aria-checked={on} onClick={() => setPayMode(key)}
-                                        className={`flex w-full items-start gap-3 rounded-xl border-2 p-3.5 text-left transition-colors ${on ? 'border-black/70 bg-[#F6F5F1]' : 'border-black/[0.08] hover:border-black/25'}`}>
-                                        <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${on ? 'border-[#141412]' : 'border-black/25'}`}>{on && <span className="h-2.5 w-2.5 rounded-full bg-[#141412]" />}</span>
-                                        <span className="min-w-0"><span className="block text-sm font-medium text-[#141412]">{label}</span><span className="block text-sm text-[#5F5E58]">{sub}</span></span>
-                                    </button>
-                                );
-                            })}
+                    <Step n={3} title="Paiement" sub="Choisissez votre moyen de paiement" done={paymentOk} primaryColor={primaryColor} primaryTextColor={primaryTextColor} delay={0.12}>
+                        {depositPercent > 0 && depositAmount < vendorAmount && (
+                            <div className="space-y-2.5" role="radiogroup" aria-label="Montant à payer">
+                                <span className={labelClass}>Montant à payer maintenant</span>
+                                {[
+                                    ['full', 'Tout payer maintenant', `${formatFcfa(vendorAmount + serviceFee(vendorAmount, feePercent))} en Mobile Money`],
+                                    ['deposit', `Acompte de ${depositPercent} %, le reste à la livraison`, `${formatFcfa(depositAmount + serviceFee(depositAmount, feePercent))} maintenant, puis ${formatFcfa(vendorAmount - depositAmount)} en espèces au livreur`],
+                                ].map(([key, label, sub]) => {
+                                    const on = payMode === key;
+                                    return (
+                                        <button key={key} type="button" role="radio" aria-checked={on} onClick={() => setPayMode(key)}
+                                            className={`flex w-full items-start gap-3 rounded-xl border-2 p-3.5 text-left transition-colors ${on ? 'border-black/70 bg-[#F6F5F1]' : 'border-black/[0.08] hover:border-black/25'}`}>
+                                            <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${on ? 'border-[#141412]' : 'border-black/25'}`}>{on && <span className="h-2.5 w-2.5 rounded-full bg-[#141412]" />}</span>
+                                            <span className="min-w-0"><span className="block text-sm font-medium text-[#141412]">{label}</span><span className="block text-sm text-[#5F5E58]">{sub}</span></span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {!hosted && (
+                            <div>
+                                <span className={labelClass}>Moyen de paiement</span>
+                                <div className="grid gap-2.5 sm:grid-cols-2" role="radiogroup" aria-label="Moyen de paiement">
+                                    {operators.map((id) => {
+                                        const on = form.operator === id;
+                                        const info = OPERATOR_INFO[id];
+                                        return (
+                                            <motion.button key={id} type="button" role="radio" aria-checked={on} whileTap={{ scale: 0.98 }}
+                                                onClick={() => { set('operator', id); setOperatorTouched(true); }}
+                                                className={`relative flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors ${on ? 'border-[#141412] bg-[#F6F5F1]' : 'border-black/[0.08] hover:border-black/25'}`}>
+                                                {info.logo ? <OperatorLogo op={info.logo} className="h-10 w-10" /> : <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F2F1EC] text-[11px] font-semibold">{id}</span>}
+                                                <span className="min-w-0 flex-1">
+                                                    <span className="block text-sm font-medium text-[#141412]">{info.label}</span>
+                                                    <span className="block text-xs text-[#5F5E58]">Validation sur votre téléphone</span>
+                                                </span>
+                                                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${on ? 'border-[#141412] bg-[#141412]' : 'border-black/20'}`}>{on && <Check className="h-3 w-3 text-white" strokeWidth={3} />}</span>
+                                            </motion.button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        <div>
+                            <span className={labelClass}>{operatorLabel ? `Numéro ${operatorLabel} à débiter` : 'Numéro Mobile Money à débiter'}</span>
+                            <label className="flex items-center gap-3 rounded-xl bg-[#F6F5F1] p-3.5 text-sm text-[#141412]">
+                                <input type="checkbox" checked={samePhone} onChange={(e) => setSamePhone(e.target.checked)} className="h-5 w-5 rounded border-black/25 text-[#141412] focus:ring-0" />
+                                <span>Utiliser mon numéro WhatsApp{whatsappOk && <span className="ml-1 tabular-nums text-[#5F5E58]">(+237 {whatsapp})</span>}</span>
+                            </label>
+                            {!samePhone && (
+                                <div className="mt-3 flex gap-2">
+                                    <span className="flex h-11 items-center rounded-full border border-black/[0.08] bg-[#F6F5F1] px-3.5 text-[15px] text-[#5F5E58]">+237</span>
+                                    <input id="co-phone" type="tel" inputMode="numeric" autoComplete="tel-national" aria-label="Numéro Mobile Money à débiter" autoFocus
+                                        placeholder="6XX XX XX XX" value={form.customer_phone} onChange={(e) => onPhone(e.target.value)}
+                                        className={`${fieldClass} h-11 text-base tracking-wide`} />
+                                </div>
+                            )}
+                            {phoneOk && operatorLabel && !hosted && (
+                                <p className="mt-2 text-[13px] text-[#5F5E58]">Une demande de paiement sera envoyée au <span className="tabular-nums text-[#141412]">+237 {formatLocalPhone(digits)}</span>. Validez-la avec votre code {operatorLabel}.</p>
+                            )}
                         </div>
-                    )}
+                    </Step>
 
                     {allowPromo && (
                         <div className="rounded-2xl border border-black/[0.08] bg-white p-5">
@@ -454,7 +488,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                             {submitting ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Lock className="h-5 w-5" />} {payLabel}
                         </motion.button>
                         <p className="mt-2 flex items-center justify-center gap-1.5 text-[13px] text-[#5F5E58]">
-                            <ShieldCheck className="h-4 w-4 text-[#16A34A]" /> Paiement sécurisé {operator.label} · Aucune carte bancaire
+                            <ShieldCheck className="h-4 w-4 text-[#16A34A]" /> Paiement sécurisé{operatorLabel ? ` ${operatorLabel}` : ' Mobile Money'} · Facture et suivi après le paiement
                         </p>
                     </div>
                 </div>

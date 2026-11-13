@@ -94,7 +94,6 @@ export function StoreHero({ store, products, theme, onShop }) {
                     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25, ease: EASE_OUT }}
                         className="mt-6 flex flex-col gap-2.5 sm:mt-8 sm:flex-row sm:gap-3">
                         <Pill onClick={onShop} theme={theme}>{store.hero_cta_text || 'Voir les produits'} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></Pill>
-                        {wa && <Pill href={wa} target="_blank" rel="noreferrer" theme={theme} variant="outline"><WhatsappIcon className="h-4 w-4 text-[#16A34A]" /> Commander sur WhatsApp</Pill>}
                     </motion.div>
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}
                         className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-[#5F5E58] sm:mt-9 sm:text-[14px]">
@@ -103,7 +102,7 @@ export function StoreHero({ store, products, theme, onShop }) {
                             Paiement Mobile Money
                         </span>
                         <span className="flex items-center gap-2"><Truck className="h-4 w-4" /> Livraison à domicile</span>
-                        <span className="flex items-center gap-2"><FileText className="h-4 w-4" /> Reçu par WhatsApp</span>
+                        <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-[#16A34A]" /> Paiement protégé et suivi de commande</span>
                     </motion.div>
                 </div>
 
@@ -379,7 +378,7 @@ export function AboutSection({ store, theme }) {
                         <li className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#16A34A]" /> Paiement sécurisé MTN MoMo et Orange Money</li>
                     </ul>
                     <div className="space-y-4">
-                        {wa && <Pill href={wa} target="_blank" rel="noreferrer" theme={theme} className="w-full"><WhatsappIcon className="h-4 w-4" /> Écrire sur WhatsApp</Pill>}
+                        {wa && <Pill href={wa} target="_blank" rel="noreferrer" theme={theme} variant="outline" className="w-full"><WhatsappIcon className="h-4 w-4" /> Une question ? Écrivez-nous</Pill>}
                         {socials.length > 0 && (
                             <div className="flex gap-2">
                                 {socials.map(([href, Icon, label]) => (

@@ -4,7 +4,7 @@ import { initPixels, track } from '@/Components/Storefront/pixels';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import StorefrontLayout from '@/Layouts/StorefrontLayout';
-import { ArrowLeft, ArrowRight, Check, Minus, Plus, Share2, ShoppingBag, Smartphone, Star, Store, Truck, Eye, MessageSquare } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Minus, Plus, Share2, ShoppingBag, Smartphone, Star, Store, Truck, Eye, MessageSquare, ShieldCheck } from 'lucide-react';
 import { EASE_OUT, Reveal, Stagger, StaggerItem } from '@/Components/UI/Motion';
 import ProductCard, { ProductImage } from '@/Components/Storefront/ProductCard';
 import { contrastColor } from '@/Components/Storefront/theme';
@@ -178,8 +178,8 @@ export default function ProductSlugShow({ store, product, isPreview = false, pro
                             <StaggerItem className="divide-y divide-black/[0.08] border-y border-black/[0.08] text-sm">
                                 {[
                                     [Truck, 'Livraison à domicile', (store.city_location || store.city) ? `Expédié depuis ${store.city_location || store.city}` : 'Organisée par le vendeur'],
-                                    [Smartphone, 'Paiement MTN MoMo ou Orange Money', 'Confirmé sur votre téléphone'],
-                                    [MessageSquare, 'Suivi sur WhatsApp', 'Facture et lien de suivi après paiement'],
+                                    [ShieldCheck, 'Paiement sécurisé MTN MoMo ou Orange Money', 'Un problème ? Signalez-le depuis le suivi : la vente reste bloquée le temps de trouver une solution'],
+                                    [MessageSquare, 'Facture et suivi de commande', 'Envoyés par WhatsApp et e-mail après le paiement'],
                                 ].map(([Icon, title, sub]) => (
                                     <div key={title} className="flex items-start gap-3 py-2.5">
                                         <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[#141412]" />

@@ -285,7 +285,7 @@ export default function Boutique({ store, products = [], activeSmartLinks = [], 
                     initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 1 }}
                     whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }}
                     className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#16A34A] text-white shadow-[0_14px_30px_-12px_rgba(22,163,74,0.8)]"
-                    aria-label="Écrire à la boutique sur WhatsApp">
+                    aria-label="Une question ? Écrire à la boutique sur WhatsApp" title="Une question ? Écrivez-nous">
                     <WhatsappIcon className="h-6 w-6" />
                 </motion.a>
             )}

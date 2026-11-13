@@ -46,7 +46,11 @@ class HandleInertiaRequests extends Middleware
                 'withdrawal_fee_percent' => config('payments.withdrawal_fee_percent'),
                 'commission_percent' => config('payments.commission_percent'),
                 'min_withdrawal' => config('payments.min_withdrawal'),
+                // Paiement sur la page hébergée de l'agrégateur (choix de l'opérateur fait sur cette page)
+                'hosted_checkout' => config('payments.driver') === 'mercypay' && config('payments.mercypay.checkout') === 'hosted',
                 'min_order' => collect(config('payments.countries'))->map(fn ($c) => $c['min_order'] ?? config('payments.min_order')),
+                // Moyens de paiement proposés à la caisse, par pays (clés de config/payments.php)
+                'operators' => collect(config('payments.countries'))->map(fn ($c) => array_keys($c['operators'] ?? [])),
             ],
             // Messages de confirmation (->with('message', …)) affichés en notification dans le tableau de bord
             'flash' => fn () => [

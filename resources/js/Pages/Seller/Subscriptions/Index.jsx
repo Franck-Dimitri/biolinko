@@ -59,6 +59,8 @@ function PayDialog({ plan, cycle, setCycle, user, onClose, onStarted }) {
         try {
             const { data } = await axios.post(route('seller.subscriptions.subscribe'), { plan: plan.id, method, phone_momo: method === 'momo' ? phone : null, operator: op, cycle });
             if (data.paid) { toast.success(data.message); onClose(); router.reload(); return; }
+            // Page de paiement Mercy Pay aux couleurs Biolinko
+            if (data.checkout_url) { window.location.href = data.checkout_url; return; }
             if (data.requires_ussd) onStarted(data);
         } catch (err) {
             toast.error(err.response?.data?.error || err.response?.data?.message || 'Le paiement n’a pas pu être lancé. Vérifiez le numéro.');
@@ -198,7 +200,7 @@ function PaymentWait({ payment, onClose }) {
 
     if (!payment) return null;
     return (
-        <SubPage onClose={onClose} backLabel="Retour aux plans" width="max-w-xl" title={status === 'SUCCESS' ? 'Abonnement activé' : status === 'FAILED' ? 'Paiement non abouti' : 'Validez sur votre téléphone'}
+        <SubPage onClose={onClose} backLabel="Retour aux plans" width="max-w-xl" title={status === 'SUCCESS' ? 'Abonnement activé' : status === 'FAILED' ? 'Paiement non abouti' : payment?.hosted ? 'Vérification du paiement' : 'Validez sur votre téléphone'}
             sub={status === 'PENDING' ? 'Cette page se met à jour dès que l’opérateur confirme le paiement.' : null}>
             <div className="py-4 text-center">
                 <span className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${status === 'SUCCESS' ? 'bg-[#16A34A] text-white' : status === 'FAILED' ? 'bg-red-50 text-[#B91C1C]' : 'bg-[#FFCC00] text-[#141412]'}`}>
@@ -207,7 +209,9 @@ function PaymentWait({ payment, onClose }) {
                 <p className="mx-auto mt-5 max-w-sm text-[15px] text-[#5F5E58]">
                     {status === 'SUCCESS' && `Votre plan ${payment.plan_name} est actif. Merci !`}
                     {status === 'FAILED' && 'Le paiement a été refusé ou annulé. Vous pouvez réessayer.'}
-                    {status === 'PENDING' && <>Demande de <strong className="font-medium text-[#141412]">{fcfa(payment.amount)}</strong> envoyée au {payment.phone}. Tapez votre code secret pour valider.</>}
+                    {status === 'PENDING' && (payment.hosted
+                        ? <>Nous attendons la confirmation de votre paiement de <strong className="font-medium text-[#141412]">{fcfa(payment.amount)}</strong>. Cela prend quelques secondes.</>
+                        : <>Demande de <strong className="font-medium text-[#141412]">{fcfa(payment.amount)}</strong> envoyée au {payment.phone}. Tapez votre code secret pour valider.</>)}
                 </p>
                 {status === 'PENDING' && <p className="mt-4 flex items-center justify-center gap-2 text-[13px] text-[#8B8A83]"><RefreshCw className="h-4 w-4 animate-spin" /> En attente de confirmation</p>}
                 {status === 'FAILED' && <Button className="mt-5" variant="primary" onClick={onClose}>Choisir à nouveau</Button>}
@@ -216,10 +220,10 @@ function PaymentWait({ payment, onClose }) {
     );
 }
 
-export default function Index({ upgradeHint = null, user, plans = [], history = [], intendedPlan = null, simulation = false }) {
+export default function Index({ upgradeHint = null, user, plans = [], history = [], intendedPlan = null, simulation = false, returningPayment = null }) {
     const [cycle, setCycle] = useState(1);
     const [selected, setSelected] = useState(null);
-    const [payment, setPayment] = useState(null);
+    const [payment, setPayment] = useState(returningPayment);
     const current = plans.find((p) => p.id === user.plan) || plans[0];
     const isPaid = user.plan !== 'starter';
     const usage = Math.min(100, Math.round(((user.products_count || 0) / Math.max(1, user.max_products)) * 100));
