@@ -47,7 +47,7 @@ export default function About() {
                 </motion.div>
                 <motion.div {...reveal(0.1)} className="rounded-[24px] border border-black/[0.08] bg-[#FBFAF6] p-7 sm:p-9">
                     <p className="text-[18px] font-medium">Vous vendez déjà en ligne ?</p>
-                    <p className="mt-2 text-[15px] text-[#5F5E58]">Rejoignez le programme pilote : nous installons votre boutique avec vous et vous accompagnons pendant vos premières ventes.</p>
+                    <p className="mt-2 text-[15px] text-[#5F5E58]">Rejoignez le programme pilote : nous installons votre boutique avec vous, et la formule Growth vous est offerte jusqu’à 3 mois.</p>
                     <div className="mt-6 flex flex-wrap gap-3">
                         <Link href={route('site.pilot')} className="group inline-flex h-11 items-center gap-2 rounded-full bg-[#FFCC00] px-5 text-[15px] font-medium text-[#141412] hover:bg-[#FFD633]">
                             Rejoindre le pilote <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

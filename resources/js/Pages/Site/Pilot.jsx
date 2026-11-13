@@ -1,6 +1,6 @@
 import { useForm, usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, CheckCircle2, Loader2, MessageCircle, Rocket, Sparkles, Store } from 'lucide-react';
+import { Check, CheckCircle2, Gift, Loader2, MessageCircle, Rocket, Sparkles, Store } from 'lucide-react';
 import SiteLayout from '@/Layouts/SiteLayout';
 import { Section, reveal } from '@/Components/Landing/Frame';
 
@@ -8,6 +8,7 @@ const field = 'h-11 w-full rounded-xl border border-black/10 bg-white px-4 text-
 const label = 'mb-1.5 block text-[14px] font-medium text-[#141412]';
 
 const PERKS = [
+    [Gift, 'Jusqu’à 3 mois de formule Growth offerts', 'Le premier mois est offert. Chaque palier de 10 commandes payées dans Biolinko vous offre un mois de plus, jusqu’à 3 mois. Sans engagement : à la fin, vous choisissez de continuer ou de revenir au Starter gratuit.'],
     [Store, 'Votre boutique installée avec vous', 'Nous créons votre boutique ensemble : produits, photos, livraison et paiement, prêts à vendre.'],
     [MessageCircle, 'Un accompagnement direct', 'Un contact WhatsApp avec l’équipe pendant vos premières ventes, pour répondre à vos questions.'],
     [Sparkles, 'Vos idées comptent', 'Vos retours décident des prochaines améliorations de Biolinko.'],
@@ -18,7 +19,10 @@ function FieldError({ msg }) {
 }
 
 export default function Pilot({ channels = [], volumes = [] }) {
-    const sent = usePage().props.flash?.pilot_sent;
+    const { flash, payments } = usePage().props;
+    const sent = flash?.pilot_sent;
+    const growth = payments?.commission_percent?.growth;
+    const starter = payments?.commission_percent?.starter;
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '', business_name: '', phone_whatsapp: '', email: '', city: '', category: '', channels: [], monthly_orders: '', message: '', website: '',
     });
@@ -27,7 +31,7 @@ export default function Pilot({ channels = [], volumes = [] }) {
 
     return (
         <SiteLayout title="Programme pilote" eyebrow="Programme pilote · Cameroun" heading="Soyez parmi les premiers vendeurs Biolinko"
-            intro="Nous lançons Biolinko avec une quinzaine de vendeurs qui vendent déjà en ligne au Cameroun. Nous installons votre boutique avec vous et vous accompagnons pendant vos premières ventes.">
+            intro={`Nous lançons Biolinko avec une quinzaine de vendeurs qui vendent déjà en ligne au Cameroun. Nous installons votre boutique avec vous, et la formule Growth vous est offerte jusqu’à 3 mois${growth ? ` : ${String(growth).replace('.', ',')} % de commission au lieu de ${String(starter).replace('.', ',')} %` : ''}.`}>
             <Section top={false} className="bg-white py-16 sm:py-20" innerClassName="grid gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-16">
                 <div className="space-y-4">
                     {PERKS.map(([Icon, title, text], i) => (
