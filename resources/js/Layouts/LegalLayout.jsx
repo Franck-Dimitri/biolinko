@@ -9,6 +9,7 @@ const PAGES = [
     ['legal.terms', 'Conditions d’utilisation'],
     ['legal.privacy', 'Confidentialité'],
     ['legal.cookies', 'Cookies'],
+    ['legal.notice', 'Mentions légales'],
 ];
 
 /**
