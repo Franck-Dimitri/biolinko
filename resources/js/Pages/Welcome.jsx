@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, MotionConfig, animate, motion, useInView, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion';
-import { ArrowRight, BarChart3, Check, HandCoins, Menu, Package, Repeat, ShieldCheck, Store, Truck, X } from 'lucide-react';
+import { AnimatePresence, MotionConfig, animate, motion, useInView, useReducedMotion } from 'framer-motion';
+import { ArrowRight, BarChart3, Check, HandCoins, Megaphone, Package, Receipt, Repeat, ShieldCheck, ShoppingBag, Store, Truck, Users, Wallet } from 'lucide-react';
 import { EASE_OUT } from '@/Components/UI/Motion';
 import { FacebookIcon, InstagramIcon, TiktokIcon, WhatsappIcon } from '@/Components/UI/BrandIcons';
 import Footer from '@/Components/Landing/Footer';
@@ -12,120 +12,71 @@ import Features from '@/Components/Landing/Features';
 import { Eyebrow, RevealWords, Section, WRAP, reveal } from '@/Components/Landing/Frame';
 import SiteHeader from '@/Components/Landing/SiteHeader';
 import Pricing from '@/Components/Landing/Pricing';
-import ProductWall from '@/Components/Landing/ProductWall';
 import ShopClaim from '@/Components/Landing/ShopClaim';
 import {
-    BalanceCard, CampaignMock, InvoiceMock, LinkMock, OperatorLogo, OrdersMock, PhoneCheckout, PhoneStore, StatsMock,
+    BalanceCard, CampaignMock, DashboardPanel, InvoiceMock, LinkMock, OrderFeed, OrdersMock, PhoneCheckout, PhoneStore, StatsMock,
 } from '@/Components/Landing/Illustrations';
 
 const H2 = 'text-[36px] font-medium leading-[1.05] tracking-[-0.03em] sm:text-[52px]';
 
 /* ---------------------------------------------------------------- Hero */
 
-const WORDS = ['WhatsApp', 'Instagram', 'TikTok', 'Facebook'];
+const MODULES = [[Store, 'Boutique'], [Package, 'Catalogue'], [ShoppingBag, 'Commandes'], [Receipt, 'Factures'], [Users, 'Clients'], [Megaphone, 'Marketing'], [Wallet, 'Paiements'], [BarChart3, 'Statistiques']];
 
-function RotatingWord() {
-    const [i, setI] = useState(0);
-    useEffect(() => {
-        const t = setInterval(() => setI((v) => (v + 1) % WORDS.length), 2400);
-        return () => clearInterval(t);
-    }, []);
+function Hero({ auth }) {
+    const cta = auth?.user ? route('dashboard') : route('register');
     return (
-        <span className="relative inline-grid overflow-hidden pb-[0.08em] align-bottom text-[#FFCC00]">
-            <AnimatePresence mode="popLayout" initial={false}>
-                <motion.span key={WORDS[i]} initial={{ y: '100%', opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: '-100%', opacity: 0 }} transition={{ duration: 0.5, ease: EASE_OUT }}
-                    className="col-start-1 row-start-1">{WORDS[i]}</motion.span>
-            </AnimatePresence>
-        </span>
-    );
-}
-
-/** Mot du titre qui monte depuis un masque au chargement. */
-function IntroWord({ children, i }) {
-    return (
-        <span className="inline-block overflow-hidden pb-[0.08em] align-bottom">
-            <motion.span className="inline-block" initial={{ y: '110%' }} animate={{ y: 0 }} transition={{ duration: 0.8, delay: 0.2 + i * 0.07, ease: EASE_OUT }}>
-                {children}
-            </motion.span>
-        </span>
-    );
-}
-
-const EVENTS = [
-    ['MTN', 'Paiement reçu', 'Robe pagne · Douala', '+18 500', '#16A34A'],
-    ['WHATSAPP', 'Nouvelle commande', 'Sac à chaîne · Yaoundé', '32 000', '#141412'],
-    ['ORANGE', 'Retrait envoyé', 'Vers votre Orange Money', '−45 000', '#141412'],
-];
-
-/** Notifications qui se succèdent : la vie d'une boutique en direct. */
-function LiveFeed({ className = '' }) {
-    const [i, setI] = useState(0);
-    useEffect(() => {
-        const t = setInterval(() => setI((v) => (v + 1) % EVENTS.length), 3200);
-        return () => clearInterval(t);
-    }, []);
-    const [op, title, sub, amount, color] = EVENTS[i];
-    return (
-        <motion.div initial={{ opacity: 0, y: 30, scale: 0.94 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.7, delay: 1.2, ease: EASE_OUT }}
-            className={`w-[280px] ${className}`}>
-            <AnimatePresence mode="popLayout" initial={false}>
-                <motion.div key={i} initial={{ opacity: 0, y: 24, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -24, scale: 0.95 }} transition={{ duration: 0.45, ease: EASE_OUT }}
-                    className="flex items-center gap-3 rounded-2xl bg-white p-4 text-[#141412] shadow-[0_30px_60px_-20px_rgba(0,0,0,0.6)]">
-                    <OperatorLogo op={op} className="h-10 w-10" />
-                    <div className="min-w-0 flex-1">
-                        <p className="text-[14px] font-medium">{title}</p>
-                        <p className="truncate text-[12px] text-[#5F5E58]">{sub}</p>
+        <section className="relative overflow-hidden bg-white pt-16">
+            <div className="relative mx-auto max-w-[1320px] border-x border-black/[0.06]">
+                <div className="grid lg:grid-cols-2">
+                    <div className="min-w-0 px-5 pb-10 pt-16 sm:px-8 sm:pt-24 lg:px-12 lg:pb-20">
+                        <motion.span initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+                            className="inline-flex items-center gap-2 rounded-full border border-black/10 px-3 py-1 text-[13px] text-[#5F5E58]">
+                            <span className="h-1.5 w-1.5 rounded-full bg-[#16A34A]" /> Disponible au Cameroun
+                        </motion.span>
+                        <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.05, ease: EASE_OUT }}
+                            className="mt-6 text-[44px] font-medium leading-[1.02] tracking-[-0.035em] text-[#141412] sm:text-[64px]">
+                            Lancez, gérez et développez votre commerce en ligne.
+                        </motion.h1>
+                        <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.15, ease: EASE_OUT }}
+                            className="mt-6 max-w-[520px] text-[18px] leading-relaxed text-[#5F5E58]">
+                            Boutique, commandes, factures, clients, marketing et paiements : Biolinko réunit tous les outils pour vendre en ligne, dans une seule application.
+                        </motion.p>
+                        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.25, ease: EASE_OUT }}
+                            className="mt-9 flex flex-col gap-3 sm:flex-row">
+                            <Link href={cta} className="group inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#FFCC00] px-6 text-[15px] font-medium text-[#141412] transition-all hover:-translate-y-0.5 hover:bg-[#F5C400]">
+                                {auth?.user ? 'Aller au tableau de bord' : 'Créer ma boutique gratuitement'} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                            </Link>
+                            <a href="#tarifs" className="inline-flex h-12 items-center justify-center rounded-full border border-black/15 px-6 text-[15px] font-medium text-[#141412] transition-colors hover:border-black/40">
+                                Voir les tarifs
+                            </a>
+                        </motion.div>
                     </div>
-                    <p className="text-[14px] font-medium tabular-nums" style={{ color }}>{amount}</p>
-                </motion.div>
-            </AnimatePresence>
-        </motion.div>
-    );
-}
 
-function Hero() {
-    const ref = useRef(null);
-    const reduce = useReducedMotion();
-    // Sortie : en défilant, le texte remonte et s'efface, le mur recule légèrement
-    const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
-    const textY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -120]);
-    const textOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-    const wallScale = useTransform(scrollYProgress, [0, 1], [1, reduce ? 1 : 0.92]);
-    const wallY = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : 80]);
+                    <div className="relative hidden min-w-0 flex-col justify-between border-l border-dashed border-black/10 px-12 pb-20 pt-24 lg:flex">
+                        <OrderFeed />
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
+                            <p className="max-w-[420px] text-[16px] leading-relaxed text-[#5F5E58]">
+                                Pensé pour les vendeurs de <span className="text-[#141412]">WhatsApp, Instagram et TikTok</span> qui veulent passer à une <span className="text-[#141412]">vraie boutique</span>.
+                            </p>
+                            <div className="mt-6 flex flex-wrap gap-2">
+                                {MODULES.map(([Icon, label]) => (
+                                    <span key={label} className="flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1.5 text-[14px] text-[#3D3C37]"><Icon className="h-4 w-4 text-[#8B8A83]" /> {label}</span>
+                                ))}
+                            </div>
+                        </motion.div>
+                    </div>
+                </div>
+            </div>
 
-    return (
-        <section ref={ref} className="relative overflow-hidden bg-[#0F0F0E] text-white">
-            <div aria-hidden className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent_85%)]" />
-            {/* Rails sombres, pour la continuité avec les sections suivantes */}
-            <div aria-hidden className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-full max-w-[1320px] -translate-x-1/2 border-x border-white/[0.07] md:block" />
-
-            <div className={`${WRAP} grid items-center gap-12 pb-16 pt-28 sm:pt-32 lg:grid-cols-[1.05fr_1fr] lg:gap-10 lg:pb-0 lg:pt-20`}>
-                <motion.div style={{ y: textY, opacity: textOpacity }} className="min-w-0 lg:py-28">
-                    <motion.span initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
-                        className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-1 text-[13px] text-white/70">
-                        <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#4ADE80] opacity-60" /><span className="relative h-2 w-2 rounded-full bg-[#4ADE80]" /></span>
-                        Disponible au Cameroun<span className="hidden sm:inline"> · MTN MoMo et Orange Money</span>
-                    </motion.span>
-                    <h1 className="mt-6 text-[44px] font-semibold leading-[1.02] tracking-[-0.035em] sm:text-[64px] lg:text-[76px]" aria-label="Vos clients sont sur WhatsApp, Instagram, TikTok et Facebook. Votre boutique aussi.">
-                        <span aria-hidden>
-                            {['Vos', 'clients', 'sont', 'sur'].map((w, i) => <IntroWord key={w} i={i}>{w}&nbsp;</IntroWord>)}
-                            <IntroWord i={4}><RotatingWord />.</IntroWord><br />
-                            {['Votre', 'boutique', 'aussi.'].map((w, i) => <IntroWord key={w} i={i + 5}>{w}{i < 2 ? ' ' : ''}</IntroWord>)}
-                        </span>
-                    </h1>
-                    <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.75, ease: EASE_OUT }}
-                        className="mt-6 max-w-[540px] text-[18px] leading-relaxed text-white/65">
-                        Boutique en ligne, catalogue, commandes, livraison, factures, marketing et paiements Mobile Money : tout votre commerce dans une seule application.
-                    </motion.p>
-                    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.9, ease: EASE_OUT }} className="mt-9 max-w-[560px]">
-                        <ShopClaim dark />
-                    </motion.div>
-                </motion.div>
-
-                <motion.div style={{ scale: wallScale, y: wallY }} className="relative min-w-0">
-                    <ProductWall intro className="h-[420px] sm:h-[520px] lg:h-[700px]" />
-                    <LiveFeed className="absolute -left-2 bottom-12 hidden sm:block lg:-left-12" />
-                </motion.div>
+            {/* Composition produit : tableau de bord, solde en direct, vitrine mobile */}
+            <div className="relative mx-auto max-w-[1320px] border-x border-black/[0.06] px-5 pb-6 sm:px-8 lg:px-12">
+                <div aria-hidden className="absolute inset-x-0 bottom-0 top-24 bg-[linear-gradient(to_bottom,#fff,#F6F5F1)]" />
+                <div className="relative grid items-start gap-5 md:grid-cols-[1fr_1.05fr_0.8fr]">
+                    <motion.div {...reveal(0.3)} className="hidden min-w-0 md:block md:pt-14"><DashboardPanel className="shadow-[0_20px_50px_-30px_rgba(20,20,10,0.3)]" /></motion.div>
+                    <motion.div {...reveal(0.4)} className="relative z-10 min-w-0"><BalanceCard /></motion.div>
+                    <motion.div {...reveal(0.5)} className="hidden min-w-0 md:block md:pt-8"><PhoneStore /></motion.div>
+                </div>
             </div>
         </section>
     );
@@ -389,9 +340,9 @@ export default function Welcome({ auth }) {
         <MotionConfig reducedMotion="user">
             <Head title="Biolinko : votre boutique en ligne payée en Mobile Money | Biolinko" />
             <div className="min-h-screen overflow-x-clip bg-white font-poppins text-[#141412] antialiased selection:bg-[#FFCC00]/60">
-                <SiteHeader auth={auth} overHero />
+                <SiteHeader auth={auth} />
                 <main>
-                    <Hero />
+                    <Hero auth={auth} />
                     <ChannelStrip />
                     <Pillars />
                     <AllFeatures />
