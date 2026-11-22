@@ -7,7 +7,7 @@
 
 return [
 
-    // Agrégateur utilisé pour les nouveaux paiements et retraits : mercypay | pawapay | hrskills
+    // Agrégateur utilisé pour les nouveaux paiements et retraits : mercypay | pawapay | hrskills | test (simulé, hors production)
     // Une opération déjà lancée reste toujours suivie chez l'agrégateur qui l'a traitée.
     'driver' => env('PAYMENT_DRIVER', 'mercypay'),
     'payout_driver' => env('PAYOUT_DRIVER', env('PAYMENT_DRIVER', 'mercypay')),

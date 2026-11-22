@@ -4,7 +4,7 @@ import { usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, Check, ChevronDown, Lock, RefreshCw, ShieldCheck, Sparkles, Tag, X } from 'lucide-react';
 import { EASE_OUT } from '@/Components/UI/Motion';
-import { formatFcfa, serviceFee, useServiceFeePercent } from '@/Components/Storefront/useCart';
+import { earliestDate, formatFcfa, leadTimeLabel, serviceFee, useServiceFeePercent } from '@/Components/Storefront/useCart';
 import { contrastColor } from '@/Components/Storefront/theme';
 import PaymentStatus from '@/Components/Storefront/Checkout/PaymentStatus';
 import { track } from '@/Components/Storefront/pixels';
@@ -81,7 +81,12 @@ function Step({ n, title, sub, done, primaryColor, primaryTextColor, children, d
  * `payload` = champs propres à la commande (items, smart_link_code…), `endpoint` = route POST.
  * `summary` = récapitulatif affiché à droite (ou au-dessus sur mobile).
  */
-export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = route('checkout.process'), summary, onPaid, disabled = false, allowPromo = true }) {
+const SLOTS = [['', 'Indifférent'], ['matin', 'Matin (8 h - 12 h)'], ['midi', 'Midi (12 h - 14 h)'], ['apres-midi', 'Après-midi (14 h - 18 h)'], ['soir', 'Soir (18 h - 21 h)']];
+
+/**
+ * `schedule` (produits sur commande) : { minHours, label } → le client choisit une date et un créneau.
+ */
+export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = route('checkout.process'), summary, onPaid, disabled = false, allowPromo = true, schedule = null }) {
     const primaryColor = store?.theme_color || '#FFCC00';
     const primaryTextColor = contrastColor(primaryColor);
     const zones = store?.delivery_zones || [];
@@ -95,6 +100,9 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
         delivery_city: hasZones ? zones[0].name : 'Douala', delivery_address: '', notes: '', operator: '',
     });
     const [operatorTouched, setOperatorTouched] = useState(false);
+    const minDate = schedule ? earliestDate(schedule.minHours) : null;
+    const [desiredDate, setDesiredDate] = useState('');
+    const [desiredSlot, setDesiredSlot] = useState('');
     // WhatsApp du client (contact du vendeur) ; le numéro à débiter est le même par défaut
     const [whatsapp, setWhatsapp] = useState('');
     const [samePhone, setSamePhone] = useState(true);
@@ -172,7 +180,8 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
     const phoneOk = digits.length === 9;
     const contactOk = form.customer_name.trim().length > 1 && whatsappOk;
     const paymentOk = phoneOk && !!form.operator;
-    const detailsOk = form.customer_name.trim().length > 1 && form.delivery_address.trim().length > 2 && form.delivery_city.trim();
+    const detailsOk = form.customer_name.trim().length > 1 && form.delivery_address.trim().length > 2 && form.delivery_city.trim()
+        && (!schedule || (desiredDate && desiredDate >= minDate));
 
     // Client qui a déjà commandé dans cette boutique : on pré-remplit son nom et son adresse.
     useEffect(() => {
@@ -209,8 +218,6 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
         if (submitting || disabled || belowMin || notDelivered) return;
         if (!contactOk) return setError('Indiquez votre nom et votre numéro WhatsApp à 9 chiffres : le vendeur vous y contacte pour la livraison.');
         if (!detailsOk) return setError('Indiquez votre ville et votre quartier pour la livraison.');
-        if (!form.operator) return setError('Choisissez votre moyen de paiement.');
-        if (!phoneOk) return setError('Entrez le numéro Mobile Money à débiter (9 chiffres).');
 
         setError('');
         setSubmitting(true);
@@ -224,13 +231,18 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
             const { data } = await axios.post(endpoint, {
                 store_id: store.id,
                 ...form,
-                customer_phone: `237${digits}`,
+                // Le numéro à débiter et l'opérateur se choisissent sur la page de paiement (WhatsApp par défaut)
+                customer_phone: `237${waDigits}`,
                 customer_whatsapp: `237${waDigits}`,
+                operator: null,
+                defer_payment: true,
                 promo_code: promo?.code || null,
                 payment_mode: useDeposit ? 'deposit' : 'full',
+                ...(schedule ? { desired_date: desiredDate || null, desired_slot: desiredSlot || null } : {}),
                 ...payload,
             });
-            // Page de paiement Mercy Pay aux couleurs Biolinko : le client revient ensuite sur le suivi de sa commande
+            // Commande créée : le client paie sur la page de paiement Biolinko
+            if (data.payment_url) { onPaid?.(); window.location.href = data.payment_url; return; }
             if (data.checkout_url) { onPaid?.(); window.location.href = data.checkout_url; return; }
             if (data.reference || data.tracking_code) {
                 setPayment({
@@ -261,7 +273,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
     // Sous le minimum, on déplie le récapitulatif (replié sur téléphone) pour que la quantité soit modifiable
     useEffect(() => { if (belowMin) setShowSummary(true); }, [belowMin]);
     const hosted = Boolean(usePage().props.payments?.hosted_checkout);
-    const payLabel = submitting ? (hosted ? 'Ouverture du paiement…' : 'Envoi de la demande…') : useDeposit ? `Payer l’acompte de ${formatFcfa(total)}` : `Payer ${formatFcfa(total)}`;
+    const payLabel = submitting ? 'Préparation du paiement…' : `Continuer vers le paiement · ${formatFcfa(total)}`;
     const operatorLabel = OPERATOR_INFO[form.operator]?.label;
 
     return (
@@ -316,7 +328,24 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                         </div>
                     </Step>
 
-                    <Step n={2} title="Livraison" sub="Où le vendeur doit-il vous livrer ?" done={!!detailsOk} primaryColor={primaryColor} primaryTextColor={primaryTextColor} delay={0.06}>
+                    <Step n={2} title="Livraison" sub={schedule ? 'Quand et où le vendeur doit-il vous livrer ?' : 'Où le vendeur doit-il vous livrer ?'} done={!!detailsOk} primaryColor={primaryColor} primaryTextColor={primaryTextColor} delay={0.06}>
+                        {schedule && (
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label htmlFor="co-date" className={labelClass}>{schedule.label}</label>
+                                    <input id="co-date" type="date" required min={minDate} value={desiredDate} onChange={(e) => setDesiredDate(e.target.value)} className={fieldClass} />
+                                    <p className="mt-1.5 text-[13px] text-[#5F5E58]">
+                                        {schedule.minHours > 0 ? `Préparé sur commande : délai de ${leadTimeLabel(schedule.minHours)} minimum.` : 'Préparé sur commande.'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label htmlFor="co-slot" className={labelClass}>Créneau</label>
+                                    <select id="co-slot" value={desiredSlot} onChange={(e) => setDesiredSlot(e.target.value)} className={fieldClass}>
+                                        {SLOTS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                        )}
                         <div>
                             <span className={labelClass}>Ville</span>
                             <div className="flex flex-wrap gap-2">
@@ -367,7 +396,8 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                         )}
                     </Step>
 
-                    <Step n={3} title="Paiement" sub="Choisissez votre moyen de paiement" done={paymentOk} primaryColor={primaryColor} primaryTextColor={primaryTextColor} delay={0.12}>
+                    {depositPercent > 0 && depositAmount < vendorAmount && (
+                    <Step n={3} title="Montant à payer" sub="Tout maintenant, ou un acompte" done primaryColor={primaryColor} primaryTextColor={primaryTextColor} delay={0.12}>
                         {depositPercent > 0 && depositAmount < vendorAmount && (
                             <div className="space-y-2.5" role="radiogroup" aria-label="Montant à payer">
                                 <span className={labelClass}>Montant à payer maintenant</span>
@@ -387,49 +417,8 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                             </div>
                         )}
 
-                        {!hosted && (
-                            <div>
-                                <span className={labelClass}>Moyen de paiement</span>
-                                <div className="grid gap-2.5 sm:grid-cols-2" role="radiogroup" aria-label="Moyen de paiement">
-                                    {operators.map((id) => {
-                                        const on = form.operator === id;
-                                        const info = OPERATOR_INFO[id];
-                                        return (
-                                            <motion.button key={id} type="button" role="radio" aria-checked={on} whileTap={{ scale: 0.98 }}
-                                                onClick={() => { set('operator', id); setOperatorTouched(true); }}
-                                                className={`relative flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors ${on ? 'border-[#141412] bg-[#F6F5F1]' : 'border-black/[0.08] hover:border-black/25'}`}>
-                                                {info.logo ? <OperatorLogo op={info.logo} className="h-10 w-10" /> : <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F2F1EC] text-[11px] font-semibold">{id}</span>}
-                                                <span className="min-w-0 flex-1">
-                                                    <span className="block text-sm font-medium text-[#141412]">{info.label}</span>
-                                                    <span className="block text-xs text-[#5F5E58]">Validation sur votre téléphone</span>
-                                                </span>
-                                                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${on ? 'border-[#141412] bg-[#141412]' : 'border-black/20'}`}>{on && <Check className="h-3 w-3 text-white" strokeWidth={3} />}</span>
-                                            </motion.button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-
-                        <div>
-                            <span className={labelClass}>{operatorLabel ? `Numéro ${operatorLabel} à débiter` : 'Numéro Mobile Money à débiter'}</span>
-                            <label className="flex items-center gap-3 rounded-xl bg-[#F6F5F1] p-3.5 text-sm text-[#141412]">
-                                <input type="checkbox" checked={samePhone} onChange={(e) => setSamePhone(e.target.checked)} className="h-5 w-5 rounded border-black/25 text-[#141412] focus:ring-0" />
-                                <span>Utiliser mon numéro WhatsApp{whatsappOk && <span className="ml-1 tabular-nums text-[#5F5E58]">(+237 {whatsapp})</span>}</span>
-                            </label>
-                            {!samePhone && (
-                                <div className="mt-3 flex gap-2">
-                                    <span className="flex h-11 items-center rounded-full border border-black/[0.08] bg-[#F6F5F1] px-3.5 text-[15px] text-[#5F5E58]">+237</span>
-                                    <input id="co-phone" type="tel" inputMode="numeric" autoComplete="tel-national" aria-label="Numéro Mobile Money à débiter" autoFocus
-                                        placeholder="6XX XX XX XX" value={form.customer_phone} onChange={(e) => onPhone(e.target.value)}
-                                        className={`${fieldClass} h-11 text-base tracking-wide`} />
-                                </div>
-                            )}
-                            {phoneOk && operatorLabel && !hosted && (
-                                <p className="mt-2 text-[13px] text-[#5F5E58]">Une demande de paiement sera envoyée au <span className="tabular-nums text-[#141412]">+237 {formatLocalPhone(digits)}</span>. Validez-la avec votre code {operatorLabel}.</p>
-                            )}
-                        </div>
                     </Step>
+                    )}
 
                     {allowPromo && (
                         <div className="rounded-2xl border border-black/[0.08] bg-white p-5">
@@ -487,9 +476,10 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                             style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
                             {submitting ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Lock className="h-5 w-5" />} {payLabel}
                         </motion.button>
-                        <p className="mt-2 flex items-center justify-center gap-1.5 text-[13px] text-[#5F5E58]">
-                            <ShieldCheck className="h-4 w-4 text-[#16A34A]" /> Paiement sécurisé{operatorLabel ? ` ${operatorLabel}` : ' Mobile Money'} · Facture et suivi après le paiement
-                        </p>
+                        <div className="mt-3 flex gap-2.5 rounded-2xl bg-[#F0FDF4] p-3 text-[13px] text-[#15803D]">
+                            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                            <p><span className="font-medium">Paiement protégé par Biolinko.</span> La boutique n’est payée qu’une fois votre commande reçue. Un problème ? Signalez-le depuis votre suivi de commande.</p>
+                        </div>
                     </div>
                 </div>
             </form>

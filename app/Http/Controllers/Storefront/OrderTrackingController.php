@@ -3,14 +3,16 @@
 namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Order;
 use App\Models\OrderReport;
-use App\Services\Whatsapp\WhatsappGatewayService;
-use Illuminate\Http\RedirectResponse;
+use App\Payments\Countries;
 use App\Payments\Orders\OrderPayments;
 use App\Payments\PaymentException;
+use App\Services\Sales\OrderInvoiceService;
+use App\Services\Whatsapp\WhatsappGatewayService;
+use App\Support\StoreUrl;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -28,8 +30,39 @@ class OrderTrackingController extends Controller
             'order' => $order,
             'canReport' => $order->canBeReported() && ! $order->report,
             'canPay' => $order->isRecoverable(),
+            'canConfirmReceipt' => $order->canConfirmReceipt(),
+            'protection' => ['after_delivery_days' => Order::RELEASE_AFTER_DELIVERY_DAYS, 'max_days' => Order::MAX_HOLD_DAYS],
             'reportReasons' => OrderReport::REASONS,
             'store' => $order->store->forPublic(),
+        ]);
+    }
+
+    /**
+     * Page de paiement Biolinko : récapitulatif à gauche, moyen de paiement et numéro à droite.
+     * Le client ne quitte jamais Biolinko : la demande part directement sur son téléphone.
+     */
+    public function payment(string $tracking_code)
+    {
+        $order = Order::where('tracking_code', $tracking_code)->with(['store.user', 'items.product'])->firstOrFail();
+
+        if ($order->payment_status === 'paid' || ! $order->isRecoverable()) {
+            return redirect()->to(StoreUrl::track($order));
+        }
+
+        $country = $order->payment_country ?: 'CM';
+        $c = Countries::get($country);
+
+        return Inertia::render('Payment/Show', [
+            'order' => $order->only(['tracking_code', 'customer_name', 'customer_email', 'customer_whatsapp', 'payment_phone', 'customer_phone', 'subtotal', 'discount_amount',
+                'delivery_fee', 'saas_margin', 'total_client', 'balance_due', 'price_vendor', 'promo_code', 'desired_date', 'desired_slot', 'currency']),
+            'items' => $order->items->map(fn ($i) => [
+                'title' => $i->product_title, 'variant' => $i->variant_label, 'quantity' => $i->quantity, 'total' => (float) $i->total_price_vendor,
+                'image' => $i->product?->image_url ?: ($i->product?->images[0] ?? null), 'customizations' => $i->customizations ?? [],
+            ]),
+            'store' => $order->store->forPublic(),
+            'country' => ['code' => $country, 'dial' => $c['dial'], 'operators' => array_keys($c['operators']), 'prefixes' => $c['prefixes'] ?? []],
+            'trackUrl' => StoreUrl::track($order),
+            'storeHome' => StoreUrl::home($order->store),
         ]);
     }
 
@@ -41,9 +74,13 @@ class OrderTrackingController extends Controller
         $validated = $request->validate([
             'phone' => ['nullable', 'string', 'max:50'],
             'operator' => ['nullable', 'string', 'in:MTN,ORANGE,mtn,orange'],
+            'email' => ['nullable', 'email', 'max:255'],
         ]);
 
         $order = Order::where('tracking_code', $tracking_code)->with(['store.user', 'items.product'])->firstOrFail();
+        if (! empty($validated['email'])) {
+            $order->update(['customer_email' => $validated['email']]);
+        }
 
         if (! $order->isRecoverable()) {
             return response()->json(['error' => 'Cette commande ne peut plus être payée. Refaites-la depuis la boutique.'], 422);
@@ -57,7 +94,7 @@ class OrderTrackingController extends Controller
             return response()->json(['error' => 'Cette boutique n’accepte pas de paiement pour le moment.'], 422);
         }
         foreach ($order->items as $item) {
-            if ($item->product && $item->product->stock < $item->quantity) {
+            if ($item->product && ! $item->product->isMadeToOrder() && $item->product->stock < $item->quantity) {
                 return response()->json(['error' => "« {$item->product_title} » n’est plus disponible en quantité suffisante."], 422);
             }
         }
@@ -124,6 +161,18 @@ class OrderTrackingController extends Controller
         return back()->with('success', 'Votre signalement a été envoyé à la boutique, qui va vous contacter.');
     }
 
+    /** Le client confirme avoir bien reçu sa commande : l'argent de la vente est libéré pour le vendeur. */
+    public function confirmReceipt(string $tracking_code): RedirectResponse
+    {
+        $order = Order::where('tracking_code', $tracking_code)->with('report')->firstOrFail();
+
+        if (! $order->confirmReceipt()) {
+            return back()->withErrors(['receipt' => 'Cette commande ne peut pas être confirmée.']);
+        }
+
+        return back()->with('success', 'Merci ! La réception de votre commande est confirmée.');
+    }
+
     /** Le client indique que tout est réglé : l'argent de la vente est libéré pour le vendeur. */
     public function resolve(string $tracking_code): RedirectResponse
     {
@@ -143,7 +192,7 @@ class OrderTrackingController extends Controller
      * Facture PDF de la commande pour le client (même document que celle du vendeur).
      * Le numéro de suivi sert de clé d'accès, comme pour la page de suivi. Une facture n'existe qu'une fois la commande payée.
      */
-    public function invoice(string $tracking_code, \App\Services\Sales\OrderInvoiceService $invoices)
+    public function invoice(string $tracking_code, OrderInvoiceService $invoices)
     {
         $order = Order::where('tracking_code', $tracking_code)->with(['store', 'items'])->firstOrFail();
         abort_unless($order->invoice_number, 404, 'La facture sera disponible une fois la commande payée.');

@@ -5,6 +5,7 @@ namespace App\Payments;
 use App\Payments\Gateways\HrSkillsGateway;
 use App\Payments\Gateways\MercyPayGateway;
 use App\Payments\Gateways\PawapayGateway;
+use App\Payments\Gateways\TestGateway;
 use InvalidArgumentException;
 
 /**
@@ -19,6 +20,8 @@ class PaymentManager
             'mercypay' => app(MercyPayGateway::class),
             'pawapay' => app(PawapayGateway::class),
             'hrskills' => app(HrSkillsGateway::class),
+            // Paiements simulés pour tester le parcours en local (jamais en production)
+            'test' => app(TestGateway::class),
             default => throw new InvalidArgumentException('Agrégateur de paiement inconnu : '.$name),
         };
     }
