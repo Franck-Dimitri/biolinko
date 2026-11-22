@@ -8,7 +8,7 @@ export const ARTICLES = {
         { p: 'Créer une boutique Biolinko est gratuit et prend quelques minutes, depuis votre téléphone.' },
         { h: 'Créer votre compte' },
         { steps: [
-            'Sur l’accueil de biolinko.link, tapez l’adresse que vous voulez pour votre boutique (par exemple biolinko.link/chez-awa) : le site vous dit tout de suite si elle est libre.',
+            'Sur l’accueil de biolinko.link, tapez l’adresse que vous voulez pour votre boutique (par exemple chez-awa.biolinko.store) : le site vous dit tout de suite si elle est libre.',
             'Appuyez sur « Créer ma boutique », puis indiquez votre nom, votre e-mail, votre numéro WhatsApp et un mot de passe.',
             'Vous recevez un code par e-mail : tapez-le pour confirmer votre adresse.',
         ] },
@@ -43,7 +43,7 @@ export const ARTICLES = {
     ],
 
     'partager-et-vendre': [
-        { p: 'Votre boutique a une adresse unique, biolinko.link/votre-boutique. C’est ce lien que vous partagez partout où sont vos clients.' },
+        { p: 'Votre boutique a une adresse unique, votre-boutique.biolinko.store. C’est ce lien que vous partagez partout où sont vos clients.' },
         { list: [
             'WhatsApp : dans vos discussions, vos statuts et votre profil professionnel ;',
             'Instagram et TikTok : dans votre bio et vos stories ;',
@@ -83,13 +83,19 @@ export const ARTICLES = {
 
     'recevoir-son-argent': [
         { h: 'Votre portefeuille' },
-        { p: 'Chaque vente payée apparaît tout de suite dans « Portefeuille », d’abord en attente, puis disponible après le délai de sécurité :' },
-        { list: ['4 jours après le paiement ;', '2 jours une fois que votre boutique a livré 10 commandes.'] },
-        { p: 'Ce délai protège vos clients en cas de problème de livraison. Si un client signale un problème, seule la vente concernée reste en attente.' },
+        { p: 'Chaque vente payée apparaît tout de suite dans « Portefeuille », d’abord en attente. Pour protéger vos clients, elle devient disponible une fois la commande reçue :' },
+        { list: ['dès que le client confirme la réception depuis son suivi de commande ;', '3 jours après que vous avez marqué la commande « Livrée », si le client ne signale aucun problème ;', 'au plus tard 14 jours après le paiement.'] },
+        { p: 'Marquez vos commandes « Livrée » dès la livraison : c’est ce qui déclenche le versement. Si un client signale un problème, seule la vente concernée reste en attente.' },
+        { h: 'Avant votre premier retrait' },
+        { steps: [
+            'Faites vérifier votre identité : une pièce d’identité et un selfie, depuis « Portefeuille ». La vérification prend 24 à 48 h.',
+            'Enregistrez votre numéro de retrait, à votre nom. Vos retraits partiront uniquement vers ce numéro.',
+        ] },
+        { p: 'Pour votre sécurité, un changement de numéro de retrait ne prend effet qu’après 48 h, et vous êtes prévenu par e-mail.' },
         { h: 'Faire un retrait' },
         { steps: [
             'Dans « Portefeuille », appuyez sur « Retirer ».',
-            'Indiquez le montant (1 000 FCFA minimum), votre opérateur et votre numéro.',
+            'Indiquez le montant (1 000 FCFA minimum) : l’argent part vers votre numéro de retrait enregistré.',
             'Appuyez sur « Demander le retrait » : après vérification, le virement part sur votre numéro Mobile Money.',
         ] },
         { tip: 'Les retraits sont gratuits : vous recevez la totalité du montant retiré. Si un virement échoue, l’argent revient sur votre solde.' },
@@ -105,7 +111,7 @@ export const ARTICLES = {
             'les frais de paiement payés par le client ne sont pas remboursés.',
         ] },
         { h: 'Quand un client signale un problème' },
-        { p: 'Pendant le délai de sécurité, le client peut signaler un problème depuis sa page de suivi. Vous êtes prévenu et vous recevez son numéro pour trouver une solution avec lui.' },
+        { p: 'Tant que l’argent de la vente est en attente, le client peut signaler un problème depuis sa page de suivi. Vous êtes prévenu et vous recevez son numéro pour trouver une solution avec lui.' },
         { steps: [
             'Répondez au signalement depuis la commande.',
             'Réglez le problème avec le client (échange, livraison, remboursement…).',

@@ -368,7 +368,7 @@ export function LinkMock({ className = '' }) {
     return (
         <div className={`w-full max-w-[280px] rounded-2xl border border-black/5 bg-white p-3 shadow-[0_20px_40px_-24px_rgba(20,20,10,0.35)] ${className}`}>
             <div className="flex items-center gap-2 rounded-xl bg-[#F2F1EC] px-3 py-2 font-mono text-[11px] text-[#141412]">
-                <Link2 className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">biolinko.link/pay/pack-wax</span>
+                <Link2 className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">maison-ngono.biolinko.store/pay/pack-wax</span>
             </div>
             <div className="mt-3 flex items-center gap-3">
                 <span className="flex -space-x-3">

@@ -21,7 +21,7 @@ export default function About() {
                 </motion.div>
                 <motion.div {...reveal(0.1)} className="space-y-5 text-[17px] leading-relaxed text-[#3D3C37]">
                     <p>Biolinko réunit en une seule application ce dont un commerçant a besoin pour vendre en ligne : une boutique à son image, un catalogue, les commandes, la livraison, les factures, le fichier client, le marketing et l’encaissement en Mobile Money.</p>
-                    <p>Le vendeur partage un seul lien, <strong className="font-medium text-[#141412]">biolinko.link/sa-boutique</strong>, là où ses clients se trouvent déjà. Le client choisit, paie avec son téléphone et reçoit sa facture et un lien de suivi. Le vendeur retrouve l’argent sur son solde et le retire gratuitement vers son Mobile Money.</p>
+                    <p>Le vendeur partage un seul lien, <strong className="font-medium text-[#141412]">sa-boutique.biolinko.store</strong>, là où ses clients se trouvent déjà. Le client choisit, paie avec son téléphone et reçoit sa facture et un lien de suivi. Le vendeur retrouve l’argent sur son solde et le retire gratuitement vers son Mobile Money.</p>
                     <p>Biolinko ne vend aucun produit : nous fournissons l’outil, chaque vendeur reste maître de sa boutique, de ses prix et de ses clients.</p>
                 </motion.div>
             </Section>

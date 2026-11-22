@@ -1,21 +1,23 @@
 import { Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, BadgeCheck, Clock, Flag, KeyRound, Lock, Undo2 } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, Clock, Flag, KeyRound, Lock, ShieldCheck, Undo2 } from 'lucide-react';
 import SiteLayout from '@/Layouts/SiteLayout';
 import { Section, reveal } from '@/Components/Landing/Frame';
 
 const STEPS = [
     [BadgeCheck, 'Le paiement est confirmé par l’opérateur', 'Quand le client paie, une demande arrive sur son téléphone et il la valide avec son code secret. La commande n’est payée que lorsque MTN ou Orange a confirmé le paiement : une capture d’écran ne suffit jamais.'],
-    [Clock, 'Un court délai de sécurité', 'Chaque vente payée apparaît tout de suite dans le solde du vendeur, puis devient retirable après 4 jours (2 jours une fois que la boutique a livré 10 commandes). Ce délai laisse le temps de livrer.'],
+    [Clock, 'Payé une fois la commande reçue', 'Chaque vente payée apparaît dans le solde du vendeur, mais ne devient retirable qu’une fois la commande reçue : dès que l’acheteur le confirme, ou 3 jours après la livraison sans signalement.'],
     [Flag, 'Un signalement en cas de problème', 'Pendant ce délai, le client peut signaler un problème depuis la page de suivi de sa commande. La vente concernée reste bloquée le temps que le vendeur et le client trouvent une solution.'],
+    [ShieldCheck, 'Des vendeurs vérifiés', 'Avant son premier retrait, chaque vendeur fait vérifier son identité par l’équipe Biolinko. Ses retraits partent uniquement vers un numéro à son nom. Une fausse boutique ne peut donc jamais toucher l’argent des clients.'],
     [Undo2, 'Un remboursement simple', 'Le vendeur peut rembourser tout ou partie d’une vente : le montant est renvoyé directement sur le Mobile Money du client.'],
 ];
 
 const TIPS = [
     'Biolinko et les vendeurs ne vous demanderont jamais votre code secret Mobile Money par message ou par appel. Vous le tapez uniquement sur votre téléphone, pour valider une demande que vous avez lancée.',
-    'Vérifiez l’adresse : les boutiques Biolinko s’ouvrent sur biolinko.link.',
+    'Vérifiez l’adresse : les boutiques Biolinko s’ouvrent toujours sur une adresse en .biolinko.store (par exemple chez-awa.biolinko.store).',
     'Vérifiez le montant affiché sur la demande de paiement avant de la valider.',
-    'Gardez votre lien de suivi : il contient votre facture et vous permet de signaler un problème.',
+    'Gardez votre lien de suivi : il contient votre facture et vous permet de signaler un problème. Ne confirmez la réception qu’après avoir reçu et vérifié vos articles.',
+    'Une boutique vous semble suspecte ? Utilisez « Signaler cette boutique » en bas de sa page : l’équipe Biolinko est prévenue.',
 ];
 
 export default function Security() {

@@ -12,7 +12,7 @@ const GROUPS = [
         [Palette, 'Votre marque', 'Logo, couleurs, police et coins arrondis ou carrés.'],
         [LayoutTemplate, 'Sections modulables', 'Bandeau, héro, promotions, avis, à propos : activez ce que vous voulez.'],
         [Eye, 'Aperçu avant publication', 'Préparez votre vitrine en privé, publiez quand elle est prête.'],
-        [Globe, 'Votre adresse', 'biolinko.link/votre-boutique, facile à retenir et à partager.'],
+        [Globe, 'Votre adresse', 'votre-boutique.biolinko.store, facile à retenir et à partager.'],
     ]],
     ['catalogue', 'Catalogue', [
         [Layers, 'Tailles et couleurs', 'Des options par produit, chacune avec son prix et son stock.'],
