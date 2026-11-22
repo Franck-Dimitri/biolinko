@@ -23,6 +23,8 @@ class ReleaseHeldFunds extends Command
             ->get();
         foreach ($closed as $report) {
             $report->update(['status' => 'released', 'closed_at' => now()]);
+            // Le vendeur a répondu et le client ne conteste plus : la vente est libérée
+            $report->order?->releaseFunds();
         }
 
         $released = 0;

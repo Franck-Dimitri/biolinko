@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Services\Sales\OrderInvoiceService;
+use App\Services\Whatsapp\WhatsappGatewayService;
+use App\Support\PilotOffer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,6 +29,10 @@ class Order extends Model
         'payment_reminded_at',
         'funds_release_at',
         'funds_released_at',
+        'delivered_at',
+        'received_confirmed_at',
+        'desired_date',
+        'desired_slot',
         'uuid',
         'tracking_code',
         'store_id',
@@ -68,6 +75,9 @@ class Order extends Model
         'payment_reminded_at' => 'datetime',
         'funds_release_at' => 'datetime',
         'funds_released_at' => 'datetime',
+        'delivered_at' => 'datetime',
+        'desired_date' => 'date',
+        'received_confirmed_at' => 'datetime',
         'is_manual' => 'boolean',
         'price_vendor' => 'decimal:2',
         'saas_margin' => 'decimal:2',
@@ -93,7 +103,7 @@ class Order extends Model
                 $order->uuid = (string) Str::uuid();
             }
             if (empty($order->tracking_code)) {
-                $order->tracking_code = 'BLK-CMD-' . strtoupper(Str::random(10));
+                $order->tracking_code = 'BLK-CMD-'.strtoupper(Str::random(10));
             }
         });
 
@@ -170,8 +180,8 @@ class Order extends Model
                 PromoCode::whereKey($order->promo_code_id)->increment('used_count');
             }
 
-            // La vente reste « en attente » le temps du délai de sécurité, puis devient retirable (releaseFunds)
-            $order->update(['funds_release_at' => now()->addDays(static::holdDaysFor($order->store_id))]);
+            // La vente reste bloquée jusqu'à la livraison (voir markDelivered / confirmReceipt), au plus MAX_HOLD_DAYS jours
+            $order->update(['funds_release_at' => now()->addDays(static::MAX_HOLD_DAYS)]);
             $wallet = Wallet::where('store_id', $order->store_id)->lockForUpdate()->first()
                 ?? Wallet::create(['store_id' => $order->store_id, 'balance_available' => 0, 'balance_pending' => 0]);
             $wallet->increment('balance_held', $order->sellerNet());
@@ -179,7 +189,8 @@ class Order extends Model
             foreach ($order->items as $item) {
                 if ($item->product_id) {
                     $q = (int) $item->quantity;
-                    Product::whereKey($item->product_id)->update(['stock' => DB::raw("CASE WHEN stock > {$q} THEN stock - {$q} ELSE 0 END")]);
+                    // Les produits sur commande n'ont pas de stock
+                    Product::whereKey($item->product_id)->where('fulfillment', 'stock')->update(['stock' => DB::raw("CASE WHEN stock > {$q} THEN stock - {$q} ELSE 0 END")]);
                 }
                 if ($item->variant_id) {
                     $q = (int) $item->quantity;
@@ -212,17 +223,17 @@ class Order extends Model
             $this->refresh();
             // Programme pilote : un palier de ventes payées dans l'app prolonge l'offre d'un mois
             try {
-                \App\Support\PilotOffer::recordSale($this);
+                PilotOffer::recordSale($this);
             } catch (\Throwable $e) {
                 report($e);
             }
             try {
-                app(\App\Services\Sales\OrderInvoiceService::class)->sendOrderInvoiceEmails($this);
+                app(OrderInvoiceService::class)->sendOrderInvoiceEmails($this);
             } catch (\Throwable $e) {
                 Log::warning('Invoice emails failed', ['order_id' => $this->id, 'err' => $e->getMessage()]);
             }
             try {
-                app(\App\Services\Whatsapp\WhatsappGatewayService::class)->notifyOrderPaid($this);
+                app(WhatsappGatewayService::class)->notifyOrderPaid($this);
             } catch (\Throwable $e) {
                 Log::warning('WhatsApp notifyOrderPaid failed', ['order_id' => $this->id, 'err' => $e->getMessage()]);
             }
@@ -270,19 +281,59 @@ class Order extends Model
         return max(0, (float) $this->price_vendor - (float) $this->balance_due - (float) $this->refunded_amount - (float) $this->commission_amount);
     }
 
-    /** Ventes livrées à partir desquelles un vendeur est considéré comme établi. */
-    public const ESTABLISHED_AFTER_DELIVERED = 10;
+    /*
+     * Protection de l'acheteur : l'argent d'une vente reste bloqué jusqu'à la livraison.
+     * - le client confirme la réception → libéré tout de suite ;
+     * - le vendeur marque « livrée » → libéré RELEASE_AFTER_DELIVERY_DAYS jours plus tard, sans signalement ;
+     * - sinon → libéré au plus tard MAX_HOLD_DAYS jours après le paiement, sans signalement.
+     * Un signalement ouvert gèle la vente jusqu'à ce qu'il soit réglé.
+     */
+    public const RELEASE_AFTER_DELIVERY_DAYS = 3;
 
-    public const HOLD_DAYS_NEW = 4;
+    public const MAX_HOLD_DAYS = 14;
 
-    public const HOLD_DAYS_ESTABLISHED = 2;
-
-    /** Délai de sécurité avant que l'argent d'une vente soit retirable : 4 jours, puis 2 après 10 ventes livrées. */
-    public static function holdDaysFor(int $storeId): int
+    /** Le vendeur marque la commande livrée : le client a quelques jours pour signaler un problème. */
+    public function markDelivered(): void
     {
-        $delivered = static::where('store_id', $storeId)->where('status', 'delivered')->count();
+        $changes = ['delivered_at' => $this->delivered_at ?? now()];
+        if ($this->payment_status === 'paid' && ! $this->funds_released_at && ! $this->is_manual) {
+            $after = now()->addDays(self::RELEASE_AFTER_DELIVERY_DAYS);
+            $changes['funds_release_at'] = $this->funds_release_at && $this->funds_release_at->lt($after) ? $this->funds_release_at : $after;
+        }
+        $this->update($changes);
+    }
 
-        return $delivered >= self::ESTABLISHED_AFTER_DELIVERED ? self::HOLD_DAYS_ESTABLISHED : self::HOLD_DAYS_NEW;
+    /** Retour de « livrée » à « en livraison » : le délai repart sur le plafond après paiement. */
+    public function unmarkDelivered(): void
+    {
+        $changes = ['delivered_at' => null];
+        if ($this->payment_status === 'paid' && ! $this->funds_released_at && ! $this->is_manual && $this->paid_at) {
+            $changes['funds_release_at'] = $this->paid_at->copy()->addDays(self::MAX_HOLD_DAYS);
+        }
+        $this->update($changes);
+    }
+
+    /** Le client confirme avoir reçu sa commande. */
+    public function canConfirmReceipt(): bool
+    {
+        return $this->payment_status === 'paid' && ! $this->is_manual && ! $this->received_confirmed_at
+            && ! in_array($this->status, ['cancelled', 'failed'], true)
+            && ! ($this->report && $this->report->isOpen());
+    }
+
+    public function confirmReceipt(): bool
+    {
+        if (! $this->canConfirmReceipt()) {
+            return false;
+        }
+        $this->update([
+            'received_confirmed_at' => now(),
+            'status' => 'delivered',
+            'delivered_at' => $this->delivered_at ?? now(),
+        ]);
+        $this->releaseFunds();
+
+        return true;
     }
 
     /**

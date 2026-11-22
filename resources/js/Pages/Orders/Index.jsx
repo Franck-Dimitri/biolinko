@@ -3,7 +3,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { AlertTriangle, ArrowRight, Clock, Copy, Download, FileText, MapPin, PackageCheck, Phone, ShoppingBag, Truck, Wallet, X } from 'lucide-react';
+import { AlertTriangle, ArrowRight, CalendarClock, Clock, Copy, Download, FileText, MapPin, PackageCheck, Phone, ShoppingBag, Truck, Wallet, X } from 'lucide-react';
 import ExportSalesModal from '@/Components/Dashboard/ExportSalesModal';
 import RefundBox from '@/Components/Dashboard/RefundBox';
 import { WhatsappIcon } from '@/Components/UI/BrandIcons';
@@ -98,7 +98,9 @@ function FundsLine({ order }) {
     const frozen = order.report && ['open', 'answered'].includes(order.report.status);
     return (
         <p className="flex items-center gap-2 text-[13px] text-[#5F5E58]">
-            <Clock className="h-4 w-4" /> {frozen ? 'Argent en attente le temps de régler le signalement' : `Argent disponible le ${dateTime(order.funds_release_at)}`}
+            <Clock className="h-4 w-4" /> {frozen ? 'Argent en attente le temps de régler le signalement'
+                : order.delivered_at ? `Livrée : argent disponible le ${dateTime(order.funds_release_at)}, ou dès que le client confirme la réception`
+                    : `Argent versé après la livraison : marquez la commande « Livrée » (au plus tard le ${dateTime(order.funds_release_at)})`}
         </p>
     );
 }
@@ -151,6 +153,13 @@ function OrderPanel({ order, store, onClose }) {
                         </Button>
                     )}
 
+                    {order.desired_date && (
+                        <div className="flex items-center gap-3 rounded-2xl border border-[#FFCC00]/60 bg-[#FFFBEA] p-4 text-[14px] text-[#141412]">
+                            <CalendarClock className="h-5 w-5 shrink-0" />
+                            <span>À préparer pour le <strong className="font-medium">{new Date(`${order.desired_date.substring(0, 10)}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</strong>{order.desired_slot ? `, ${({ matin: 'le matin', midi: 'à midi', 'apres-midi': 'l’après-midi', soir: 'le soir' })[order.desired_slot] || order.desired_slot}` : ''}</span>
+                        </div>
+                    )}
+
                     <section>
                         <h3 className="text-[14px] text-[#8B8A83]">Client</h3>
                         <p className="mt-2 text-[16px] font-medium text-[#141412]">{order.customer_name}</p>
@@ -177,6 +186,9 @@ function OrderPanel({ order, store, onClose }) {
                                     <span className="min-w-0">
                                         <span className="block truncate text-[#141412]">{it.product_title}</span>
                                         <span className="text-[13px] text-[#8B8A83]">{it.variant_label ? `${it.variant_label} · ` : ''}Qté {it.quantity}</span>
+                                        {(it.customizations || []).map((c) => (
+                                            <span key={c.label} className="block text-[13px] text-[#3D3C37] [overflow-wrap:anywhere]">{c.label} : <strong className="font-medium">{c.value}</strong></span>
+                                        ))}
                                     </span>
                                     <span className="shrink-0 tabular-nums text-[#141412]">{fcfa(it.total_price_vendor)}</span>
                                 </li>

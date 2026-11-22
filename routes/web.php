@@ -1,33 +1,45 @@
 <?php
 
+use App\Http\Controllers\Account\ProfileController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminPilotController;
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminSettingController;
 use App\Http\Controllers\Admin\AdminStoreController;
+use App\Http\Controllers\Admin\AdminStoreReportController;
 use App\Http\Controllers\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Admin\AdminTransactionController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminVerificationController;
 use App\Http\Controllers\Admin\AdminWalletController;
 use App\Http\Controllers\Admin\AdminWithdrawalController;
 use App\Http\Controllers\Seller\AppearanceController;
-use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Seller\CustomerController;
 use App\Http\Controllers\Seller\DashboardController;
-use App\Http\Controllers\Webhooks\HrSkillsPayWebhookController;
 use App\Http\Controllers\Seller\MarketingController;
 use App\Http\Controllers\Seller\OrderController;
-use App\Http\Controllers\Storefront\OrderTrackingController;
 use App\Http\Controllers\Seller\ProductController;
-use App\Http\Controllers\Account\ProfileController;
 use App\Http\Controllers\Seller\SalesReportController;
 use App\Http\Controllers\Seller\SellerInvoiceController;
-use App\Http\Controllers\Seller\SmartLinkController;
 use App\Http\Controllers\Seller\SellingController;
+use App\Http\Controllers\Seller\SmartLinkController;
 use App\Http\Controllers\Seller\StoreController;
-use App\Http\Controllers\Storefront\StorefrontController;
 use App\Http\Controllers\Seller\SubscriptionController;
 use App\Http\Controllers\Seller\ToolPluginController;
+use App\Http\Controllers\Seller\VerificationController;
 use App\Http\Controllers\Seller\WalletController;
+use App\Http\Controllers\Storefront\CheckoutController;
+use App\Http\Controllers\Storefront\OrderTrackingController;
+use App\Http\Controllers\Storefront\SeoController;
+use App\Http\Controllers\Storefront\SiteController;
+use App\Http\Controllers\Storefront\StorefrontController;
+use App\Http\Controllers\Webhooks\HrSkillsPayWebhookController;
+use App\Http\Controllers\Webhooks\MercyPayWebhookController;
+use App\Http\Controllers\Webhooks\PawapayWebhookController;
+use App\Http\Controllers\Webhooks\WhatsappCloudWebhookController;
+use App\Support\PlanIntent;
+use App\Support\Seo;
+use App\Support\ShopIntent;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -39,7 +51,7 @@ Route::get('/', function () {
         'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
-    ])->withViewData(['meta' => \App\Support\Seo::landing()]);
+    ])->withViewData(['meta' => Seo::landing()]);
 });
 
 // Smart Dashboard Redirector based on user role
@@ -50,7 +62,7 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function (Request $re
     }
 
     // Plan choisi sur la landing avant connexion / inscription : on reprend l'abonnement
-    if ($plan = \App\Support\PlanIntent::pull($request)) {
+    if ($plan = PlanIntent::pull($request)) {
         return redirect()->route('seller.subscriptions.index', ['plan' => $plan]);
     }
 
@@ -90,6 +102,14 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
     Route::post('/withdrawals/{withdrawal}/approve', [AdminWithdrawalController::class, 'approve'])->name('admin.withdrawals.approve');
     Route::post('/withdrawals/{withdrawal}/reject', [AdminWithdrawalController::class, 'reject'])->name('admin.withdrawals.reject');
 
+    // 6 bis. Vérification d'identité des vendeurs et signalements de boutiques
+    Route::get('/verifications', [AdminVerificationController::class, 'index'])->name('admin.verifications.index');
+    Route::get('/verifications/{verification}/file/{kind}', [AdminVerificationController::class, 'file'])->whereIn('kind', ['front', 'back', 'selfie'])->name('admin.verifications.file');
+    Route::post('/verifications/{verification}/approve', [AdminVerificationController::class, 'approve'])->name('admin.verifications.approve');
+    Route::post('/verifications/{verification}/reject', [AdminVerificationController::class, 'reject'])->name('admin.verifications.reject');
+    Route::get('/store-reports', [AdminStoreReportController::class, 'index'])->name('admin.storeReports.index');
+    Route::post('/store-reports/{report}/close', [AdminStoreReportController::class, 'close'])->name('admin.storeReports.close');
+
     // 7. Portefeuille Admin & Gains Plateforme
     Route::get('/wallet', [AdminWalletController::class, 'index'])->name('admin.wallet.index');
 
@@ -101,8 +121,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
     Route::get('/settings', [AdminSettingController::class, 'index'])->name('admin.settings.index');
 
     // 10. Candidatures au programme pilote
-    Route::get('/pilote', [\App\Http\Controllers\Admin\AdminPilotController::class, 'index'])->name('admin.pilot.index');
-    Route::patch('/pilote/{application}', [\App\Http\Controllers\Admin\AdminPilotController::class, 'update'])->name('admin.pilot.update');
+    Route::get('/pilote', [AdminPilotController::class, 'index'])->name('admin.pilot.index');
+    Route::patch('/pilote/{application}', [AdminPilotController::class, 'update'])->name('admin.pilot.update');
     Route::get('/settings/whatsapp-templates', [AdminSettingController::class, 'whatsappTemplates'])->name('admin.settings.whatsapp.templates');
     Route::post('/settings/whatsapp-test', [AdminSettingController::class, 'testWhatsappMessage'])->name('admin.settings.whatsapp.test');
 });
@@ -136,6 +156,10 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
     // Wallet & Cashout Management
     Route::get('/wallet', [WalletController::class, 'index'])->name('seller.wallet.index');
     Route::post('/wallet/withdraw', [WalletController::class, 'requestWithdrawal'])->name('wallet.withdraw');
+    Route::post('/wallet/payout-account', [WalletController::class, 'savePayoutAccount'])->middleware('throttle:6,1')->name('wallet.payout.save');
+    Route::delete('/wallet/payout-account/pending', [WalletController::class, 'cancelPendingPayout'])->name('wallet.payout.cancel');
+    Route::get('/verification', [VerificationController::class, 'index'])->name('seller.verification.index');
+    Route::post('/verification', [VerificationController::class, 'store'])->middleware('throttle:6,1')->name('seller.verification.store');
 
     // Invoices Management
     Route::get('/invoices', [SellerInvoiceController::class, 'index'])->name('seller.invoices.index');
@@ -187,19 +211,19 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Webhook Endpoints (CSRF Exempted in bootstrap/app.php)
-Route::post('/api/webhooks/mercypay', [\App\Http\Controllers\Webhooks\MercyPayWebhookController::class, 'handle'])->name('webhooks.mercypay');
-Route::post('/api/webhooks/pawapay/deposits', [\App\Http\Controllers\Webhooks\PawapayWebhookController::class, 'deposits'])->name('webhooks.pawapay.deposits');
-Route::post('/api/webhooks/pawapay/payouts', [\App\Http\Controllers\Webhooks\PawapayWebhookController::class, 'payouts'])->name('webhooks.pawapay.payouts');
-Route::post('/api/webhooks/pawapay/refunds', [\App\Http\Controllers\Webhooks\PawapayWebhookController::class, 'refunds'])->name('webhooks.pawapay.refunds');
+Route::post('/api/webhooks/mercypay', [MercyPayWebhookController::class, 'handle'])->name('webhooks.mercypay');
+Route::post('/api/webhooks/pawapay/deposits', [PawapayWebhookController::class, 'deposits'])->name('webhooks.pawapay.deposits');
+Route::post('/api/webhooks/pawapay/payouts', [PawapayWebhookController::class, 'payouts'])->name('webhooks.pawapay.payouts');
+Route::post('/api/webhooks/pawapay/refunds', [PawapayWebhookController::class, 'refunds'])->name('webhooks.pawapay.refunds');
 Route::post('/api/webhooks/hrskills-pay', [HrSkillsPayWebhookController::class, 'handle'])->name('webhooks.hrskills-pay');
-Route::get('/api/webhooks/whatsapp-cloud', [\App\Http\Controllers\Webhooks\WhatsappCloudWebhookController::class, 'verify'])->name('webhooks.whatsapp-cloud.verify');
-Route::post('/api/webhooks/whatsapp-cloud', [\App\Http\Controllers\Webhooks\WhatsappCloudWebhookController::class, 'handle'])->name('webhooks.whatsapp-cloud');
+Route::get('/api/webhooks/whatsapp-cloud', [WhatsappCloudWebhookController::class, 'verify'])->name('webhooks.whatsapp-cloud.verify');
+Route::post('/api/webhooks/whatsapp-cloud', [WhatsappCloudWebhookController::class, 'handle'])->name('webhooks.whatsapp-cloud');
 
 // Landing : l'adresse biolinko.link/<boutique> est-elle libre ?
 Route::get('/boutique-disponible', function (Request $request) {
-    $slug = \App\Support\ShopIntent::normalize($request->query('slug'));
+    $slug = ShopIntent::normalize($request->query('slug'));
 
-    return response()->json(['slug' => $slug, 'available' => $slug !== null && \App\Support\ShopIntent::isAvailable($slug)]);
+    return response()->json(['slug' => $slug, 'available' => $slug !== null && ShopIntent::isAvailable($slug)]);
 })->middleware('throttle:30,1')->name('shop.available');
 
 // Public Client Fast Checkout & Order Tracking & Customer Lookup
@@ -210,7 +234,9 @@ Route::get('/checkout/status/{reference}', [CheckoutController::class, 'checkSta
 Route::get('/track/{tracking_code}', [OrderTrackingController::class, 'show'])->name('order.track');
 Route::get('/track/{tracking_code}/facture', [OrderTrackingController::class, 'invoice'])->middleware('throttle:20,1')->name('order.invoice');
 Route::post('/track/{tracking_code}/report', [OrderTrackingController::class, 'report'])->middleware('throttle:3,1')->name('order.report');
+Route::post('/track/{tracking_code}/received', [OrderTrackingController::class, 'confirmReceipt'])->middleware('throttle:5,1')->name('order.received');
 Route::post('/track/{tracking_code}/report/resolve', [OrderTrackingController::class, 'resolve'])->middleware('throttle:5,1')->name('order.report.resolve');
+Route::get('/track/{tracking_code}/paiement', [OrderTrackingController::class, 'payment'])->name('order.payment');
 Route::post('/track/{tracking_code}/pay', [OrderTrackingController::class, 'pay'])->middleware('throttle:5,1')->name('order.pay');
 
 // Public SmartLink Fast Checkout Pages
@@ -221,11 +247,11 @@ Route::get('/{store_slug}/pay/sl/{code}', [SmartLinkController::class, 'showPubl
 Route::post('/pay/{code}/checkout', [SmartLinkController::class, 'processPublicCheckout'])->middleware('throttle:10,1')->name('smartlink.checkout');
 
 // Référencement : plan du site et robots.txt (avant les routes de boutique)
-Route::get('/sitemap.xml', [\App\Http\Controllers\Storefront\SeoController::class, 'sitemap'])->name('seo.sitemap');
-Route::get('/robots.txt', [\App\Http\Controllers\Storefront\SeoController::class, 'robots'])->name('seo.robots');
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap');
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('seo.robots');
 
 // Pages d'information du site public
-Route::controller(\App\Http\Controllers\Storefront\SiteController::class)->group(function () {
+Route::controller(SiteController::class)->group(function () {
     Route::get('/a-propos', 'about')->name('site.about');
     Route::get('/contact', 'contact')->name('site.contact');
     Route::get('/paiement-et-securite', 'security')->name('site.security');
@@ -238,7 +264,7 @@ Route::controller(\App\Http\Controllers\Storefront\SiteController::class)->group
 
 // Public Legal Pages (Terms, Privacy, Cookies)
 Route::get('/conditions-generales', function () {
-    return Inertia::render('Legal/Terms')->withViewData(['meta' => \App\Support\Seo::page('Conditions générales', 'Conditions générales d’utilisation et de vente de Biolinko, la plateforme de boutiques en ligne payées en Mobile Money.', '/conditions-generales')]);
+    return Inertia::render('Legal/Terms')->withViewData(['meta' => Seo::page('Conditions générales', 'Conditions générales d’utilisation et de vente de Biolinko, la plateforme de boutiques en ligne payées en Mobile Money.', '/conditions-generales')]);
 })->name('legal.terms');
 
 Route::get('/terms', function () {
@@ -246,7 +272,7 @@ Route::get('/terms', function () {
 });
 
 Route::get('/politique-de-confidentialite', function () {
-    return Inertia::render('Legal/Privacy')->withViewData(['meta' => \App\Support\Seo::page('Politique de confidentialité', 'Comment Biolinko collecte, utilise et protège les données des vendeurs et de leurs clients.', '/politique-de-confidentialite')]);
+    return Inertia::render('Legal/Privacy')->withViewData(['meta' => Seo::page('Politique de confidentialité', 'Comment Biolinko collecte, utilise et protège les données des vendeurs et de leurs clients.', '/politique-de-confidentialite')]);
 })->name('legal.privacy');
 
 Route::get('/privacy', function () {
@@ -254,7 +280,7 @@ Route::get('/privacy', function () {
 });
 
 Route::get('/politique-des-cookies', function () {
-    return Inertia::render('Legal/Cookies')->withViewData(['meta' => \App\Support\Seo::page('Politique des cookies', 'Les cookies utilisés sur Biolinko et comment les gérer.', '/politique-des-cookies')]);
+    return Inertia::render('Legal/Cookies')->withViewData(['meta' => Seo::page('Politique des cookies', 'Les cookies utilisés sur Biolinko et comment les gérer.', '/politique-des-cookies')]);
 })->name('legal.cookies');
 
 Route::get('/cookies', function () {
@@ -265,6 +291,7 @@ Route::get('/cookies', function () {
 require __DIR__.'/auth.php';
 
 // Public Storefront Catch-All (MUST BE ABSOLUTELY LAST)
+Route::post('/{store_slug}/signaler', [StorefrontController::class, 'reportStore'])->middleware('throttle:3,1')->name('storefront.report');
 Route::post('/{store_slug}/reviews', [StorefrontController::class, 'submitReview'])->middleware('throttle:5,1')->name('storefront.reviews.store');
 Route::get('/{store_slug}/p/{product_slug}', [StorefrontController::class, 'showProduct'])->name('storefront.product.show');
 Route::get('/{store_slug}', [StorefrontController::class, 'show'])->name('storefront.show');

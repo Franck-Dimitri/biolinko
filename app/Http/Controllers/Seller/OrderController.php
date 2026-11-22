@@ -3,21 +3,20 @@
 namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Order;
+use App\Models\OrderReport;
 use App\Models\Wallet;
-use App\Models\Withdrawal;
+use App\Payments\Orders\OrderRefunds;
+use App\Payments\PaymentException;
 use App\Services\Whatsapp\WhatsappGatewayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class OrderController extends Controller
 {
-
     public function index(Request $request): Response
     {
         $store = $request->user()->store;
@@ -121,11 +120,19 @@ class OrderController extends Controller
             return back()->withErrors(['status' => 'Ce changement de statut n’est pas possible pour cette commande.']);
         }
 
+        $previous = $order->status;
         $order->update([
             'status' => $validated['status'],
             // Livrée = le livreur a encaissé le solde de l'acompte
             'balance_collected_at' => $validated['status'] === 'delivered' && (float) $order->balance_due > 0 ? ($order->balance_collected_at ?? now()) : $order->balance_collected_at,
         ]);
+
+        // L'argent de la vente n'est libéré qu'après la livraison (protection de l'acheteur)
+        if ($validated['status'] === 'delivered') {
+            $order->markDelivered();
+        } elseif ($previous === 'delivered') {
+            $order->unmarkDelivered();
+        }
 
         // Send real-time WhatsApp shipping / delivery notification to customer
         try {
@@ -152,13 +159,13 @@ class OrderController extends Controller
 
         $report->update(['status' => 'answered', 'seller_response' => $validated['response'], 'seller_responded_at' => now()]);
 
-        return back()->with('success', 'Réponse envoyée. Sans réaction du client sous '.\App\Models\OrderReport::CUSTOMER_REPLY_DAYS.' jours, la vente sera libérée.');
+        return back()->with('success', 'Réponse envoyée. Sans réaction du client sous '.OrderReport::CUSTOMER_REPLY_DAYS.' jours, la vente sera libérée.');
     }
 
     /**
      * Rembourse le client par virement Mobile Money (total ou partiel).
      */
-    public function refund(Request $request, Order $order, \App\Payments\Orders\OrderRefunds $refunds): RedirectResponse
+    public function refund(Request $request, Order $order, OrderRefunds $refunds): RedirectResponse
     {
         abort_unless($order->store_id === $request->user()->store?->id, 403);
         $data = $request->validate([
@@ -168,7 +175,7 @@ class OrderController extends Controller
 
         try {
             $refund = $refunds->refund($order, (float) $data['amount'], $data['reason'], $request->user());
-        } catch (\App\Payments\PaymentException $e) {
+        } catch (PaymentException $e) {
             return back()->withErrors(['refund' => $e->getMessage()]);
         }
 

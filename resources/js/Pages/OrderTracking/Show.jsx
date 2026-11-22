@@ -2,7 +2,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { AlertCircle, AlertTriangle, ArrowLeft, Check, Clock, Copy, MapPin, Package, Printer, Smartphone, Truck } from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowLeft, Check, Clock, Copy, MapPin, Package, Printer, ShieldCheck, Smartphone, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 import StorefrontLayout from '@/Layouts/StorefrontLayout';
 import { WhatsappIcon } from '@/Components/UI/BrandIcons';
@@ -11,6 +11,7 @@ import { contrastColor } from '@/Components/Storefront/theme';
 import { formatFcfa } from '@/Components/Storefront/useCart';
 import PaymentStatus from '@/Components/Storefront/Checkout/PaymentStatus';
 import { track } from '@/Components/Storefront/pixels';
+import { storeUrl } from '@/Components/Storefront/storeUrl';
 
 const STEPS = [
     { id: 'paid', label: 'Payée', icon: Check },
@@ -25,6 +26,41 @@ function stepIndex(order) {
     if (order.status === 'in_delivery') return 2;
     if (order.payment_status === 'paid' || order.status === 'paid') return 1;
     return -1;
+}
+
+// Protection de l'acheteur : la boutique n'est payée qu'après la réception de la commande
+function ReceiptSection({ order, canConfirm, protection, primaryColor, primaryTextColor }) {
+    const [sending, setSending] = useState(false);
+    if (order.received_confirmed_at) {
+        return (
+            <section className="flex items-center gap-3 rounded-3xl border border-[#BBF7D0] bg-[#F0FDF4] p-5 text-[15px] text-[#15803D] print:hidden">
+                <Check className="h-5 w-5 shrink-0" /> Réception confirmée le {new Date(order.received_confirmed_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}. Merci !
+            </section>
+        );
+    }
+    if (!canConfirm) return null;
+    const confirm = () => {
+        setSending(true);
+        router.post(route('order.received', order.tracking_code), {}, { preserveScroll: true, onFinish: () => setSending(false) });
+    };
+    return (
+        <section className="space-y-4 rounded-3xl border border-black/[0.08] bg-white p-5 text-[15px] sm:p-8 print:hidden">
+            <div className="flex gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#141412] text-white"><ShieldCheck className="h-5 w-5" /></span>
+                <div className="min-w-0">
+                    <h2 className="text-lg font-semibold text-[#141412]">Paiement protégé par Biolinko</h2>
+                    <p className="mt-1 text-[#5F5E58]">
+                        La boutique ne reçoit votre argent qu’une fois la commande reçue : après votre confirmation, ou {protection?.after_delivery_days ?? 3} jours après la livraison si vous ne signalez aucun problème.
+                    </p>
+                </div>
+            </div>
+            <button type="button" onClick={confirm} disabled={sending}
+                className="inline-flex h-11 items-center gap-2 rounded-full px-5 font-semibold disabled:opacity-60" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                <Check className="h-4 w-4" /> {sending ? 'Envoi…' : 'J’ai bien reçu ma commande'}
+            </button>
+            <p className="text-sm text-[#5F5E58]">Ne confirmez qu’après avoir reçu et vérifié vos articles.</p>
+        </section>
+    );
 }
 
 // Signalement pendant le délai de sécurité : prévient la boutique, qui reste l'interlocuteur du client
@@ -111,7 +147,7 @@ function ReportSection({ order, canReport, reasons, primaryColor, primaryTextCol
     );
 }
 
-export default function Show({ order, store, canReport = false, reportReasons = {}, canPay = false }) {
+export default function Show({ order, store, canReport = false, reportReasons = {}, canPay = false, canConfirmReceipt = false, protection }) {
     const primaryColor = store?.theme_color || '#FFCC00';
     const primaryTextColor = contrastColor(primaryColor);
     const [checking, setChecking] = useState(false);
@@ -195,7 +231,7 @@ export default function Show({ order, store, canReport = false, reportReasons = 
 
             <div className="mx-auto max-w-2xl space-y-6">
                 <div className="flex items-center justify-between gap-3 print:hidden">
-                    <a href={`/${store.slug}`} className="inline-flex items-center gap-1.5 text-sm text-[#5F5E58] hover:text-[#141412]">
+                    <a href={storeUrl(store.slug)} className="inline-flex items-center gap-1.5 text-sm text-[#5F5E58] hover:text-[#141412]">
                         <ArrowLeft className="h-4 w-4" /> Retour à la boutique
                     </a>
                     {order.invoice_number && (
@@ -257,6 +293,8 @@ export default function Show({ order, store, canReport = false, reportReasons = 
                     )}
                 </motion.section>
 
+                <ReceiptSection order={order} canConfirm={canConfirmReceipt} protection={protection} primaryColor={primaryColor} primaryTextColor={primaryTextColor} />
+
                 <ReportSection order={{ ...order, store }} canReport={canReport} reasons={reportReasons} primaryColor={primaryColor} primaryTextColor={primaryTextColor} />
 
                 <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="space-y-5 rounded-3xl border border-black/[0.08] bg-[#F6F5F1] p-5 sm:p-8">
@@ -274,6 +312,7 @@ export default function Show({ order, store, canReport = false, reportReasons = 
                                 <div className="min-w-0 flex-1">
                                     <div className="truncate text-[15px] font-medium text-[#141412]">{item.product_title}</div>
                                     <div className="text-sm text-[#5F5E58]">{item.variant_label ? `${item.variant_label} · ` : ''}Qté {item.quantity}</div>
+                                    {(item.customizations || []).map((c) => <div key={c.label} className="text-sm text-[#5F5E58] [overflow-wrap:anywhere]">{c.label} : <span className="text-[#141412]">{c.value}</span></div>)}
                                 </div>
                                 <span className="shrink-0 tabular-nums text-[15px] text-[#141412]">{formatFcfa(item.total_price_vendor)}</span>
                             </li>
@@ -300,6 +339,9 @@ export default function Show({ order, store, canReport = false, reportReasons = 
                     <dl className="grid gap-3 border-t border-black/[0.08] pt-4 text-[15px] sm:grid-cols-2">
                         <div><dt className="text-sm text-[#5F5E58]">Client</dt><dd className="text-[#141412]">{order.customer_name}<br />{order.customer_phone}</dd></div>
                         <div><dt className="text-sm text-[#5F5E58]">Livraison</dt><dd className="break-words text-[#141412]">{order.city}<br />{order.address_details}</dd></div>
+                        {order.desired_date && (
+                            <div><dt className="text-sm text-[#5F5E58]">Date souhaitée</dt><dd className="text-[#141412]">{new Date(`${order.desired_date.substring(0, 10)}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}{order.desired_slot ? ` · ${({ matin: 'matin', midi: 'midi', 'apres-midi': 'après-midi', soir: 'soir' })[order.desired_slot] || ''}` : ''}</dd></div>
+                        )}
                         <div><dt className="text-sm text-[#5F5E58]">Paiement</dt><dd className="text-[#141412]">{order.payment_operator === 'ORANGE' ? 'Orange Money' : 'MTN MoMo'}</dd></div>
                     </dl>
                 </motion.section>
