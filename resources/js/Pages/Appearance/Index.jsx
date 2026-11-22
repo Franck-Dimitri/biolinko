@@ -1,19 +1,22 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
-import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-    ArrowDown, ArrowUp, Check, ExternalLink, Eye, EyeOff, ImagePlus, Lock, Monitor, RefreshCw, Smartphone, Star, Trash2,
+    ArrowDown, ArrowUp, Check, ExternalLink, Eye, EyeOff, ImagePlus, Lock, Monitor, RefreshCw, Smartphone, Star, Trash2, X,
 } from 'lucide-react';
 import { contrastColor } from '@/Components/Storefront/theme';
 import { Badge, Button, Field, fieldClass } from '@/Components/Dashboard/UI';
+import { storeAddressParts, storeUrl } from '@/Components/Storefront/storeUrl';
+import { PatternLayer, patternLabel } from '@/Components/Storefront/patterns';
+import { ActivityPicker, ActivitySummary, PatternPicker } from '@/Components/Seller/ActivityPicker';
+import { PREVIEW_READY, sendPreview } from '@/Components/Storefront/livePreview';
 
 const TABS = [['identity', 'Identité'], ['style', 'Style'], ['home', 'Accueil'], ['sections', 'Sections'], ['contact', 'Contact'], ['reviews', 'Avis']];
 
 const COLORS = ['#FFCC00', '#1F6F5C', '#141412', '#B45309', '#BE123C', '#7C3AED', '#2563EB', '#0F766E'];
-const FONTS = [['Poppins', 'Rond et chaleureux, la police Biolinko (par défaut)'], ['Inter', 'Moderne et neutre'], ['Roboto', 'Classique et lisible']];
-const CATEGORIES = ['Mode et vêtements', 'Beauté et cosmétiques', 'Accessoires', 'Chaussures', 'Électronique', 'Alimentation', 'Maison et déco', 'Santé et bien-être', 'Enfants', 'Services', 'Autre'];
+const FONTS = [['Poppins', 'Rond et chaleureux, la police Biolinko (par défaut)'], ['Inter', 'Moderne et neutre'], ['Roboto', 'Classique et lisible'], ['Playfair Display', 'Élégante, pour les titres (pâtisserie, beauté, couture)']];
 
 // Sections affichées par la vitrine, dans l'ordre par défaut
 const SECTION_CATALOG = {
@@ -67,9 +70,20 @@ function ImagePicker({ label, hint, current, onFile, shape = 'square' }) {
     );
 }
 
-function Preview({ slug, version, published }) {
-    const [device, setDevice] = useState('desktop');
+function Preview({ slug, version, published, draft, initialDevice = 'desktop', onClose }) {
+    const [device, setDevice] = useState(initialDevice);
     const box = useRef(null);
+    const frame = useRef(null);
+
+    // Aperçu en direct : chaque modification est envoyée à la vitrine affichée, sans enregistrer
+    useEffect(() => { sendPreview(frame.current, draft); }, [draft]);
+    useEffect(() => {
+        const onReady = (e) => {
+            if (e.origin === window.location.origin && e.data?.type === PREVIEW_READY && e.source === frame.current?.contentWindow) sendPreview(frame.current, draft);
+        };
+        window.addEventListener('message', onReady);
+        return () => window.removeEventListener('message', onReady);
+    }, [draft]);
     const [size, setSize] = useState({ w: 0, h: 0 });
     const width = device === 'mobile' ? 390 : 1280;
     const pad = device === 'mobile' ? 24 : 0;
@@ -95,7 +109,10 @@ function Preview({ slug, version, published }) {
                 </div>
                 <div className="flex items-center gap-2 text-[13px] text-[#8B8A83]">
                     {!published && <Badge tone="warning">Non publiée</Badge>}
-                    <a href={`/${slug}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-[#141412]">Ouvrir <ExternalLink className="h-3.5 w-3.5" /></a>
+                    <a href={storeUrl(slug)} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-[#141412]">Ouvrir <ExternalLink className="h-3.5 w-3.5" /></a>
+                    {onClose && (
+                        <button type="button" onClick={onClose} aria-label="Fermer l’aperçu" className="ml-1 flex h-9 w-9 items-center justify-center rounded-full text-[#141412] hover:bg-black/5"><X className="h-5 w-5" /></button>
+                    )}
                 </div>
             </div>
             {/* Le cadre garde la taille réelle de l'écran simulé, puis il est réduit pour tenir dans la place disponible */}
@@ -109,7 +126,7 @@ function Preview({ slug, version, published }) {
                         transform: `scale(${scale})`,
                         transformOrigin: 'top left',
                     }}>
-                        <iframe key={`${version}-${slug}`} title="Aperçu de la boutique" src={`/${slug}?apercu=${version}`}
+                        <iframe ref={frame} key={`${version}-${slug}`} title="Aperçu de la boutique" src={`/${slug}?apercu=${version}`}
                             className={`h-full w-full bg-white ${device === 'mobile' ? 'rounded-[32px] border-[8px] border-[#141412]' : ''}`} />
                     </div>
                 )}
@@ -118,12 +135,14 @@ function Preview({ slug, version, published }) {
     );
 }
 
-export default function Index({ store, reviews = [], stats = {} }) {
+export default function Index({ store, reviews = [], stats = {}, businessTypes = {} }) {
     const [tab, setTab] = useState('identity');
+    const [previewOpen, setPreviewOpen] = useState(false);
+    const [pickActivity, setPickActivity] = useState(!store.business_type);
     const [version, setVersion] = useState(Date.now());
     const form = useForm({
-        name: store.name || '', slug: store.slug || '', category: store.category || '', description: store.description || '', about_text: store.about_text || '',
-        theme_color: store.theme_color || '#FFCC00', font_family: store.font_family || 'Poppins', border_radius_style: store.border_radius_style || 'rounded',
+        name: store.name || '', slug: store.slug || '', category: store.category || '', business_type: store.business_type || '', description: store.description || '', about_text: store.about_text || '',
+        theme_color: store.theme_color || '#FFCC00', font_family: store.font_family || 'Poppins', border_radius_style: store.border_radius_style || 'rounded', pattern: store.pattern || 'none',
         announcement_header: store.announcement_header || '', hero_badge_text: store.hero_badge_text || '', hero_title: store.hero_title || '',
         hero_subtitle: store.hero_subtitle || '', hero_cta_text: store.hero_cta_text || '',
         phone_whatsapp: store.phone_whatsapp || '', city_location: store.city_location || '', opening_hours: store.opening_hours || '',
@@ -135,6 +154,55 @@ export default function Index({ store, reviews = [], stats = {} }) {
     const { data, setData, errors, processing, isDirty } = form;
     const set = (k) => (e) => setData(k, e?.target ? e.target.value : e);
 
+    // Style de l'activité : couleur, police, forme, motif, sections, avantages et textes d'accueil (seulement s'ils sont vides)
+    const applyStyle = (key) => {
+        const t = businessTypes?.[key];
+        if (!t?.style) return;
+        // Un texte d'accueil vide ou suggéré par une activité est remplacé ; un texte écrit par le vendeur est gardé
+        // (y compris les anciens textes par défaut des boutiques)
+        const LEGACY = { badge: 'PROMOTIONS & TENDANCES', title: 'Découvrez nos Produits d\'Exception', cta: 'Acheter Maintenant' };
+        const suggested = (field) => {
+            const current = data[`hero_${field === 'cta' ? 'cta_text' : field === 'badge' ? 'badge_text' : field}`];
+            return current === LEGACY[field] || Object.values(businessTypes || {}).some((x) => x.hero?.[field] && x.hero[field] === current);
+        };
+        const pick = (current, field) => (!current || suggested(field) ? (t.hero?.[field] || '') : current);
+        setData((d) => ({
+            ...d,
+            business_type: key,
+            ...t.style,
+            sections: normalizeSections(t.sections),
+            benefits: t.benefits || DEFAULT_BENEFITS,
+            hero_badge_text: pick(d.hero_badge_text, 'badge'),
+            hero_title: pick(d.hero_title, 'title'),
+            hero_subtitle: pick(d.hero_subtitle, 'subtitle'),
+            hero_cta_text: pick(d.hero_cta_text, 'cta'),
+        }));
+        toast.success(`Style « ${t.label} » appliqué. Enregistrez pour le voir sur votre boutique.`);
+    };
+    // Style encore d'origine : choisir une activité l'applique directement
+    const untouched = data.theme_color.toUpperCase() === '#FFCC00' && data.font_family === 'Poppins' && data.pattern === 'none';
+    const chooseActivity = (key) => {
+        if (key && untouched) applyStyle(key);
+        else setData('business_type', key);
+        setPickActivity(false); // la liste se replie une fois l'activité choisie
+    };
+    const preset = businessTypes?.[data.business_type];
+
+    // Brouillon envoyé à l'aperçu : tout ce qui est modifié s'affiche tout de suite
+    const logoPreview = useMemo(() => (data.logo_file ? URL.createObjectURL(data.logo_file) : null), [data.logo_file]);
+    const bannerPreview = useMemo(() => (data.banner_file ? URL.createObjectURL(data.banner_file) : null), [data.banner_file]);
+    const draft = useMemo(() => {
+        const { sections, benefits, logo_file: _l, banner_file: _b, ...rest } = data;
+        return {
+            ...rest,
+            sections_json: sections,
+            benefits_json: benefits,
+            ...(preset ? { template: { cta: preset.cta, date_label: preset.made_to_order ? (store.template?.date_label || null) : null } } : {}),
+            ...(logoPreview ? { logo_url: logoPreview } : {}),
+            ...(bannerPreview ? { banner_url: bannerPreview } : {}),
+        };
+    }, [data, preset, logoPreview, bannerPreview]);
+
     const save = () => {
         form.transform((d) => {
             const { sections, benefits, ...rest } = d;
@@ -144,7 +212,7 @@ export default function Index({ store, reviews = [], stats = {} }) {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => { setVersion(Date.now()); form.setDefaults(); setData((d) => ({ ...d, logo_file: null, banner_file: null })); },
-            onError: (e) => { toast.error('Vérifiez les champs signalés.'); if (e.name || e.slug || e.category) setTab('identity'); },
+            onError: (e) => { toast.error('Vérifiez les champs signalés.'); if (e.name || e.slug || e.business_type) setTab('identity'); },
         });
     };
 
@@ -167,15 +235,19 @@ export default function Index({ store, reviews = [], stats = {} }) {
         <AuthenticatedLayout>
             <Head title="Apparence, Biolinko">
                 {/* Aperçu des polices proposées aux vendeurs */}
-                <link head-key="font-choices" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto:wght@400;500;700&display=swap" />
+                <link head-key="font-choices" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto:wght@400;500;700&family=Playfair+Display:wght@500;600&display=swap" />
             </Head>
             <div className="grid gap-6 pb-6 xl:grid-cols-[460px_1fr]">
                 {/* Éditeur */}
                 <div className="min-w-0">
-                    <div className="mb-5 flex items-end justify-between gap-4">
-                        <div>
+                    <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="min-w-0">
                             <h1 className="text-[28px] font-medium tracking-[-0.03em] text-[#141412]">Apparence</h1>
-                            <p className="mt-1 text-[15px] text-[#5F5E58]">Personnalisez votre boutique, l’aperçu se met à jour à l’enregistrement.</p>
+                            <p className="mt-1 text-[15px] text-[#5F5E58]">Personnalisez votre boutique : l’aperçu change en direct.</p>
+                        </div>
+                        <div className="flex shrink-0 gap-2">
+                            <Button size="sm" variant="dark" onClick={() => setPreviewOpen(true)} className="xl:hidden"><Eye className="h-4 w-4" /> Aperçu</Button>
+                            <Button size="sm" href={storeUrl(store.slug)} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /> Ouvrir ma boutique</Button>
                         </div>
                     </div>
 
@@ -191,26 +263,50 @@ export default function Index({ store, reviews = [], stats = {} }) {
                     <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 rounded-3xl border border-black/[0.06] bg-white p-6">
                         {tab === 'identity' && (
                             <>
+                                <Group title="Votre activité" sub="Elle règle votre boutique : couleurs, police, motifs, sections, textes et type de produits.">
+                                    {pickActivity || !preset
+                                        ? <ActivityPicker types={businessTypes} value={data.business_type} onChange={chooseActivity} />
+                                        : <ActivitySummary types={businessTypes} value={data.business_type} onChange={() => setPickActivity(true)} />}
+                                    {errors.business_type && <p className="text-[13px] text-[#B91C1C]">{errors.business_type}</p>}
+                                    {preset?.style && (
+                                        <div className="space-y-3 rounded-2xl border border-black/[0.08] p-3 sm:p-4">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                <span className="min-w-0 text-[13px] text-[#5F5E58]">
+                                                    <span className="block text-[14px] font-medium text-[#141412]">Style « {preset.label} »</span>
+                                                    <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                        <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-full" style={{ backgroundColor: preset.style.theme_color }} />{preset.style.theme_color}</span>
+                                                        <span>· {preset.style.font_family}</span>
+                                                        <span>· {preset.made_to_order ? 'produits sur commande' : 'produits en stock'}</span>
+                                                    </span>
+                                                </span>
+                                                <Button size="sm" variant="primary" onClick={() => applyStyle(data.business_type)} className="shrink-0">Appliquer ce style</Button>
+                                            </div>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {preset.patterns.map((key) => (
+                                                    <div key={key} className="overflow-hidden rounded-xl border border-black/[0.06]">
+                                                        <span className="relative block h-14 bg-white"><PatternLayer pattern={key} color={preset.style.theme_color} opacity={0.55} scale={0.55} fade={false} /></span>
+                                                        <span className="block truncate px-2 py-1 text-[11px] text-[#5F5E58]">{patternLabel(key)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {preset.made_to_order && <p className="text-[12px] text-[#8B8A83]">Vos nouveaux produits seront « sur commande » : le client choisit une date et précise sa demande.</p>}
+                                        </div>
+                                    )}
+                                </Group>
                                 <Group title="Votre marque">
                                     <div className="flex items-start gap-4">
                                         <ImagePicker label="Logo" current={store.logo_url} onFile={(f) => setData('logo_file', f)} />
                                         <div className="flex-1 space-y-3">
                                             <Field label="Nom de la boutique" error={errors.name}><input value={data.name} onChange={set('name')} className={fieldClass} /></Field>
-                                            <Field label="Catégorie" error={errors.category}>
-                                                <select value={data.category} onChange={set('category')} className={fieldClass}>
-                                                    {!CATEGORIES.includes(data.category) && data.category && <option value={data.category}>{data.category}</option>}
-                                                    <option value="">Choisir…</option>
-                                                    {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                                                </select>
-                                            </Field>
                                         </div>
                                     </div>
                                 </Group>
                                 <Group title="Adresse de la boutique" sub="Si vous la changez, les anciens liens partagés ne fonctionneront plus.">
                                     <Field error={errors.slug}>
                                         <div className="flex items-center overflow-hidden rounded-xl border border-black/10 focus-within:border-black/30">
-                                            <span className="bg-[#F6F5F1] px-3 py-3 text-[14px] text-[#5F5E58]">biolinko.link/</span>
-                                            <input value={data.slug} onChange={(e) => setData('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, '-'))} className="h-11 flex-1 border-0 px-2 text-[15px] focus:ring-0" />
+                                            {storeAddressParts().prefix && <span className="bg-[#F6F5F1] px-3 py-3 text-[14px] text-[#5F5E58]">{storeAddressParts().prefix}</span>}
+                                            <input value={data.slug} onChange={(e) => setData('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 40))} className="h-11 min-w-0 flex-1 border-0 px-2 text-[15px] focus:ring-0" />
+                                            {storeAddressParts().suffix && <span className="bg-[#F6F5F1] px-3 py-3 text-[14px] text-[#5F5E58]">{storeAddressParts().suffix}</span>}
                                         </div>
                                     </Field>
                                 </Group>
@@ -239,6 +335,9 @@ export default function Index({ store, reviews = [], stats = {} }) {
                                         <span className="rounded-full px-4 py-2 text-[14px] font-medium" style={{ backgroundColor: data.theme_color, color: contrastColor(data.theme_color) }}>Voir les produits</span>
                                         <span className="text-[13px] text-[#8B8A83]">Aperçu d’un bouton</span>
                                     </div>
+                                </Group>
+                                <Group title="Motif de fond" sub={`Les motifs de votre activité${preset ? ` (${preset.label})` : ''}, dans votre couleur : en haut de la vitrine et sur les blocs sombres.`}>
+                                    <PatternPicker patterns={(preset || businessTypes?.autre)?.patterns || []} value={data.pattern} color={data.theme_color} onChange={(k) => setData('pattern', k)} />
                                 </Group>
                                 <Group title="Police d’écriture">
                                     <div className="grid gap-2">
@@ -369,7 +468,8 @@ export default function Index({ store, reviews = [], stats = {} }) {
 
                     {/* Barre d'enregistrement */}
                     <div className="sticky bottom-4 z-10 mt-4 flex items-center justify-between gap-3 rounded-full border border-black/[0.08] bg-white/95 py-2 pl-5 pr-2 shadow-[0_10px_30px_-15px_rgba(20,20,10,0.35)] backdrop-blur">
-                        <span className="text-[14px] text-[#5F5E58]">{isDirty || data.logo_file || data.banner_file ? 'Modifications non enregistrées' : 'Tout est enregistré'}</span>
+                        <span className="min-w-0 truncate text-[14px] text-[#5F5E58]">{isDirty || data.logo_file || data.banner_file ? 'Non enregistré' : 'Tout est enregistré'}</span>
+                        <Button size="sm" variant="ghost" onClick={() => setPreviewOpen(true)} className="shrink-0 xl:hidden"><Eye className="h-4 w-4" /> Aperçu</Button>
                         <Button variant="primary" onClick={save} disabled={processing || !(isDirty || data.logo_file || data.banner_file)}>
                             {processing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Enregistrer
                         </Button>
@@ -378,9 +478,19 @@ export default function Index({ store, reviews = [], stats = {} }) {
 
                 {/* Aperçu */}
                 <div className="hidden h-[calc(100vh-112px)] min-w-0 xl:sticky xl:top-20 xl:block">
-                    <Preview slug={store.slug} version={version} published={store.is_published} />
+                    <Preview slug={store.slug} version={version} published={store.is_published} draft={draft} />
                 </div>
             </div>
+
+            {/* Aperçu sur mobile et tablette : plein écran, toujours à jour */}
+            <AnimatePresence>
+                {previewOpen && (
+                    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} transition={{ duration: 0.25 }}
+                        role="dialog" aria-modal="true" aria-label="Aperçu de la boutique" className="fixed inset-0 z-[60] flex flex-col bg-[#F2F1EC] p-2 sm:p-4 xl:hidden">
+                        <Preview slug={store.slug} version={version} published={store.is_published} draft={draft} initialDevice="mobile" onClose={() => setPreviewOpen(false)} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </AuthenticatedLayout>
     );
 }

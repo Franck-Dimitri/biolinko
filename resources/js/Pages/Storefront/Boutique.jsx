@@ -13,6 +13,8 @@ import OrderSummary from '@/Components/Storefront/Checkout/OrderSummary';
 import {
     AboutSection, BenefitsSection, Container, PacksSection, ProductsSection, PromotionsSection, ReviewsSection, StoreCta, StoreHero, whatsappUrl,
 } from '@/Components/Storefront/Sections';
+import { productUrl } from '@/Components/Storefront/storeUrl';
+import { usePreviewStore } from '@/Components/Storefront/livePreview';
 
 const DEFAULT_SECTIONS = ['banner', 'hero', 'categories', 'products', 'best-sellers', 'promotions', 'smartlinks', 'benefits', 'reviews', 'about'].map((id) => ({ id, enabled: true }));
 
@@ -27,14 +29,16 @@ const isEnabled = (sec) => sec && ![false, 'false', 0, '0'].includes(sec.enabled
 
 const slugify = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '-');
 
-export default function Boutique({ store, products = [], activeSmartLinks = [], isPreview = false, seoTitle = null }) {
+export default function Boutique({ store: savedStore, products = [], activeSmartLinks = [], isPreview = false, seoTitle = null }) {
+    // Dans l'éditeur « Apparence », les modifications s'affichent avant même d'être enregistrées
+    const store = usePreviewStore(savedStore);
     const authUser = usePage().props.auth?.user;
     const isOwner = authUser && authUser.id === store.user_id;
     const cart = useCart(store.id);
 
     const primaryColor = store?.theme_color || '#FFCC00';
     const primaryTextColor = contrastColor(primaryColor);
-    const theme = { color: primaryColor, text: primaryTextColor };
+    const theme = { color: primaryColor, text: primaryTextColor, pattern: store?.pattern };
 
     const [activeSectionTab, setActiveSectionTab] = useState('all'); // 'all' | 'cart'
     // Lien vers une catégorie (?categorie=Robes, fil d'Ariane de la page produit) : catalogue filtré
@@ -62,6 +66,11 @@ export default function Boutique({ store, products = [], activeSmartLinks = [], 
     };
 
     const handleAddToCart = (product) => {
+        // Produit avec des précisions à donner (message, mensurations…) : sur sa fiche
+        if ((product.custom_fields || []).some((f) => f.label)) {
+            window.location.href = productUrl(store.slug, product.slug);
+            return;
+        }
         cart.add(product);
         toast.success(`« ${product.title} » ajouté au panier`, {
             action: { label: 'Voir le panier', onClick: () => { setActiveSectionTab('cart'); window.scrollTo({ top: 0 }); } },
@@ -209,7 +218,11 @@ export default function Boutique({ store, products = [], activeSmartLinks = [], 
                             {cart.items.length > 0 ? (
                                 <CheckoutForm subtotal={cart.subtotal}
                                     store={store}
-                                    payload={{ items: cart.items.map((it) => ({ product_id: it.product_id, variant_id: it.variant_id, quantity: it.quantity })) }}
+                                    payload={{ items: cart.items.map((it) => ({ product_id: it.product_id, variant_id: it.variant_id, quantity: it.quantity, customizations: it.customizations || [] })) }}
+                                    schedule={cart.items.some((it) => it.made_to_order) ? {
+                                        minHours: Math.max(0, ...cart.items.filter((it) => it.made_to_order).map((it) => it.lead_time_hours || 0)),
+                                        label: store.template?.date_label || 'Date de livraison ou de retrait souhaitée',
+                                    } : null}
                                     onPaid={cart.clear}
                                     disabled={isPreview}
                                     summary={(x) => <OrderSummary items={cart.items} subtotal={cart.subtotal} fee={x.fee} total={x.total} promo={x.promo} delivery={x.delivery} balance={x.balance} onQuantity={cart.setQuantity} onRemove={cart.remove} />}
