@@ -220,7 +220,7 @@ function Everywhere() {
                 </motion.p>
                 <motion.div {...reveal(0.2)} className="mt-8 inline-flex items-center gap-3 rounded-2xl border border-black/[0.08] bg-white px-5 py-4">
                     <span className="relative flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FFCC00] opacity-70" /><span className="relative h-2.5 w-2.5 rounded-full bg-[#FFCC00]" /></span>
-                    <span className="text-[16px] text-[#141412]">biolinko.link/<span className="font-semibold">votre-boutique</span></span>
+                    <span className="text-[16px] text-[#141412]"><span className="font-semibold">votre-boutique</span>.biolinko.store</span>
                 </motion.div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -246,7 +246,7 @@ function Trust() {
     const items = [
         [ShieldCheck, 'Paiement confirmé par l’opérateur', 'Fini les captures de faux reçus : une vente n’est payée que lorsque MTN ou Orange l’a confirmée.'],
         [Store, 'Vos clients suivent leur commande', 'Chaque achat reçoit un lien de suivi et une facture. Le client sait où en est sa commande.'],
-        [Repeat, 'L’argent protégé jusqu’à la livraison', 'Un court délai de sécurité avant le retrait, un signalement en cas de souci, un remboursement simple.'],
+        [Repeat, 'L’argent protégé jusqu’à la livraison', 'Le vendeur est payé une fois la commande reçue, le client peut signaler un souci, le remboursement est simple.'],
     ];
     return (
         <Section className="bg-white py-24 sm:py-32">
@@ -289,7 +289,7 @@ function Facts() {
         [100, 0, ' FCFA', 'pour ouvrir votre boutique'],
         [100, 0, ' FCFA', 'de frais sur vos retraits'],
         [50, 0, ' %', 'de commission sur la livraison'],
-        [0, 4, ' jours', 'au plus avant de pouvoir retirer'],
+        [0, 3, ' jours', 'après la livraison, votre argent est disponible'],
     ];
     return (
         <section className="relative overflow-hidden bg-[#FFCC00] py-16 sm:py-20">
