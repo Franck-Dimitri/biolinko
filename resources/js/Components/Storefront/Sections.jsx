@@ -6,6 +6,8 @@ import { FacebookIcon, InstagramIcon, TiktokIcon, WhatsappIcon } from '@/Compone
 import { OperatorLogo } from '@/Components/Landing/Illustrations';
 import ProductCard, { ProductImage, productImage } from '@/Components/Storefront/ProductCard';
 import { formatFcfa } from '@/Components/Storefront/useCart';
+import { storeUrl } from '@/Components/Storefront/storeUrl';
+import { PatternLayer } from '@/Components/Storefront/patterns';
 
 /* Sections de la vitrine publique : une vraie page d'accueil de marque pour chaque vendeur. */
 
@@ -74,6 +76,7 @@ export function StoreHero({ store, products, theme, onShop }) {
     return (
         <section id="hero" className="relative overflow-hidden">
             <div aria-hidden className="absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full opacity-25 blur-[120px]" style={{ backgroundColor: theme.color }} />
+            <PatternLayer pattern={store.pattern} color={theme.color} opacity={0.16} />
             <Container className="relative grid items-center gap-8 py-8 sm:gap-12 sm:py-20 lg:grid-cols-[1.05fr_1fr]">
                 <div className="min-w-0">
                     {tagline && (
@@ -121,7 +124,7 @@ export function StoreHero({ store, products, theme, onShop }) {
                     {current && (
                         <div className="absolute -bottom-6 left-3 right-3 sm:-left-8 sm:right-auto sm:w-[300px]">
                             <AnimatePresence mode="wait">
-                                <motion.a key={current.id} href={`/${store.slug}/p/${current.slug}`}
+                                <motion.a key={current.id} href={storeUrl(store.slug, `/p/${current.slug}`)}
                                     initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.45, ease: EASE_OUT }}
                                     className="flex items-center gap-3 rounded-2xl border border-black/[0.06] bg-white/95 p-3 shadow-[0_20px_40px_-20px_rgba(20,20,10,0.45)] backdrop-blur">
                                     <ProductImage src={productImage(current)} alt="" className="h-14 w-14 shrink-0 rounded-xl" />
@@ -232,6 +235,7 @@ export function PromotionsSection({ products, endsAt, theme, cardProps }) {
             <Container>
                 <motion.div {...reveal()} className="relative overflow-hidden rounded-[32px] bg-[#0F0F0E] px-5 py-14 sm:px-12 sm:py-16">
                     <div aria-hidden className="absolute -top-32 left-1/2 h-[380px] w-[760px] -translate-x-1/2 rounded-full opacity-30 blur-[110px]" style={{ backgroundColor: theme.color }} />
+                    <PatternLayer pattern={theme.pattern} color="#FFFFFF" opacity={0.07} fade={false} />
                     <div className="relative flex flex-wrap items-end justify-between gap-8">
                         <div>
                             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-1 text-[13px] text-white/70"><Tag className="h-3.5 w-3.5" /> Offres limitées</span>
@@ -402,6 +406,7 @@ export function StoreCta({ store, theme, onShop }) {
             <Container>
                 <motion.div {...reveal()} className="relative overflow-hidden rounded-3xl bg-[#0F0F0E] px-5 py-10 text-center sm:rounded-[32px] sm:px-6 sm:py-20">
                     <div aria-hidden className="absolute left-1/2 top-full h-[380px] w-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-40 blur-[110px]" style={{ backgroundColor: theme.color }} />
+                    <PatternLayer pattern={theme.pattern} color="#FFFFFF" opacity={0.07} fade={false} />
                     <h2 className="relative mx-auto max-w-[620px] text-[24px] font-medium leading-[1.12] tracking-[-0.03em] text-white sm:text-[44px]">
                         Trouvé votre bonheur ? Commandez en 1 minute.
                     </h2>

@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\StoreReview;
+use App\Models\User;
+use App\Support\BusinessTypes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,6 +27,11 @@ class AppearanceController extends Controller
                 'promos' => $store->products()->where('is_promo', true)->count(),
                 'packs' => $store->smartLinks()->where('is_active', true)->count(),
             ],
+            // Activités proposées : chacune règle le vocabulaire de la vitrine et les produits par défaut
+            'businessTypes' => collect(BusinessTypes::all())->map(fn ($t) => [
+                'label' => $t['label'], 'made_to_order' => $t['fulfillment'] === 'made_to_order', 'cta' => $t['cta'],
+                'style' => $t['style'], 'patterns' => $t['patterns'], 'sections' => $t['sections'], 'benefits' => $t['benefits'], 'hero' => $t['hero'],
+            ]),
         ]);
     }
 
@@ -35,13 +41,15 @@ class AppearanceController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'alpha_dash', 'unique:stores,slug,' . $store->id, \Illuminate\Validation\Rule::notIn(\App\Models\User::RESERVED_SLUGS)],
+            'slug' => ['required', 'string', 'regex:/^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/', Rule::unique('stores', 'slug')->ignore($store->id), Rule::notIn(User::RESERVED_SLUGS)],
             'category' => ['nullable', 'string', 'max:255'],
+            'business_type' => ['nullable', 'in:'.implode(',', BusinessTypes::keys())],
             'description' => ['nullable', 'string'],
             'about_text' => ['nullable', 'string'],
             'theme_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'accent_color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'font_family' => ['nullable', 'in:Poppins,Inter,Roboto'],
+            'font_family' => ['nullable', 'in:'.implode(',', BusinessTypes::FONTS)],
+            'pattern' => ['nullable', 'in:'.implode(',', BusinessTypes::patterns())],
             'border_radius_style' => ['nullable', 'string', 'max:20'],
             'theme_mode' => ['nullable', 'string', 'max:20'],
             'phone_whatsapp' => ['nullable', 'string', 'max:50'],
@@ -61,16 +69,16 @@ class AppearanceController extends Controller
             'support_email' => ['nullable', 'email', 'max:255'],
             'logo_file' => ['nullable', 'image', 'max:5120'],
             'banner_file' => ['nullable', 'image', 'max:5120'],
-        ]);
+        ], ['slug.regex' => 'L’adresse doit faire 3 à 40 caractères : lettres minuscules, chiffres et tirets, sans tiret au début ni à la fin.', 'slug.not_in' => 'Cette adresse est réservée, choisissez-en une autre.']);
 
         if ($request->hasFile('logo_file')) {
             $path = $request->file('logo_file')->store('logos', 'public');
-            $validated['logo_url'] = '/storage/' . $path;
+            $validated['logo_url'] = '/storage/'.$path;
         }
 
         if ($request->hasFile('banner_file')) {
             $path = $request->file('banner_file')->store('banners', 'public');
-            $validated['banner_url'] = '/storage/' . $path;
+            $validated['banner_url'] = '/storage/'.$path;
         }
 
         if ($request->has('sections_json')) {
@@ -83,6 +91,7 @@ class AppearanceController extends Controller
                     if (is_array($sec) && isset($sec['enabled'])) {
                         $sec['enabled'] = filter_var($sec['enabled'], FILTER_VALIDATE_BOOLEAN);
                     }
+
                     return $sec;
                 }, $sections));
             }
@@ -98,6 +107,11 @@ class AppearanceController extends Controller
             }
         }
 
+        // La catégorie affichée (vitrine, Google) suit l'activité choisie
+        if (! empty($validated['business_type'])) {
+            $validated['category'] = BusinessTypes::get($validated['business_type'])['label'];
+        }
+
         $store->update($validated);
 
         return redirect()->back()->with('message', 'Paramètres d\'apparence mis à jour avec succès !');
@@ -110,7 +124,7 @@ class AppearanceController extends Controller
             abort(403);
         }
 
-        $review->update(['is_featured' => !$review->is_featured]);
+        $review->update(['is_featured' => ! $review->is_featured]);
 
         return redirect()->back()->with('message', 'Statut de l\'avis mis à jour !');
     }
