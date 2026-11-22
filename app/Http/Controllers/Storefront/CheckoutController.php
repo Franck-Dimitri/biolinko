@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -17,16 +16,20 @@ use App\Payments\Orders\OrderPayments;
 use App\Payments\PaymentException;
 use App\Services\Sales\OrderInvoiceService;
 use App\Services\Whatsapp\WhatsappGatewayService;
+use App\Support\BusinessTypes;
+use App\Support\StoreUrl;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
     protected OrderPayments $orderPayments;
+
     protected OrderInvoiceService $invoiceService;
+
     protected WhatsappGatewayService $whatsappService;
 
     public function __construct(
@@ -38,7 +41,6 @@ class CheckoutController extends Controller
         $this->invoiceService = $invoiceService;
         $this->whatsappService = $whatsappService;
     }
-
 
     public function lookupCustomer(Request $request): JsonResponse
     {
@@ -109,7 +111,7 @@ class CheckoutController extends Controller
                 'status' => 'SUCCESS',
                 'paid' => true,
                 'tracking_code' => $order->tracking_code,
-                'redirect_url' => route('order.track', $order->tracking_code),
+                'redirect_url' => StoreUrl::track($order),
             ]);
         }
 
@@ -139,6 +141,8 @@ class CheckoutController extends Controller
             'operator' => ['nullable', 'string', 'in:MTN,ORANGE,mtn,orange'],
             'promo_code' => ['nullable', 'string', 'max:30'],
             'payment_mode' => ['nullable', 'in:full,deposit'],
+            // La commande est créée, puis le client paie sur la page de paiement Biolinko
+            'defer_payment' => ['nullable', 'boolean'],
 
             // Single-item checkout
             'product_id' => ['nullable', 'exists:products,id'],
@@ -150,6 +154,13 @@ class CheckoutController extends Controller
             'items.*.product_id' => ['required_with:items', 'exists:products,id'],
             'items.*.variant_id' => ['nullable', 'exists:product_variants,id'],
             'items.*.quantity' => ['required_with:items', 'integer', 'min:1'],
+            'items.*.customizations' => ['nullable', 'array', 'max:5'],
+            'items.*.customizations.*.label' => ['required', 'string', 'max:60'],
+            'items.*.customizations.*.value' => ['nullable', 'string', 'max:300'],
+
+            // Produits sur commande : date (et créneau) souhaités par le client
+            'desired_date' => ['nullable', 'date_format:Y-m-d'],
+            'desired_slot' => ['nullable', 'in:'.implode(',', array_keys(BusinessTypes::SLOTS))],
         ]);
 
         $store = Store::with('user')->findOrFail($validated['store_id']);
@@ -168,12 +179,12 @@ class CheckoutController extends Controller
         // Determine items
         // Pack (SmartLink) : les articles et le prix viennent du lien, pas du client
         $smartLink = null;
-        if (!empty($validated['smart_link_code'])) {
+        if (! empty($validated['smart_link_code'])) {
             $smartLink = SmartLink::where('code', $validated['smart_link_code'])
                 ->where('store_id', $store->id)
                 ->first();
 
-            if (!$smartLink || !$smartLink->isValid()) {
+            if (! $smartLink || ! $smartLink->isValid()) {
                 return response()->json(['error' => 'Ce lien de commande est expiré ou n\'est plus disponible.'], 422);
             }
 
@@ -185,13 +196,14 @@ class CheckoutController extends Controller
         }
 
         $checkoutItems = [];
-        if (!empty($validated['items']) && count($validated['items']) > 0) {
+        if (! empty($validated['items']) && count($validated['items']) > 0) {
             $checkoutItems = $validated['items'];
-        } elseif (!empty($validated['product_id'])) {
+        } elseif (! empty($validated['product_id'])) {
             $checkoutItems[] = [
                 'product_id' => $validated['product_id'],
                 'variant_id' => $validated['variant_id'] ?? null,
                 'quantity' => $validated['quantity'] ?? 1,
+                'customizations' => [],
             ];
         } else {
             return back()->withErrors(['product_id' => 'Aucun article sélectionné pour la commande.']);
@@ -215,29 +227,46 @@ class CheckoutController extends Controller
             }
 
             $variant = null;
-            if (!empty($item['variant_id'])) {
+            if (! empty($item['variant_id'])) {
                 $variant = ProductVariant::where('product_id', $product->id)
                     ->where('id', $item['variant_id'])
                     ->first();
             }
 
             $minQ = $smartLink ? 1 : ($product->min_order_quantity ?: 1);
-            $quantity = max((int)$item['quantity'], $minQ);
+            $quantity = max((int) $item['quantity'], $minQ);
+
+            // Produit sur commande : pas de stock, mais une date, une capacité par jour et les précisions du client
+            $customizations = [];
+            // (un pack se commande tel quel : les précisions se règlent avec le vendeur)
+            if ($product->customFields() && ! $smartLink) {
+                [$customizations, $fieldError] = $this->customizationsFor($product, $item['customizations'] ?? []);
+                if ($fieldError) {
+                    return response()->json(['error' => $fieldError], 422);
+                }
+            }
+            if ($product->isMadeToOrder()) {
+                if ($scheduleError = $this->checkSchedule($product, $quantity, $validated['desired_date'] ?? null, (bool) $smartLink)) {
+                    return response()->json(['error' => $scheduleError, 'errors' => ['desired_date' => [$scheduleError]]], 422);
+                }
+            }
 
             // Stock Check Enforcement
-            if ($product->stock <= 0) {
+            if (! $product->isMadeToOrder() && $product->stock <= 0) {
                 $errMsg = "Désolé, le produit '{$product->title}' est actuellement en rupture de stock (Stock Épuisé).";
                 if ($request->wantsJson() || $request->header('X-Inertia')) {
                     return response()->json(['error' => $errMsg], 422);
                 }
+
                 return back()->withErrors(['product_id' => $errMsg]);
             }
 
-            if ($quantity > $product->stock) {
+            if (! $product->isMadeToOrder() && $quantity > $product->stock) {
                 $errMsg = "Désolé, il ne reste que {$product->stock} article(s) disponible(s) en stock pour '{$product->title}'.";
                 if ($request->wantsJson() || $request->header('X-Inertia')) {
                     return response()->json(['error' => $errMsg], 422);
                 }
+
                 return back()->withErrors(['quantity' => $errMsg]);
             }
 
@@ -246,11 +275,12 @@ class CheckoutController extends Controller
                 if ($request->wantsJson() || $request->header('X-Inertia')) {
                     return response()->json(['error' => $errMsg], 422);
                 }
+
                 return back()->withErrors(['quantity' => $errMsg]);
             }
 
-            $currentPv = $product->promoActive() 
-                ? (float) $product->promo_price 
+            $currentPv = $product->promoActive()
+                ? (float) $product->promo_price
                 : (float) $product->price_vendor;
 
             if ($variant && (float) $variant->price > 0) {
@@ -271,13 +301,14 @@ class CheckoutController extends Controller
             $apiFeeTotal += $itemApiFee;
             $totalClient += $itemTotalClient;
 
-            $variantLabel = $variant ? trim(($variant->size ? "Taille: {$variant->size} " : "") . ($variant->color ? "Couleur: {$variant->color}" : "")) : null;
+            $variantLabel = $variant ? trim(($variant->size ? "Taille: {$variant->size} " : '').($variant->color ? "Couleur: {$variant->color}" : '')) : null;
 
             $preparedOrderItems[] = [
                 'product_id' => $product->id,
                 'variant_id' => $variant ? $variant->id : null,
                 'product_title' => $product->title,
                 'variant_label' => $variantLabel,
+                'customizations' => $customizations ?: null,
                 'quantity' => $quantity,
                 'unit_price_vendor' => $currentPv,
                 'total_price_vendor' => $itemVendorPrice,
@@ -342,7 +373,7 @@ class CheckoutController extends Controller
         // 1. SAVE OR UPDATE CUSTOMER
         $customer = Customer::firstOrNew(['phone' => $formattedPhone]);
         $customer->name = $validated['customer_name'];
-        if (!empty($validated['customer_email'])) {
+        if (! empty($validated['customer_email'])) {
             $customer->email = $validated['customer_email'];
         }
         $customer->whatsapp = $whatsapp;
@@ -355,14 +386,14 @@ class CheckoutController extends Controller
             $store->customers()->attach($customer->id, ['total_orders_count' => 0, 'total_spent' => 0, 'last_order_at' => now()]);
         }
 
-        $trackingCode = 'BLK-CMD-' . strtoupper(Str::random(10));
+        $trackingCode = 'BLK-CMD-'.strtoupper(Str::random(10));
 
         $extraNotes = [];
-        if (!empty($validated['notes'])) {
+        if (! empty($validated['notes'])) {
             $extraNotes[] = "Note: {$validated['notes']}";
         }
 
-        $addressWithNotes = $validated['delivery_address'] . (count($extraNotes) > 0 ? " (" . implode(" | ", $extraNotes) . ")" : "");
+        $addressWithNotes = $validated['delivery_address'].(count($extraNotes) > 0 ? ' ('.implode(' | ', $extraNotes).')' : '');
 
         // Create Order with PENDING status for Mobile Money USSD
         $order = Order::create([
@@ -376,6 +407,8 @@ class CheckoutController extends Controller
             'customer_email' => $validated['customer_email'] ?? null,
             'customer_whatsapp' => $whatsapp,
             'city' => $city,
+            'desired_date' => $validated['desired_date'] ?? null,
+            'desired_slot' => $validated['desired_slot'] ?? null,
             'address_details' => $addressWithNotes,
             'price_vendor' => $priceVendorTotal,
             'subtotal' => $goods,
@@ -398,7 +431,6 @@ class CheckoutController extends Controller
             $order->items()->create($itemData);
         }
 
-
         // Notify Customer & Vendor via WhatsApp that order has been initiated
         try {
             $this->whatsappService->notifyOrderPlaced($order);
@@ -406,6 +438,14 @@ class CheckoutController extends Controller
             Log::warning('WhatsApp notifyOrderPlaced failed', ['order_id' => $order->id, 'err' => $e->getMessage()]);
         }
 
+        // Page de paiement Biolinko : le client y choisit son moyen de paiement et son numéro
+        if ($request->boolean('defer_payment')) {
+            return response()->json([
+                'success' => true,
+                'tracking_code' => $order->tracking_code,
+                'payment_url' => StoreUrl::payment($order),
+            ]);
+        }
 
         // Demande de paiement Mobile Money sur le téléphone du client (agrégateur configuré)
         try {
@@ -423,5 +463,59 @@ class CheckoutController extends Controller
         }
 
         return response()->json(['success' => true, 'requires_ussd' => true] + $payment);
+    }
+
+    /**
+     * Réponses du client aux champs du produit (message sur le gâteau, mensurations…), vérifiées.
+     *
+     * @return array{0: array<int, array{label: string, value: string}>, 1: ?string}
+     */
+    private function customizationsFor(Product $product, array $given): array
+    {
+        $answers = collect($given)->mapWithKeys(fn ($c) => [trim((string) ($c['label'] ?? '')) => trim((string) ($c['value'] ?? ''))]);
+        $out = [];
+        foreach ($product->customFields() as $field) {
+            $value = mb_substr((string) ($answers[$field['label']] ?? ''), 0, 300);
+            if ($value === '') {
+                if (! empty($field['required'])) {
+                    return [[], "Précisez « {$field['label']} » pour « {$product->title} »."];
+                }
+
+                continue;
+            }
+            if (($field['type'] ?? 'text') === 'select' && ! in_array($value, $field['options'] ?? [], true)) {
+                return [[], "Choix invalide pour « {$field['label']} » (« {$product->title} »)."];
+            }
+            $out[] = ['label' => $field['label'], 'value' => $value];
+        }
+
+        return [$out, null];
+    }
+
+    /** Date souhaitée pour un produit sur commande : après le délai de préparation, dans la capacité du jour. */
+    private function checkSchedule(Product $product, int $quantity, ?string $date, bool $fromPack): ?string
+    {
+        if (! $date) {
+            // Un pack se règle avec le vendeur ; une commande du panier doit indiquer sa date
+            return $fromPack ? null : "Choisissez la date souhaitée pour « {$product->title} ».";
+        }
+
+        $day = Carbon::createFromFormat('Y-m-d', $date)->endOfDay();
+        $earliest = now()->addHours((int) $product->lead_time_hours);
+        if ($day->lt($earliest)) {
+            return "« {$product->title} » demande un délai de préparation : choisissez une date à partir du ".$earliest->locale('fr')->translatedFormat('j F').'.';
+        }
+
+        if ($product->daily_capacity) {
+            $booked = OrderItem::where('product_id', $product->id)
+                ->whereHas('order', fn ($q) => $q->whereDate('desired_date', $date)->where(fn ($q) => $q->where('payment_status', 'paid')
+                    ->orWhere(fn ($q) => $q->where('payment_status', 'pending')->where('created_at', '>', now()->subMinutes(30)))))
+                ->sum('quantity');
+            if ($booked + $quantity > $product->daily_capacity) {
+                return "Plus de place pour « {$product->title} » le ".$day->locale('fr')->translatedFormat('j F').' : choisissez une autre date.';
+            }
+        }
+
+        return null;
     }
 }

@@ -28,10 +28,15 @@ class Product extends Model
         'image_url',
         'images',
         'stock',
+        'fulfillment',
+        'lead_time_hours',
+        'daily_capacity',
+        'custom_fields',
         'is_active',
     ];
 
     protected $casts = [
+        'custom_fields' => 'array',
         'price_vendor' => 'decimal:2',
         'promo_price' => 'decimal:2',
         'is_promo' => 'boolean',
@@ -92,5 +97,17 @@ class Product extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /** Produit fabriqué ou préparé à la demande (pâtisserie, couture, prestation…) : pas de stock, une date souhaitée. */
+    public function isMadeToOrder(): bool
+    {
+        return $this->fulfillment === 'made_to_order';
+    }
+
+    /** Champs que le client remplit pour ce produit (message, mensurations…). */
+    public function customFields(): array
+    {
+        return array_values(array_filter($this->custom_fields ?? [], fn ($f) => filled($f['label'] ?? null)));
     }
 }

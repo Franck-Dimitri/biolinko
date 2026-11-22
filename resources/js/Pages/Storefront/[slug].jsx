@@ -4,14 +4,17 @@ import { initPixels, track } from '@/Components/Storefront/pixels';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import StorefrontLayout from '@/Layouts/StorefrontLayout';
-import { ArrowLeft, ArrowRight, Check, Minus, Plus, Share2, ShoppingBag, Smartphone, Star, Store, Truck, Eye, MessageSquare, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Clock, Eye, MessageSquare, Minus, Plus, Share2, ShieldCheck, ShoppingBag, Smartphone, Star, Store, Truck } from 'lucide-react';
 import { EASE_OUT, Reveal, Stagger, StaggerItem } from '@/Components/UI/Motion';
 import ProductCard, { ProductImage } from '@/Components/Storefront/ProductCard';
 import { contrastColor } from '@/Components/Storefront/theme';
-import useCart from '@/Components/Storefront/useCart';
+import useCart, { leadTimeLabel } from '@/Components/Storefront/useCart';
 import ProductReviews from '@/Components/Storefront/ProductReviews';
+import { storeUrl } from '@/Components/Storefront/storeUrl';
+import { usePreviewStore } from '@/Components/Storefront/livePreview';
 
-export default function ProductSlugShow({ store, product, isPreview = false, productReviews = [], rating = null, seoTitle = null }) {
+export default function ProductSlugShow({ store: savedStore, product, isPreview = false, productReviews = [], rating = null, seoTitle = null }) {
+    const store = usePreviewStore(savedStore);
     const authUser = usePage().props.auth?.user;
     const isOwner = authUser && authUser.id === store.user_id;
 
@@ -33,14 +36,27 @@ export default function ProductSlugShow({ store, product, isPreview = false, pro
     const [quantity, setQuantity] = useState(product.min_order_quantity || 1);
     const cart = useCart(store.id);
 
-    const soldOut = Number(product.stock) <= 0;
+    const madeToOrder = product.fulfillment === 'made_to_order';
+    const soldOut = !madeToOrder && Number(product.stock) <= 0;
+    const maxQ = madeToOrder ? (product.daily_capacity || 99) : Number(product.stock);
     const minQ = product.min_order_quantity || 1;
     const isPromo = product.promo_active;
+    const fields = (product.custom_fields || []).filter((f) => f.label);
+    const [answers, setAnswers] = useState({});
+    const cta = madeToOrder ? (store.template?.cta === 'Réserver' ? 'Réserver' : 'Commander') : 'Acheter maintenant';
 
     const handleAddToCart = (goToCart = false) => {
-        cart.add({ ...product, image_url: images[0] }, quantity, selectedVariant);
+        // Précisions obligatoires (nombre de parts, mensurations…) avant d'ajouter au panier
+        const missing = fields.find((f) => f.required && !(answers[f.label] || '').trim());
+        if (missing) {
+            toast.error(`Précisez « ${missing.label} »`);
+            document.getElementById(`field-${fields.indexOf(missing)}`)?.focus();
+            return;
+        }
+        const customizations = fields.map((f) => ({ label: f.label, value: (answers[f.label] || '').trim() })).filter((c) => c.value);
+        cart.add({ ...product, image_url: images[0] }, quantity, selectedVariant, customizations);
         if (goToCart) {
-            window.location.href = `/${store.slug}?tab=cart`;
+            window.location.href = storeUrl(store.slug, `?tab=cart`);
         } else {
             toast.success('Ajouté au panier', { description: product.title });
         }
@@ -76,7 +92,7 @@ export default function ProductSlugShow({ store, product, isPreview = false, pro
                 )}
 
                 <div className="space-y-6">
-                    <a href={`/${store.slug}`} className="inline-flex items-center gap-1.5 text-sm text-[#5F5E58] hover:text-[#141412]">
+                    <a href={storeUrl(store.slug)} className="inline-flex items-center gap-1.5 text-sm text-[#5F5E58] hover:text-[#141412]">
                         <ArrowLeft className="h-4 w-4" /> Retour à la boutique
                     </a>
 
@@ -111,14 +127,16 @@ export default function ProductSlugShow({ store, product, isPreview = false, pro
                         <Stagger gap={0.07} className="space-y-5 min-w-0">
                             <StaggerItem className="space-y-3 min-w-0">
                                 {product.category && (
-                                    <a href={`/${store.slug}?categorie=${encodeURIComponent(product.category)}`} className="inline-block text-sm text-[#5F5E58] hover:text-[#141412] hover:underline">{product.category}</a>
+                                    <a href={storeUrl(store.slug, `?categorie=${encodeURIComponent(product.category)}`)} className="inline-block text-sm text-[#5F5E58] hover:text-[#141412] hover:underline">{product.category}</a>
                                 )}
                                 <h1 className="break-words text-2xl font-medium leading-tight tracking-[-0.02em] text-[#141412] sm:text-[28px]">{product.title}</h1>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                                     {rating?.count > 0 && (
                                         <a href="#avis" className="flex items-center gap-1 text-[#141412] hover:underline"><Star className="h-4 w-4 fill-[#F5B800] text-[#F5B800]" /> {String(rating.avg).replace('.', ',')} ({rating.count} avis)</a>
                                     )}
-                                    {soldOut ? (
+                                    {madeToOrder ? (
+                                        <span className="flex items-center gap-1 text-[#141412]"><Clock className="h-4 w-4" /> Sur commande{product.lead_time_hours > 0 ? ` · prêt en ${leadTimeLabel(product.lead_time_hours)}` : ''}</span>
+                                    ) : soldOut ? (
                                         <span className="text-[#B91C1C]">Épuisé</span>
                                     ) : (
                                         <span className="flex items-center gap-1 text-green-700"><Check className="h-4 w-4" /> En stock{Number(product.stock) <= 5 ? `, plus que ${product.stock}` : ''}</span>
@@ -150,12 +168,34 @@ export default function ProductSlugShow({ store, product, isPreview = false, pro
                                 </StaggerItem>
                             )}
 
+                            {fields.length > 0 && (
+                                <StaggerItem className="space-y-3">
+                                    {fields.map((f, i) => (
+                                        <div key={f.label}>
+                                            <label htmlFor={`field-${i}`} className="mb-1.5 block text-sm font-medium text-[#141412]">
+                                                {f.label}{f.required ? '' : <span className="font-normal text-[#8B8A83]"> (facultatif)</span>}
+                                            </label>
+                                            {f.type === 'select' ? (
+                                                <select id={`field-${i}`} value={answers[f.label] || ''} onChange={(e) => setAnswers((a) => ({ ...a, [f.label]: e.target.value }))}
+                                                    className="h-11 w-full rounded-xl border border-black/[0.08] bg-white px-3.5 text-[15px] text-[#141412] focus:border-black/40 focus:ring-0">
+                                                    <option value="">Choisir…</option>
+                                                    {(f.options || []).map((o) => <option key={o} value={o}>{o}</option>)}
+                                                </select>
+                                            ) : (
+                                                <input id={`field-${i}`} type="text" maxLength={300} value={answers[f.label] || ''} onChange={(e) => setAnswers((a) => ({ ...a, [f.label]: e.target.value }))}
+                                                    className="h-11 w-full rounded-xl border border-black/[0.08] bg-white px-3.5 text-[15px] text-[#141412] focus:border-black/40 focus:ring-0" />
+                                            )}
+                                        </div>
+                                    ))}
+                                </StaggerItem>
+                            )}
+
                             <StaggerItem className="flex items-center gap-4">
                                 <span className="text-sm font-medium text-[#141412]">Quantité</span>
                                 <div className="flex items-center rounded-xl border border-black/[0.08]">
                                     <button type="button" aria-label="Retirer un" disabled={soldOut} onClick={() => setQuantity(Math.max(minQ, quantity - 1))} className="flex h-9 w-9 items-center justify-center text-[#141412] disabled:opacity-40"><Minus className="h-4 w-4" /></button>
                                     <motion.span key={quantity} initial={{ scale: 0.7 }} animate={{ scale: 1 }} className="w-8 text-center font-medium text-[#141412]">{soldOut ? 0 : quantity}</motion.span>
-                                    <button type="button" aria-label="Ajouter un" disabled={soldOut || quantity >= product.stock} onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} className="flex h-9 w-9 items-center justify-center text-[#141412] disabled:opacity-40"><Plus className="h-4 w-4" /></button>
+                                    <button type="button" aria-label="Ajouter un" disabled={soldOut || quantity >= maxQ} onClick={() => setQuantity(Math.min(maxQ, quantity + 1))} className="flex h-9 w-9 items-center justify-center text-[#141412] disabled:opacity-40"><Plus className="h-4 w-4" /></button>
                                 </div>
                                 {!soldOut && quantity > 1 && <span className="text-sm text-[#5F5E58]">Total : {Math.ceil(unitPrice * quantity).toLocaleString('fr-FR')} FCFA</span>}
                             </StaggerItem>
@@ -164,7 +204,7 @@ export default function ProductSlugShow({ store, product, isPreview = false, pro
                                 <motion.button type="button" disabled={soldOut} whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} onClick={() => handleAddToCart(true)}
                                     className="flex flex-1 items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold disabled:opacity-50"
                                     style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
-                                    <Smartphone className="h-4 w-4" /> {soldOut ? 'Épuisé' : 'Acheter maintenant'}
+                                    <Smartphone className="h-4 w-4" /> {soldOut ? 'Épuisé' : cta}
                                 </motion.button>
                                 <motion.button type="button" disabled={soldOut} whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} onClick={() => handleAddToCart(false)}
                                     className="flex items-center justify-center gap-2 rounded-full border border-black/15 px-5 text-sm font-semibold text-[#141412] hover:border-black/40 disabled:opacity-50">
@@ -196,7 +236,7 @@ export default function ProductSlugShow({ store, product, isPreview = false, pro
                             )}
 
                             <StaggerItem>
-                                <a href={`/${store.slug}`} className="flex items-center gap-3 rounded-xl bg-[#F6F5F1] p-3 hover:bg-[#F6F5F1]">
+                                <a href={storeUrl(store.slug)} className="flex items-center gap-3 rounded-xl bg-[#F6F5F1] p-3 hover:bg-[#F6F5F1]">
                                     <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-xs" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
                                         {store.logo_url ? <img src={store.logo_url} alt="" className="h-full w-full object-cover" /> : <Store className="h-5 w-5" />}
                                     </span>
@@ -217,7 +257,7 @@ export default function ProductSlugShow({ store, product, isPreview = false, pro
                     <section className="space-y-6">
                         <Reveal className="flex items-end justify-between">
                             <h2 className="text-xl font-medium tracking-[-0.02em] text-[#141412]">Vous aimerez aussi</h2>
-                            <a href={`/${store.slug}`} className="inline-flex items-center gap-1.5 text-[15px] font-medium text-[#141412] hover:underline shrink-0">Toute la boutique <ArrowRight className="h-4 w-4" /></a>
+                            <a href={storeUrl(store.slug)} className="inline-flex items-center gap-1.5 text-[15px] font-medium text-[#141412] hover:underline shrink-0">Toute la boutique <ArrowRight className="h-4 w-4" /></a>
                         </Reveal>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-4">
                             {relatedProducts.map((p) => (
@@ -227,7 +267,7 @@ export default function ProductSlugShow({ store, product, isPreview = false, pro
                                     storeSlug={store.slug}
                                     primaryColor={primaryColor}
                                     primaryTextColor={primaryTextColor}
-                                    onAdd={() => { window.location.href = `/${store.slug}/p/${p.slug}`; }}
+                                    onAdd={() => { window.location.href = storeUrl(store.slug, `/p/${p.slug}`); }}
                                 />
                             ))}
                         </div>
@@ -242,7 +282,7 @@ export default function ProductSlugShow({ store, product, isPreview = false, pro
                     <ShoppingBag className="h-5 w-5" />
                 </button>
                 <button type="button" disabled={soldOut} onClick={() => handleAddToCart(true)} className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full text-sm font-semibold disabled:opacity-50 min-w-0 px-2" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
-                    <span className="truncate">{soldOut ? 'Épuisé' : `Acheter • ${Math.ceil(unitPrice * quantity).toLocaleString('fr-FR')} FCFA`}</span>
+                    <span className="truncate">{soldOut ? 'Épuisé' : `${madeToOrder ? cta : 'Acheter'} • ${Math.ceil(unitPrice * quantity).toLocaleString('fr-FR')} FCFA`}</span>
                 </button>
             </motion.div>
         </StorefrontLayout>

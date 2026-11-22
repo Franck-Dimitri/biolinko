@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Product;
+use App\Support\BusinessTypes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -27,9 +27,8 @@ class ProductController extends Controller
         $totalStockValue = $products->sum(function ($p) {
             return (float) $p->price_vendor * (int) $p->stock;
         });
-        $lowStockCount = $products->filter(function ($p) {
-            return (int) $p->stock <= 3;
-        })->count();
+        // Les produits sur commande n'ont pas de stock
+        $lowStockCount = $products->filter(fn ($p) => $p->fulfillment !== 'made_to_order' && (int) $p->stock <= 3)->count();
 
         $topProduct = $products->sortByDesc('stock')->first();
 
@@ -48,6 +47,9 @@ class ProductController extends Controller
                 'max_images' => $request->user()->getPlanMaxImagesPerProduct(),
                 'plan' => $request->user()->effectivePlan(),
             ],
+            // Modèle de l'activité : type de produit et champs suggérés à la création
+            'template' => BusinessTypes::get($store->business_type),
+            'leadTimes' => BusinessTypes::LEAD_TIMES,
             'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
         ]);
     }
@@ -133,7 +135,9 @@ class ProductController extends Controller
 
         $slug = Str::slug($validated['title']).'-'.Str::random(4);
 
-        $product = $store->products()->create([
+        $fulfillment = $this->fulfillmentData($request);
+
+        $product = $store->products()->create($fulfillment + [
             'title' => $validated['title'],
             'slug' => $slug,
             'description' => $validated['description'] ?? null,
@@ -291,7 +295,7 @@ class ProductController extends Controller
             $updateData['images'] = $imagePaths;
         }
 
-        $product->update($updateData);
+        $product->update($updateData + $this->fulfillmentData($request));
 
         // Sync Variants
         if ($request->has('variants')) {
@@ -371,5 +375,43 @@ class ProductController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Type de produit : en stock, ou sur commande (pâtisserie, couture, prestation…) avec délai de préparation,
+     * capacité par jour et champs que le client remplit (message sur le gâteau, mensurations…).
+     */
+    private function fulfillmentData(Request $request): array
+    {
+        $v = $request->validate([
+            'fulfillment' => ['nullable', 'in:stock,made_to_order'],
+            'lead_time_hours' => ['nullable', 'integer', 'min:0', 'max:720'],
+            'daily_capacity' => ['nullable', 'integer', 'min:1', 'max:1000'],
+            'custom_fields' => ['nullable', 'array', 'max:5'],
+            'custom_fields.*.label' => ['required', 'string', 'max:60'],
+            'custom_fields.*.type' => ['required', 'in:text,select'],
+            'custom_fields.*.required' => ['nullable', 'boolean'],
+            'custom_fields.*.options' => ['nullable', 'array', 'max:12'],
+            'custom_fields.*.options.*' => ['nullable', 'string', 'max:40'],
+        ], ['custom_fields.max' => '5 champs personnalisés au maximum.', 'custom_fields.*.label.required' => 'Donnez un nom à chaque champ.']);
+
+        if (! $request->has('fulfillment')) {
+            return [];
+        }
+
+        $madeToOrder = ($v['fulfillment'] ?? 'stock') === 'made_to_order';
+        $fields = collect($v['custom_fields'] ?? [])->map(fn ($f) => [
+            'label' => trim($f['label']),
+            'type' => $f['type'],
+            'required' => (bool) ($f['required'] ?? false),
+            'options' => $f['type'] === 'select' ? array_values(array_filter(array_map('trim', $f['options'] ?? []), 'strlen')) : [],
+        ])->filter(fn ($f) => $f['type'] !== 'select' || count($f['options']) >= 2)->values()->all();
+
+        return [
+            'fulfillment' => $madeToOrder ? 'made_to_order' : 'stock',
+            'lead_time_hours' => $madeToOrder ? (int) ($v['lead_time_hours'] ?? 0) : null,
+            'daily_capacity' => $madeToOrder ? ($v['daily_capacity'] ?? null) : null,
+            'custom_fields' => $fields ?: null,
+        ];
     }
 }

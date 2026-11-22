@@ -32,6 +32,9 @@ export default function OrderSummary({ items, subtotal, fee, total, discount = 0
                             <div className="min-w-0 flex-1">
                                 <div className="truncate text-sm font-medium text-[#141412]" title={item.title}>{item.title}</div>
                                 {item.variant_label && <div className="truncate text-sm text-[#5F5E58]">{item.variant_label}</div>}
+                                {(item.customizations || []).map((c) => (
+                                    <div key={c.label} className="truncate text-[13px] text-[#5F5E58]" title={`${c.label} : ${c.value}`}>{c.label} : <span className="text-[#141412]">{c.value}</span></div>
+                                ))}
                                 {onQuantity && (
                                     <div className="mt-1.5 flex items-center gap-1">
                                         <div className="flex items-center rounded-xl border border-black/[0.08] bg-white">

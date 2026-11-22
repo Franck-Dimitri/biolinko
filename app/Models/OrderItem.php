@@ -16,12 +16,14 @@ class OrderItem extends Model
         'variant_id',
         'product_title',
         'variant_label',
+        'customizations',
         'quantity',
         'unit_price_vendor',
         'total_price_vendor',
     ];
 
     protected $casts = [
+        'customizations' => 'array',
         'unit_price_vendor' => 'decimal:2',
         'total_price_vendor' => 'decimal:2',
     ];

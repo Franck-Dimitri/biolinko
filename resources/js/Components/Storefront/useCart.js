@@ -33,6 +33,22 @@ export function unitPrice(product, variant = null) {
     return Number(isPromo ? product.promo_price : product.price_vendor);
 }
 
+/** « 48 heures », « 3 jours », « 1 semaine » : délai de préparation d'un produit sur commande. */
+export function leadTimeLabel(hours) {
+    const h = Number(hours) || 0;
+    if (h <= 0) return 'tout de suite';
+    if (h < 24) return `${h} h`;
+    if (h % 168 === 0) return `${h / 168} semaine${h / 168 > 1 ? 's' : ''}`;
+    if (h % 24 === 0) return h === 24 ? '24 h' : h === 48 ? '48 h' : `${h / 24} jours`;
+    return `${h} h`;
+}
+
+/** Date la plus proche possible (AAAA-MM-JJ) pour une commande, selon le plus long délai de préparation. */
+export function earliestDate(hours) {
+    const d = new Date(Date.now() + (Number(hours) || 0) * 3600 * 1000);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export function variantLabel(v) {
     if (!v) return '';
     return v.name || [v.size, v.color].filter(Boolean).join(' · ');
@@ -68,14 +84,17 @@ export default function useCart(storeId) {
         window.dispatchEvent(new CustomEvent(CART_EVENT, { detail: storeId }));
     }, [storeId]);
 
-    const add = useCallback((product, quantity = null, variant = null) => {
+    const add = useCallback((product, quantity = null, variant = null, customizations = []) => {
         const minQ = product.min_order_quantity || 1;
         const qty = Math.max(quantity || minQ, minQ);
         const v = variant || product.variants?.[0] || null;
         const price = unitPrice(product, v);
         track('AddToCart', { value: price * qty, id: product.id, name: product.title });
         const current = readCart(storeId);
-        const idx = current.findIndex((it) => it.product_id === product.id && it.variant_id === (v?.id ?? null));
+        // Même produit avec des précisions différentes (message sur le gâteau…) = deux lignes du panier
+        const custom = (customizations || []).filter((c) => c.value);
+        const sameCustom = (it) => JSON.stringify(it.customizations || []) === JSON.stringify(custom);
+        const idx = current.findIndex((it) => it.product_id === product.id && it.variant_id === (v?.id ?? null) && sameCustom(it));
 
         if (idx > -1) {
             current[idx] = { ...current[idx], quantity: current[idx].quantity + qty };
@@ -90,6 +109,9 @@ export default function useCart(storeId) {
                 price_vendor: price,
                 price_display: Math.ceil(price),
                 quantity: qty,
+                customizations: custom,
+                made_to_order: product.fulfillment === 'made_to_order',
+                lead_time_hours: product.lead_time_hours || 0,
             });
         }
         save(current);

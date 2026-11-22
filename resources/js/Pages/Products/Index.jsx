@@ -3,7 +3,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { AlertTriangle, Copy, Eye, ImagePlus, MoreHorizontal, Package, Pencil, Percent, Plus, Trash2, X } from 'lucide-react';
+import { AlertTriangle, CakeSlice, Copy, Eye, ImagePlus, MoreHorizontal, Package, Pencil, Percent, Plus, Trash2, X } from 'lucide-react';
 import { compressImages } from '@/Utils/imageCompressor';
 import { Badge, Button, Empty, Field, PageHeader, SubPage, PlanLock, SearchInput, Stat, Tabs, fcfa, fieldClass, reveal } from '@/Components/Dashboard/UI';
 
@@ -46,8 +46,91 @@ function SeoSection({ data, setData, errors, store }) {
     );
 }
 
-function ProductEditor({ product, onClose, limits, categories = [], store }) {
+const toFieldRows = (fields = []) => fields.map((f) => ({ label: f.label || '', type: f.type || 'text', required: !!f.required, options_text: (f.options || []).join(', ') }));
+
+/** En stock ou sur commande (délai, capacité par jour), et informations demandées au client. */
+function FulfillmentSection({ data, setData, errors, template, leadTimes }) {
+    const made = data.fulfillment === 'made_to_order';
+    const setField = (i, k, v) => setData('custom_fields', data.custom_fields.map((row, j) => (j === i ? { ...row, [k]: v } : row)));
+    const fieldError = Object.entries(errors).find(([k]) => k.startsWith('custom_fields'))?.[1];
+
+    return (
+        <section className="space-y-4">
+            <div>
+                <span className="mb-2 block text-[14px] font-medium text-[#141412]">Type de produit</span>
+                <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Type de produit">
+                    {[
+                        ['stock', Package, 'En stock', 'Vous avez l’article : le stock baisse à chaque vente.'],
+                        ['made_to_order', CakeSlice, 'Sur commande', 'Préparé à la demande : gâteau, tenue sur mesure, prestation…'],
+                    ].map(([key, Icon, label, text]) => (
+                        <button key={key} type="button" role="radio" aria-checked={data.fulfillment === key} onClick={() => setData('fulfillment', key)}
+                            className={`flex gap-3 rounded-2xl border-2 p-3 text-left transition-colors ${data.fulfillment === key ? 'border-[#141412] bg-[#FFFBEA]' : 'border-black/[0.08] hover:border-black/20'}`}>
+                            <Icon className="mt-0.5 h-5 w-5 shrink-0 text-[#141412]" />
+                            <span><span className="block text-[15px] font-medium text-[#141412]">{label}</span><span className="text-[13px] text-[#5F5E58]">{text}</span></span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {made && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                    <Field label="Délai de préparation" hint="Le client choisit une date à partir de ce délai." error={errors.lead_time_hours}>
+                        <select value={data.lead_time_hours} onChange={(e) => setData('lead_time_hours', e.target.value)} className={fieldClass}>
+                            {Object.entries(leadTimes || {}).map(([h, label]) => <option key={h} value={h}>{label}</option>)}
+                        </select>
+                    </Field>
+                    <Field label="Commandes max. par jour (facultatif)" hint="Au-delà, la date n’est plus proposée." error={errors.daily_capacity}>
+                        <input type="number" min="1" value={data.daily_capacity} onChange={(e) => setData('daily_capacity', e.target.value)} placeholder="Illimité" className={fieldClass} />
+                    </Field>
+                </div>
+            )}
+
+            <div className="rounded-2xl border border-black/[0.08] p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <span>
+                        <span className="block text-[15px] font-medium text-[#141412]">Informations demandées au client</span>
+                        <span className="text-[13px] text-[#8B8A83]">Ex. message sur le gâteau, nombre de parts, mensurations. 5 au maximum.</span>
+                    </span>
+                    {data.custom_fields.length < 5 && (
+                        <Button size="sm" onClick={() => setData('custom_fields', [...data.custom_fields, { label: '', type: 'text', required: false, options_text: '' }])}><Plus className="h-4 w-4" /> Ajouter</Button>
+                    )}
+                </div>
+                {data.custom_fields.length === 0 && template?.fields?.length > 0 && (
+                    <button type="button" onClick={() => setData('custom_fields', toFieldRows(template.fields))} className="mt-3 text-[13px] font-medium text-[#141412] underline underline-offset-4">
+                        Utiliser les champs suggérés pour « {template.label} »
+                    </button>
+                )}
+                {data.custom_fields.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                        {data.custom_fields.map((f, i) => (
+                            <div key={i} className="space-y-2 rounded-2xl bg-[#F6F5F1] p-3">
+                                <div className="grid gap-2 sm:grid-cols-[1fr_140px_36px]">
+                                    <input aria-label="Nom du champ" value={f.label} maxLength={60} onChange={(e) => setField(i, 'label', e.target.value)} placeholder="Ex. Message sur le gâteau" className={fieldClass} />
+                                    <select aria-label="Type de réponse" value={f.type} onChange={(e) => setField(i, 'type', e.target.value)} className={fieldClass}>
+                                        <option value="text">Texte libre</option>
+                                        <option value="select">Choix dans une liste</option>
+                                    </select>
+                                    <button type="button" aria-label="Supprimer le champ" onClick={() => setData('custom_fields', data.custom_fields.filter((_, j) => j !== i))} className="flex h-11 w-9 items-center justify-center rounded-full text-[#8B8A83] hover:text-[#B91C1C]"><Trash2 className="h-4 w-4" /></button>
+                                </div>
+                                {f.type === 'select' && (
+                                    <input aria-label="Choix proposés" value={f.options_text} onChange={(e) => setField(i, 'options_text', e.target.value)} placeholder="Choix séparés par des virgules : 6 parts, 8 parts, 12 parts" className={fieldClass} />
+                                )}
+                                <label className="flex items-center gap-2 text-[13px] text-[#5F5E58]">
+                                    <input type="checkbox" checked={f.required} onChange={(e) => setField(i, 'required', e.target.checked)} className="h-4 w-4 rounded border-black/20 text-[#141412] focus:ring-0" /> Réponse obligatoire
+                                </label>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {fieldError && <p className="mt-2 text-[13px] text-[#B91C1C]">{fieldError}</p>}
+            </div>
+        </section>
+    );
+}
+
+function ProductEditor({ product, onClose, limits, categories = [], store, template, leadTimes }) {
     const editing = !!product?.id;
+    const madeDefault = template?.fulfillment === 'made_to_order';
     const starter = limits.plan === 'starter';
     const form = useForm(editing ? {
         ...blank,
@@ -56,7 +139,14 @@ function ProductEditor({ product, onClose, limits, categories = [], store }) {
         promo_start_at: product.promo_start_at?.substring(0, 10) || '', promo_end_at: product.promo_end_at?.substring(0, 10) || '', is_active: !!product.is_active,
         kept_images: product.images?.length ? product.images : (product.image_url ? [product.image_url] : []),
         variants: (product.variants || []).map((v) => ({ id: v.id, name: v.name || '', size: v.size || '', color: v.color || '', price: v.price ? Number(v.price) : '', stock_quantity: v.stock_quantity ?? 10 })),
-    } : blank);
+        fulfillment: product.fulfillment || 'stock', lead_time_hours: product.lead_time_hours ?? (template?.lead_time_hours ?? 24), daily_capacity: product.daily_capacity ?? '',
+        custom_fields: toFieldRows(product.custom_fields || []),
+    } : {
+        ...blank,
+        // Nouveau produit : réglages du modèle de l'activité (pâtisserie → sur commande, 48 h, champs suggérés)
+        fulfillment: madeDefault ? 'made_to_order' : 'stock', lead_time_hours: template?.lead_time_hours ?? 24, daily_capacity: '',
+        custom_fields: toFieldRows(template?.fields || []), stock: madeDefault ? 0 : blank.stock,
+    });
     const { data, setData, errors, processing } = form;
     const [previews, setPreviews] = useState([]);
     const slots = limits.max_images - data.kept_images.length - data.images_files.length;
@@ -86,6 +176,12 @@ function ProductEditor({ product, onClose, limits, categories = [], store }) {
             ...d,
             kept_images: d.kept_images.length ? d.kept_images : [''],
             variants: d.variants.length ? d.variants : [{ name: '' }],
+            stock: d.fulfillment === 'made_to_order' ? 0 : d.stock,
+            daily_capacity: d.daily_capacity === '' ? null : d.daily_capacity,
+            custom_fields: d.custom_fields.filter((f) => f.label.trim()).map((f) => ({
+                label: f.label.trim(), type: f.type, required: f.required ? 1 : 0,
+                options: f.type === 'select' ? f.options_text.split(',').map((o) => o.trim()).filter(Boolean) : [],
+            })),
         }));
         if (editing) form.post(route('products.update.post', product.id), opts);
         else form.post(route('products.store'), opts);
@@ -148,13 +244,15 @@ function ProductEditor({ product, onClose, limits, categories = [], store }) {
                         </div>
                     </Field>
 
-                    <div className="grid gap-3 sm:grid-cols-3">
+                    <div className={`grid gap-3 ${data.fulfillment === 'made_to_order' ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
                         <Field label="Prix" error={errors.price_vendor}>
                             <div className="relative"><input aria-label="Prix" required type="number" min="0" value={data.price_vendor} onChange={(e) => setData('price_vendor', e.target.value)} className={`${fieldClass} pr-14`} /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-[#8B8A83]">FCFA</span></div>
                         </Field>
-                        <Field label="Stock" error={errors.stock}><input required type="number" min="0" value={data.stock} onChange={(e) => setData('stock', e.target.value)} className={fieldClass} /></Field>
+                        {data.fulfillment !== 'made_to_order' && <Field label="Stock" error={errors.stock}><input required type="number" min="0" value={data.stock} onChange={(e) => setData('stock', e.target.value)} className={fieldClass} /></Field>}
                         <Field label="Quantité min." error={errors.min_order_quantity}><input required type="number" min="1" value={data.min_order_quantity} onChange={(e) => setData('min_order_quantity', e.target.value)} className={fieldClass} /></Field>
                     </div>
+
+                    <FulfillmentSection data={data} setData={setData} errors={errors} template={template} leadTimes={leadTimes} />
 
                     <section className="rounded-2xl border border-black/[0.08] p-4">
                         <label className="flex items-center justify-between gap-3">
@@ -209,7 +307,8 @@ function ProductEditor({ product, onClose, limits, categories = [], store }) {
 function ProductCard({ product, store, onEdit, index }) {
     const [menu, setMenu] = useState(false);
     const promo = isPromo(product);
-    const low = Number(product.stock) <= LOW_STOCK;
+    const made = product.fulfillment === 'made_to_order';
+    const low = !made && Number(product.stock) <= LOW_STOCK;
     const url = `${window.location.origin}/${store.slug}/p/${product.slug}`;
     const image = product.image_url || product.images?.[0];
 
@@ -251,7 +350,7 @@ function ProductCard({ product, store, onEdit, index }) {
                 </p>
                 <div className="mt-auto flex items-center justify-between pt-4 text-[13px]">
                     <span className={low ? 'flex items-center gap-1 text-[#B45309]' : 'text-[#8B8A83]'}>
-                        {low && <AlertTriangle className="h-3.5 w-3.5" />}{Number(product.stock) === 0 ? 'Épuisé' : `${product.stock} en stock`}
+                        {low && <AlertTriangle className="h-3.5 w-3.5" />}{made ? 'Sur commande' : Number(product.stock) === 0 ? 'Épuisé' : `${product.stock} en stock`}
                         {product.variants?.length ? ` · ${product.variants.length} variante${product.variants.length > 1 ? 's' : ''}` : ''}
                     </span>
                     <Button size="sm" variant="ghost" onClick={onEdit}><Pencil className="h-4 w-4" /> Modifier</Button>
@@ -261,7 +360,7 @@ function ProductCard({ product, store, onEdit, index }) {
     );
 }
 
-export default function Index({ store, products = [], metrics, planLimits }) {
+export default function Index({ store, products = [], metrics, planLimits, template, leadTimes }) {
     const [editing, setEditing] = useState(null); // null | {} (nouveau) | produit
     const [tab, setTab] = useState('all');
     const [search, setSearch] = useState('');
@@ -271,14 +370,14 @@ export default function Index({ store, products = [], metrics, planLimits }) {
     const counts = useMemo(() => ({
         active: products.filter((p) => p.is_active).length,
         promo: products.filter(isPromo).length,
-        low: products.filter((p) => Number(p.stock) <= LOW_STOCK).length,
+        low: products.filter((p) => p.fulfillment !== 'made_to_order' && Number(p.stock) <= LOW_STOCK).length,
         hidden: products.filter((p) => !p.is_active).length,
     }), [products]);
 
     const shown = products.filter((p) => {
         if (search && !p.title.toLowerCase().includes(search.toLowerCase())) return false;
         if (tab === 'promo') return isPromo(p);
-        if (tab === 'low') return Number(p.stock) <= LOW_STOCK;
+        if (tab === 'low') return p.fulfillment !== 'made_to_order' && Number(p.stock) <= LOW_STOCK;
         if (tab === 'hidden') return !p.is_active;
         return true;
     });
@@ -286,7 +385,7 @@ export default function Index({ store, products = [], metrics, planLimits }) {
     return (
         <AuthenticatedLayout>
             <Head title="Produits, Biolinko" />
-            {editing && <ProductEditor key={editing.id || 'new'} product={editing} limits={limits} store={store} categories={[...new Set(products.map((p) => p.category).filter(Boolean))].sort()} onClose={() => setEditing(null)} />}
+            {editing && <ProductEditor key={editing.id || 'new'} product={editing} limits={limits} store={store} template={template} leadTimes={leadTimes} categories={[...new Set(products.map((p) => p.category).filter(Boolean))].sort()} onClose={() => setEditing(null)} />}
             <div className="space-y-6 pb-12" hidden={!!editing}>
                 <PageHeader title="Produits" sub="Votre catalogue, vos prix, vos stocks et vos promotions."
                     actions={<Button variant="primary" onClick={() => setEditing({})} disabled={atLimit}><Plus className="h-4 w-4" /> Nouveau produit</Button>} />

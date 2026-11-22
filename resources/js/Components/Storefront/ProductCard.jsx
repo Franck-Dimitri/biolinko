@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Heart, Package, Plus } from 'lucide-react';
 import { EASE_OUT } from '@/Components/UI/Motion';
+import { productUrl } from '@/Components/Storefront/storeUrl';
 
 export function productImage(product) {
     return product?.image_url || product?.images?.[0] || null;
@@ -18,11 +19,12 @@ export function ProductImage({ src, alt, className = '' }) {
 }
 
 export default function ProductCard({ product, storeSlug, primaryColor, primaryTextColor, onAdd, onWishlist, isWished = false, badge = null }) {
-    const url = `/${storeSlug}/p/${product.slug}`;
+    const url = productUrl(storeSlug, product.slug);
     const isPromo = product.promo_active;
     const price = Math.ceil(isPromo ? Number(product.promo_price) : Number(product.price_vendor));
     const discount = isPromo ? Math.round(((product.price_vendor - product.promo_price) / product.price_vendor) * 100) : 0;
-    const soldOut = product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0;
+    const madeToOrder = product.fulfillment === 'made_to_order';
+    const soldOut = !madeToOrder && product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0;
 
     return (
         <motion.article
@@ -47,6 +49,8 @@ export default function ProductCard({ product, storeSlug, primaryColor, primaryT
                         <span className="rounded-full bg-white px-2.5 py-1 text-[12px] font-medium text-[#141412]">Épuisé</span>
                     ) : isPromo ? (
                         <span className="rounded-full bg-[#DC2626] px-2.5 py-1 text-[12px] font-medium text-white">−{discount} %</span>
+                    ) : madeToOrder ? (
+                        <span className="truncate rounded-full bg-white px-2.5 py-1 text-[12px] font-medium text-[#141412]">Sur commande</span>
                     ) : badge ? (
                         <span className="truncate rounded-full bg-white px-2.5 py-1 text-[12px] font-medium text-[#141412]">{badge}</span>
                     ) : null}
