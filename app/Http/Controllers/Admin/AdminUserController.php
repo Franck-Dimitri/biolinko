@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\ModerationNotificationMail;
+use App\Models\Subscription;
 use App\Models\User;
+use App\Models\Withdrawal;
 use App\Services\Whatsapp\WhatsappGatewayService;
+use App\Support\PilotOffer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -26,11 +29,11 @@ class AdminUserController extends Controller
             },
         ]);
 
-        if (!empty($search)) {
+        if (! empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone_whatsapp', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone_whatsapp', 'like', "%{$search}%");
             });
         }
 
@@ -106,17 +109,17 @@ class AdminUserController extends Controller
             'wallet_held' => $store && $store->wallet ? (float) $store->wallet->balance_held : 0.0,
             'commission_paid' => (float) $paidOrders->sum('commission_amount'),
             'delivered_count' => $ordersBreakdown['delivered'],
-            'hold_days' => $store ? \App\Models\Order::holdDaysFor($store->id) : null,
+            'verification' => $user->verification?->status ?? 'none',
         ];
 
         return Inertia::render('Admin/Users/Show', [
             'vendor' => $user,
             'stats' => $stats,
             'reports' => $store ? $store->reports()->with('order:id,tracking_code,total_client')->latest()->take(20)->get() : [],
-            'withdrawals' => $store && $store->wallet ? \App\Models\Withdrawal::where('wallet_id', $store->wallet->id)->latest()->take(15)->get() : [],
-            'subscriptions' => \App\Models\Subscription::where('user_id', $user->id)->latest()->take(10)->get(),
+            'withdrawals' => $store && $store->wallet ? Withdrawal::where('wallet_id', $store->wallet->id)->latest()->take(15)->get() : [],
+            'subscriptions' => Subscription::where('user_id', $user->id)->latest()->take(10)->get(),
             'daysRemaining' => $user->plan && $user->plan !== 'starter' ? $user->getDaysRemaining() : null,
-            'pilot' => \App\Support\PilotOffer::progress($user),
+            'pilot' => PilotOffer::progress($user),
         ]);
     }
 
@@ -131,7 +134,7 @@ class AdminUserController extends Controller
 
         return redirect()->back()->with('message', $validated['plan'] === 'starter'
             ? "{$user->name} repasse au plan Starter."
-            : "{$user->name} passe au plan ".ucfirst($validated['plan'])." jusqu’au ".$user->fresh()->subscription_expires_at->format('d/m/Y').'.');
+            : "{$user->name} passe au plan ".ucfirst($validated['plan']).' jusqu’au '.$user->fresh()->subscription_expires_at->format('d/m/Y').'.');
     }
 
     /** Programme pilote : Growth offert 1 mois, prolongé automatiquement par paliers de ventes. */
@@ -140,7 +143,7 @@ class AdminUserController extends Controller
         if ($user->isAdmin()) {
             return redirect()->back()->withErrors(['user' => 'Un compte administrateur ne peut pas recevoir l’offre pilote.']);
         }
-        \App\Support\PilotOffer::start($user);
+        PilotOffer::start($user);
 
         return redirect()->back()->with('message', "Offre pilote activée pour {$user->name} : Growth jusqu’au ".$user->fresh()->subscription_expires_at->format('d/m/Y').'.');
     }
@@ -154,10 +157,10 @@ class AdminUserController extends Controller
         $isCurrentlyBanned = $user->is_banned;
         $reason = $request->input('reason');
 
-        if (!$isCurrentlyBanned) {
+        if (! $isCurrentlyBanned) {
             // Banning user: require or default a clear reason
             $reason = $reason ?: 'Non-respect répété des conditions générales d\'utilisation et règles commerciales de la plateforme.';
-            
+
             $user->update(['is_banned' => true]);
 
             // Suspend their store as well
@@ -220,19 +223,19 @@ class AdminUserController extends Controller
 
     public function toggleStore(Request $request, User $user, WhatsappGatewayService $whatsapp): RedirectResponse
     {
-        if (!$user->store) {
+        if (! $user->store) {
             return redirect()->back()->withErrors(['store' => 'Aucune boutique associée à ce vendeur.']);
         }
 
         $store = $user->store;
-        $willBePublished = !$store->is_published;
+        $willBePublished = ! $store->is_published;
         $reason = $request->input('reason');
 
         $store->update([
             'is_published' => $willBePublished,
         ]);
 
-        if (!$willBePublished && $reason) {
+        if (! $willBePublished && $reason) {
             // Suspended with reason -> notify
             if ($user->email) {
                 try {
@@ -255,6 +258,7 @@ class AdminUserController extends Controller
         }
 
         $status = $willBePublished ? 'publiée en ligne' : 'passée en mode brouillon';
+
         return redirect()->back()->with('message', "La vitrine {$store->name} a été {$status} avec succès.");
     }
 }

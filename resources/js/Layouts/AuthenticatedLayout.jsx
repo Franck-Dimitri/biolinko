@@ -4,9 +4,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import AppToaster from '@/Components/UI/AppToaster';
 import {
-    ArrowUpRight, Truck, BarChart3, ChevronDown, Copy, CreditCard, Crown, FileText, LayoutDashboard, Link2, LogOut, Megaphone,
-    Menu, Package, Palette, PackageCheck, Rocket, Settings, ShieldCheck, Store, Users, Wallet, Wrench, X,
+    ArrowUpRight, BadgeCheck, BarChart3, ChevronDown, Copy, CreditCard, Crown, FileText, Flag, LayoutDashboard, Link2, LogOut, Megaphone, Menu, Package, PackageCheck, Palette, Rocket, Settings, ShieldCheck, Store, Truck, Users, Wallet, Wrench, X,
 } from 'lucide-react';
+import { absoluteStoreUrl, storeAddress, storeUrl } from '@/Components/Storefront/storeUrl';
 
 const SELLER_NAV = [
     ['Principal', [
@@ -38,6 +38,8 @@ const ADMIN_NAV = [
         ['Vendeurs', 'admin.users.index', Users, ['admin.users.*']],
         ['Produits', 'admin.products.index', Package, ['admin.products.*']],
         ['Programme pilote', 'admin.pilot.index', Rocket, ['admin.pilot.*']],
+        ['Vérifications', 'admin.verifications.index', BadgeCheck, ['admin.verifications.*']],
+        ['Signalements', 'admin.storeReports.index', Flag, ['admin.storeReports.*']],
     ]],
     ['Finance', [
         ['Revenus', 'admin.wallet.index', CreditCard, ['admin.wallet.*']],
@@ -69,11 +71,11 @@ function NavLink({ label, name, Icon, patterns, onNavigate }) {
 function Sidebar({ user, store, onNavigate }) {
     const [menu, setMenu] = useState(false);
     const groups = user?.role === 'admin' ? ADMIN_NAV : SELLER_NAV;
-    const storeUrl = store ? `${window.location.origin}/${store.slug}` : null;
+    const shopLink = store ? absoluteStoreUrl(store.slug) : null;
 
     const copyLink = async () => {
         try {
-            await navigator.clipboard.writeText(storeUrl);
+            await navigator.clipboard.writeText(shopLink);
             toast.success('Lien de la boutique copié');
         } catch (e) { /* presse-papiers indisponible */ }
     };
@@ -98,11 +100,11 @@ function Sidebar({ user, store, onNavigate }) {
                         </span>
                         <span className="min-w-0">
                             <span className="block truncate text-[14px] font-medium text-[#141412]">{store.name}</span>
-                            <span className="block truncate text-[12px] text-[#8B8A83]">biolinko.link/{store.slug}</span>
+                            <span className="block truncate text-[12px] text-[#8B8A83]">{storeAddress(store.slug)}</span>
                         </span>
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-1.5">
-                        <a href={`/${store.slug}`} target="_blank" rel="noreferrer" className="flex h-8 items-center justify-center gap-1.5 rounded-lg bg-white text-[12px] font-medium text-[#141412] ring-1 ring-black/[0.06] hover:ring-black/20">
+                        <a href={storeUrl(store.slug)} target="_blank" rel="noreferrer" className="flex h-8 items-center justify-center gap-1.5 rounded-lg bg-white text-[12px] font-medium text-[#141412] ring-1 ring-black/[0.06] hover:ring-black/20">
                             Voir <ArrowUpRight className="h-3.5 w-3.5" />
                         </a>
                         <button type="button" onClick={copyLink} className="flex h-8 items-center justify-center gap-1.5 rounded-lg bg-white text-[12px] font-medium text-[#141412] ring-1 ring-black/[0.06] hover:ring-black/20">
@@ -193,7 +195,7 @@ function TopBar({ user, store }) {
                     </Link>
                 )}
                 {store && user?.role !== 'admin' && (
-                    <a href={`/${store.slug}`} target="_blank" rel="noreferrer"
+                    <a href={storeUrl(store.slug)} target="_blank" rel="noreferrer"
                         className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#141412] px-3.5 text-[13px] font-medium text-white hover:bg-[#2B2A26]">
                         Ma boutique <ArrowUpRight className="h-4 w-4" />
                     </a>

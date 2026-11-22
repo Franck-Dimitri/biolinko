@@ -66,7 +66,7 @@ test('vendor can request mobile money withdrawal via hrskills pay', function () 
                 'reference' => 'ref_payout_123',
                 'transaction_id' => 'tx_payout_123',
                 'status' => 'PENDING',
-            ]
+            ],
         ], 200),
     ]);
 
@@ -82,6 +82,7 @@ test('vendor can request mobile money withdrawal via hrskills pay', function () 
         'balance_pending' => 0,
     ]);
 
+    readyToWithdraw($user, '237680216505');
     $response = $this->actingAs($user)->post(route('wallet.withdraw'), [
         'amount' => 50100,
         'phone' => '237680216505',
@@ -121,8 +122,9 @@ test('admin rejecting a withdrawal puts the money back on the seller balance', f
     $wallet = Wallet::create(['store_id' => $store->id, 'balance_available' => 20000, 'balance_pending' => 0]);
     $admin = User::factory()->create(['role' => 'admin']);
 
-    $this->actingAs($seller)->post(route('wallet.withdraw'), ['amount' => 15000, 'phone' => '677123456', 'payment_operator' => 'MTN']);
-    $withdrawal = \App\Models\Withdrawal::first();
+    readyToWithdraw($seller);
+    $this->actingAs($seller)->post(route('wallet.withdraw'), ['amount' => 15000]);
+    $withdrawal = Withdrawal::first();
     expect((float) $wallet->fresh()->balance_pending)->toBe(15000.0);
 
     $this->actingAs($admin)->post(route('admin.withdrawals.reject', $withdrawal));
@@ -140,8 +142,9 @@ test('a failed payout never marks the withdrawal as paid', function () {
     Wallet::create(['store_id' => $store->id, 'balance_available' => 20000, 'balance_pending' => 0]);
     $admin = User::factory()->create(['role' => 'admin']);
 
-    $this->actingAs($seller)->post(route('wallet.withdraw'), ['amount' => 10000, 'phone' => '677123456', 'payment_operator' => 'MTN']);
-    $withdrawal = \App\Models\Withdrawal::first();
+    readyToWithdraw($seller);
+    $this->actingAs($seller)->post(route('wallet.withdraw'), ['amount' => 10000]);
+    $withdrawal = Withdrawal::first();
 
     $this->actingAs($admin)->post(route('admin.withdrawals.approve', $withdrawal));
 

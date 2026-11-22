@@ -1,14 +1,16 @@
 <?php
 
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Withdrawal;
+use App\Services\Whatsapp\WhatsappGatewayService;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
-    $this->mock(\App\Services\Whatsapp\WhatsappGatewayService::class)->shouldIgnoreMissing();
+    $this->mock(WhatsappGatewayService::class)->shouldIgnoreMissing();
     $this->seller = User::factory()->create();
     $this->store = Store::create(['user_id' => $this->seller->id, 'name' => 'B', 'slug' => 'b', 'is_published' => true]);
     $this->wallet = Wallet::create(['store_id' => $this->store->id, 'balance_available' => 0, 'balance_pending' => 0]);
@@ -42,8 +44,9 @@ test('les frais client sont de 3,5 %', function () {
 
 test('un retrait est gratuit : le vendeur reçoit tout le montant', function () {
     $this->wallet->update(['balance_available' => 10000]);
+    readyToWithdraw($this->seller);
 
-    $this->actingAs($this->seller)->post(route('wallet.withdraw'), ['amount' => 10000, 'payment_operator' => 'MTN', 'phone' => '677000000'])
+    $this->actingAs($this->seller)->post(route('wallet.withdraw'), ['amount' => 10000])
         ->assertSessionHasNoErrors();
 
     $w = Withdrawal::first();
@@ -97,7 +100,7 @@ test('l’admin envoie le virement net par pawaPay', function () {
 
 test('une commande sous 1 000 FCFA est refusée, au-delà elle passe', function () {
     Http::fake(['api.sandbox.pawapay.io/*' => Http::response(['status' => 'ACCEPTED'])]);
-    $product = \App\Models\Product::create(['store_id' => $this->store->id, 'title' => 'Bonbon', 'slug' => 'bonbon', 'price_vendor' => 100, 'stock' => 50, 'min_order_quantity' => 1, 'is_active' => true]);
+    $product = Product::create(['store_id' => $this->store->id, 'title' => 'Bonbon', 'slug' => 'bonbon', 'price_vendor' => 100, 'stock' => 50, 'min_order_quantity' => 1, 'is_active' => true]);
     $base = ['store_id' => $this->store->id, 'customer_name' => 'Awa', 'customer_phone' => '699887766', 'delivery_address' => 'Akwa'];
 
     $this->postJson(route('checkout.process'), $base + ['product_id' => $product->id, 'quantity' => 9])

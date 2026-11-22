@@ -1,6 +1,10 @@
 <?php
 
+use App\Models\SellerVerification;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 /*
@@ -18,8 +22,8 @@ pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->beforeEach(function () {
         // Aucun appel réel aux API de paiement ou de messagerie, et pas de PDF générés pour rien
-        \Illuminate\Support\Facades\Http::preventStrayRequests();
-        \Illuminate\Support\Facades\Mail::fake();
+        Http::preventStrayRequests();
+        Mail::fake();
     })
     ->in('Feature');
 
@@ -49,7 +53,14 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/** Vendeur prêt à retirer : identité validée et numéro de retrait enregistré. */
+function readyToWithdraw(User $user, string $phone = '237677123456', string $operator = 'MTN'): User
 {
-    // ..
+    SellerVerification::create([
+        'user_id' => $user->id, 'full_name' => $user->name, 'id_type' => 'cni',
+        'id_front_path' => 'kyc/x/front.jpg', 'selfie_path' => 'kyc/x/selfie.jpg', 'status' => 'approved', 'submitted_at' => now(), 'reviewed_at' => now(),
+    ]);
+    $user->forceFill(['payout_phone' => $phone, 'payout_operator' => $operator, 'payout_name' => $user->name])->save();
+
+    return $user->fresh();
 }

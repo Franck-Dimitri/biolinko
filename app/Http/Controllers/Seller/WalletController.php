@@ -3,16 +3,19 @@
 namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Order;
+use App\Models\Subscription;
+use App\Models\User;
 use App\Models\Wallet;
 use App\Models\Withdrawal;
+use App\Payments\Countries;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use App\Payments\Countries;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -35,7 +38,7 @@ class WalletController extends Controller
             ->where('is_manual', false)
             ->paid()
             ->with('report:id,order_id,status')
-            ->get(['id', 'tracking_code', 'customer_name', 'price_vendor', 'commission_amount', 'commission_rate', 'paid_at', 'created_at', 'payment_operator', 'funds_release_at', 'funds_released_at']);
+            ->get(['id', 'tracking_code', 'customer_name', 'price_vendor', 'commission_amount', 'commission_rate', 'paid_at', 'created_at', 'payment_operator', 'funds_release_at', 'funds_released_at', 'delivered_at']);
 
         // Ventes payées pas encore retirables (délai de sécurité ou signalement en cours)
         $held = $paidOrders->whereNull('funds_released_at')->sortBy('funds_release_at')->values()->map(fn ($o) => [
@@ -44,6 +47,7 @@ class WalletController extends Controller
             'customer_name' => $o->customer_name,
             'amount' => $o->sellerNet(),
             'available_at' => $o->funds_release_at?->toIso8601String(),
+            'delivered' => (bool) $o->delivered_at,
             'frozen' => $o->report && in_array($o->report->status, ['open', 'answered'], true),
         ]);
 
@@ -67,7 +71,7 @@ class WalletController extends Controller
                 'status' => strtolower($w->status),
                 'date' => $w->created_at->toIso8601String(),
             ]))
-            ->merge(\App\Models\Subscription::where('user_id', $store->user_id)->where('payment_provider', 'wallet')->where('payment_status', 'paid')->get()->map(fn ($s) => [
+            ->merge(Subscription::where('user_id', $store->user_id)->where('payment_provider', 'wallet')->where('payment_status', 'paid')->get()->map(fn ($s) => [
                 'id' => 's'.$s->id,
                 'type' => 'subscription',
                 'label' => 'Abonnement '.ucfirst($s->plan),
@@ -96,8 +100,10 @@ class WalletController extends Controller
             'ledger' => $ledger,
             'monthly' => $monthly,
             'heldSales' => $held,
-            'holdRules' => ['new' => Order::HOLD_DAYS_NEW, 'established' => Order::HOLD_DAYS_ESTABLISHED, 'after' => Order::ESTABLISHED_AFTER_DELIVERED,
-                'current' => Order::holdDaysFor($store->id), 'delivered' => Order::where('store_id', $store->id)->where('status', 'delivered')->count()],
+            'protection' => ['after_delivery_days' => Order::RELEASE_AFTER_DELIVERY_DAYS, 'max_days' => Order::MAX_HOLD_DAYS],
+            'verification' => $this->verificationStatus(Auth::user()),
+            'payoutAccount' => Auth::user()->payoutAccount(),
+            'payoutDelayHours' => User::PAYOUT_CHANGE_DELAY_HOURS,
             'pendingWithdrawals' => $withdrawals->filter(fn ($w) => strtolower($w->status) === 'pending')->values(),
             'metrics' => [
                 'available_balance' => (float) $wallet->balance_available,
@@ -119,21 +125,25 @@ class WalletController extends Controller
      */
     public function requestWithdrawal(Request $request): RedirectResponse
     {
-        $store = Auth::user()->store;
+        $user = Auth::user();
+        $store = $user->store;
         abort_unless($store, 403);
 
-        $country = $store->country ?: 'CM';
+        // Protection des clients : pas de retrait sans identité vérifiée ni numéro de retrait enregistré
+        if (! $user->isVerified()) {
+            return back()->withErrors(['amount' => 'Faites vérifier votre identité avant votre premier retrait.']);
+        }
+        $user->applyPendingPayout();
+        if (! $user->payout_phone || ! $user->payout_operator) {
+            return back()->withErrors(['amount' => 'Enregistrez d’abord votre numéro de retrait.']);
+        }
+
         $validated = $request->validate([
             'amount' => ['required', 'integer', 'min:'.config('payments.min_withdrawal')],
-            'payment_operator' => ['required', 'string', 'in:'.implode(',', array_keys(Countries::get($country)['operators']))],
-            'phone' => ['required', 'string', 'max:50'],
         ]);
-
-        try {
-            $phone = Countries::formatPhone($country, $validated['phone']);
-        } catch (\InvalidArgumentException $e) {
-            return back()->withErrors(['phone' => $e->getMessage()]);
-        }
+        // Les retraits partent uniquement vers le numéro enregistré, jamais vers un numéro saisi au moment du retrait
+        $phone = $user->payout_phone;
+        $validated['payment_operator'] = $user->payout_operator;
 
         // Frais de retrait déduits du montant : le vendeur reçoit le net sur son Mobile Money
         $amount = (float) $validated['amount'];
@@ -169,5 +179,88 @@ class WalletController extends Controller
         }
 
         return redirect()->back()->with('message', 'Demande de retrait envoyée : vous recevrez '.number_format($amount - $fee, 0, ',', ' ').' FCFA. Vous serez notifié dès le virement.');
+    }
+
+    /** État de la vérification d'identité, pour le portefeuille et le tableau de bord. */
+    public static function verificationStatus(User $user): array
+    {
+        $v = $user->verification;
+
+        return [
+            'status' => $v?->status ?? 'none',
+            'rejection_reason' => $v?->rejection_reason,
+            'submitted_at' => $v?->submitted_at?->toIso8601String(),
+        ];
+    }
+
+    /**
+     * Enregistre le numéro de retrait. Le premier est immédiat ; un changement ne prend effet
+     * qu'après User::PAYOUT_CHANGE_DELAY_HOURS heures et exige le mot de passe, pour qu'un compte volé ne puisse pas vider le solde.
+     */
+    public function savePayoutAccount(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+        $store = $user->store;
+        abort_unless($store, 403);
+
+        $country = $store->country ?: 'CM';
+        $validated = $request->validate([
+            'operator' => ['required', 'string', 'in:'.implode(',', array_keys(Countries::get($country)['operators']))],
+            'phone' => ['required', 'string', 'max:50'],
+            'name' => ['required', 'string', 'min:3', 'max:120'],
+            'password' => ['required', 'current_password'],
+        ], ['password.current_password' => 'Mot de passe incorrect.']);
+
+        try {
+            $phone = Countries::formatPhone($country, $validated['phone']);
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['phone' => $e->getMessage()]);
+        }
+        $operator = strtoupper($validated['operator']);
+        $name = trim($validated['name']);
+        $user->applyPendingPayout();
+
+        if (! $user->payout_phone) {
+            $user->forceFill(['payout_phone' => $phone, 'payout_operator' => $operator, 'payout_name' => $name])->save();
+
+            return back()->with('message', 'Numéro de retrait enregistré.');
+        }
+
+        if ($phone === $user->payout_phone && $operator === $user->payout_operator) {
+            $user->forceFill(['payout_name' => $name, 'payout_pending_phone' => null, 'payout_pending_operator' => null, 'payout_pending_name' => null, 'payout_pending_effective_at' => null])->save();
+
+            return back()->with('message', 'Numéro de retrait mis à jour.');
+        }
+
+        $effective = now()->addHours(User::PAYOUT_CHANGE_DELAY_HOURS);
+        $user->forceFill([
+            'payout_pending_phone' => $phone,
+            'payout_pending_operator' => $operator,
+            'payout_pending_name' => $name,
+            'payout_pending_effective_at' => $effective,
+        ])->save();
+
+        // Le titulaire du compte est prévenu : s'il n'est pas à l'origine du changement, il peut l'annuler
+        try {
+            Mail::raw(
+                "Bonjour {$user->name},\n\nUn nouveau numéro de retrait ({$phone}) a été demandé sur votre compte Biolinko. Il prendra effet le "
+                .$effective->locale('fr')->translatedFormat('d F à H\hi').".\n\nSi vous n’êtes pas à l’origine de ce changement, annulez-le depuis votre portefeuille et changez votre mot de passe.\n\nL’équipe Biolinko",
+                fn ($m) => $m->to($user->email)->subject('Changement de votre numéro de retrait Biolinko')
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Payout change mail failed', ['user_id' => $user->id, 'err' => $e->getMessage()]);
+        }
+
+        return back()->with('message', 'Nouveau numéro enregistré : il prendra effet dans '.User::PAYOUT_CHANGE_DELAY_HOURS.' h.');
+    }
+
+    /** Annule un changement de numéro de retrait en attente. */
+    public function cancelPendingPayout(): RedirectResponse
+    {
+        Auth::user()->forceFill([
+            'payout_pending_phone' => null, 'payout_pending_operator' => null, 'payout_pending_name' => null, 'payout_pending_effective_at' => null,
+        ])->save();
+
+        return back()->with('message', 'Changement de numéro annulé.');
     }
 }

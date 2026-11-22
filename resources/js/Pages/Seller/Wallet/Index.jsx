@@ -3,7 +3,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { AlertTriangle, ArrowDownLeft, ArrowUpRight, Clock, Hourglass, Landmark, ShieldCheck, TrendingUp, Wallet } from 'lucide-react';
+import { AlertTriangle, ArrowDownLeft, Check, ArrowUpRight, Clock, Hourglass, Landmark, ShieldCheck, TrendingUp, Wallet } from 'lucide-react';
 import { OperatorLogo } from '@/Components/Landing/Illustrations';
 import {
     Badge, Button, Card, CardHeader, SubPage, Empty, Field, PageHeader, Stat, Tabs, dateTime, fcfa, fieldClass, reveal,
@@ -12,11 +12,12 @@ import { EASE_OUT } from '@/Components/UI/Motion';
 
 const STATUS = { completed: ['Effectué', 'success'], held: ['En attente', 'neutral'], pending: ['En cours', 'warning'], processing: ['Virement en cours', 'info'], rejected: ['Rejeté', 'danger'] };
 
-function WithdrawDialog({ open, onClose, available, min, feePercent = 0, defaultPhone }) {
+const OPERATORS = [['MTN', 'MTN MoMo'], ['ORANGE', 'Orange Money']];
+const opLabel = (op) => (OPERATORS.find(([id]) => id === op) || [op, op])[1];
+
+function WithdrawDialog({ open, onClose, available, min, feePercent = 0, account, onEditAccount }) {
     const { errors } = usePage().props;
     const [amount, setAmount] = useState('');
-    const [operator, setOperator] = useState('MTN');
-    const [phone, setPhone] = useState(defaultPhone || '');
     const [busy, setBusy] = useState(false);
     const value = Number(amount) || 0;
     const invalid = value < min || value > available;
@@ -25,7 +26,7 @@ function WithdrawDialog({ open, onClose, available, min, feePercent = 0, default
     const submit = (e) => {
         e.preventDefault();
         setBusy(true);
-        router.post(route('wallet.withdraw'), { amount: value, payment_operator: operator, phone }, {
+        router.post(route('wallet.withdraw'), { amount: value }, {
             preserveScroll: true,
             onSuccess: () => { setAmount(''); onClose(); },
             onFinish: () => setBusy(false),
@@ -51,19 +52,17 @@ function WithdrawDialog({ open, onClose, available, min, feePercent = 0, default
                     </div>
                 </Field>
 
-                <Field label="Vers">
-                    <div className="grid grid-cols-2 gap-2">
-                        {[['MTN', 'MTN MoMo'], ['ORANGE', 'Orange Money']].map(([id, label]) => (
-                            <button key={id} type="button" aria-pressed={operator === id} onClick={() => setOperator(id)}
-                                className={`flex items-center gap-2.5 rounded-2xl border-2 p-3 text-left text-[14px] font-medium transition-colors ${operator === id ? 'border-[#141412] bg-[#FFFBEA]' : 'border-black/[0.08] hover:border-black/20'}`}>
-                                <OperatorLogo op={id} className="h-8 w-8" /> {label}
-                            </button>
-                        ))}
+                <Field label="Vers votre numéro de retrait">
+                    <div className="flex items-center justify-between gap-3 rounded-2xl border border-black/[0.08] p-3">
+                        <span className="flex min-w-0 items-center gap-3">
+                            <OperatorLogo op={account?.operator} className="h-9 w-9" />
+                            <span className="min-w-0">
+                                <span className="block text-[15px] tabular-nums text-[#141412]">+{account?.phone}</span>
+                                <span className="block truncate text-[13px] text-[#8B8A83]">{opLabel(account?.operator)} · {account?.name}</span>
+                            </span>
+                        </span>
+                        <Button size="sm" variant="ghost" onClick={onEditAccount}>Modifier</Button>
                     </div>
-                </Field>
-
-                <Field label="Numéro" error={errors?.phone}>
-                    <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="6XX XX XX XX" className={fieldClass} />
                 </Field>
 
                 <div className="rounded-2xl bg-[#F6F5F1] p-4 text-[14px] text-[#5F5E58]">
@@ -83,8 +82,117 @@ function WithdrawDialog({ open, onClose, available, min, feePercent = 0, default
     );
 }
 
-export default function Index({ ledger = [], monthly = [], pendingWithdrawals = [], heldSales = [], holdRules, metrics, defaultPhone }) {
+/** Numéro de retrait : le premier est immédiat, un changement prend effet après un délai. */
+function PayoutDialog({ open, onClose, account, delayHours, defaultPhone, defaultName }) {
+    const { errors } = usePage().props;
+    const [data, setData] = useState({ operator: account?.operator || 'MTN', phone: account?.phone ? `+${account.phone}` : (defaultPhone || ''), name: account?.name || defaultName || '', password: '' });
+    const [busy, setBusy] = useState(false);
+    const set = (k) => (e) => setData((d) => ({ ...d, [k]: e.target.value }));
+    const first = !account?.phone;
+
+    const submit = (e) => {
+        e.preventDefault();
+        setBusy(true);
+        router.post(route('wallet.payout.save'), data, {
+            preserveScroll: true,
+            onSuccess: () => { setData((d) => ({ ...d, password: '' })); onClose(); },
+            onFinish: () => setBusy(false),
+        });
+    };
+
+    return (
+        <SubPage open={open} onClose={onClose} title={first ? 'Votre numéro de retrait' : 'Changer de numéro de retrait'}
+            sub="Vos retraits partent uniquement vers ce numéro. Il doit être à votre nom.">
+            <form onSubmit={submit} className="space-y-5">
+                {!first && (
+                    <div className="flex gap-3 rounded-2xl border border-[#F59E0B]/50 bg-[#FFFBEB] p-4 text-[14px] text-[#141412]">
+                        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#B45309]" />
+                        <p>Pour votre sécurité, un nouveau numéro ne prend effet qu’après <strong className="font-medium">{delayHours} h</strong>. Vous recevez un e-mail et pouvez annuler le changement entre-temps.</p>
+                    </div>
+                )}
+                <Field label="Opérateur">
+                    <div className="grid grid-cols-2 gap-2">
+                        {OPERATORS.map(([id, label]) => (
+                            <button key={id} type="button" aria-pressed={data.operator === id} onClick={() => setData((d) => ({ ...d, operator: id }))}
+                                className={`flex items-center gap-2.5 rounded-2xl border-2 p-3 text-left text-[14px] font-medium transition-colors ${data.operator === id ? 'border-[#141412] bg-[#FFFBEA]' : 'border-black/[0.08] hover:border-black/20'}`}>
+                                <OperatorLogo op={id} className="h-8 w-8" /> {label}
+                            </button>
+                        ))}
+                    </div>
+                </Field>
+                <Field label="Numéro" error={errors?.phone}>
+                    <input type="tel" required value={data.phone} onChange={set('phone')} placeholder="6XX XX XX XX" className={fieldClass} />
+                </Field>
+                <Field label="Nom du titulaire du compte" hint="Tel qu’enregistré chez l’opérateur. Il doit correspondre à votre pièce d’identité." error={errors?.name}>
+                    <input required value={data.name} onChange={set('name')} className={fieldClass} />
+                </Field>
+                <Field label="Mot de passe" hint="Pour confirmer que c’est bien vous." error={errors?.password}>
+                    <input type="password" required autoComplete="current-password" value={data.password} onChange={set('password')} className={fieldClass} />
+                </Field>
+                <div className="flex justify-end gap-2">
+                    <Button onClick={onClose}>Annuler</Button>
+                    <Button variant="primary" type="submit" disabled={busy}>{busy ? 'Enregistrement…' : 'Enregistrer'}</Button>
+                </div>
+            </form>
+        </SubPage>
+    );
+}
+
+/** Conditions du premier retrait : identité vérifiée et numéro de retrait enregistré. */
+function WithdrawalSetup({ verification, account, onPayout }) {
+    const verified = verification?.status === 'approved';
+    const steps = [
+        {
+            done: verified,
+            title: 'Vérifier votre identité',
+            text: verification?.status === 'pending' ? 'Documents reçus : vérification sous 24 à 48 h.'
+                : verification?.status === 'rejected' ? `Documents refusés : ${verification.rejection_reason}`
+                    : 'Une pièce d’identité et un selfie, une seule fois.',
+            action: !verified && verification?.status !== 'pending' && <Button size="sm" variant="primary" href={route('seller.verification.index')}>{verification?.status === 'rejected' ? 'Renvoyer' : 'Commencer'}</Button>,
+        },
+        {
+            done: !!account?.phone,
+            title: 'Enregistrer votre numéro de retrait',
+            text: account?.phone ? `+${account.phone} · ${opLabel(account.operator)}` : 'Le numéro Mobile Money à votre nom qui recevra vos retraits.',
+            action: !account?.phone && <Button size="sm" onClick={onPayout}>Ajouter</Button>,
+        },
+    ];
+    if (steps.every((x) => x.done)) return null;
+    return (
+        <Card>
+            <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFCC00]"><ShieldCheck className="h-5 w-5 text-[#141412]" /></span>
+                <div className="min-w-0">
+                    <h2 className="text-[17px] font-medium text-[#141412]">Avant votre premier retrait</h2>
+                    <p className="mt-1 text-[14px] text-[#5F5E58]">Ces deux étapes protègent vos clients et votre argent : sans elles, personne ne peut retirer depuis votre compte.</p>
+                </div>
+            </div>
+            <ol className="mt-4 space-y-2">
+                {steps.map((x, i) => (
+                    <li key={x.title} className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl p-3 ${x.done ? 'bg-[#F0FDF4]' : 'bg-[#F6F5F1]'}`}>
+                        <span className="flex min-w-0 items-center gap-3">
+                            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-medium ${x.done ? 'bg-[#16A34A] text-white' : 'bg-[#141412] text-white'}`}>
+                                {x.done ? <Check className="h-4 w-4" /> : i + 1}
+                            </span>
+                            <span className="min-w-0">
+                                <span className={`block text-[15px] font-medium ${x.done ? 'text-[#15803D]' : 'text-[#141412]'}`}>{x.title}</span>
+                                <span className="block text-[13px] text-[#5F5E58] [overflow-wrap:anywhere]">{x.text}</span>
+                            </span>
+                        </span>
+                        {x.action}
+                    </li>
+                ))}
+            </ol>
+        </Card>
+    );
+}
+
+export default function Index({ ledger = [], monthly = [], pendingWithdrawals = [], heldSales = [], protection, verification, payoutAccount, payoutDelayHours = 48, metrics, defaultPhone }) {
+    const { auth } = usePage().props;
     const [open, setOpen] = useState(false);
+    const [payoutOpen, setPayoutOpen] = useState(false);
+    const ready = verification?.status === 'approved' && !!payoutAccount?.phone;
+    const pending = payoutAccount?.pending;
     const [filter, setFilter] = useState('all');
     const available = metrics?.available_balance || 0;
     const min = metrics?.min_withdrawal || 1000;
@@ -94,9 +202,21 @@ export default function Index({ ledger = [], monthly = [], pendingWithdrawals = 
     return (
         <AuthenticatedLayout>
             <Head title="Portefeuille, Biolinko" />
-            <WithdrawDialog open={open} onClose={() => setOpen(false)} available={available} min={min} feePercent={metrics?.withdrawal_fee_percent ?? 0} defaultPhone={defaultPhone} />
-            <div className="space-y-6 pb-12" hidden={open}>
+            <WithdrawDialog open={open} onClose={() => setOpen(false)} available={available} min={min} feePercent={metrics?.withdrawal_fee_percent ?? 0}
+                account={payoutAccount} onEditAccount={() => { setOpen(false); setPayoutOpen(true); }} />
+            <PayoutDialog open={payoutOpen} onClose={() => setPayoutOpen(false)} account={payoutAccount} delayHours={payoutDelayHours} defaultPhone={defaultPhone} defaultName={auth?.user?.name} />
+            <div className="space-y-6 pb-12" hidden={open || payoutOpen}>
                 <PageHeader title="Portefeuille" sub="Vos revenus, votre solde et vos retraits vers Mobile Money." />
+
+                <WithdrawalSetup verification={verification} account={payoutAccount} onPayout={() => setPayoutOpen(true)} />
+
+                {pending && (
+                    <div className="flex flex-col items-start justify-between gap-3 rounded-2xl border border-[#F59E0B]/50 bg-[#FFFBEB] p-4 text-[14px] text-[#141412] sm:flex-row sm:items-center">
+                        <p className="flex gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#B45309]" />
+                            Nouveau numéro de retrait +{pending.phone} ({opLabel(pending.operator)}) : actif le {dateTime(pending.effective_at)}. Pas vous ? Annulez et changez votre mot de passe.</p>
+                        <Button size="sm" variant="dark" onClick={() => router.delete(route('wallet.payout.cancel'), { preserveScroll: true })}>Annuler le changement</Button>
+                    </div>
+                )}
 
                 <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
                     {/* Solde */}
@@ -105,10 +225,11 @@ export default function Index({ ledger = [], monthly = [], pendingWithdrawals = 
                         <p className="relative text-[14px] text-white/60">Solde disponible</p>
                         <p className="relative mt-2 text-[40px] font-medium tracking-[-0.03em] tabular-nums">{fcfa(available)}</p>
                         <div className="relative mt-6 flex flex-wrap items-center gap-3">
-                            <Button variant="primary" size="lg" onClick={() => setOpen(true)} disabled={available < min}>
+                            <Button variant="primary" size="lg" onClick={() => setOpen(true)} disabled={available < min || !ready}>
                                 <ArrowUpRight className="h-4 w-4" /> Retirer
                             </Button>
-                            {available < min && <span className="text-[13px] text-white/55">Retrait possible dès {fcfa(min)}</span>}
+                            {!ready ? <span className="text-[13px] text-white/55">Terminez les étapes ci-dessus pour retirer</span>
+                                : available < min && <span className="text-[13px] text-white/55">Retrait possible dès {fcfa(min)}</span>}
                         </div>
                         <div className="relative mt-6 space-y-1.5 text-[14px] text-white/70">
                             {(metrics?.held_balance || 0) > 0 && <p className="flex items-center gap-2"><Hourglass className="h-4 w-4" /> {fcfa(metrics.held_balance)} en attente de disponibilité</p>}
@@ -145,10 +266,9 @@ export default function Index({ ledger = [], monthly = [], pendingWithdrawals = 
                         <div className="min-w-0">
                             <h2 className="text-[17px] font-medium text-[#141412]">Argent en attente</h2>
                             <p className="mt-1 text-[14px] text-[#5F5E58]">
-                                Chaque vente devient retirable <strong className="font-medium text-[#141412]">{holdRules?.current} jours</strong> après le paiement.
-                                {holdRules?.current === holdRules?.new
-                                    ? ` Après ${holdRules?.after} ventes livrées, ce délai passe à ${holdRules?.established} jours (vous en êtes à ${holdRules?.delivered}).`
-                                    : ' Vous bénéficiez du délai réduit des boutiques établies.'}
+                                Pour protéger vos clients, l’argent d’une vente devient retirable une fois la commande reçue : dès que le client confirme la réception,
+                                ou <strong className="font-medium text-[#141412]">{protection?.after_delivery_days ?? 3} jours</strong> après que vous l’avez marquée « Livrée ».
+                                Sans livraison marquée, au plus tard {protection?.max_days ?? 14} jours après le paiement.
                             </p>
                         </div>
                     </div>
@@ -159,7 +279,9 @@ export default function Index({ ledger = [], monthly = [], pendingWithdrawals = 
                                     <span className="min-w-0">
                                         <span className="block truncate text-[#141412]">{h.customer_name} · <span className="font-mono text-[13px]">{h.tracking_code}</span></span>
                                         <span className={`flex items-center gap-1.5 text-[13px] ${h.frozen ? 'text-[#B45309]' : 'text-[#8B8A83]'}`}>
-                                            {h.frozen ? <><AlertTriangle className="h-3.5 w-3.5" /> Signalée par le client, en attente de règlement</> : <>Disponible le {dateTime(h.available_at)}</>}
+                                            {h.frozen ? <><AlertTriangle className="h-3.5 w-3.5" /> Signalée par le client, en attente de règlement</>
+                                                : h.delivered ? <>Livrée · disponible le {dateTime(h.available_at)}</>
+                                                    : <>À marquer « Livrée » une fois livrée · au plus tard le {dateTime(h.available_at)}</>}
                                         </span>
                                     </span>
                                     <span className="shrink-0 tabular-nums text-[#141412]">{fcfa(h.amount)}</span>

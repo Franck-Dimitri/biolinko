@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
 use App\Mail\VendorOtpVerificationMail;
+use App\Support\ShopIntent;
+use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,8 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -82,11 +83,60 @@ class User extends Authenticatable implements MustVerifyEmail
             'subscription_expires_at' => 'datetime',
             'auto_renew' => 'boolean',
             'pilot_started_at' => 'datetime',
+            'payout_pending_effective_at' => 'datetime',
             'renewal_reminded_for' => 'datetime',
             'renewal_failed_for' => 'datetime',
             'email_otp_expires_at' => 'datetime',
             'is_banned' => 'boolean',
             'password' => 'hashed',
+        ];
+    }
+
+    public function verification(): HasOne
+    {
+        return $this->hasOne(SellerVerification::class);
+    }
+
+    /** Identité vérifiée par l'équipe Biolinko : condition pour retirer de l'argent. */
+    public function isVerified(): bool
+    {
+        return $this->verification?->status === 'approved';
+    }
+
+    /** Délai avant qu'un nouveau numéro de retrait prenne effet (le premier numéro est immédiat). */
+    public const PAYOUT_CHANGE_DELAY_HOURS = 48;
+
+    /** Applique un changement de numéro de retrait arrivé à échéance. */
+    public function applyPendingPayout(): void
+    {
+        if ($this->payout_pending_phone && $this->payout_pending_effective_at && $this->payout_pending_effective_at->isPast()) {
+            $this->forceFill([
+                'payout_phone' => $this->payout_pending_phone,
+                'payout_operator' => $this->payout_pending_operator,
+                'payout_name' => $this->payout_pending_name,
+                'payout_pending_phone' => null,
+                'payout_pending_operator' => null,
+                'payout_pending_name' => null,
+                'payout_pending_effective_at' => null,
+            ])->save();
+        }
+    }
+
+    /** Compte de retrait affiché au vendeur (et à l'admin), changement en attente compris. */
+    public function payoutAccount(): array
+    {
+        $this->applyPendingPayout();
+
+        return [
+            'phone' => $this->payout_phone,
+            'operator' => $this->payout_operator,
+            'name' => $this->payout_name,
+            'pending' => $this->payout_pending_phone ? [
+                'phone' => $this->payout_pending_phone,
+                'operator' => $this->payout_pending_operator,
+                'name' => $this->payout_pending_name,
+                'effective_at' => $this->payout_pending_effective_at?->toIso8601String(),
+            ] : null,
         ];
     }
 
@@ -252,7 +302,9 @@ class User extends Authenticatable implements MustVerifyEmail
     /** Adresses déjà prises par l'application : une boutique ne peut pas s'appeler ainsi. */
     public const RESERVED_SLUGS = ['admin', 'seller', 'login', 'register', 'logout', 'dashboard', 'profile', 'track', 'pay', 'store', 'api',
         'checkout', 'verify-email', 'forgot-password', 'reset-password', 'confirm-password', 'password', 'email', 'storage', 'build', 'images',
-        'conditions-generales', 'politique-de-confidentialite', 'politique-des-cookies', 'privacy', 'terms', 'cookies', 'up', 'biolinko', 'sitemap', 'robots', 'boutique-disponible', 'a-propos', 'contact', 'paiement-et-securite', 'aide', 'programme-pilote', 'mentions-legales'];
+        'conditions-generales', 'politique-de-confidentialite', 'politique-des-cookies', 'privacy', 'terms', 'cookies', 'up', 'biolinko', 'sitemap', 'robots', 'boutique-disponible', 'a-propos', 'contact', 'paiement-et-securite', 'aide', 'programme-pilote', 'mentions-legales',
+        // Sous-domaines techniques de <nom>.biolinko.store
+        'www', 'mail', 'smtp', 'imap', 'pop', 'ftp', 'cdn', 'static', 'assets', 'app', 'shop', 'ns1', 'ns2', 'blog', 'help', 'support', 'status', 'docs', 'dev', 'staging', 'test', 'webmail', 'autodiscover'];
 
     /**
      * Chaque vendeur a une boutique (en brouillon au départ) et un portefeuille : sans eux, aucune page vendeur ne fonctionne.
@@ -273,7 +325,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
         $store = Store::create([
             'user_id' => $this->id,
-            'name' => $preferredSlug ? \App\Support\ShopIntent::displayName($preferredSlug) : $this->name,
+            'name' => $preferredSlug ? ShopIntent::displayName($preferredSlug) : $this->name,
             'slug' => $slug,
             'phone_whatsapp' => $this->phone_whatsapp,
             'is_published' => false,

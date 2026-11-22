@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { AlertTriangle, Ban, Crown, ExternalLink, Eye, EyeOff, Mail, Package, Phone, ShieldCheck, ShoppingBag, Store, Trash2, Wallet } from 'lucide-react';
 import ModerationModal from '@/Components/Admin/ModerationModal';
 import { Badge, Button, Card, CardHeader, Empty, Field, OrderStatus, PageHeader, Stat, Table, Tabs, dateTime, fcfa, fieldClass, shortDate } from '@/Components/Dashboard/UI';
+import { storeAddress, storeUrl } from '@/Components/Storefront/storeUrl';
 
 const PLANS = [['starter', 'Starter'], ['pro', 'Pro'], ['growth', 'Growth'], ['business', 'Business']];
 const REPORT_STATUS = { open: ['Ouvert', 'warning'], answered: ['Vendeur a répondu', 'info'], resolved: ['Résolu', 'success'], released: ['Clos', 'neutral'] };
@@ -231,17 +232,17 @@ export default function Show({ vendor, stats = {}, reports = [], withdrawals = [
                                 <div className="mt-4 space-y-3 text-[14px]">
                                     <div className="flex items-center gap-3">
                                         <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F6F5F1]">{store.logo_url ? <img src={store.logo_url} alt="" className="h-full w-full object-cover" /> : <Store className="h-5 w-5 text-[#8B8A83]" />}</span>
-                                        <span className="min-w-0"><span className="block truncate font-medium text-[#141412]">{store.name}</span><span className="block truncate text-[13px] text-[#8B8A83]">biolinko.link/{store.slug}</span></span>
+                                        <span className="min-w-0"><span className="block truncate font-medium text-[#141412]">{store.name}</span><span className="block truncate text-[13px] text-[#8B8A83]">{storeAddress(store.slug)}</span></span>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-2">
                                         <Badge tone={store.is_published ? 'success' : 'neutral'}>{store.is_published ? 'En ligne' : 'Brouillon'}</Badge>
-                                        {stats.hold_days && <Badge>Délai de retrait : {stats.hold_days} j</Badge>}
+                                        {stats.verification === 'approved' ? <Badge tone="success">Identité vérifiée</Badge> : stats.verification === 'pending' ? <Badge tone="warning">Identité à vérifier</Badge> : <Badge>Identité non vérifiée</Badge>}
                                     </div>
                                     {store.city_location && <p className="text-[#5F5E58]">{store.city_location}</p>}
                                     <div className="flex flex-wrap gap-2 pt-1">
-                                        <Button size="sm" href={`/${store.slug}`} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /> Voir</Button>
+                                        <Button size="sm" href={storeUrl(store.slug)} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /> Voir</Button>
                                         {store.is_published
-                                            ? <Button size="sm" onClick={() => setModeration({ type: 'store', id: store.id, name: store.name, info: `biolinko.link/${store.slug}` })}><EyeOff className="h-4 w-4" /> Suspendre</Button>
+                                            ? <Button size="sm" onClick={() => setModeration({ type: 'store', id: store.id, name: store.name, info: storeAddress(store.slug) })}><EyeOff className="h-4 w-4" /> Suspendre</Button>
                                             : <Button size="sm" href={route('admin.users.toggleStore', vendor.id)} method="post" as="button" preserveScroll><Eye className="h-4 w-4" /> Republier</Button>}
                                     </div>
                                 </div>
