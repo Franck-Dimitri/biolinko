@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Menu, Search, ShoppingBag, Store, X } from 'lucide-react';
+import { BadgeCheck, Menu, Search, ShoppingBag, Store, X } from 'lucide-react';
 import { contrastColor } from '@/Components/Storefront/theme';
+import { storeUrl } from '@/Components/Storefront/storeUrl';
 
 export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, searchQuery = '', setSearchQuery, setActiveTab, hasPromos = false, hasSmartLinks = false }) {
     const primaryColor = store?.theme_color || '#FFCC00';
@@ -15,7 +16,7 @@ export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, searc
         setTimeout(() => {
             const target = document.getElementById(sectionId);
             if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            else window.location.href = `/${store.slug}#${sectionId}`;
+            else window.location.href = storeUrl(store.slug, `#${sectionId}`);
         }, 80);
     };
 
@@ -32,7 +33,7 @@ export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, searc
         ['À propos', 'about'],
     ];
 
-    const openCart = onOpenCart || (() => { window.location.href = `/${store.slug}?tab=cart`; });
+    const openCart = onOpenCart || (() => { window.location.href = storeUrl(store.slug, `?tab=cart`); });
 
     return (
         <header className="sticky top-0 z-40">
@@ -44,11 +45,12 @@ export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, searc
 
             <div className="border-b border-black/[0.06] bg-white/85 backdrop-blur-md">
                 <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-4 px-5 lg:px-8">
-                    <a href={`/${store.slug}`} className="flex min-w-0 items-center gap-3">
+                    <a href={storeUrl(store.slug)} className="flex min-w-0 items-center gap-3">
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
                             {store.logo_url ? <img src={store.logo_url} alt="" className="h-full w-full object-cover" /> : <Store className="h-4 w-4" />}
                         </span>
                         <span className="truncate text-[17px] font-semibold tracking-tight text-[#141412]" title={store.name}>{store.name}</span>
+                        {store.trust?.verified && <BadgeCheck className="h-[18px] w-[18px] shrink-0 text-[#16A34A]" aria-label="Vendeur vérifié par Biolinko" />}
                     </a>
 
                     <nav className="hidden items-center gap-8 lg:flex">

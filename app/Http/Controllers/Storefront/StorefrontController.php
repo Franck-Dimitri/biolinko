@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Order;
+use App\Models\SmartLink;
 use App\Models\Store;
+use App\Models\StoreReport;
 use App\Support\Seo;
+use App\Support\StoreUrl;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class StorefrontController extends Controller
 {
@@ -22,11 +23,16 @@ class StorefrontController extends Controller
             ->first();
 
         // 1. Boutique inexistante
-        if (!$store) {
+        if (! $store) {
             return Inertia::render('Errors/StoreUnavailable', [
                 'reason' => 'not_found',
                 'slug' => $slug,
             ])->toResponse(request())->setStatusCode(404);
+        }
+
+        // Ancienne adresse biolinko.link/<nom> : la boutique vit sur <nom>.biolinko.store
+        if ($redirect = StoreUrl::redirectFromApp(request(), $store)) {
+            return $redirect;
         }
 
         // 2. Compte vendeur banni / suspendu
@@ -40,7 +46,7 @@ class StorefrontController extends Controller
 
         // 3. Boutique non publiée (privée / en brouillon)
         $isOwnerOrAdmin = auth()->check() && (auth()->id() === $store->user_id || (method_exists(auth()->user(), 'isAdmin') && auth()->user()->isAdmin()));
-        if (!$store->is_published && !$isOwnerOrAdmin) {
+        if (! $store->is_published && ! $isOwnerOrAdmin) {
             return Inertia::render('Errors/StoreUnavailable', [
                 'reason' => 'unpublished',
                 'storeName' => $store->name,
@@ -55,7 +61,7 @@ class StorefrontController extends Controller
             ->get()
             ->map(function ($product) {
                 $pv = (float) $product->price_vendor;
-                
+
                 if ($product->promoActive()) {
                     $promoPv = (float) $product->promo_price;
                     $pb = $promoPv; // Promo Base Vendor Price
@@ -77,11 +83,12 @@ class StorefrontController extends Controller
                 $tc = $pb + Order::clientFee($pb); // prix + frais de service client
                 $product->price_client_total = $tc;
                 $product->api_fee_unit = $tc - $pb;
+
                 return $product;
             });
 
         // Packs affichés : actifs, non expirés et pas encore épuisés
-        $activeSmartLinks = \App\Models\SmartLink::where('store_id', $store->id)
+        $activeSmartLinks = SmartLink::where('store_id', $store->id)
             ->where('is_active', true)
             ->latest()
             ->get()
@@ -100,9 +107,36 @@ class StorefrontController extends Controller
             'products' => $products,
             'activeSmartLinks' => $activeSmartLinks,
             'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
-            'isPreview' => !$store->is_published && $isOwnerOrAdmin,
+            'isPreview' => ! $store->is_published && $isOwnerOrAdmin,
             'seoTitle' => $meta['title'],
         ])->withViewData(['meta' => $meta]);
+    }
+
+    /** Un visiteur signale la boutique (fausse boutique, arnaque, produit interdit) à l'équipe Biolinko. */
+    public function reportStore(Request $request, string $slug)
+    {
+        $store = Store::where('slug', $slug)->firstOrFail();
+
+        // Champ piège : rempli uniquement par les robots
+        if (filled($request->input('website'))) {
+            return back()->with('success', 'Merci, votre signalement a été envoyé.');
+        }
+
+        $validated = $request->validate([
+            'reason' => ['required', 'in:'.implode(',', array_keys(StoreReport::REASONS))],
+            'message' => ['required', 'string', 'min:10', 'max:1500'],
+            'contact' => ['nullable', 'string', 'max:120'],
+        ], ['message.min' => 'Décrivez le problème en quelques mots (10 caractères minimum).']);
+
+        StoreReport::create([
+            'store_id' => $store->id,
+            'reason' => $validated['reason'],
+            'message' => $validated['message'],
+            'contact' => ($validated['contact'] ?? null) ?: null,
+            'ip_hash' => hash('sha256', $request->ip().config('app.key')),
+        ]);
+
+        return back()->with('success', 'Merci, votre signalement a été envoyé à l’équipe Biolinko.');
     }
 
     public function submitReview(Request $request, string $slug)
@@ -130,21 +164,21 @@ class StorefrontController extends Controller
 
         $customerPhone = $request->input('customer_phone');
         $customerEmail = $request->input('customer_email');
-        $trackingCode  = $request->input('tracking_code');
+        $trackingCode = $request->input('tracking_code');
 
         $hasOrder = false;
         if ($trackingCode) {
             // Achat vérifié : commande payée de cette boutique, contenant ce produit pour un avis produit
-            $hasOrder = \App\Models\Order::where('store_id', $store->id)
+            $hasOrder = Order::where('store_id', $store->id)
                 ->where('tracking_code', $trackingCode)->paid()
                 ->when($product, fn ($q) => $q->whereHas('items', fn ($i) => $i->where('product_id', $product->id)))
                 ->exists();
         } elseif ($customerPhone) {
-            $hasOrder = \App\Models\Order::where('store_id', $store->id)
+            $hasOrder = Order::where('store_id', $store->id)
                 ->where('customer_phone', $customerPhone)
                 ->exists();
         } elseif ($customerEmail) {
-            $hasOrder = \App\Models\Order::where('store_id', $store->id)
+            $hasOrder = Order::where('store_id', $store->id)
                 ->where('customer_email', $customerEmail)
                 ->exists();
         }
@@ -152,11 +186,11 @@ class StorefrontController extends Controller
         $reviewData = [
             'customer_name' => $validated['customer_name'],
             'customer_city' => $validated['customer_city'] ?? null,
-            'rating'        => $validated['rating'],
-            'comment'       => $validated['comment'],
-            'is_verified'   => $hasOrder, // acheteur vérifié uniquement s'il a déjà commandé
-            'product_id'    => $product?->id,
-            'is_featured'   => true,
+            'rating' => $validated['rating'],
+            'comment' => $validated['comment'],
+            'is_verified' => $hasOrder, // acheteur vérifié uniquement s'il a déjà commandé
+            'product_id' => $product?->id,
+            'is_featured' => true,
         ];
 
         $store->reviews()->create($reviewData);
@@ -169,11 +203,15 @@ class StorefrontController extends Controller
         $store = Store::where('slug', $slug)->with(['user', 'reviews'])->first();
 
         // 1. Boutique inexistante
-        if (!$store) {
+        if (! $store) {
             return Inertia::render('Errors/StoreUnavailable', [
                 'reason' => 'not_found',
                 'slug' => $slug,
             ])->toResponse(request())->setStatusCode(404);
+        }
+
+        if ($redirect = StoreUrl::redirectFromApp(request(), $store, '/p/'.$product_slug)) {
+            return $redirect;
         }
 
         // 2. Compte vendeur banni / suspendu
@@ -187,7 +225,7 @@ class StorefrontController extends Controller
 
         // 3. Boutique non publiée
         $isOwnerOrAdmin = auth()->check() && (auth()->id() === $store->user_id || (method_exists(auth()->user(), 'isAdmin') && auth()->user()->isAdmin()));
-        if (!$store->is_published && !$isOwnerOrAdmin) {
+        if (! $store->is_published && ! $isOwnerOrAdmin) {
             return Inertia::render('Errors/StoreUnavailable', [
                 'reason' => 'unpublished',
                 'storeName' => $store->name,
@@ -202,7 +240,7 @@ class StorefrontController extends Controller
             ->with('variants')
             ->first();
 
-        if (!$product) {
+        if (! $product) {
             return Inertia::render('Errors/ProductUnavailable', [
                 'store' => [
                     'name' => $store->name,
@@ -224,6 +262,7 @@ class StorefrontController extends Controller
             } else {
                 $p->price_display = $pv;
             }
+
             return $p;
         });
 
@@ -262,7 +301,7 @@ class StorefrontController extends Controller
             'productReviews' => $productReviews,
             'rating' => $rating,
             'appUrl' => request()->getSchemeAndHttpHost() ?: config('app.url', 'http://localhost:8000'),
-            'isPreview' => !$store->is_published && $isOwnerOrAdmin,
+            'isPreview' => ! $store->is_published && $isOwnerOrAdmin,
             'seoTitle' => $meta['title'],
         ])->withViewData(['meta' => $meta]);
     }
