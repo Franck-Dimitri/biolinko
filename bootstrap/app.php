@@ -1,10 +1,16 @@
 <?php
 
+use App\Http\Middleware\EnsureUserHasPlan;
+use App\Http\Middleware\EnsureUserHasRole;
+use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\LogoutBannedUser;
+use App\Http\Middleware\ResolveStoreDomain;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,14 +19,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Boutiques sur <nom>.biolinko.store : réécriture de l'adresse avant le routage
+        $middleware->prepend(ResolveStoreDomain::class);
+
         $middleware->web(append: [
-            \App\Http\Middleware\HandleInertiaRequests::class,
-            \App\Http\Middleware\LogoutBannedUser::class,
+            HandleInertiaRequests::class,
+            LogoutBannedUser::class,
         ]);
 
         $middleware->alias([
-            'role' => \App\Http\Middleware\EnsureUserHasRole::class,
-            'plan' => \App\Http\Middleware\EnsureUserHasPlan::class,
+            'role' => EnsureUserHasRole::class,
+            'plan' => EnsureUserHasPlan::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [
@@ -32,7 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*'),
         );
 
-        $exceptions->respond(function (Symfony\Component\HttpFoundation\Response $response, Throwable $e, Request $request) {
+        $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
             // Do not override API, JSON or static asset responses
             if ($request->is('api/*') || $request->wantsJson()) {
                 return $response;
@@ -67,8 +76,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 return Inertia::render('Errors/Index', [
                     'status' => $statusCode,
                 ])
-                ->toResponse($request)
-                ->setStatusCode($statusCode);
+                    ->toResponse($request)
+                    ->setStatusCode($statusCode);
             }
 
             return $response;

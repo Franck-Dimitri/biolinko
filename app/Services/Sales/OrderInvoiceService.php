@@ -5,6 +5,7 @@ namespace App\Services\Sales;
 use App\Mail\OrderConfirmationToCustomerMail;
 use App\Mail\OrderNotificationToVendorMail;
 use App\Models\Order;
+use App\Support\StoreUrl;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -19,12 +20,12 @@ class OrderInvoiceService
     {
         $order->loadMissing(['store.user', 'items']);
 
-        $trackUrl = route('order.track', $order->tracking_code);
+        $trackUrl = StoreUrl::track($order);
 
         // Generate QR Code as base64 PNG/SVG for DomPDF embedding
         try {
             $qrSvg = QrCode::size(100)->margin(1)->generate($trackUrl);
-            $qrCodeBase64 = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+            $qrCodeBase64 = 'data:image/svg+xml;base64,'.base64_encode($qrSvg);
         } catch (\Exception $e) {
             $qrCodeBase64 = null;
         }

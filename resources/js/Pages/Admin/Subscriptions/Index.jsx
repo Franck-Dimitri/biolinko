@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { CalendarClock, ChevronRight, Crown, TrendingUp, Users } from 'lucide-react';
 import { Badge, Card, Empty, PageHeader, Pagination, SearchInput, Stat, Table, Tabs, fcfa, shortDate } from '@/Components/Dashboard/UI';
+import { storeUrl } from '@/Components/Storefront/storeUrl';
 
 const name = (p) => (p || 'starter').replace(/^./, (c) => c.toUpperCase());
 
@@ -62,7 +63,7 @@ export default function Index({ vendors, metrics = {}, filters = {} }) {
                                         <span className="block text-[#141412]">{u.name}</span>
                                         <span className="text-[13px] text-[#8B8A83]">{u.email}</span>
                                     </td>
-                                    <td className="px-4 py-3.5">{u.store ? <a href={`/${u.store.slug}`} target="_blank" rel="noreferrer" className="hover:underline">{u.store.name}</a> : '—'}</td>
+                                    <td className="px-4 py-3.5">{u.store ? <a href={storeUrl(u.store.slug)} target="_blank" rel="noreferrer" className="hover:underline">{u.store.name}</a> : '—'}</td>
                                     <td className="px-4 py-3.5"><Badge tone={u.plan && u.plan !== 'starter' ? 'brand' : 'neutral'}>{name(u.plan)}</Badge></td>
                                     <td className="px-4 py-3.5"><Expiry user={u} /></td>
                                     <td className="px-4 py-3.5">

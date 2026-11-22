@@ -3,8 +3,7 @@
 namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
-
-use App\Models\Store;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -17,7 +16,7 @@ class StoreController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', Rule::unique('stores', 'slug')->ignore($store->id)],
+            'slug' => ['required', 'string', 'regex:/^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/', Rule::unique('stores', 'slug')->ignore($store->id), Rule::notIn(User::RESERVED_SLUGS)],
             'category' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'about_text' => ['nullable', 'string'],
@@ -33,16 +32,16 @@ class StoreController extends Controller
             'instagram_link' => ['nullable', 'url', 'max:255'],
             'tiktok_link' => ['nullable', 'url', 'max:255'],
             'facebook_link' => ['nullable', 'url', 'max:255'],
-        ]);
+        ], ['slug.regex' => 'L’adresse doit faire 3 à 40 caractères : lettres minuscules, chiffres et tirets, sans tiret au début ni à la fin.', 'slug.not_in' => 'Cette adresse est réservée, choisissez-en une autre.']);
 
         if ($request->hasFile('logo_file')) {
             $logoPath = $request->file('logo_file')->store('stores/logos', 'public');
-            $validated['logo_url'] = '/storage/' . $logoPath;
+            $validated['logo_url'] = '/storage/'.$logoPath;
         }
 
         if ($request->hasFile('banner_file')) {
             $bannerPath = $request->file('banner_file')->store('stores/banners', 'public');
-            $validated['banner_url'] = '/storage/' . $bannerPath;
+            $validated['banner_url'] = '/storage/'.$bannerPath;
         }
 
         $validated['is_configured'] = true;
@@ -55,10 +54,10 @@ class StoreController extends Controller
     public function togglePublish(Request $request): RedirectResponse
     {
         $store = $request->user()->store;
-        $store->is_published = !$store->is_published;
+        $store->is_published = ! $store->is_published;
         $store->save();
 
-        $statusMsg = $store->is_published 
+        $statusMsg = $store->is_published
             ? 'Félicitations ! Votre boutique est désormais officielle et publiée en ligne !'
             : 'Votre boutique a été repassée en mode brouillon (masquée du public).';
 

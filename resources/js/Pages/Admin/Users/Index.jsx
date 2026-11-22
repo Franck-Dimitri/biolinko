@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Ban, ChevronRight, Crown, ShieldCheck, Store, UserCheck, Users } from 'lucide-react';
 import ModerationModal from '@/Components/Admin/ModerationModal';
 import { Badge, Button, Card, Empty, PageHeader, Pagination, SearchInput, Stat, Table, Tabs, fcfa, shortDate } from '@/Components/Dashboard/UI';
+import { storeUrl } from '@/Components/Storefront/storeUrl';
 
 const PLAN_TONE = { starter: 'neutral', pro: 'brand', growth: 'brand', business: 'brand' };
 
@@ -69,7 +70,7 @@ export default function Index({ users, metrics = {}, filters = {} }) {
                                     </td>
                                     <td className="px-4 py-3.5">
                                         {u.store ? (
-                                            <a href={`/${u.store.slug}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[#141412] hover:underline">
+                                            <a href={storeUrl(u.store.slug)} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[#141412] hover:underline">
                                                 <Store className="h-4 w-4 shrink-0 text-[#8B8A83]" /><span className="max-w-[160px] truncate">{u.store.name}</span>
                                             </a>
                                         ) : <span className="text-[#8B8A83]">—</span>}

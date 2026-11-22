@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, Package, PackageX, Percent, Trash2 } from 'lucide-react';
 import ModerationModal from '@/Components/Admin/ModerationModal';
 import { Badge, Card, Empty, PageHeader, Pagination, SearchInput, Stat, Table, Tabs, fcfa } from '@/Components/Dashboard/UI';
+import { storeUrl } from '@/Components/Storefront/storeUrl';
 
 export default function ProductsIndex({ products, metrics = {}, filters = {} }) {
     const [search, setSearch] = useState(filters.search || '');
@@ -58,7 +59,7 @@ export default function ProductsIndex({ products, metrics = {}, filters = {} }) 
                                         <span className="flex items-center gap-3">
                                             <span className="h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-[#F6F5F1]">{(p.image_url || p.images?.[0]) && <img src={p.image_url || p.images[0]} alt="" loading="lazy" className="h-full w-full object-cover" />}</span>
                                             <span className="min-w-0">
-                                                <a href={p.store ? `/${p.store.slug}/p/${p.slug}` : '#'} target="_blank" rel="noreferrer" className="block max-w-[240px] truncate text-[#141412] hover:underline">{p.title}</a>
+                                                <a href={p.store ? storeUrl(p.store.slug, `/p/${p.slug}`) : '#'} target="_blank" rel="noreferrer" className="block max-w-[240px] truncate text-[#141412] hover:underline">{p.title}</a>
                                                 {p.variants?.length > 0 && <span className="text-[13px] text-[#8B8A83]">{p.variants.length} variante{p.variants.length > 1 ? 's' : ''}</span>}
                                             </span>
                                         </span>

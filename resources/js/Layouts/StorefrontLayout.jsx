@@ -7,6 +7,7 @@ import { Lock } from 'lucide-react';
 import { Head, router } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { initPixels, track } from '@/Components/Storefront/pixels';
+import { storeUrl } from '@/Components/Storefront/storeUrl';
 
 export default function StorefrontLayout({ 
     store, 
@@ -52,7 +53,12 @@ export default function StorefrontLayout({
                         border-radius: 4px !important;
                     }
                 ` : ''}
-                ${store?.font_family && store.font_family !== 'Poppins' ? `
+                ${store?.font_family === 'Playfair Display' ? `
+                    h1, h2, h3 {
+                        font-family: 'Playfair Display', Georgia, serif !important;
+                        letter-spacing: -0.01em !important;
+                    }
+                ` : store?.font_family && store.font_family !== 'Poppins' ? `
                     body, button, input, textarea, select, h1, h2, h3, h4, h5, h6, span, p, div {
                         font-family: '${store.font_family}', system-ui, -apple-system, sans-serif !important;
                     }
@@ -79,7 +85,7 @@ export default function StorefrontLayout({
                     if (setActiveTab) {
                         setActiveTab('cart');
                     } else {
-                        router.visit(`/${store.slug}?tab=cart`);
+                        router.visit(storeUrl(store.slug, `?tab=cart`));
                     }
                 }}
                 searchQuery={searchQuery}
@@ -91,7 +97,7 @@ export default function StorefrontLayout({
                     if (setActiveTab) {
                         setActiveTab(tab);
                     } else {
-                        router.visit(`/${store.slug}${tab === 'all' ? '' : `?tab=${tab}`}`);
+                        router.visit(storeUrl(store.slug, tab === 'all' ? '' : `?tab=${tab}`));
                     }
                 }}
             />

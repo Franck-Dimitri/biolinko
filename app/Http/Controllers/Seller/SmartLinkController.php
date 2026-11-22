@@ -2,24 +2,20 @@
 
 namespace App\Http\Controllers\Seller;
 
-use App\Http\Controllers\Storefront\CheckoutController;
-
 use App\Http\Controllers\Controller;
-
+use App\Http\Controllers\Storefront\CheckoutController;
 use App\Models\Product;
 use App\Models\SmartLink;
-
+use App\Payments\Countries;
+use App\Support\Seo;
 use Illuminate\Http\Request;
-
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-
 use Inertia\Inertia;
 use Inertia\Response;
 
 class SmartLinkController extends Controller
 {
-
     /**
      * Seller SmartLinks dashboard page.
      */
@@ -28,7 +24,7 @@ class SmartLinkController extends Controller
         $user = Auth::user();
         $store = $user->store;
 
-        if (!$store) {
+        if (! $store) {
             return Inertia::render('Seller/SmartLinks/Index', [
                 'smartLinks' => [],
                 'products' => [],
@@ -75,6 +71,7 @@ class SmartLinkController extends Controller
             'products' => $products,
             'stats' => $stats,
             'maxActiveLinks' => $user->planLimit('smartlinks'),
+            'storeSlug' => $user->store?->slug,
         ]);
     }
 
@@ -99,7 +96,7 @@ class SmartLinkController extends Controller
         $user = Auth::user();
         $store = $user->store;
 
-        if (!$store) {
+        if (! $store) {
             return back()->with('error', 'Boutique introuvable.');
         }
 
@@ -124,7 +121,7 @@ class SmartLinkController extends Controller
 
         foreach ($validated['items'] as $itemData) {
             $product = Product::where('store_id', $store->id)->find($itemData['product_id']);
-            if (!$product) {
+            if (! $product) {
                 continue;
             }
 
@@ -161,9 +158,9 @@ class SmartLinkController extends Controller
         $totalAmount = max(0, $subtotal - $discountAmount);
 
         // Generate Unique Code
-        $code = 'sl_' . Str::random(8);
+        $code = 'sl_'.Str::random(8);
 
-        $minOrder = \App\Payments\Countries::minOrder($store->country ?: 'CM');
+        $minOrder = Countries::minOrder($store->country ?: 'CM');
         if ($totalAmount < $minOrder) {
             return back()->withErrors(['items' => 'Le prix du lien doit être d’au moins '.number_format($minOrder, 0, ',', ' ').' FCFA (montant minimum d’une commande).']);
         }
@@ -201,7 +198,7 @@ class SmartLinkController extends Controller
         }
 
         $smartLink->update([
-            'is_active' => !$smartLink->is_active,
+            'is_active' => ! $smartLink->is_active,
         ]);
 
         return back()->with('success', 'Statut du SmartLink mis à jour.');
@@ -238,10 +235,10 @@ class SmartLinkController extends Controller
         $isValid = $smartLink->isValid();
 
         // Aperçu WhatsApp : photo du premier article du pack
-        $firstProduct = \App\Models\Product::find(collect($smartLink->items)->first()['product_id'] ?? null);
+        $firstProduct = Product::find(collect($smartLink->items)->first()['product_id'] ?? null);
         $meta = $isValid
-            ? \App\Support\Seo::smartLink($smartLink->store, $smartLink, $firstProduct?->image_url ?: ($firstProduct?->images[0] ?? null))
-            : \App\Support\Seo::noindex("Offre indisponible | {$smartLink->store->name}");
+            ? Seo::smartLink($smartLink->store, $smartLink, $firstProduct?->image_url ?: ($firstProduct?->images[0] ?? null))
+            : Seo::noindex("Offre indisponible | {$smartLink->store->name}");
 
         return Inertia::render('SmartLink/Show', [
             'smartLink' => $smartLink,

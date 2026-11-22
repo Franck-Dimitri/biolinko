@@ -3,6 +3,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, Crown, Eye, EyeOff, KeyRound, Lock, ShieldAlert, Store, User } from 'lucide-react';
 import { Badge, Button, Card, CardHeader, Field, PageHeader, fieldClass, shortDate } from '@/Components/Dashboard/UI';
+import { storeAddress, storeUrl } from '@/Components/Storefront/storeUrl';
 
 const PLAN_LABEL = { starter: 'Starter', pro: 'Pro', growth: 'Growth', business: 'Business' };
 const SECTIONS = [['profil', 'Profil', User], ['securite', 'Sécurité', KeyRound], ['abonnement', 'Abonnement et boutique', Crown], ['suppression', 'Supprimer le compte', ShieldAlert]];
@@ -92,8 +93,8 @@ function AccountSummary({ account }) {
                     <div className="rounded-2xl bg-[#F6F5F1] p-4">
                         <p className="flex items-center gap-2 text-[14px] text-[#5F5E58]"><Store className="h-4 w-4" /> Boutique</p>
                         <p className="mt-1 text-[18px] font-medium text-[#141412]">{account.store.name}</p>
-                        <p className="text-[13px] text-[#8B8A83]">biolinko.link/{account.store.slug} · <Badge tone={account.store.is_published ? 'success' : 'warning'}>{account.store.is_published ? 'En ligne' : 'Non publiée'}</Badge></p>
-                        <a href={`/${account.store.slug}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-[14px] text-[#141412] underline underline-offset-2">Voir la boutique <ArrowUpRight className="h-4 w-4" /></a>
+                        <p className="text-[13px] text-[#8B8A83]">{storeAddress(account.store.slug)} · <Badge tone={account.store.is_published ? 'success' : 'warning'}>{account.store.is_published ? 'En ligne' : 'Non publiée'}</Badge></p>
+                        <a href={storeUrl(account.store.slug)} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-[14px] text-[#141412] underline underline-offset-2">Voir la boutique <ArrowUpRight className="h-4 w-4" /></a>
                     </div>
                 )}
             </div>

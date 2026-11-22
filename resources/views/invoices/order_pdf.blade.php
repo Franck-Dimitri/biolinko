@@ -77,7 +77,7 @@
                             @if ($store?->city_location)<div class="muted">{{ $store->city_location }}</div>@endif
                             @if ($seller?->phone_whatsapp)<div class="muted">Tél. {{ $seller->phone_whatsapp }}</div>@endif
                             @if ($seller?->email)<div class="muted">{{ $seller->email }}</div>@endif
-                            <div class="muted">biolinko.link/{{ $store->slug ?? '' }}</div>
+                            <div class="muted">{{ $store ? \App\Support\StoreUrl::display($store) : '' }}</div>
                         </td>
                     </tr>
                 </table>
@@ -149,6 +149,7 @@
                     <td>
                         {{ $item->product_title }}
                         @if ($item->variant_label)<div class="muted small">{{ $item->variant_label }}</div>@endif
+                        @foreach (($item->customizations ?? []) as $c)<div class="muted small">{{ $c['label'] }} : {{ $c['value'] }}</div>@endforeach
                     </td>
                     <td class="num">{{ $item->quantity }}</td>
                     <td class="num">{{ $money($item->unit_price_vendor) }}</td>

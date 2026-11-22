@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Webhooks;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Order;
 use App\Services\Whatsapp\WhatsappGatewayService;
+use App\Support\StoreUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -91,26 +91,26 @@ class WhatsappCloudWebhookController extends Controller
         if ($order && $order->store) {
             $store = $order->store;
             $vendorPhone = $store->phone_whatsapp ?: ($store->user->phone ?? null);
-            $trackingUrl = route('order.track', $order->tracking_code);
+            $trackingUrl = StoreUrl::track($order);
 
             $reply = "👋 Bonjour *{$pushName}* !\n\n"
-                . "Merci pour votre message. Je suis le bot d'assistance automatique de *Biolinko*.\n\n"
-                . "📦 Concernant votre commande *#{$order->tracking_code}* chez *{$store->name}* :\n"
-                . "👉 *Suivre votre livraison en direct :*\n{$trackingUrl}\n\n";
+                ."Merci pour votre message. Je suis le bot d'assistance automatique de *Biolinko*.\n\n"
+                ."📦 Concernant votre commande *#{$order->tracking_code}* chez *{$store->name}* :\n"
+                ."👉 *Suivre votre livraison en direct :*\n{$trackingUrl}\n\n";
 
             if ($vendorPhone) {
                 $reply .= "💬 Pour échanger directement avec votre vendeur *{$store->name}*, vous pouvez le joindre ici : {$vendorPhone}\n\n";
             }
 
             $reply .= "L'équipe Biolinko reste à votre entière disposition ! ✨\n"
-                . "_Biolinko — ".preg_replace('#^https?://#', '', config('app.url'))."_";
+                .'_Biolinko — '.preg_replace('#^https?://#', '', config('app.url')).'_';
         } else {
             $reply = "👋 Bonjour *{$pushName}* !\n\n"
-                . "Merci d'avoir contacté le service officiel de notifications *Biolinko*.\n\n"
-                . "Nous avons bien reçu votre message. Pour suivre une commande en cours ou créer votre boutique en ligne avec encaissement Mobile Money, rendez-vous sur :\n"
-                . "👉 ".config('app.url')."\n\n"
-                . "Pour contacter le support officiel : support@biolinko.link\n"
-                . "Belle journée ! ✨";
+                ."Merci d'avoir contacté le service officiel de notifications *Biolinko*.\n\n"
+                ."Nous avons bien reçu votre message. Pour suivre une commande en cours ou créer votre boutique en ligne avec encaissement Mobile Money, rendez-vous sur :\n"
+                .'👉 '.config('app.url')."\n\n"
+                ."Pour contacter le support officiel : support@biolinko.link\n"
+                .'Belle journée ! ✨';
         }
 
         $gateway->sendMessage($phone, $reply);

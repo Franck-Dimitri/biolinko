@@ -8,6 +8,7 @@ import { contrastColor } from '@/Components/Storefront/theme';
 import { formatFcfa, serviceFee, useServiceFeePercent } from '@/Components/Storefront/useCart';
 import CheckoutForm from '@/Components/Storefront/Checkout/CheckoutForm';
 import OrderSummary from '@/Components/Storefront/Checkout/OrderSummary';
+import { storeUrl } from '@/Components/Storefront/storeUrl';
 
 export default function SmartLinkShow({ smartLink, store, isValid }) {
     const primaryColor = store?.theme_color || '#FFCC00';
@@ -22,7 +23,7 @@ export default function SmartLinkShow({ smartLink, store, isValid }) {
                     <AlertCircle className="mx-auto h-10 w-10 text-[#5F5E58]" />
                     <h1 className="text-xl font-semibold text-[#141412]">Cette offre n'est plus disponible</h1>
                     <p className="text-[#5F5E58]">Le lien a expiré ou le stock du pack est épuisé. Découvrez les autres articles de {store?.name}.</p>
-                    <a href={`/${store?.slug}`} className="inline-flex h-11 items-center rounded-full px-5 font-semibold" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
+                    <a href={storeUrl(store?.slug)} className="inline-flex h-11 items-center rounded-full px-5 font-semibold" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
                         Voir la boutique
                     </a>
                 </div>
@@ -49,7 +50,7 @@ export default function SmartLinkShow({ smartLink, store, isValid }) {
             <Head title={`${smartLink.title} | ${store.name}`} />
 
             <div className="space-y-8">
-                <a href={`/${store.slug}`} className="inline-flex items-center gap-1.5 text-sm text-[#5F5E58] hover:text-[#141412]">
+                <a href={storeUrl(store.slug)} className="inline-flex items-center gap-1.5 text-sm text-[#5F5E58] hover:text-[#141412]">
                     <ArrowLeft className="h-4 w-4" /> Voir toute la boutique
                 </a>
 

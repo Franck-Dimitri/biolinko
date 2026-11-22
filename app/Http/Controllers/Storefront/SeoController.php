@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Store;
+use App\Support\HelpCenter;
 use App\Support\Seo;
+use App\Support\StoreUrl;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 
@@ -15,8 +17,13 @@ use Illuminate\Support\Facades\Cache;
  */
 class SeoController extends Controller
 {
-    public function sitemap(): Response
+    public function sitemap(Request $request): Response
     {
+        // Domaine d'une boutique (<nom>.biolinko.store) : plan de cette boutique uniquement
+        if ($slug = $request->attributes->get('store_host')) {
+            return $this->storeSitemap($slug);
+        }
+
         $xml = Cache::remember('seo.sitemap', now()->addHour(), function () {
             $urls = [
                 [Seo::url('/'), now(), '1.0'],
@@ -29,11 +36,12 @@ class SeoController extends Controller
                 [Seo::url('/politique-de-confidentialite'), null, '0.2'],
                 [Seo::url('/mentions-legales'), null, '0.2'],
             ];
-            foreach (array_keys(\App\Support\HelpCenter::ARTICLES) as $slug) {
+            foreach (array_keys(HelpCenter::ARTICLES) as $slug) {
                 $urls[] = [Seo::url('/aide/'.$slug), null, '0.6'];
             }
 
-            Store::where('is_published', true)
+            // Les boutiques sur leur propre domaine ont leur propre plan du site
+            StoreUrl::enabled() || Store::where('is_published', true)
                 ->whereHas('user', fn ($q) => $q->where('is_banned', false)->orWhereNull('is_banned'))
                 ->with(['products' => fn ($q) => $q->where('is_active', true)->select('id', 'store_id', 'slug', 'image_url', 'images', 'title', 'updated_at')])
                 ->select('id', 'slug', 'name', 'updated_at')
@@ -48,24 +56,58 @@ class SeoController extends Controller
                     }
                 });
 
-            $out = '<?xml version="1.0" encoding="UTF-8"?>'."\n"
-                .'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">'."\n";
-            foreach ($urls as $u) {
-                $out .= '  <url><loc>'.e($u[0]).'</loc>'
-                    .($u[1] ? '<lastmod>'.$u[1]->toAtomString().'</lastmod>' : '')
-                    .'<priority>'.$u[2].'</priority>'
-                    .(! empty($u[3]) ? '<image:image><image:loc>'.e($u[3]).'</image:loc><image:title>'.e($u[4]).'</image:title></image:image>' : '')
-                    ."</url>\n";
-            }
-
-            return $out.'</urlset>';
+            return $this->xml($urls);
         });
 
         return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
     }
 
-    public function robots(): Response
+    private function storeSitemap(string $slug): Response
     {
+        $xml = Cache::remember('seo.sitemap.'.$slug, now()->addHour(), function () use ($slug) {
+            $store = Store::where('slug', $slug)->where('is_published', true)
+                ->whereHas('user', fn ($q) => $q->where('is_banned', false)->orWhereNull('is_banned'))
+                ->with(['products' => fn ($q) => $q->where('is_active', true)->select('id', 'store_id', 'slug', 'image_url', 'images', 'title', 'updated_at')])
+                ->first();
+            if (! $store) {
+                return $this->xml([]);
+            }
+            $urls = [[StoreUrl::home($store), $store->products->max('updated_at') ?? $store->updated_at, '1.0']];
+            foreach ($store->products as $p) {
+                $image = $p->image_url ?: ($p->images[0] ?? null);
+                $urls[] = [StoreUrl::product($store, $p->slug), $p->updated_at, '0.8', $image ? Seo::url($image) : null, $p->title];
+            }
+
+            return $this->xml($urls);
+        });
+
+        return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
+    }
+
+    private function xml(array $urls): string
+    {
+        $out = '<?xml version="1.0" encoding="UTF-8"?>'."\n"
+            .'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">'."\n";
+        foreach ($urls as $u) {
+            $out .= '  <url><loc>'.e($u[0]).'</loc>'
+                .($u[1] ? '<lastmod>'.$u[1]->toAtomString().'</lastmod>' : '')
+                .'<priority>'.$u[2].'</priority>'
+                .(! empty($u[3]) ? '<image:image><image:loc>'.e($u[3]).'</image:loc><image:title>'.e($u[4]).'</image:title></image:image>' : '')
+                ."</url>\n";
+        }
+
+        return $out.'</urlset>';
+    }
+
+    public function robots(Request $request): Response
+    {
+        if ($slug = $request->attributes->get('store_host')) {
+            $lines = ['User-agent: *', 'Allow: /', 'Disallow: /track/', 'Disallow: /checkout', 'Disallow: /*?tab=cart', '',
+                'Sitemap: '.StoreUrl::home($slug, '/sitemap.xml')];
+
+            return response(implode("\n", $lines)."\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
+        }
+
         $lines = [
             'User-agent: *',
             'Allow: /',

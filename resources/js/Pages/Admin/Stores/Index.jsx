@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { AlertTriangle, ChevronRight, ExternalLink, Eye, EyeOff, FileEdit, Globe, Store } from 'lucide-react';
 import ModerationModal from '@/Components/Admin/ModerationModal';
 import { Badge, Button, Card, Empty, PageHeader, Pagination, SearchInput, Stat, Table, Tabs, fcfa, shortDate } from '@/Components/Dashboard/UI';
+import { storeAddress, storeUrl } from '@/Components/Storefront/storeUrl';
 
 const planOf = (u) => (u?.plan || 'starter').replace(/^./, (c) => c.toUpperCase());
 
@@ -84,7 +85,7 @@ export default function Index({ stores, metrics = {}, filters = {} }) {
                                     </td>
                                     <td className="px-4 py-3.5">
                                         <div className="flex items-center justify-end gap-1">
-                                            <a href={`/${s.slug}`} target="_blank" rel="noreferrer" aria-label="Voir la boutique" className="flex h-8 w-8 items-center justify-center rounded-full text-[#5F5E58] hover:bg-[#F2F1EC]"><ExternalLink className="h-4 w-4" /></a>
+                                            <a href={storeUrl(s.slug)} target="_blank" rel="noreferrer" aria-label="Voir la boutique" className="flex h-8 w-8 items-center justify-center rounded-full text-[#5F5E58] hover:bg-[#F2F1EC]"><ExternalLink className="h-4 w-4" /></a>
                                             {s.is_published
                                                 ? <Button size="sm" variant="ghost" onClick={() => setTarget(s)}><EyeOff className="h-4 w-4" /> Suspendre</Button>
                                                 : <Button size="sm" onClick={() => republish(s)}><Eye className="h-4 w-4" /> Publier</Button>}
@@ -101,7 +102,7 @@ export default function Index({ stores, metrics = {}, filters = {} }) {
             </div>
 
             <ModerationModal isOpen={!!target} onClose={() => setTarget(null)} onConfirm={suspend} type="store" isLoading={busy}
-                itemName={target?.name || ''} targetInfo={target ? `biolinko.link/${target.slug} · ${target.user?.email || ''}` : null} />
+                itemName={target?.name || ''} targetInfo={target ? `${storeAddress(target.slug)} · ${target.user?.email || ''}` : null} />
         </AuthenticatedLayout>
     );
 }

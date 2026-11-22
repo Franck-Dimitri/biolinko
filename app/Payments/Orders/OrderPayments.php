@@ -2,13 +2,13 @@
 
 namespace App\Payments\Orders;
 
+use App\Models\Order;
+use App\Payments\Countries;
 use App\Payments\HostedCheckout;
 use App\Payments\PaymentException;
-use App\Payments\PaymentManager;
-use App\Payments\Countries;
-
-use App\Models\Order;
 use App\Payments\PaymentGateway;
+use App\Payments\PaymentManager;
+use App\Support\StoreUrl;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -17,9 +17,7 @@ use Illuminate\Support\Str;
  */
 class OrderPayments
 {
-    public function __construct(private PaymentManager $payments)
-    {
-    }
+    public function __construct(private PaymentManager $payments) {}
 
     /**
      * Envoie la demande de paiement sur le téléphone du client.
@@ -75,7 +73,7 @@ class OrderPayments
             'amount' => (float) $order->total_client,
             'operator' => $operator,
             'phone' => $phone,
-            'redirect_url' => route('order.track', $order->tracking_code),
+            'redirect_url' => StoreUrl::track($order),
         ];
     }
 
@@ -95,7 +93,7 @@ class OrderPayments
         $reference = (string) Str::uuid();
         $order->update(['payment_provider' => $gateway->name(), 'payment_reference' => $reference, 'payment_phone' => $phone]);
 
-        $track = route('order.track', $order->tracking_code);
+        $track = StoreUrl::track($order);
         $result = $gateway->checkout([
             'reference' => $reference,
             'amount' => (float) $order->total_client,

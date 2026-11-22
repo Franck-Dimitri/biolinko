@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { ArrowRight, Check, Copy, Link2, Megaphone, Percent, Repeat, ShoppingBag, Target, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import { FacebookIcon, TiktokIcon, WhatsappIcon } from '@/Components/UI/BrandIcons';
 import { Badge, Button, Card, CardHeader, Field, PageHeader, PlanLock, Stat, fcfa, fieldClass } from '@/Components/Dashboard/UI';
+import { absoluteStoreUrl } from '@/Components/Storefront/storeUrl';
 
 function Action({ done, title, text, href, cta, Icon, highlight }) {
     return (
@@ -67,11 +68,11 @@ export default function Index({ store, user, stats = {}, topProducts = [], marke
     const { errors } = usePage().props;
     const [pixels, setPixels] = useState(marketing);
     const [saving, setSaving] = useState(false);
-    const storeUrl = `${window.location.origin}/${store.slug}`;
+    const shopLink = absoluteStoreUrl(store.slug);
     const trend = stats.revenue_trend;
 
     const copy = async () => {
-        try { await navigator.clipboard.writeText(storeUrl); toast.success('Lien de la boutique copié'); } catch (e) { /* indisponible */ }
+        try { await navigator.clipboard.writeText(shopLink); toast.success('Lien de la boutique copié'); } catch (e) { /* indisponible */ }
     };
     const save = (e) => {
         e.preventDefault();
@@ -130,12 +131,12 @@ export default function Index({ store, user, stats = {}, topProducts = [], marke
                         <Card delay={0.1}>
                             <CardHeader title="Partager ma boutique" sub="Le geste qui rapporte le plus : votre lien partout." />
                             <div className="mt-4 flex items-center gap-2 rounded-2xl bg-[#F6F5F1] p-3">
-                                <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-[#141412]">{storeUrl.replace(/^https?:\/\//, '')}</span>
+                                <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-[#141412]">{shopLink.replace(/^https?:\/\//, '')}</span>
                                 <Button size="sm" onClick={copy}><Copy className="h-4 w-4" /> Copier</Button>
                             </div>
                             <div className="mt-3 grid grid-cols-3 gap-2">
-                                <Button size="sm" href={`https://wa.me/?text=${encodeURIComponent(`Découvrez ma boutique : ${storeUrl}`)}`} target="_blank" rel="noreferrer"><WhatsappIcon className="h-4 w-4 text-[#16A34A]" /> Statut</Button>
-                                <Button size="sm" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(storeUrl)}`} target="_blank" rel="noreferrer"><FacebookIcon className="h-4 w-4 text-[#1877F2]" /> Facebook</Button>
+                                <Button size="sm" href={`https://wa.me/?text=${encodeURIComponent(`Découvrez ma boutique : ${shopLink}`)}`} target="_blank" rel="noreferrer"><WhatsappIcon className="h-4 w-4 text-[#16A34A]" /> Statut</Button>
+                                <Button size="sm" href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shopLink)}`} target="_blank" rel="noreferrer"><FacebookIcon className="h-4 w-4 text-[#1877F2]" /> Facebook</Button>
                                 <Button size="sm" onClick={copy}><TiktokIcon className="h-4 w-4" /> Bio</Button>
                             </div>
                         </Card>

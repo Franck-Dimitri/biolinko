@@ -6,6 +6,7 @@ import {
     ArrowRight, ArrowUpRight, Check, Eye, FileText, Link2, MessageCircle, Package, PackageCheck, Palette, Plus, Rocket, ShoppingBag, TrendingUp, Wallet,
 } from 'lucide-react';
 import { EASE_OUT } from '@/Components/UI/Motion';
+import { storeUrl } from '@/Components/Storefront/storeUrl';
 
 const fcfa = (n) => `${Math.round(Number(n) || 0).toLocaleString('fr-FR')} FCFA`;
 
@@ -155,7 +156,7 @@ export default function Dashboard({ pilot = null, upgradeHint = null, totalNet =
                             <Plus className="h-4 w-4" /> Ajouter un produit
                         </Link>
                         {store && (
-                            <a href={`/${store.slug}`} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 rounded-full border border-black/10 bg-white px-4 text-[14px] font-medium text-[#141412] hover:border-black/30">
+                            <a href={storeUrl(store.slug)} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 rounded-full border border-black/10 bg-white px-4 text-[14px] font-medium text-[#141412] hover:border-black/30">
                                 <Eye className="h-4 w-4" /> Voir ma boutique
                             </a>
                         )}

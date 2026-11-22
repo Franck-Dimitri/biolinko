@@ -13,7 +13,7 @@ Votre commande **#{{ $order->tracking_code }}** effectuée auprès de la boutiqu
 
 **Votre facture d'achat officielle PDF avec QR Code est disponible en pièce jointe.**
 
-<x-mail::button :url="route('order.track', $order->tracking_code)">
+<x-mail::button :url="\App\Support\StoreUrl::track($order)">
 Suivre ma Livraison en Direct
 </x-mail::button>
 

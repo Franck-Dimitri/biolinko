@@ -88,7 +88,7 @@ class Seo
      */
     public static function store(Store $store, Collection $products, Collection $reviews): array
     {
-        $url = static::url('/'.$store->slug);
+        $url = StoreUrl::home($store);
         $place = $store->city_location ? " à {$store->city_location}" : '';
         $title = $store->seo_title ?: $store->name.($store->category ? " : {$store->category}{$place}" : $place);
         $description = $store->seo_description
@@ -108,7 +108,7 @@ class Seo
         $list = $products->isEmpty() ? null : [
             '@context' => 'https://schema.org', '@type' => 'ItemList', 'name' => "Articles de {$store->name}",
             'itemListElement' => $products->take(30)->values()->map(fn ($p, $i) => [
-                '@type' => 'ListItem', 'position' => $i + 1, 'url' => static::url("/{$store->slug}/p/{$p->slug}"), 'name' => $p->title,
+                '@type' => 'ListItem', 'position' => $i + 1, 'url' => StoreUrl::product($store, $p->slug), 'name' => $p->title,
             ])->all(),
         ];
 
@@ -125,7 +125,7 @@ class Seo
 
     public static function product(Store $store, Product $product, Collection $reviews): array
     {
-        $url = static::url("/{$store->slug}/p/{$product->slug}");
+        $url = StoreUrl::product($store, $product->slug);
         $price = (float) ($product->price_display ?? $product->price_vendor);
         $images = collect($product->images ?: [])->prepend($product->image_url)->filter()->unique()->map(fn ($i) => static::url($i))->values();
         $inStock = (int) $product->stock > 0;
@@ -139,7 +139,7 @@ class Seo
             'availability' => $inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
             'itemCondition' => 'https://schema.org/NewCondition',
             'priceValidUntil' => $product->promoActive() && $product->promo_end_at ? $product->promo_end_at->toDateString() : null,
-            'seller' => ['@type' => 'Organization', 'name' => $store->name, 'url' => static::url('/'.$store->slug)],
+            'seller' => ['@type' => 'Organization', 'name' => $store->name, 'url' => StoreUrl::home($store)],
         ], fn ($v) => $v !== null);
 
         $schema = array_filter([
@@ -158,9 +158,9 @@ class Seo
             ])->values()->all() ?: null,
         ], fn ($v) => $v !== null && $v !== '');
 
-        $crumbs = [['Accueil', static::url('/'.$store->slug), $store->name]];
+        $crumbs = [['Accueil', StoreUrl::home($store), $store->name]];
         if ($product->category) {
-            $crumbs[] = ['Catégorie', static::url('/'.$store->slug).'?categorie='.rawurlencode($product->category), $product->category];
+            $crumbs[] = ['Catégorie', StoreUrl::home($store).'?categorie='.rawurlencode($product->category), $product->category];
         }
         $crumbs[] = ['Produit', $url, $product->title];
         $breadcrumb = [

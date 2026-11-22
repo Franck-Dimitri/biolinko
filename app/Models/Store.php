@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\BusinessTypes;
+use App\Support\StoreUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +14,19 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Store extends Model
 {
     use HasFactory;
+
+    /** Adresse publique de la boutique (domaine des boutiques en production). */
+    protected $appends = ['public_url', 'public_address'];
+
+    public function getPublicUrlAttribute(): string
+    {
+        return StoreUrl::home($this);
+    }
+
+    public function getPublicAddressAttribute(): string
+    {
+        return StoreUrl::display($this);
+    }
 
     protected $fillable = [
         'country',
@@ -25,6 +40,7 @@ class Store extends Model
         'is_configured',
         'is_published',
         'category',
+        'business_type',
         'description',
         'about_text',
         'logo_url',
@@ -33,6 +49,7 @@ class Store extends Model
         'accent_color',
         'font_family',
         'border_radius_style',
+        'pattern',
         'theme_mode',
         'plan_type',
         'phone_whatsapp',
@@ -73,12 +90,12 @@ class Store extends Model
     {
         return [
             ['id' => 'banner', 'name' => "Bandeau d'Annonce Supérieur", 'enabled' => true, 'locked' => true],
-            ['id' => 'hero', 'name' => "Section Héro & Slogan Boutique", 'enabled' => true, 'locked' => true],
-            ['id' => 'smartlinks', 'name' => "Offres SmartLinks Express", 'enabled' => true, 'locked' => false],
-            ['id' => 'products', 'name' => "Catalogue de Produits", 'enabled' => true, 'locked' => true],
-            ['id' => 'benefits', 'name' => "Engagements & Garanties Vendeur", 'enabled' => true, 'locked' => false],
-            ['id' => 'reviews', 'name' => "Avis & Témoignages Clients", 'enabled' => true, 'locked' => false],
-            ['id' => 'about', 'name' => "À propos & Contact Vendeur", 'enabled' => true, 'locked' => false],
+            ['id' => 'hero', 'name' => 'Section Héro & Slogan Boutique', 'enabled' => true, 'locked' => true],
+            ['id' => 'smartlinks', 'name' => 'Offres SmartLinks Express', 'enabled' => true, 'locked' => false],
+            ['id' => 'products', 'name' => 'Catalogue de Produits', 'enabled' => true, 'locked' => true],
+            ['id' => 'benefits', 'name' => 'Engagements & Garanties Vendeur', 'enabled' => true, 'locked' => false],
+            ['id' => 'reviews', 'name' => 'Avis & Témoignages Clients', 'enabled' => true, 'locked' => false],
+            ['id' => 'about', 'name' => 'À propos & Contact Vendeur', 'enabled' => true, 'locked' => false],
         ];
     }
 
@@ -126,6 +143,15 @@ class Store extends Model
     public function forPublic(): static
     {
         $pixels = (bool) $this->user?->hasPlan('pro');
+        // Repères de confiance affichés au client avant qu'il paie
+        // Modèle de l'activité : vocabulaire de la vitrine (Commander, Réserver…)
+        $template = BusinessTypes::get($this->business_type);
+        $this->setAttribute('template', ['cta' => $template['cta'], 'date_label' => $template['date_label']]);
+        $this->setAttribute('trust', [
+            'verified' => (bool) $this->user?->isVerified(),
+            'since' => $this->created_at?->toIso8601String(),
+            'delivered' => Order::where('store_id', $this->id)->where('status', 'delivered')->count(),
+        ]);
         $this->unsetRelation('user');
         $this->makeHidden(['user']);
         if (! $pixels) {
@@ -169,7 +195,7 @@ class Store extends Model
         return $fee;
     }
 
-    public function reports(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function reports(): HasMany
     {
         return $this->hasMany(OrderReport::class);
     }

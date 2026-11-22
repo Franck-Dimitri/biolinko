@@ -3,6 +3,7 @@ import PlanIntentBanner from '@/Components/Dashboard/PlanIntentBanner';
 import AuthShell, { fieldClass, labelClass, primaryButtonClass } from '@/Layouts/AuthShell';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowRight, Loader2 } from 'lucide-react';
+import { storeAddress } from '@/Components/Storefront/storeUrl';
 
 export default function Register({ intendedPlan = null, intendedShop = null }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -27,14 +28,14 @@ export default function Register({ intendedPlan = null, intendedShop = null }) {
             <AuthShell
                 title="Créez votre boutique"
                 subtitle={<>Déjà inscrit ? <Link href={route('login', intendedPlan ? { plan: intendedPlan } : {})} className="font-medium text-[#141412] underline underline-offset-4">Se connecter</Link></>}
-                footer={<>Votre boutique sera accessible à l’adresse <span className="font-medium text-[#141412]">biolinko.link/{intendedShop?.slug || 'votre-boutique'}</span>.</>}
+                footer={<>Votre boutique sera accessible à l’adresse <span className="font-medium text-[#141412]">{storeAddress(intendedShop?.slug || 'votre-boutique')}</span>.</>}
             >
                 <PlanIntentBanner plan={intendedPlan} action="Créez votre compte et validez votre e-mail :" />
                 {intendedShop && (
                     <div className={`mb-6 rounded-2xl border p-4 text-sm ${intendedShop.available ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
                         {intendedShop.available
-                            ? <>Votre adresse <strong className="font-semibold">biolinko.link/{intendedShop.slug}</strong> est réservée pendant votre inscription.</>
-                            : <>L’adresse <strong className="font-semibold">biolinko.link/{intendedShop.slug}</strong> est déjà prise : nous vous en proposerons une proche, modifiable ensuite.</>}
+                            ? <>Votre adresse <strong className="font-semibold">{storeAddress(intendedShop.slug)}</strong> est réservée pendant votre inscription.</>
+                            : <>L’adresse <strong className="font-semibold">{storeAddress(intendedShop.slug)}</strong> est déjà prise : nous vous en proposerons une proche, modifiable ensuite.</>}
                     </div>
                 )}
 

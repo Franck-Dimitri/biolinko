@@ -6,8 +6,10 @@ import { toast } from 'sonner';
 import { Copy, Eye, Link2, Minus, Package, Plus, ShoppingBag, Trash2, TrendingUp } from 'lucide-react';
 import { WhatsappIcon } from '@/Components/UI/BrandIcons';
 import { Badge, Button, SubPage, Empty, Field, PageHeader, PlanLock, SearchInput, Stat, Tabs, fcfa, fieldClass, reveal, shortDate } from '@/Components/Dashboard/UI';
+import { storeDomainEnabled, storeUrl } from '@/Components/Storefront/storeUrl';
 
-const linkUrl = (code) => `${window.location.origin}/pay/${code}`;
+// Lien de paiement : sur le domaine de la boutique en production, sinon sur le site
+const linkUrl = (code, slug) => (storeDomainEnabled() && slug ? storeUrl(slug, `/pay/${code}`) : `${window.location.origin}/pay/${code}`);
 
 function linkState(l) {
     if (!l.is_active) return ['Désactivé', 'neutral'];
@@ -112,9 +114,9 @@ function NewLinkDialog({ open, onClose, products }) {
     );
 }
 
-function LinkCard({ link, index }) {
+function LinkCard({ link, index, storeSlug }) {
     const [label, tone] = linkState(link);
-    const url = linkUrl(link.code);
+    const url = linkUrl(link.code, storeSlug);
     const conversion = link.views_count ? Math.round((link.sales_count / link.views_count) * 100) : 0;
     const saving = Math.max(0, Number(link.subtotal_amount) - Number(link.total_amount));
 
@@ -167,7 +169,7 @@ function LinkCard({ link, index }) {
     );
 }
 
-export default function Index({ smartLinks = [], products = [], stats, maxActiveLinks = null }) {
+export default function Index({ smartLinks = [], products = [], stats, maxActiveLinks = null, storeSlug = null }) {
     const [creating, setCreating] = useState(false);
     const [tab, setTab] = useState('active');
     const active = useMemo(() => smartLinks.filter((l) => linkState(l)[0] === 'Actif'), [smartLinks]);
@@ -196,7 +198,7 @@ export default function Index({ smartLinks = [], products = [], stats, maxActive
                 <Tabs id="links" value={tab} onChange={setTab} tabs={[['active', 'Actifs', active.length], ['inactive', 'Inactifs et expirés', inactive.length]]} />
 
                 {shown.length ? (
-                    <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">{shown.map((l, i) => <LinkCard key={l.id} link={l} index={i} />)}</div>
+                    <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">{shown.map((l, i) => <LinkCard key={l.id} link={l} index={i} storeSlug={storeSlug} />)}</div>
                 ) : (
                     <Empty Icon={Link2} title={tab === 'active' ? 'Aucun lien actif' : 'Rien ici'}
                         text={products.length ? 'Créez un lien pour un produit ou un pack à prix réduit, puis partagez-le sur WhatsApp.' : 'Ajoutez d’abord des produits à votre catalogue.'}
