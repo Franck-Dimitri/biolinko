@@ -26,7 +26,7 @@ const SELLER_NAV = [
         ['Outils', 'seller.tools.index', Wrench, ['seller.tools.*']],
     ]],
     ['Boutique', [
-        ['Apparence', 'appearance.index', Palette, ['appearance.*']],
+        ['Ma boutique', 'appearance.index', Palette, ['appearance.*']],
         ['Abonnement', 'seller.subscriptions.index', Crown, ['seller.subscriptions.*']],
     ]],
 ];

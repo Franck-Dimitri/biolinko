@@ -262,15 +262,6 @@ export default function Index({ store, reviews = [], stats = {}, businessTypes =
                         ))}
                     </div>
 
-                    {/* Nouveau moteur : couleurs, polices, motif et sections se règlent dans l'éditeur de vitrine */}
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-black/[0.06] bg-[#FFFBEA] p-4">
-                        <p className="text-[14px] text-[#141412]">
-                            {store.design_engine
-                                ? <>Le style et les sections de votre vitrine se règlent dans <strong className="font-medium">Ma vitrine</strong>, avec un aperçu en direct.</>
-                                : <>Essayez les 3 templates pensés pour votre activité : <strong className="font-medium">votre boutique change de style sans perdre vos produits</strong>.</>}
-                        </p>
-                        <Button size="sm" variant="dark" href={route('seller.editor')}>Ouvrir Ma vitrine</Button>
-                    </div>
 
                     <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 rounded-3xl border border-black/[0.06] bg-white p-6">
                         {tab === 'identity' && (

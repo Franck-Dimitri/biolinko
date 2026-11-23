@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Support\BusinessTypes;
 use App\Support\ImageUpload;
 use App\Support\OpeningHours;
+use App\Support\TemplatesRollout;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -16,8 +17,13 @@ use Inertia\Response;
 
 class AppearanceController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
+        // « Ma boutique » : l'éditeur complet (vitrine, infos, avis) dès que les templates sont ouverts au vendeur
+        if (TemplatesRollout::openTo($request->user())) {
+            return app(EditorController::class)->show($request);
+        }
+
         $store = $request->user()->store()->with(['reviews' => fn ($q) => $q->with('product:id,title')->latest()])->first();
         abort_unless($store, 404);
 

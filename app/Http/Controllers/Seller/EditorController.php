@@ -33,6 +33,11 @@ class EditorController extends Controller
 
         return Inertia::render('Seller/Editor', [
             'store' => $store->only(['id', 'name', 'slug', 'business_type', 'public_url', 'theme_color']),
+            // Onglets « Infos » et « Avis » : tout se règle sur la même page
+            'info' => $store->only(['name', 'slug', 'business_type', 'description', 'about_text', 'logo_url', 'banner_url', 'phone_whatsapp', 'city_location',
+                'location_address', 'opening_hours', 'opening_schedule', 'min_order_amount', 'instagram_link', 'tiktok_link', 'facebook_link', 'support_email', 'theme_color']),
+            'activities' => collect(BusinessTypes::all())->map(fn ($t) => $t['label']),
+            'reviews' => $store->reviews()->with('product:id,title')->latest()->get(['id', 'product_id', 'customer_name', 'customer_city', 'rating', 'comment', 'is_featured', 'is_verified', 'created_at']),
             'draft' => $this->current($store, 'design_draft'),
             'published' => $store->design_engine ? $store->design : null,
             'catalog' => StoreDesign::catalog(),

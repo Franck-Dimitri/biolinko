@@ -137,7 +137,8 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
     Route::get('/creation', [\App\Http\Controllers\Seller\CreationController::class, 'show'])->name('seller.creation');
     Route::post('/creation', [\App\Http\Controllers\Seller\CreationController::class, 'store'])->name('seller.creation.store');
     // Éditeur visuel de la vitrine
-    Route::get('/vitrine', [\App\Http\Controllers\Seller\EditorController::class, 'show'])->name('seller.editor');
+    // L'éditeur fait partie de « Ma boutique » (ancienne adresse gardée)
+    Route::redirect('/vitrine', '/seller/appearance')->name('seller.editor');
     Route::put('/vitrine/brouillon', [\App\Http\Controllers\Seller\EditorController::class, 'saveDraft'])->middleware('throttle:60,1')->name('seller.editor.draft');
     Route::post('/vitrine/publier', [\App\Http\Controllers\Seller\EditorController::class, 'publish'])->name('seller.editor.publish');
     Route::post('/vitrine/versions/{version}/restaurer', [\App\Http\Controllers\Seller\EditorController::class, 'restore'])->name('seller.editor.restore');

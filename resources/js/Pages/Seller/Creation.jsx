@@ -43,8 +43,8 @@ function Done({ store, examples }) {
     };
     const todo = [
         [Package, examples > 0 ? `Remplacez les ${examples} produits d’exemple` : 'Ajoutez vos produits', 'Ils sont en brouillon : modifiez la photo, le nom et le prix, puis activez-les.', route('products.index')],
-        [ImagePlus, 'Ajoutez votre logo et vos coordonnées', 'Ils apparaissent dans l’en-tête et le pied de page.', route('appearance.index')],
-        [Palette, 'Personnalisez votre vitrine', 'Couleurs, polices, sections : tout se modifie sans rien casser.', route('seller.editor')],
+        [ImagePlus, 'Ajoutez votre logo et vos coordonnées', 'Ils apparaissent dans l’en-tête et le pied de page.', route('appearance.index', { onglet: 'infos' })],
+        [Palette, 'Personnalisez votre boutique', 'Couleurs, polices, sections : tout se modifie sans rien casser.', route('appearance.index')],
     ];
     return (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-xl space-y-8 py-10 text-center">
