@@ -141,6 +141,7 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
     Route::redirect('/vitrine', '/seller/appearance')->name('seller.editor');
     Route::put('/vitrine/brouillon', [\App\Http\Controllers\Seller\EditorController::class, 'saveDraft'])->middleware('throttle:60,1')->name('seller.editor.draft');
     Route::post('/vitrine/publier', [\App\Http\Controllers\Seller\EditorController::class, 'publish'])->name('seller.editor.publish');
+    Route::post('/vitrine/activite', [\App\Http\Controllers\Seller\EditorController::class, 'activity'])->name('seller.editor.activity');
     Route::post('/vitrine/versions/{version}/restaurer', [\App\Http\Controllers\Seller\EditorController::class, 'restore'])->name('seller.editor.restore');
     Route::post('/vitrine/image', [\App\Http\Controllers\Seller\EditorController::class, 'image'])->middleware('throttle:20,1')->name('seller.editor.image');
     Route::post('/store', [StoreController::class, 'update'])->name('store.update');

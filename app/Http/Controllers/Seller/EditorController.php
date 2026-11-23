@@ -103,6 +103,18 @@ class EditorController extends Controller
         return back()->with('success', 'La version précédente est de nouveau en ligne.');
     }
 
+    /** Étape 1 : l'activité décide des 3 templates proposés et des motifs. */
+    public function activity(Request $request): RedirectResponse
+    {
+        $validated = $request->validate(['business_type' => ['required', \Illuminate\Validation\Rule::in(BusinessTypes::keys())]]);
+        $request->user()->ensureStore()->forceFill([
+            'business_type' => $validated['business_type'],
+            'category' => BusinessTypes::get($validated['business_type'])['label'],
+        ])->save();
+
+        return back();
+    }
+
     /** Photo d'une section (accueil, histoire…) : optimisée comme les photos de produits. */
     public function image(Request $request): JsonResponse
     {

@@ -4,9 +4,13 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import {
     ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, ExternalLink, Eye, EyeOff, History, ImagePlus, LayoutTemplate, Monitor, Palette,
-    Plus, RotateCcw, Rows3, Smartphone, Trash2, X,
+    Plus, RotateCcw, Rows3, Smartphone, Star, Store, Trash2, X,
 } from 'lucide-react';
-import AppToaster from '@/Components/UI/AppToaster';
+import { useForm } from '@inertiajs/react';
+import OpeningScheduleEditor from '@/Components/Seller/OpeningScheduleEditor';
+import { storeAddressParts } from '@/Components/Storefront/storeUrl';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Badge, Button } from '@/Components/Dashboard/UI';
 import { PatternLayer, patternLabel } from '@/Components/Storefront/patterns';
 import { contrastColor } from '@/Components/Storefront/theme';
 import { PREVIEW_READY, SECTION_CLICK, selectInPreview, sendPreview } from '@/Components/Storefront/livePreview';
@@ -32,7 +36,9 @@ const FONT_PAIRS = [
 ];
 const SHAPES = [['Carré', 2, 2], ['Doux', 14, 12], ['Rond', 22, 999]];
 const INTENSITIES = [['none', 'Aucun'], ['soft', 'Discret'], ['bold', 'Marqué']];
-const TABS = [['sections', 'Sections', Rows3], ['style', 'Style', Palette], ['templates', 'Templates', LayoutTemplate], ['history', 'Historique', History]];
+// Étapes, dans l'ordre : activité, template, personnalisation, informations, avis
+const STEPS = [['activite', 'Activité'], ['template', 'Template'], ['personnaliser', 'Personnaliser'], ['infos', 'Infos'], ['avis', 'Avis']];
+const TABS = [...STEPS, ['versions', 'Versions']];
 
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const fontsLink = (pairs) => `https://fonts.googleapis.com/css2?${[...new Set(pairs.flat().filter((f) => typeof f === 'string' && f !== 'Poppins'))].map((f) => `family=${f.replace(/ /g, '+')}`).join('&')}&display=swap`;
@@ -121,11 +127,130 @@ function ImageField({ label, value, onChange }) {
     );
 }
 
+/* ------------------------------------------------------------------ Infos de la boutique */
+
+const inputCls = 'w-full rounded-xl border border-black/10 bg-white px-3 py-2.5 text-[14px] text-[#141412] focus:border-black/30 focus:ring-0';
+
+function Row({ label, hint, error, children }) {
+    return (
+        <label className="block">
+            <span className="mb-1 block text-[13px] font-medium text-[#141412]">{label}</span>
+            {children}
+            {hint && !error && <span className="mt-1 block text-[12px] text-[#8B8A83]">{hint}</span>}
+            {error && <span className="mt-1 block text-[12px] text-[#B91C1C]">{error}</span>}
+        </label>
+    );
+}
+
+/** Nom, adresse, activité, logo, coordonnées, horaires : enregistrés tout de suite (pas de brouillon). */
+function InfoPanel({ info, activities, onSaved }) {
+    const parts = storeAddressParts();
+    const form = useForm({
+        name: info.name || '', slug: info.slug || '', business_type: info.business_type || '', description: info.description || '', about_text: info.about_text || '',
+        phone_whatsapp: info.phone_whatsapp || '', city_location: info.city_location || '', location_address: info.location_address || '',
+        opening_hours: info.opening_hours || '', opening_schedule: info.opening_schedule || null, min_order_amount: info.min_order_amount ?? '',
+        instagram_link: info.instagram_link || '', tiktok_link: info.tiktok_link || '', facebook_link: info.facebook_link || '', support_email: info.support_email || '',
+        theme_color: info.theme_color || '#FFCC00', logo_file: null, banner_file: null,
+    });
+    const { data, setData, errors, processing } = form;
+    const set = (k) => (e) => setData(k, e.target.value);
+    const save = (e) => {
+        e.preventDefault();
+        // L'activité se choisit à l'étape 1 : on renvoie toujours la valeur à jour
+        form.transform((d) => ({ ...d, business_type: info.business_type || '', opening_schedule: JSON.stringify(d.opening_schedule || {}) }));
+        form.post(route('appearance.update'), {
+            forceFormData: true, preserveScroll: true, preserveState: true,
+            onSuccess: () => { toast.success('Informations enregistrées'); setData((d) => ({ ...d, logo_file: null, banner_file: null })); onSaved(); },
+            onError: () => toast.error('Vérifiez les champs signalés.'),
+        });
+    };
+    const file = (k, current, label) => (
+        <div className="flex items-center gap-3">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F6F5F1]">
+                {data[k] ? <img src={URL.createObjectURL(data[k])} alt="" className="h-full w-full object-cover" /> : current ? <img src={current} alt="" className="h-full w-full object-cover" /> : <ImagePlus className="h-5 w-5 text-[#8B8A83]" />}
+            </span>
+            <label className="cursor-pointer rounded-full border border-black/15 px-3 py-2 text-[13px] font-medium hover:border-black/40">
+                {current || data[k] ? 'Changer' : label}
+                <input type="file" accept="image/*" className="sr-only" onChange={(e) => setData(k, e.target.files?.[0] || null)} />
+            </label>
+        </div>
+    );
+    return (
+        <form onSubmit={save} className="space-y-5">
+            <p className="text-[13px] text-[#5F5E58]">Ces informations s’affichent sur toute la boutique. Elles sont enregistrées dès que vous cliquez sur « Enregistrer ».</p>
+            <Row label="Nom de la boutique" error={errors.name}><input value={data.name} onChange={set('name')} maxLength={60} className={inputCls} /></Row>
+            <Row label="Adresse de la boutique" error={errors.slug}>
+                <div className="flex items-center rounded-xl border border-black/10 bg-white focus-within:border-black/30">
+                    {parts.prefix && <span className="pl-3 text-[14px] text-[#8B8A83]">{parts.prefix}</span>}
+                    <input value={data.slug} onChange={(e) => setData('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} aria-label="Adresse" className="min-w-0 flex-1 border-0 bg-transparent px-1 py-2.5 text-[14px] focus:ring-0" />
+                    {parts.suffix && <span className="pr-3 text-[14px] text-[#8B8A83]">{parts.suffix}</span>}
+                </div>
+            </Row>
+            <div className="grid gap-3">
+                <span className="text-[13px] font-medium">Logo</span>{file('logo_file', info.logo_url, 'Ajouter un logo')}
+                <span className="text-[13px] font-medium">Photo d’accueil (bannière)</span>{file('banner_file', info.banner_url, 'Ajouter une photo')}
+            </div>
+            <Row label="En une phrase" hint="Sous le nom de la boutique et sur Google." error={errors.description}><textarea rows={2} value={data.description} onChange={set('description')} className={inputCls} /></Row>
+            <Row label="À propos" hint="Votre histoire, en quelques phrases." error={errors.about_text}><textarea rows={4} value={data.about_text} onChange={set('about_text')} className={inputCls} /></Row>
+            <Row label="WhatsApp de la boutique" hint="Pour vous prévenir des commandes ; affiché en pied de page." error={errors.phone_whatsapp}><input type="tel" value={data.phone_whatsapp} onChange={set('phone_whatsapp')} placeholder="+237 6XX XX XX XX" className={inputCls} /></Row>
+            <div className="grid grid-cols-2 gap-3">
+                <Row label="Ville" error={errors.city_location}><input value={data.city_location} onChange={set('city_location')} className={inputCls} /></Row>
+                <Row label="Commande minimum" error={errors.min_order_amount}><input type="number" min="0" step="500" value={data.min_order_amount} onChange={set('min_order_amount')} placeholder="Aucune" className={inputCls} /></Row>
+            </div>
+            <Row label="Adresse ou point de repère (facultatif)" error={errors.location_address}><input value={data.location_address} onChange={set('location_address')} className={inputCls} /></Row>
+            <div>
+                <span className="mb-2 block text-[13px] font-medium">Horaires d’ouverture</span>
+                <OpeningScheduleEditor value={data.opening_schedule} onChange={(v) => setData('opening_schedule', v)} />
+            </div>
+            {[['instagram_link', 'Instagram'], ['tiktok_link', 'TikTok'], ['facebook_link', 'Facebook']].map(([k, l]) => (
+                <Row key={k} label={l} error={errors[k]}><input value={data[k]} onChange={set(k)} placeholder="https://…" className={inputCls} /></Row>
+            ))}
+            <button type="submit" disabled={processing} className="sticky bottom-0 w-full rounded-full bg-[#141412] py-3 text-[14px] font-medium text-white disabled:opacity-60">{processing ? 'Enregistrement…' : 'Enregistrer les informations'}</button>
+        </form>
+    );
+}
+
+/** Avis des clients : afficher ou masquer sur la boutique, supprimer. */
+function ReviewsPanel({ reviews }) {
+    if (!reviews.length) return <p className="text-[13px] text-[#8B8A83]">Aucun avis pour le moment. Ils apparaîtront ici dès vos premières commandes.</p>;
+    return (
+        <div className="space-y-2">
+            <p className="text-[13px] text-[#5F5E58]">Choisissez les avis affichés sur votre boutique.</p>
+            {reviews.map((r) => (
+                <div key={r.id} className={`rounded-xl border p-3 ${r.is_featured ? 'border-black/[0.08]' : 'border-dashed border-black/15 opacity-70'}`}>
+                    <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                            <p className="text-[14px] font-medium">{r.customer_name} <span className="text-[#F5B800]">{'★'.repeat(r.rating)}</span></p>
+                            <p className="text-[12px] text-[#8B8A83]">{[r.customer_city, r.product?.title, r.is_verified ? 'Commande vérifiée' : null].filter(Boolean).join(' · ')}</p>
+                        </div>
+                        <div className="flex shrink-0 gap-1">
+                            <button type="button" onClick={() => router.patch(route('appearance.reviews.toggle', r.id), {}, { preserveScroll: true, preserveState: true })}
+                                aria-label={r.is_featured ? 'Masquer de la boutique' : 'Afficher sur la boutique'} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-black/5">
+                                {r.is_featured ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                            </button>
+                            <button type="button" onClick={() => { if (window.confirm('Supprimer cet avis ?')) router.delete(route('appearance.reviews.destroy', r.id), { preserveScroll: true, preserveState: true }); }}
+                                aria-label="Supprimer l’avis" className="flex h-8 w-8 items-center justify-center rounded-lg text-[#B91C1C] hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
+                        </div>
+                    </div>
+                    <p className="mt-1.5 text-[13px] text-[#141412] [overflow-wrap:anywhere]">{r.comment}</p>
+                </div>
+            ))}
+        </div>
+    );
+}
+
 /* ------------------------------------------------------------------ Éditeur */
 
-export default function Editor({ store, draft: initialDraft, published, catalog, patterns = [], templates = [], products = [], versions = [] }) {
+export default function Editor({ store, info = {}, activities = {}, reviews = [], draft: initialDraft, published, catalog, patterns = [], templates = [], products = [], versions = [] }) {
     const [draft, setDraft] = useState(initialDraft);
-    const [tab, setTab] = useState('sections');
+    const initialTab = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('onglet') : null;
+    const legacyTabs = { sections: 'personnaliser', style: 'personnaliser', templates: 'template', history: 'versions' };
+    const wanted = legacyTabs[initialTab] || initialTab;
+    const [tab, setTab] = useState(TABS.some(([k]) => k === wanted) ? wanted
+        : !info.business_type ? 'activite' : !published ? 'template' : 'personnaliser');
+    const [sub, setSub] = useState(initialTab === 'style' ? 'style' : 'sections'); // Personnaliser : sections ou style
+    const [previewOpen, setPreviewOpen] = useState(false);
+    const [frameKey, setFrameKey] = useState(0);
     const [selected, setSelected] = useState(null);
     const [device, setDevice] = useState('phone');
     const [save, setSave] = useState('saved'); // saved | saving | error
@@ -161,7 +286,7 @@ export default function Editor({ store, draft: initialDraft, published, catalog,
         const onMessage = (e) => {
             if (e.origin !== window.location.origin) return;
             if (e.data?.type === PREVIEW_READY) { push(); selectInPreview(frame.current, selected, false); }
-            if (e.data?.type === SECTION_CLICK) { setSelected(e.data.id); setTab('sections'); }
+            if (e.data?.type === SECTION_CLICK) { setSelected(e.data.id); setTab('personnaliser'); setSub('sections'); }
         };
         window.addEventListener('message', onMessage);
         return () => window.removeEventListener('message', onMessage);
@@ -215,7 +340,7 @@ export default function Editor({ store, draft: initialDraft, published, catalog,
         next.sections = next.sections.map((s) => ({ ...s, settings: Object.keys(s.settings || {}).length ? s.settings : (kept[s.type] || {}) }));
         Object.assign(d, next);
         setSelected(null);
-        toast.success(`Template « ${t.name} » appliqué au brouillon`, { description: 'Vos produits et vos textes sont gardés. Publiez pour le mettre en ligne.' });
+        toast.success(`Template « ${t.name} » choisi`, { description: 'Personnalisez-le, puis publiez pour le mettre en ligne. Vos produits et vos textes sont gardés.' });
     });
 
     const publish = () => router.post(route('seller.editor.publish'), { design: draft }, {
@@ -230,56 +355,110 @@ export default function Editor({ store, draft: initialDraft, published, catalog,
     };
 
     const existing = useMemo(() => new Set(draft.sections.map((s) => s.type)), [draft.sections]);
+    const chooseActivity = (key) => router.post(route('seller.editor.activity'), { business_type: key }, {
+        preserveScroll: true, preserveState: true, onSuccess: () => setTab('template'),
+    });
     const scale = device === 'phone' ? Math.min(1, (boxWidth - 32) / 390) : Math.min(1, (boxWidth - 32) / 1280);
     const width = device === 'phone' ? 390 : 1280;
     const height = device === 'phone' ? 844 : 800;
     const st = draft.style;
 
+    const status = save === 'saving' ? 'Enregistrement du brouillon…' : save === 'error' ? saveError
+        : !published ? (draft.template === 'classique' ? 'Suivez les étapes : activité, template, puis personnalisez.' : 'Votre template est prêt : publiez-le pour le mettre en ligne.')
+            : dirty ? 'Modifications enregistrées, pas encore publiées' : 'Votre boutique en ligne est à jour';
+
     return (
-        <div className="flex h-screen flex-col bg-[#F2F1EC] font-poppins text-[#141412]">
-            <Head title="Ma vitrine">{<link rel="stylesheet" href={fontsLink(FONT_PAIRS.map((p) => [p[0], p[1]]))} />}</Head>
-            <AppToaster />
-
-            <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-black/[0.08] bg-white px-4 py-2.5">
-                <div className="flex min-w-0 items-center gap-3">
-                    <Link href={route('seller.dashboard')} className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-black/5" aria-label="Retour au tableau de bord"><ArrowLeft className="h-5 w-5" /></Link>
-                    <div className="min-w-0">
-                        <p className="truncate text-[15px] font-semibold">Ma vitrine</p>
-                        <p className="text-[12px] text-[#8B8A83]" aria-live="polite">
-                            {save === 'saving' ? 'Enregistrement du brouillon…' : save === 'error' ? <span className="text-[#B91C1C]">{saveError}</span> : dirty ? 'Brouillon enregistré · non publié' : 'À jour avec la boutique en ligne'}
-                        </p>
+        <AuthenticatedLayout>
+            <Head title="Ma boutique">{<link rel="stylesheet" href={fontsLink(FONT_PAIRS.map((p) => [p[0], p[1]]))} />}</Head>
+            <div className="grid gap-6 pb-6 xl:grid-cols-[530px_1fr]">
+                {/* Réglages */}
+                <div className="min-w-0">
+                    <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="min-w-0">
+                            <h1 className="text-[28px] font-medium tracking-[-0.03em] text-[#141412]">Ma boutique</h1>
+                            <p className="mt-1 text-[15px] text-[#5F5E58]">Choisissez votre activité et votre template, puis personnalisez : l’aperçu change en direct.</p>
+                        </div>
+                        <div className="flex shrink-0 gap-2">
+                            <Button size="sm" variant="dark" onClick={() => setPreviewOpen(true)} className="xl:hidden"><Eye className="h-4 w-4" /> Aperçu</Button>
+                            <Button size="sm" href={store.public_url} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /> Ouvrir ma boutique</Button>
+                        </div>
                     </div>
-                </div>
-                <div className="flex items-center gap-1 rounded-full bg-[#F2F1EC] p-1" role="radiogroup" aria-label="Aperçu">
-                    {[['phone', Smartphone, 'Téléphone'], ['desktop', Monitor, 'Ordinateur']].map(([k, Icon, l]) => (
-                        <button key={k} type="button" role="radio" aria-checked={device === k} aria-label={l} onClick={() => setDevice(k)}
-                            className={`flex h-8 w-10 items-center justify-center rounded-full ${device === k ? 'bg-white shadow-sm' : 'text-[#5F5E58]'}`}><Icon className="h-4 w-4" /></button>
-                    ))}
-                </div>
-                <div className="flex items-center gap-2">
-                    <a href={store.public_url} target="_blank" rel="noreferrer" className="hidden h-9 items-center gap-1.5 rounded-full px-3 text-[13px] text-[#5F5E58] hover:bg-black/5 sm:inline-flex"><ExternalLink className="h-4 w-4" /> Ma boutique</a>
-                    {published && dirty && <button type="button" onClick={reset} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] text-[#5F5E58] hover:bg-black/5"><RotateCcw className="h-4 w-4" /> Annuler</button>}
-                    <button type="button" onClick={publish} disabled={(!dirty && !!published) || save === 'error'}
-                        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#FFCC00] px-4 text-[14px] font-medium hover:bg-[#E6B800] disabled:opacity-50">
-                        <Check className="h-4 w-4" /> Publier
-                    </button>
-                </div>
-            </header>
 
-            <div className="flex min-h-0 flex-1 flex-col-reverse lg:flex-row">
-                {/* Panneau de réglages */}
-                <aside className="flex max-h-[48vh] min-h-0 w-full shrink-0 flex-col border-t border-black/[0.08] bg-white lg:max-h-none lg:w-[380px] lg:border-r lg:border-t-0">
-                    <nav className="flex shrink-0 gap-1 border-b border-black/[0.06] p-2" aria-label="Réglages">
-                        {TABS.map(([k, l, Icon]) => (
+                    {/* Publication : rien ne change pour les clients avant « Publier » */}
+                    <div className={`mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3 ${dirty ? 'border-[#FFCC00]/70 bg-[#FFFBEA]' : 'border-black/[0.06] bg-white'}`}>
+                        <p className={`text-[14px] ${save === 'error' ? 'text-[#B91C1C]' : 'text-[#141412]'}`} aria-live="polite">{status}</p>
+                        <div className="flex items-center gap-2">
+                            {published && dirty && <button type="button" onClick={reset} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] text-[#5F5E58] hover:bg-black/5"><RotateCcw className="h-4 w-4" /> Annuler</button>}
+                            <button type="button" onClick={publish} disabled={(!dirty && !!published) || save === 'error'}
+                                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#FFCC00] px-4 text-[14px] font-medium hover:bg-[#E6B800] disabled:opacity-50">
+                                <Check className="h-4 w-4" /> Publier
+                            </button>
+                        </div>
+                    </div>
+
+                    <nav className="sticky top-16 z-10 -mx-1 mb-4 flex gap-0.5 overflow-x-auto bg-[#FAFAF8] px-1 py-2 [scrollbar-width:none]" aria-label="Étapes">
+                        {STEPS.map(([k, l], i) => (
                             <button key={k} type="button" onClick={() => { setTab(k); setAdding(false); }} aria-pressed={tab === k}
-                                className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-[13px] ${tab === k ? 'bg-[#141412] text-white' : 'text-[#5F5E58] hover:bg-black/5'}`}>
-                                <Icon className="h-4 w-4" /> <span className="hidden sm:inline">{l}</span>
+                                className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[13px] transition-colors ${tab === k ? 'bg-[#141412] text-white' : 'text-[#5F5E58] hover:bg-black/5 hover:text-[#141412]'}`}>
+                                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] ${tab === k ? 'bg-white text-[#141412]' : 'bg-black/[0.06]'}`}>{i + 1}</span> {l}
                             </button>
                         ))}
+                        <button type="button" onClick={() => setTab('versions')} aria-pressed={tab === 'versions'}
+                            aria-label="Versions publiées" title="Versions publiées"
+                            className={`ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tab === 'versions' ? 'bg-[#141412] text-white' : 'text-[#8B8A83] hover:bg-black/5'}`}><History className="h-4 w-4" /></button>
                     </nav>
 
-                    <div className="min-h-0 flex-1 overflow-y-auto p-4">
-                        {tab === 'sections' && !section && !adding && (
+                    <div className="rounded-3xl border border-black/[0.06] bg-white p-5 sm:p-6">
+                        {tab === 'activite' && (
+                            <div className="space-y-4">
+                                <div><h2 className="text-[17px] font-medium">Que vendez-vous ?</h2><p className="mt-0.5 text-[13px] text-[#8B8A83]">Votre activité décide des templates proposés à l’étape suivante.</p></div>
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                    {Object.entries(activities).map(([k, l]) => (
+                                        <button key={k} type="button" onClick={() => chooseActivity(k)} aria-pressed={info.business_type === k}
+                                            className={`flex items-center justify-between gap-2 rounded-2xl border-2 px-4 py-3 text-left text-[14px] transition-colors ${info.business_type === k ? 'border-[#141412] bg-[#FFFBEA]' : 'border-black/[0.08] hover:border-black/25'}`}>
+                                            {l} {info.business_type === k && <Check className="h-4 w-4 shrink-0" />}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {tab === 'template' && (
+                            <div className="space-y-4">
+                                <div>
+                                    <h2 className="text-[17px] font-medium">Choisissez votre template</h2>
+                                    <p className="mt-0.5 text-[13px] text-[#8B8A83]">{info.business_type ? `3 templates pensés pour « ${activities[info.business_type]} ».` : 'Choisissez d’abord votre activité.'} Vos produits et vos textes restent si vous changez.</p>
+                                </div>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {templates.filter((t) => t.id !== 'classique').map((t) => (
+                                        <button key={t.id} type="button" onClick={() => { applyTemplate(t); setTab('personnaliser'); }} aria-pressed={draft.template === t.id}
+                                            className={`group min-w-0 rounded-2xl border-2 p-1.5 text-left transition-colors ${draft.template === t.id ? 'border-[#141412]' : 'border-transparent hover:border-black/20'}`}>
+                                            <span className="relative block overflow-hidden rounded-xl bg-[#F2F1EC]" style={{ aspectRatio: '390 / 700' }}>
+                                                <iframe src={`${route('site.templates.show', t.id)}?apercu=1`} title={`Template ${t.name}`} loading="lazy" tabIndex={-1} aria-hidden
+                                                    className="pointer-events-none absolute left-0 top-0 origin-top-left border-0" style={{ width: 390, height: 700, transform: 'scale(var(--s))' }}
+                                                    ref={(el) => { if (el) el.style.setProperty('--s', String(el.parentElement.clientWidth / 390)); }} />
+                                                {draft.template === t.id && <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#141412] text-white"><Check className="h-4 w-4" /></span>}
+                                            </span>
+                                            <span className="mt-2 block px-1 text-[14px] font-medium">{t.name}</span>
+                                            <span className="block px-1 text-[12px] leading-snug text-[#8B8A83] line-clamp-3">{t.pitch}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                {templates.some((t) => t.id === 'classique') && draft.template !== 'classique' && published?.template === 'classique' && (
+                                    <p className="text-[12px] text-[#8B8A83]">Votre boutique est encore sur l’apparence Biolinko d’origine tant que vous ne publiez pas.</p>
+                                )}
+                            </div>
+                        )}
+
+                        {tab === 'personnaliser' && (
+                            <div className="mb-4 flex gap-1 rounded-full bg-[#F2F1EC] p-1" role="tablist" aria-label="Personnaliser">
+                                {[['sections', 'Sections', Rows3], ['style', 'Couleurs et polices', Palette]].map(([k, l, Icon]) => (
+                                    <button key={k} type="button" role="tab" aria-selected={sub === k} onClick={() => { setSub(k); setAdding(false); }}
+                                        className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-[13px] ${sub === k ? 'bg-white shadow-sm' : 'text-[#5F5E58]'}`}><Icon className="h-4 w-4" /> {l}</button>
+                                ))}
+                            </div>
+                        )}
+                        {tab === 'personnaliser' && sub === 'sections' && !section && !adding && (
                             <div className="space-y-3">
                                 <p className="text-[13px] text-[#5F5E58]">Cliquez sur une section de l’aperçu, ou ici, pour la modifier.</p>
                                 <ul className="space-y-1.5">
@@ -302,7 +481,7 @@ export default function Editor({ store, draft: initialDraft, published, catalog,
                             </div>
                         )}
 
-                        {tab === 'sections' && adding && (
+                        {tab === 'personnaliser' && sub === 'sections' && adding && (
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between"><p className="text-[15px] font-semibold">Ajouter une section</p><button type="button" onClick={() => setAdding(false)} aria-label="Fermer"><X className="h-5 w-5" /></button></div>
                                 <div className="grid grid-cols-2 gap-2">
@@ -313,7 +492,7 @@ export default function Editor({ store, draft: initialDraft, published, catalog,
                             </div>
                         )}
 
-                        {tab === 'sections' && section && (
+                        {tab === 'personnaliser' && sub === 'sections' && section && (
                             <div className="space-y-5">
                                 <button type="button" onClick={() => setSelected(null)} className="inline-flex items-center gap-1.5 text-[13px] text-[#5F5E58] hover:text-[#141412]"><ArrowLeft className="h-4 w-4" /> Toutes les sections</button>
                                 <div className="flex items-center justify-between gap-2">
@@ -345,7 +524,7 @@ export default function Editor({ store, draft: initialDraft, published, catalog,
                             </div>
                         )}
 
-                        {tab === 'style' && (
+                        {tab === 'personnaliser' && sub === 'style' && (
                             <div className="space-y-6">
                                 <div>
                                     <p className="mb-2 text-[13px] font-medium">Palettes</p>
@@ -412,27 +591,11 @@ export default function Editor({ store, draft: initialDraft, published, catalog,
                             </div>
                         )}
 
-                        {tab === 'templates' && (
-                            <div className="space-y-3">
-                                <p className="text-[13px] text-[#5F5E58]">Changer de template ne fait rien perdre : vos produits, vos avis et vos textes restent. Le changement va dans le brouillon, publiez pour le mettre en ligne.</p>
-                                {templates.map((t) => (
-                                    <div key={t.id} className={`rounded-xl border p-3 ${draft.template === t.id ? 'border-[#141412]' : 'border-black/[0.08]'}`}>
-                                        <div className="flex items-center gap-2">
-                                            <span className="h-4 w-4 rounded-full ring-1 ring-black/10" style={{ backgroundColor: t.design.style.primary }} />
-                                            <span className="font-medium">{t.name}</span>
-                                            {draft.template === t.id && <span className="ml-auto text-[12px] text-[#15803D]">Actuel</span>}
-                                        </div>
-                                        <p className="mt-1 text-[13px] text-[#5F5E58]">{t.pitch}</p>
-                                        {draft.template !== t.id && (
-                                            <button type="button" onClick={() => applyTemplate(t)} className="mt-2 rounded-full border border-black/15 px-3 py-1.5 text-[13px] font-medium hover:border-black/40">Essayer ce template</button>
-                                        )}
-                                    </div>
-                                ))}
-                                <a href={route('site.templates')} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[13px] text-[#5F5E58] underline underline-offset-2">Voir tous les templates <ExternalLink className="h-3.5 w-3.5" /></a>
-                            </div>
-                        )}
+                        {tab === 'infos' && <InfoPanel info={info} activities={activities} onSaved={() => setFrameKey((k) => k + 1)} />}
 
-                        {tab === 'history' && (
+                        {tab === 'avis' && <ReviewsPanel reviews={reviews} />}
+
+                        {tab === 'versions' && (
                             <div className="space-y-3">
                                 <p className="text-[13px] text-[#5F5E58]">Les {versions.length || ''} dernières versions publiées. Remettez-en une en ligne en un clic.</p>
                                 {!versions.length && <p className="text-[13px] text-[#8B8A83]">Aucune version précédente pour le moment.</p>}
@@ -445,16 +608,32 @@ export default function Editor({ store, draft: initialDraft, published, catalog,
                             </div>
                         )}
                     </div>
-                </aside>
+                </div>
 
-                {/* Aperçu */}
-                <main ref={box} className="flex min-h-0 flex-1 items-start justify-center overflow-auto p-4">
-                    <div className="overflow-hidden rounded-[22px] bg-white shadow-[0_20px_50px_-25px_rgba(20,20,10,0.35)] ring-1 ring-black/10" style={{ width: width * scale, height: height * scale }}>
-                        <iframe ref={frame} title="Aperçu de la vitrine" src={`/${store.slug}?apercu=editeur`} onLoad={push}
-                            className="origin-top-left border-0" style={{ width, height, transform: `scale(${scale})` }} />
+                {/* Aperçu : colonne collante sur ordinateur, plein écran sur téléphone */}
+                <div className={previewOpen ? 'fixed inset-0 z-[60] flex flex-col bg-[#F2F1EC] p-2 sm:p-4' : 'hidden h-[calc(100vh-112px)] min-w-0 xl:sticky xl:top-20 xl:flex xl:flex-col'}>
+                    <div className="flex h-full flex-col rounded-3xl border border-black/[0.06] bg-white">
+                        <div className="flex items-center justify-between gap-3 border-b border-black/[0.06] px-4 py-3">
+                            <div className="flex rounded-full bg-[#F2F1EC] p-1" role="radiogroup" aria-label="Aperçu">
+                                {[['desktop', Monitor, 'Ordinateur'], ['phone', Smartphone, 'Mobile']].map(([k, Icon, l]) => (
+                                    <button key={k} type="button" role="radio" aria-checked={device === k} onClick={() => setDevice(k)}
+                                        className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] ${device === k ? 'bg-white text-[#141412] shadow-sm' : 'text-[#5F5E58]'}`}><Icon className="h-4 w-4" /> {l}</button>
+                                ))}
+                            </div>
+                            <div className="flex items-center gap-2 text-[13px] text-[#8B8A83]">
+                                {dirty && <Badge tone="warning">Non publié</Badge>}
+                                {previewOpen && <button type="button" onClick={() => setPreviewOpen(false)} aria-label="Fermer l’aperçu" className="flex h-9 w-9 items-center justify-center rounded-full text-[#141412] hover:bg-black/5"><X className="h-5 w-5" /></button>}
+                            </div>
+                        </div>
+                        <div ref={box} className="flex min-h-0 flex-1 justify-center overflow-auto rounded-b-3xl bg-[#F2F1EC] p-4">
+                            <div className={`shrink-0 overflow-hidden bg-white ${device === 'phone' ? 'rounded-[32px] border-[8px] border-[#141412]' : 'rounded-xl ring-1 ring-black/10'}`} style={{ width: width * scale + (device === 'phone' ? 16 : 0), height: height * scale + (device === 'phone' ? 16 : 0) }}>
+                                <iframe key={frameKey} ref={frame} title="Aperçu de la vitrine" src={`/${store.slug}?apercu=editeur`} onLoad={push}
+                                    className="origin-top-left border-0" style={{ width, height, transform: `scale(${scale})` }} />
+                            </div>
+                        </div>
                     </div>
-                </main>
+                </div>
             </div>
-        </div>
+        </AuthenticatedLayout>
     );
 }
