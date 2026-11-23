@@ -15,7 +15,7 @@ const REPORT_REASONS = [
 ];
 
 /** Signalement de la boutique à l'équipe Biolinko (pas au vendeur). */
-function ReportStoreDialog({ store, onClose }) {
+export function ReportStoreDialog({ store, onClose }) {
     const form = useForm({ reason: 'fake', message: '', contact: '', website: '' });
     const submit = (e) => {
         e.preventDefault();

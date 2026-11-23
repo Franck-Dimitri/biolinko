@@ -59,13 +59,13 @@ export default function PaymentStatus({ payment, primaryColor, primaryTextColor,
             {payment && (
                 <motion.div
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[70] flex items-end justify-center bg-[#141412]/55 backdrop-blur-sm sm:items-center sm:p-4"
+                    className="fixed inset-0 z-[70] flex items-end justify-center bg-[color:var(--ink,#141412)]/55 backdrop-blur-sm sm:items-center sm:p-4"
                 >
                     <motion.div
                         role="dialog" aria-modal="true" aria-labelledby="pay-title" aria-live="polite"
                         initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                        className="w-full max-w-md rounded-t-xl bg-white p-6 pb-8 text-center shadow-2xl sm:rounded-xl sm:p-8"
+                        className="w-full max-w-md rounded-t-xl bg-[color:var(--bg,#FFFFFF)] p-6 pb-8 text-center shadow-2xl sm:rounded-[min(var(--r,12px),12px)] sm:p-8"
                     >
                         {status === 'SUCCESS' && (
                             <div className="space-y-4">
@@ -73,21 +73,21 @@ export default function PaymentStatus({ payment, primaryColor, primaryTextColor,
                                     className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#16A34A]">
                                     <Check className="h-10 w-10 text-white" />
                                 </motion.div>
-                                <h2 id="pay-title" className="text-xl font-bold text-[#141412]">Paiement confirmé</h2>
-                                <p className="text-[#5F5E58]">Merci ! Nous ouvrons votre reçu et le suivi de commande…</p>
+                                <h2 id="pay-title" className="text-xl font-bold text-[color:var(--ink,#141412)]">Paiement confirmé</h2>
+                                <p className="text-[color:var(--mu,#5F5E58)]">Merci ! Nous ouvrons votre reçu et le suivi de commande…</p>
                             </div>
                         )}
 
                         {(status === 'FAILED' || status === 'TIMEOUT') && (
                             <div className="space-y-5">
                                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
-                                    {status === 'FAILED' ? <AlertCircle className="h-8 w-8 text-[#B91C1C]" /> : <Clock className="h-8 w-8 text-[#5F5E58]" />}
+                                    {status === 'FAILED' ? <AlertCircle className="h-8 w-8 text-[#B91C1C]" /> : <Clock className="h-8 w-8 text-[color:var(--mu,#5F5E58)]" />}
                                 </div>
                                 <div className="space-y-1.5">
-                                    <h2 id="pay-title" className="text-xl font-bold text-[#141412]">
+                                    <h2 id="pay-title" className="text-xl font-bold text-[color:var(--ink,#141412)]">
                                         {status === 'FAILED' ? "Le paiement n'a pas abouti" : 'Toujours pas de confirmation'}
                                     </h2>
-                                    <p className="text-[#5F5E58]">
+                                    <p className="text-[color:var(--mu,#5F5E58)]">
                                         {status === 'FAILED'
                                             ? (message || 'Vérifiez votre solde ou votre code secret, puis réessayez.')
                                             : `L’opérateur n’a pas encore répondu. Si vous avez validé, la commande sera confirmée automatiquement : suivez-la depuis sa page. Pas de demande reçue ? Composez ${op.ussd}.`}
@@ -109,7 +109,7 @@ export default function PaymentStatus({ payment, primaryColor, primaryTextColor,
                                     ) : (
                                         // Pas de nouvelle commande tant que la première peut encore aboutir : sinon double débit possible
                                         <a href={payment.redirect_url || `/track/${payment.tracking_code}`}
-                                            className="flex h-12 items-center justify-center rounded-full border border-black/15 font-semibold text-[#141412]">
+                                            className="flex h-12 items-center justify-center rounded-full border border-[color:var(--ln,rgba(0,0,0,0.15))] font-semibold text-[color:var(--ink,#141412)]">
                                             Suivre ma commande
                                         </a>
                                     )}
@@ -129,26 +129,26 @@ export default function PaymentStatus({ payment, primaryColor, primaryTextColor,
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <h2 id="pay-title" className="text-xl font-bold text-[#141412]">Validez sur votre téléphone</h2>
-                                    <p className="text-[#5F5E58]">
-                                        Demande de <strong className="font-semibold text-[#141412]">{formatFcfa(payment.amount)}</strong> envoyée au <span className="whitespace-nowrap font-medium text-[#141412]">{payment.phone}</span> ({op.label}).
+                                    <h2 id="pay-title" className="text-xl font-bold text-[color:var(--ink,#141412)]">Validez sur votre téléphone</h2>
+                                    <p className="text-[color:var(--mu,#5F5E58)]">
+                                        Demande de <strong className="font-semibold text-[color:var(--ink,#141412)]">{formatFcfa(payment.amount)}</strong> envoyée au <span className="whitespace-nowrap font-medium text-[color:var(--ink,#141412)]">{payment.phone}</span> ({op.label}).
                                     </p>
                                 </div>
 
-                                <ol className="space-y-2.5 rounded-3xl bg-[#F6F5F1] p-4 text-left text-[15px] text-[#141412]">
+                                <ol className="space-y-2.5 rounded-[var(--r,24px)] bg-[color:var(--sf,#F6F5F1)] p-4 text-left text-[15px] text-[color:var(--ink,#141412)]">
                                     {['Un message apparaît sur votre téléphone', 'Tapez votre code secret Mobile Money', 'Votre commande est confirmée ici automatiquement'].map((t, i) => (
                                         <li key={t} className="flex items-start gap-3">
-                                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-xl text-xs font-semibold" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>{i + 1}</span>
+                                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[min(var(--r,12px),12px)] text-xs font-semibold" style={{ backgroundColor: primaryColor, color: primaryTextColor }}>{i + 1}</span>
                                             <span>{t}</span>
                                         </li>
                                     ))}
                                 </ol>
 
-                                <div className="space-y-1 text-sm text-[#5F5E58]">
+                                <div className="space-y-1 text-sm text-[color:var(--mu,#5F5E58)]">
                                     <div className="flex items-center justify-center gap-2">
                                         <RefreshCw className="h-4 w-4 animate-spin" /> En attente de confirmation · {Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, '0')}
                                     </div>
-                                    <p>Pas de message ? Composez <strong className="font-semibold text-[#141412]">{op.ussd}</strong></p>
+                                    <p>Pas de message ? Composez <strong className="font-semibold text-[color:var(--ink,#141412)]">{op.ussd}</strong></p>
                                 </div>
                             </div>
                         )}

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, BadgeCheck, Clock, FileText, MapPin, Package, Search, ShieldCheck, Star, Tag, Truck } from 'lucide-react';
 import { EASE_OUT } from '@/Components/UI/Motion';
-import { FacebookIcon, InstagramIcon, TiktokIcon, WhatsappIcon } from '@/Components/UI/BrandIcons';
+import { FacebookIcon, InstagramIcon, TiktokIcon } from '@/Components/UI/BrandIcons';
 import { OperatorLogo } from '@/Components/Landing/Illustrations';
 import ProductCard, { ProductImage, productImage } from '@/Components/Storefront/ProductCard';
 import { formatFcfa } from '@/Components/Storefront/useCart';
@@ -17,12 +17,6 @@ export const reveal = (delay = 0) => ({
     viewport: { once: true, margin: '-60px' },
     transition: { duration: 0.6, delay, ease: EASE_OUT },
 });
-
-export const whatsappUrl = (store, text) => {
-    const n = store?.phone_whatsapp?.replace(/[^0-9]/g, '');
-    if (!n || n.length < 8) return null;
-    return `https://wa.me/${n}?text=${encodeURIComponent(text || `Bonjour ${store.name}, je vous contacte depuis votre boutique en ligne.`)}`;
-};
 
 const price = (p) => {
     const promo = p.promo_active;
@@ -70,7 +64,6 @@ export function StoreHero({ store, products, theme, onShop }) {
     }, [featured.length, reduce]);
     const current = featured[i];
     const cover = store.banner_url || productImage(current);
-    const wa = whatsappUrl(store);
     const tagline = [store.category, store.city_location].filter(Boolean).join(' · ');
 
     return (
@@ -363,8 +356,7 @@ export function ReviewsSection({ reviews, onReview }) {
 
 /* ------------------------------------------------------------------ À propos + contact */
 
-export function AboutSection({ store, theme }) {
-    const wa = whatsappUrl(store);
+export function AboutSection({ store }) {
     const socials = [[store.instagram_link, InstagramIcon, 'Instagram'], [store.tiktok_link, TiktokIcon, 'TikTok'], [store.facebook_link, FacebookIcon, 'Facebook']].filter(([h]) => h);
     return (
         <section id="about" className="scroll-mt-24 py-10 sm:py-24">
@@ -381,16 +373,15 @@ export function AboutSection({ store, theme }) {
                         {store.opening_hours && <li className="flex gap-3"><Clock className="mt-0.5 h-5 w-5 shrink-0 text-[#8B8A83]" /> {store.opening_hours}</li>}
                         <li className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#16A34A]" /> Paiement sécurisé MTN MoMo et Orange Money</li>
                     </ul>
-                    <div className="space-y-4">
-                        {wa && <Pill href={wa} target="_blank" rel="noreferrer" theme={theme} variant="outline" className="w-full"><WhatsappIcon className="h-4 w-4" /> Une question ? Écrivez-nous</Pill>}
-                        {socials.length > 0 && (
+                    {socials.length > 0 && (
+                        <div className="space-y-4">
                             <div className="flex gap-2">
                                 {socials.map(([href, Icon, label]) => (
                                     <a key={label} href={href} target="_blank" rel="noreferrer" aria-label={label} className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-[#141412] hover:border-black/30"><Icon className="h-4 w-4" /></a>
                                 ))}
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </motion.div>
             </Container>
         </section>
@@ -399,8 +390,7 @@ export function AboutSection({ store, theme }) {
 
 /* ------------------------------------------------------------------ Appel final */
 
-export function StoreCta({ store, theme, onShop }) {
-    const wa = whatsappUrl(store, `Bonjour ${store.name}, j’ai une question avant de commander.`);
+export function StoreCta({ theme, onShop }) {
     return (
         <section className="pb-12 pt-2 sm:pb-20 sm:pt-4">
             <Container>
@@ -413,7 +403,6 @@ export function StoreCta({ store, theme, onShop }) {
                     <p className="relative mx-auto mt-3 max-w-[460px] text-[15px] text-white/60 sm:mt-4 sm:text-[17px]">Paiement par Mobile Money, confirmation immédiate et reçu sur WhatsApp.</p>
                     <div className="relative mt-6 flex flex-col justify-center gap-2.5 sm:mt-8 sm:flex-row sm:gap-3">
                         <Pill onClick={onShop} theme={theme}>Voir les produits <ArrowRight className="h-4 w-4" /></Pill>
-                        {wa && <Pill href={wa} target="_blank" rel="noreferrer" theme={theme} variant="dark"><WhatsappIcon className="h-4 w-4" /> Poser une question</Pill>}
                     </div>
                 </motion.div>
             </Container>

@@ -8,6 +8,12 @@ import { Head, router } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { initPixels, track } from '@/Components/Storefront/pixels';
 import { storeUrl } from '@/Components/Storefront/storeUrl';
+import { storeDesign } from '@/Components/Storefront/Design/classic';
+import { DesignFooter, DesignHeader } from '@/Components/Storefront/Design/Chrome';
+import { fontsHref } from '@/Components/Storefront/Design/tokens';
+import { storeTheme } from '@/Components/Storefront/Design/theme';
+import { PatternBand } from '@/Components/Storefront/Design/ui';
+import '@/Components/Storefront/Design/storefront.css';
 
 export default function StorefrontLayout({ 
     store, 
@@ -21,8 +27,16 @@ export default function StorefrontLayout({
     hasSmartLinks = false,
     cartCount = null,
     fullBleed = false,
+    patternBand = false,
 }) {
-    const primaryColor = store?.theme_color || '#FFCC00';
+    // Vitrine : en-tête et pied de page du template, sinon ceux d'origine (template « Classique »)
+    // Template : ses variables (couleurs, polices, arrondis) s'appliquent à tout le parcours d'achat
+    const theme = storeTheme(store);
+    const design = theme.design;
+    const header = design.sections.find((s) => s.type === 'header');
+    const footer = design.sections.find((s) => s.type === 'footer');
+    const legacy = design.template === 'classique';
+    const fonts = legacy ? null : fontsHref(design.style);
 
     const cart = useCart(store?.id);
 
@@ -39,15 +53,20 @@ export default function StorefrontLayout({
 
     return (
         <MotionConfig reducedMotion="user">
-        <div className="min-h-screen bg-white text-[#141412] font-poppins antialiased flex flex-col justify-between selection:bg-brand-honey selection:text-brand-ink">
+        <div className={`min-h-screen bg-white text-[#141412] font-poppins antialiased flex flex-col justify-between selection:bg-brand-honey selection:text-brand-ink ${legacy ? '' : 'sfj'}`}
+            {...(legacy
+                // Classique « coins carrés » : les pages du parcours lisent l'arrondi dans --r
+                ? (store?.border_radius_style === 'square' ? { style: { '--r': '4px' } } : {})
+                : { 'data-template': design.template, style: { ...theme.vars, backgroundColor: design.style.background } })}>
             {/* Sonner Toast Provider */}
             <AppToaster />
 
             {/* Police choisie par le vendeur (Poppins est déjà chargée par la page) */}
-            {store?.font_family && store.font_family !== 'Poppins' && (
+            {fonts && <Head><link head-key="store-font" rel="stylesheet" href={fonts} /></Head>}
+            {legacy && store?.font_family && store.font_family !== 'Poppins' && (
                 <Head><link head-key="store-font" rel="stylesheet" href={`https://fonts.googleapis.com/css2?family=${encodeURIComponent(store.font_family)}:wght@400;500;600;700&display=swap`} /></Head>
             )}
-            <style>{`
+            {legacy && <style>{`
                 ${store?.border_radius_style === 'square' ? `
                     .rounded, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl {
                         border-radius: 4px !important;
@@ -63,7 +82,7 @@ export default function StorefrontLayout({
                         font-family: '${store.font_family}', system-ui, -apple-system, sans-serif !important;
                     }
                 ` : ''}
-            `}</style>
+            `}</style>}
             
             {/* UNPUBLISHED BANNER / VENDOR PREVIEW MODE */}
             {!store.is_published && (
@@ -77,38 +96,32 @@ export default function StorefrontLayout({
                 </div>
             )}
 
-            {/* UNIFIED HEADER BOUTIQUE */}
-            <HeaderBoutique 
-                store={store} 
-                cartCount={totalCartCount} 
-                onOpenCart={() => {
-                    if (setActiveTab) {
-                        setActiveTab('cart');
-                    } else {
-                        router.visit(storeUrl(store.slug, `?tab=cart`));
-                    }
-                }}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                activeTab={activeTab}
-                hasPromos={hasPromos}
-                hasSmartLinks={hasSmartLinks}
-                setActiveTab={(tab) => {
-                    if (setActiveTab) {
-                        setActiveTab(tab);
-                    } else {
-                        router.visit(storeUrl(store.slug, tab === 'all' ? '' : `?tab=${tab}`));
-                    }
-                }}
-            />
+            {/* EN-TÊTE : celui du template, sinon l'en-tête Biolinko d'origine */}
+            {(() => {
+                const openCart = () => {
+                    if (setActiveTab) setActiveTab('cart');
+                    else router.visit(storeUrl(store.slug, `?tab=cart`));
+                };
+                const changeTab = (tab) => {
+                    if (setActiveTab) setActiveTab(tab);
+                    else router.visit(storeUrl(store.slug, tab === 'all' ? '' : `?tab=${tab}`));
+                };
+                const props = { store, cartCount: totalCartCount, searchQuery, setSearchQuery, hasPromos, hasSmartLinks, setActiveTab: changeTab };
+                return header && header.variant !== 'classic'
+                    ? <DesignHeader {...props} design={design} variant={header.variant} openCart={openCart} />
+                    : <HeaderBoutique {...props} onOpenCart={openCart} activeTab={activeTab} />;
+            })()}
 
             {/* MAIN CONTENT AREA */}
+            {patternBand && <PatternBand design={design} />}
             <main className={fullBleed ? 'w-full flex-1' : 'mx-auto w-full max-w-[1200px] flex-1 space-y-12 px-5 py-8 lg:px-8'}>
                 {children}
             </main>
 
-            {/* UNIFIED FOOTER BOUTIQUE */}
-            <FooterBoutique store={store} />
+            {/* PIED DE PAGE : celui du template, sinon celui d'origine */}
+            {footer && footer.variant !== 'classic'
+                ? <DesignFooter store={store} design={design} variant={footer.variant} />
+                : <FooterBoutique store={store} />}
         </div>
         </MotionConfig>
     );

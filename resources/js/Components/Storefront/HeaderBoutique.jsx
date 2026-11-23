@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { BadgeCheck, Menu, Search, ShoppingBag, Store, X } from 'lucide-react';
 import { contrastColor } from '@/Components/Storefront/theme';
 import { storeUrl } from '@/Components/Storefront/storeUrl';
+import { hasSection, storeDesign } from '@/Components/Storefront/Design/classic';
 
 export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, searchQuery = '', setSearchQuery, setActiveTab, hasPromos = false, hasSmartLinks = false }) {
     const primaryColor = store?.theme_color || '#FFCC00';
@@ -20,10 +21,8 @@ export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, searc
         }, 80);
     };
 
-    const sections = store?.sections_json;
-    const isBannerEnabled = Array.isArray(sections)
-        ? sections.some((s) => s.id === 'banner' && ![false, 'false', 0, '0'].includes(s.enabled))
-        : true;
+    // Bandeau d'annonce : section « announce » de la vitrine
+    const isBannerEnabled = hasSection(storeDesign(store), 'announce');
 
     const links = [
         ['Produits', 'catalog-grid'],
