@@ -24,7 +24,7 @@ export default function Faq() {
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#141412] text-white"><Mail className="h-5 w-5" /></span>
                     <p className="mt-4 text-[16px] font-medium text-[#141412]">Une autre question ?</p>
                     <p className="mt-1 text-[14px] text-[#5F5E58]">L’équipe Biolinko vous répond par e-mail.</p>
-                    <a href="mailto:contact@biolinko.link" className="mt-4 inline-flex text-[15px] font-medium text-[#141412] underline decoration-black/20 underline-offset-4 hover:decoration-black">contact@biolinko.link</a>
+                    <a href="mailto:contact@biolinko.app" className="mt-4 inline-flex text-[15px] font-medium text-[#141412] underline decoration-black/20 underline-offset-4 hover:decoration-black">contact@biolinko.app</a>
                 </motion.div>
             </div>
 

@@ -109,7 +109,7 @@ class WhatsappCloudWebhookController extends Controller
                 ."Merci d'avoir contacté le service officiel de notifications *Biolinko*.\n\n"
                 ."Nous avons bien reçu votre message. Pour suivre une commande en cours ou créer votre boutique en ligne avec encaissement Mobile Money, rendez-vous sur :\n"
                 .'👉 '.config('app.url')."\n\n"
-                ."Pour contacter le support officiel : support@biolinko.link\n"
+                ."Pour contacter le support officiel : support@biolinko.app\n"
                 .'Belle journée ! ✨';
         }
 

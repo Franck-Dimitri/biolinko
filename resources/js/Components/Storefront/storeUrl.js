@@ -21,7 +21,7 @@ export function storeUrl(slug, path = '') {
     return `/${slug}${p}`;
 }
 
-/** Adresse complète (https://…) à copier ou partager : awa.biolinko.store ou biolinko.link/awa. */
+/** Adresse complète (https://…) à copier ou partager : awa.biolinko.store ou biolinko.app/awa. */
 export function absoluteStoreUrl(slug, path = '') {
     const url = storeUrl(slug, path);
     if (!url.startsWith('/')) return url;
@@ -30,17 +30,17 @@ export function absoluteStoreUrl(slug, path = '') {
 
 export const productUrl = (slug, productSlug) => storeUrl(slug, `/p/${productSlug}`);
 
-/** Adresse affichée au vendeur, sans https:// : awa.biolinko.store ou biolinko.link/awa */
+/** Adresse affichée au vendeur, sans https:// : awa.biolinko.store ou biolinko.app/awa */
 export function storeAddress(slug) {
     if (storeDomain) return `${slug}.${storeDomain}`;
     const host = (appUrl || (typeof window !== 'undefined' ? window.location.origin : '')).replace(/^https?:\/\//, '');
     return `${host}/${slug}`;
 }
 
-/** Suffixe affiché dans les champs d'adresse : « .biolinko.store » ou préfixe « biolinko.link/ ». */
+/** Suffixe affiché dans les champs d'adresse : « .biolinko.store » ou préfixe « biolinko.app/ ». */
 export const storeAddressParts = () => (storeDomain
     ? { prefix: '', suffix: `.${storeDomain}` }
-    : { prefix: `${(appUrl || '').replace(/^https?:\/\//, '') || 'biolinko.link'}/`, suffix: '' });
+    : { prefix: `${(appUrl || '').replace(/^https?:\/\//, '') || 'biolinko.app'}/`, suffix: '' });
 
 /** Boutiques sur leur propre domaine (production) ? */
 export const storeDomainEnabled = () => !!storeDomain;

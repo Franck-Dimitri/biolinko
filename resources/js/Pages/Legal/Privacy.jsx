@@ -1,6 +1,6 @@
 import LegalLayout, { Note } from '@/Layouts/LegalLayout';
 
-const CONTACT = 'contact@biolinko.link';
+const CONTACT = 'contact@biolinko.app';
 
 const sections = [
     {

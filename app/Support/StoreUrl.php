@@ -81,7 +81,7 @@ class StoreUrl
         return static::home($store, '/track/'.$order->tracking_code.'/paiement');
     }
 
-    /** Adresse affichée (sans https://) : awa.biolinko.store ou biolinko.link/awa. */
+    /** Adresse affichée (sans https://) : awa.biolinko.store ou biolinko.app/awa. */
     public static function display(Store|string $store): string
     {
         $slug = static::slugOf($store);

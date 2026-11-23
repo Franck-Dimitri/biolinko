@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 /**
- * Adresse de boutique choisie sur la landing (biolinko.link/<slug>), gardée en session
+ * Adresse de boutique choisie sur la landing (biolinko.app/<slug>), gardée en session
  * jusqu'à la création du compte, puis utilisée pour nommer la boutique.
  */
 class ShopIntent

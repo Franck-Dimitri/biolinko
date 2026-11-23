@@ -7,13 +7,13 @@
 return [
     /*
     | Domaine des boutiques : chaque boutique répond sur <nom>.<domaine> (ex. awa.biolinko.store),
-    | le site et le tableau de bord restent sur APP_URL (biolinko.link).
+    | le site et le tableau de bord restent sur APP_URL (biolinko.app).
     | Vide (développement local) : les boutiques restent à l'adresse APP_URL/<nom>.
     */
     'store_domain' => env('BIOLINKO_STORE_DOMAIN'),
 
     'contact' => [
-        'email' => env('BIOLINKO_CONTACT_EMAIL', 'contact@biolinko.link'),
+        'email' => env('BIOLINKO_CONTACT_EMAIL', 'contact@biolinko.app'),
         // Numéro WhatsApp Business du support, au format international sans + (ex. 2376XXXXXXXX)
         'whatsapp' => env('BIOLINKO_WHATSAPP'),
         'city' => env('BIOLINKO_CITY', 'Douala, Cameroun'),

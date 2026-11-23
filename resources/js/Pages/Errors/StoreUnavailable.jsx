@@ -20,7 +20,7 @@ export default function StoreUnavailable({ reason = 'not_found', storeName, slug
             description: 'L’accès à cette boutique a été suspendu suite à un contrôle de conformité.',
             actions: [
                 { label: 'Retour à l’accueil', href: '/', primary: true },
-                { label: 'Contacter le support', href: 'mailto:support@biolinko.link' },
+                { label: 'Contacter le support', href: 'mailto:support@biolinko.app' },
             ],
         },
         not_found: {

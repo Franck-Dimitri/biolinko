@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Http;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    config(['app.url' => 'https://biolinko.link']);
+    config(['app.url' => 'https://biolinko.app']);
     $this->mock(\App\Services\Whatsapp\WhatsappGatewayService::class)->shouldIgnoreMissing();
     $this->seller = User::factory()->create();
     $this->store = Store::create(['user_id' => $this->seller->id, 'name' => 'Wax Shop', 'slug' => 'wax-shop', 'is_published' => true, 'city_location' => 'Douala', 'category' => 'Mode']);
@@ -37,8 +37,8 @@ test('la page produit expose titre, description, canonique, aperçu et données 
 
     expect($html)->toContain('<title inertia>Robe wax évasée | Wax Shop</title>')
         ->toContain('<meta name="robots" content="index, follow, max-image-preview:large">')
-        ->toContain('<link rel="canonical" href="https://biolinko.link/wax-shop/p/robe-wax">')
-        ->toContain('<meta property="og:image" content="https://biolinko.link/storage/products/robe.jpg">')
+        ->toContain('<link rel="canonical" href="https://biolinko.app/wax-shop/p/robe-wax">')
+        ->toContain('<meta property="og:image" content="https://biolinko.app/storage/products/robe.jpg">')
         ->toContain('<meta property="product:price:amount" content="15000">')
         ->toContain('Robe wax évasée à 15 000 FCFA chez Wax Shop (Douala). Robe en wax 100 % coton. Tailles S à XL.')
         ->toContain('<html lang="fr">');
@@ -68,10 +68,10 @@ test('un produit épuisé est signalé OutOfStock', function () {
 
 test('la boutique expose OnlineStore et la liste de ses produits', function () {
     $html = $this->get('/wax-shop')->assertOk()->getContent();
-    expect($html)->toContain('<link rel="canonical" href="https://biolinko.link/wax-shop">')->toContain('Wax Shop : Mode à Douala | Biolinko');
+    expect($html)->toContain('<link rel="canonical" href="https://biolinko.app/wax-shop">')->toContain('Wax Shop : Mode à Douala | Biolinko');
     [$org, $list] = jsonLd($html);
     expect($org['@type'])->toBe('OnlineStore')->and($org['address']['addressLocality'])->toBe('Douala')
-        ->and($list['itemListElement'][0]['url'])->toBe('https://biolinko.link/wax-shop/p/robe-wax');
+        ->and($list['itemListElement'][0]['url'])->toBe('https://biolinko.app/wax-shop/p/robe-wax');
 });
 
 test('une boutique non publiée, le suivi de commande et l’espace vendeur ne sont pas indexés', function () {
@@ -81,7 +81,7 @@ test('une boutique non publiée, le suivi de commande et l’espace vendeur ne s
 });
 
 test('l’accueil est indexable avec son aperçu de partage', function () {
-    $this->get('/')->assertSee('og:image" content="https://biolinko.link/images/brand/og-biolinko.jpg', false)
+    $this->get('/')->assertSee('og:image" content="https://biolinko.app/images/brand/og-biolinko.jpg', false)
         ->assertSee('index, follow', false)->assertSee('"@type":"Organization"', false);
 });
 
@@ -93,15 +93,15 @@ test('le plan du site liste les boutiques publiées et leurs produits actifs, av
 
     $xml = $this->get('/sitemap.xml')->assertOk()->assertHeader('Content-Type', 'application/xml; charset=UTF-8')->getContent();
     expect(simplexml_load_string($xml))->not->toBeFalse();
-    expect($xml)->toContain('<loc>https://biolinko.link/wax-shop</loc>')
-        ->toContain('<loc>https://biolinko.link/wax-shop/p/robe-wax</loc>')
-        ->toContain('<image:loc>https://biolinko.link/storage/products/robe.jpg</image:loc>')
+    expect($xml)->toContain('<loc>https://biolinko.app/wax-shop</loc>')
+        ->toContain('<loc>https://biolinko.app/wax-shop/p/robe-wax</loc>')
+        ->toContain('<image:loc>https://biolinko.app/storage/products/robe.jpg</image:loc>')
         ->not->toContain('/p/cache')->not->toContain('/bannie')->not->toContain('/brouillon');
 });
 
 test('robots.txt bloque les espaces privés et indique le plan du site', function () {
     $this->get('/robots.txt')->assertOk()->assertSee('Disallow: /seller/')->assertSee('Disallow: /track/')
-        ->assertSee('Sitemap: https://biolinko.link/sitemap.xml');
+        ->assertSee('Sitemap: https://biolinko.app/sitemap.xml');
 });
 
 test('le vendeur enregistre une catégorie et le référencement de ses produits et de sa boutique', function () {

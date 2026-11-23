@@ -19,7 +19,7 @@ export default function Notice({ publisher = {}, host = {}, contact = {} }) {
             title: 'Éditeur de la plateforme',
             body: (
                 <>
-                    <p>La plateforme Biolinko, accessible aux adresses biolinko.link et *.biolinko.store (boutiques des vendeurs), est éditée par :</p>
+                    <p>La plateforme Biolinko, accessible aux adresses biolinko.app et *.biolinko.store (boutiques des vendeurs), est éditée par :</p>
                     <Rows rows={[
                         ['Nom', publisher.name || 'Biolinko'],
                         ['Statut', publisher.status || PENDING],

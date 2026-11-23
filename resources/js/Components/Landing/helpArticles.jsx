@@ -8,7 +8,7 @@ export const ARTICLES = {
         { p: 'Créer une boutique Biolinko est gratuit et prend quelques minutes, depuis votre téléphone.' },
         { h: 'Créer votre compte' },
         { steps: [
-            'Sur l’accueil de biolinko.link, tapez l’adresse que vous voulez pour votre boutique (par exemple chez-awa.biolinko.store) : le site vous dit tout de suite si elle est libre.',
+            'Sur l’accueil de biolinko.app, tapez l’adresse que vous voulez pour votre boutique (par exemple chez-awa.biolinko.store) : le site vous dit tout de suite si elle est libre.',
             'Appuyez sur « Créer ma boutique », puis indiquez votre nom, votre e-mail, votre numéro WhatsApp et un mot de passe.',
             'Vous recevez un code par e-mail : tapez-le pour confirmer votre adresse.',
         ] },

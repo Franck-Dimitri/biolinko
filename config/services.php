@@ -59,7 +59,7 @@ return [
         'version' => env('WHATSAPP_CLOUD_API_VERSION', 'v23.0'),
         'language' => env('WHATSAPP_CLOUD_LANGUAGE', 'fr'),
         // Domaine public des liens dans les modèles (Meta refuse localhost)
-        'public_url' => env('WHATSAPP_CLOUD_PUBLIC_URL', 'https://biolinko.link'),
+        'public_url' => env('WHATSAPP_CLOUD_PUBLIC_URL', 'https://biolinko.app'),
     ],
 
     // Validation du domaine dans Google Search Console (balise meta)

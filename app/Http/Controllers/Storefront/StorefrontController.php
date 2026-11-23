@@ -30,7 +30,7 @@ class StorefrontController extends Controller
             ])->toResponse(request())->setStatusCode(404);
         }
 
-        // Ancienne adresse biolinko.link/<nom> : la boutique vit sur <nom>.biolinko.store
+        // Ancienne adresse biolinko.app/<nom> : la boutique vit sur <nom>.biolinko.store
         if ($redirect = StoreUrl::redirectFromApp(request(), $store)) {
             return $redirect;
         }

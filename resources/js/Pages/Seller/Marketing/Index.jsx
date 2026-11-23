@@ -48,7 +48,7 @@ function SeoCard({ store, seo }) {
             </ul>
             <form onSubmit={(e) => { e.preventDefault(); post(route('seller.seo.update'), { preserveScroll: true, onSuccess: () => toast.success('Référencement enregistré') }); }} className="mt-6 space-y-4 border-t border-black/[0.06] pt-5">
                 <div className="rounded-xl bg-[#F6F5F1] p-3" aria-label="Aperçu Google">
-                    <p className="truncate text-[12px] text-[#5F5E58]">biolinko.link › {store.slug}</p>
+                    <p className="truncate text-[12px] text-[#5F5E58]">biolinko.app › {store.slug}</p>
                     <p className="truncate text-[17px] leading-snug text-[#1a0dab]">{(data.seo_title || autoTitle).slice(0, 65)}</p>
                     <p className="line-clamp-2 text-[13px] text-[#4d5156]">{(data.seo_description || autoDesc).slice(0, 160)}</p>
                 </div>
