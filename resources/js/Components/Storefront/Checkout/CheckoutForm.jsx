@@ -4,11 +4,11 @@ import { usePage } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, Check, ChevronDown, Lock, RefreshCw, ShieldCheck, Sparkles, Tag, X } from 'lucide-react';
 import { EASE_OUT } from '@/Components/UI/Motion';
-import { earliestDate, formatFcfa, leadTimeLabel, serviceFee, useServiceFeePercent } from '@/Components/Storefront/useCart';
-import { contrastColor } from '@/Components/Storefront/theme';
+import { earliestDate, formatFcfa, leadTimeLabel, scheduleKey, serviceFee, useServiceFeePercent } from '@/Components/Storefront/useCart';
 import PaymentStatus from '@/Components/Storefront/Checkout/PaymentStatus';
 import { track } from '@/Components/Storefront/pixels';
 import { OperatorLogo } from '@/Components/Landing/Illustrations';
+import { storeTheme } from '@/Components/Storefront/Design/theme';
 
 const CUSTOMER_KEY = 'biolinko_cust_info';
 const DEFAULT_CITIES = ['Douala', 'Yaoundé', 'Bafoussam', 'Garoua', 'Bamenda', 'Kribi'];
@@ -54,21 +54,21 @@ function readSaved() {
     try { return JSON.parse(localStorage.getItem(CUSTOMER_KEY) || '{}') || {}; } catch (e) { return {}; }
 }
 
-const fieldClass = 'h-10 w-full rounded-full border border-black/[0.08] bg-white px-3.5 text-sm text-[#141412] placeholder:text-[#5F5E58]/60 focus:border-black/40 focus:ring-0';
-const labelClass = 'mb-1.5 block text-sm font-medium text-[#141412]';
+const fieldClass = 'h-10 w-full rounded-full border border-[color:var(--ln,rgba(0,0,0,0.08))] bg-[color:var(--bg,#FFFFFF)] px-3.5 text-sm text-[color:var(--ink,#141412)] placeholder:text-[color:var(--mu,#5F5E58)]/60 focus:border-[color:color-mix(in_srgb,var(--ink,#000000)_40%,transparent)] focus:ring-0';
+const labelClass = 'mb-1.5 block text-sm font-medium text-[color:var(--ink,#141412)]';
 
 function Step({ n, title, sub, done, primaryColor, primaryTextColor, children, delay = 0 }) {
     return (
         <motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: EASE_OUT, delay }}
-            className="space-y-5 rounded-2xl border border-black/[0.08] bg-white p-4 sm:p-5">
+            className="space-y-5 rounded-[var(--r,16px)] border border-[color:var(--ln,rgba(0,0,0,0.08))] bg-[color:var(--bg,#FFFFFF)] p-4 sm:p-5">
             <header className="flex items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-semibold"
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[min(var(--r,12px),12px)] text-sm font-semibold"
                     style={done ? { backgroundColor: '#16A34A', color: '#fff' } : { backgroundColor: primaryColor, color: primaryTextColor }}>
                     {done ? <Check className="h-4 w-4" /> : n}
                 </span>
                 <div className="min-w-0">
-                    <h2 className="text-base font-semibold text-[#141412]">{title}</h2>
-                    {sub && <p className="text-sm text-[#5F5E58]">{sub}</p>}
+                    <h2 className="text-base font-semibold text-[color:var(--ink,#141412)]">{title}</h2>
+                    {sub && <p className="text-sm text-[color:var(--mu,#5F5E58)]">{sub}</p>}
                 </div>
             </header>
             {children}
@@ -87,8 +87,7 @@ const SLOTS = [['', 'Indifférent'], ['matin', 'Matin (8 h - 12 h)'], ['midi', '
  * `schedule` (produits sur commande) : { minHours, label } → le client choisit une date et un créneau.
  */
 export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = route('checkout.process'), summary, onPaid, disabled = false, allowPromo = true, schedule = null }) {
-    const primaryColor = store?.theme_color || '#FFCC00';
-    const primaryTextColor = contrastColor(primaryColor);
+    const { primary: primaryColor, onPrimary: primaryTextColor } = storeTheme(store);
     const zones = store?.delivery_zones || [];
     const hasZones = zones.length > 0;
     const othersDelivered = !hasZones || (store?.delivery_other_fee !== null && store?.delivery_other_fee !== undefined);
@@ -101,8 +100,15 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
     });
     const [operatorTouched, setOperatorTouched] = useState(false);
     const minDate = schedule ? earliestDate(schedule.minHours) : null;
-    const [desiredDate, setDesiredDate] = useState('');
-    const [desiredSlot, setDesiredSlot] = useState('');
+    // Date et moment déjà choisis sur la vitrine (accueil « Créneaux ») : repris ici
+    const chosen = (() => {
+        try { return JSON.parse(localStorage.getItem(scheduleKey(store?.id)) || 'null') || {}; } catch (e) { return {}; }
+    })();
+    const [desiredDate, setDesiredDate] = useState(schedule && chosen.date && chosen.date >= earliestDate(schedule.minHours) ? chosen.date : '');
+    const [desiredSlot, setDesiredSlot] = useState(schedule && chosen.slot ? chosen.slot : '');
+    // Panier de la semaine (alimentation) : la même commande revient chaque semaine, payée à chaque fois
+    const [recurring, setRecurring] = useState(false);
+    const canRecur = store?.business_type === 'alimentation' && !payload?.smart_link_code;
     // WhatsApp du client (contact du vendeur) ; le numéro à débiter est le même par défaut
     const [whatsapp, setWhatsapp] = useState('');
     const [samePhone, setSamePhone] = useState(true);
@@ -239,6 +245,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                 promo_code: promo?.code || null,
                 payment_mode: useDeposit ? 'deposit' : 'full',
                 ...(schedule ? { desired_date: desiredDate || null, desired_slot: desiredSlot || null } : {}),
+                ...(canRecur && recurring ? { recurring: true } : {}),
                 ...payload,
             });
             // Commande créée : le client paie sur la page de paiement Biolinko
@@ -268,7 +275,10 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
 
     // Minimum de commande (articles remisés + livraison, hors frais) : en dessous, le paiement en ligne est refusé
     const minOrder = usePage().props.payments?.min_order?.[store?.country || 'CM'] ?? 1000;
-    const belowMin = vendorAmount < minOrder;
+    // Minimum de la boutique (articles, hors livraison) ou minimum d'un paiement
+    const storeMin = Number(store?.min_order_amount) || 0;
+    const belowStoreMin = storeMin > 0 && subtotal < storeMin;
+    const belowMin = vendorAmount < minOrder || belowStoreMin;
     const summaryNode = typeof summary === 'function' ? summary({ fee, total, promo, delivery: delivery ?? undefined, balance }) : summary;
     // Sous le minimum, on déplie le récapitulatif (replié sur téléphone) pour que la quantité soit modifiable
     useEffect(() => { if (belowMin) setShowSummary(true); }, [belowMin]);
@@ -283,7 +293,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                     <div className="lg:order-2 lg:col-span-5 lg:sticky lg:top-24">
                         {/* Mobile : récapitulatif replié pour garder le formulaire en vue */}
                         <button type="button" onClick={() => setShowSummary((v) => !v)} aria-expanded={showSummary}
-                            className="flex w-full items-center justify-between rounded-2xl border border-black/[0.08] bg-[#F6F5F1] px-4 py-3.5 text-sm text-[#141412] lg:hidden">
+                            className="flex w-full items-center justify-between rounded-[var(--r,16px)] border border-[color:var(--ln,rgba(0,0,0,0.08))] bg-[color:var(--sf,#F6F5F1)] px-4 py-3.5 text-sm text-[color:var(--ink,#141412)] lg:hidden">
                             <span className="flex items-center gap-2 font-medium">
                                 <ChevronDown className={`h-4 w-4 transition-transform ${showSummary ? 'rotate-180' : ''}`} />
                                 {showSummary ? 'Masquer le récapitulatif' : 'Voir le récapitulatif'}
@@ -305,7 +315,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                     <AnimatePresence>
                         {welcome && (
                             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                                className="flex items-center gap-2 rounded-xl bg-[#FFF8D6] px-4 py-3 text-sm text-[#141412]">
+                                className="flex items-center gap-2 rounded-[min(var(--r,12px),12px)] bg-[#FFF8D6] px-4 py-3 text-sm text-[color:var(--ink,#141412)]">
                                 <Sparkles className="h-4 w-4 shrink-0" /> Content de vous revoir, {welcome} ! Vos informations sont pré-remplies.
                             </motion.div>
                         )}
@@ -320,7 +330,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                             <div>
                                 <label htmlFor="co-whatsapp" className={labelClass}>Numéro WhatsApp</label>
                                 <div className="flex gap-2">
-                                    <span className="flex h-10 items-center rounded-full border border-black/[0.08] bg-[#F6F5F1] px-3.5 text-sm text-[#5F5E58]">+237</span>
+                                    <span className="flex h-10 items-center rounded-[var(--rb,9999px)] border border-[color:var(--ln,rgba(0,0,0,0.08))] bg-[color:var(--sf,#F6F5F1)] px-3.5 text-sm text-[color:var(--mu,#5F5E58)]">+237</span>
                                     <input id="co-whatsapp" type="tel" inputMode="numeric" autoComplete="tel-national" required placeholder="6XX XX XX XX" value={whatsapp}
                                         onChange={(e) => setWhatsapp(formatLocalPhone(e.target.value))} className={`${fieldClass} tracking-wide`} />
                                 </div>
@@ -334,7 +344,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                                 <div>
                                     <label htmlFor="co-date" className={labelClass}>{schedule.label}</label>
                                     <input id="co-date" type="date" required min={minDate} value={desiredDate} onChange={(e) => setDesiredDate(e.target.value)} className={fieldClass} />
-                                    <p className="mt-1.5 text-[13px] text-[#5F5E58]">
+                                    <p className="mt-1.5 text-[13px] text-[color:var(--mu,#5F5E58)]">
                                         {schedule.minHours > 0 ? `Préparé sur commande : délai de ${leadTimeLabel(schedule.minHours)} minimum.` : 'Préparé sur commande.'}
                                     </p>
                                 </div>
@@ -353,7 +363,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                                     const on = !otherCity && form.delivery_city === c;
                                     return (
                                         <button key={c} type="button" aria-pressed={on} onClick={() => { setOtherCity(false); set('delivery_city', c); }}
-                                            className={`h-10 rounded-xl border px-3.5 text-sm transition-colors ${on ? 'border-transparent font-semibold' : 'border-black/[0.08] text-[#141412] hover:border-black/30'}`}
+                                            className={`h-10 rounded-[min(var(--r,12px),12px)] border px-3.5 text-sm transition-colors ${on ? 'border-transparent font-semibold' : 'border-[color:var(--ln,rgba(0,0,0,0.08))] text-[color:var(--ink,#141412)] hover:border-[color:color-mix(in_srgb,var(--ink,#000000)_30%,transparent)]'}`}
                                             style={on ? { backgroundColor: primaryColor, color: primaryTextColor } : undefined}>
                                             {c}
                                             {hasZones && (() => { const f = deliveryFor(store, c, subtotal - discount); return <span className="ml-1.5 text-[13px] font-normal opacity-75">{f > 0 ? `+${Number(f).toLocaleString('fr-FR')} F` : 'gratuit'}</span>; })()}
@@ -361,7 +371,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                                     );
                                 })}
                                 {othersDelivered && <button type="button" aria-pressed={otherCity} onClick={() => { setOtherCity(true); set('delivery_city', ''); }}
-                                    className={`h-10 rounded-xl border px-3.5 text-sm transition-colors ${otherCity ? 'border-black/60 bg-[#F6F5F1] font-semibold text-[#141412]' : 'border-black/[0.08] text-[#141412] hover:border-black/30'}`}>
+                                    className={`h-10 rounded-[min(var(--r,12px),12px)] border px-3.5 text-sm transition-colors ${otherCity ? 'border-[color:color-mix(in_srgb,var(--ink,#000000)_60%,transparent)] bg-[color:var(--sf,#F6F5F1)] font-semibold text-[color:var(--ink,#141412)]' : 'border-[color:var(--ln,rgba(0,0,0,0.08))] text-[color:var(--ink,#141412)] hover:border-[color:color-mix(in_srgb,var(--ink,#000000)_30%,transparent)]'}`}>
                                     Autre ville
                                     {hasZones && <span className="ml-1.5 text-[13px] font-normal opacity-75">{Number(store.delivery_other_fee) > 0 ? `+${Number(store.delivery_other_fee).toLocaleString('fr-FR')} F` : 'gratuit'}</span>}
                                 </button>}
@@ -381,7 +391,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                         {showExtras ? (
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div>
-                                    <label htmlFor="co-email" className={labelClass}>E-mail <span className="font-normal text-[#5F5E58]">(pour le reçu)</span></label>
+                                    <label htmlFor="co-email" className={labelClass}>E-mail <span className="font-normal text-[color:var(--mu,#5F5E58)]">(pour le reçu)</span></label>
                                     <input id="co-email" type="email" autoComplete="email" placeholder="vous@exemple.com" value={form.customer_email} onChange={(e) => set('customer_email', e.target.value)} className={fieldClass} />
                                 </div>
                                 <div>
@@ -390,7 +400,7 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                                 </div>
                             </div>
                         ) : (
-                            <button type="button" onClick={() => setShowExtras(true)} className="text-sm font-medium text-[#141412] underline underline-offset-4">
+                            <button type="button" onClick={() => setShowExtras(true)} className="text-sm font-medium text-[color:var(--ink,#141412)] underline underline-offset-4">
                                 + Ajouter un e-mail ou une note au vendeur
                             </button>
                         )}
@@ -408,9 +418,9 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                                     const on = payMode === key;
                                     return (
                                         <button key={key} type="button" role="radio" aria-checked={on} onClick={() => setPayMode(key)}
-                                            className={`flex w-full items-start gap-3 rounded-xl border-2 p-3.5 text-left transition-colors ${on ? 'border-black/70 bg-[#F6F5F1]' : 'border-black/[0.08] hover:border-black/25'}`}>
-                                            <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${on ? 'border-[#141412]' : 'border-black/25'}`}>{on && <span className="h-2.5 w-2.5 rounded-full bg-[#141412]" />}</span>
-                                            <span className="min-w-0"><span className="block text-sm font-medium text-[#141412]">{label}</span><span className="block text-sm text-[#5F5E58]">{sub}</span></span>
+                                            className={`flex w-full items-start gap-3 rounded-[min(var(--r,12px),12px)] border-2 p-3.5 text-left transition-colors ${on ? 'border-[color:color-mix(in_srgb,var(--ink,#000000)_70%,transparent)] bg-[color:var(--sf,#F6F5F1)]' : 'border-[color:var(--ln,rgba(0,0,0,0.08))] hover:border-[color:color-mix(in_srgb,var(--ink,#000000)_25%,transparent)]'}`}>
+                                            <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${on ? 'border-[color:var(--ink,#141412)]' : 'border-[color:color-mix(in_srgb,var(--ink,#000000)_25%,transparent)]'}`}>{on && <span className="h-2.5 w-2.5 rounded-full bg-[color:var(--ink,#141412)]" />}</span>
+                                            <span className="min-w-0"><span className="block text-sm font-medium text-[color:var(--ink,#141412)]">{label}</span><span className="block text-sm text-[color:var(--mu,#5F5E58)]">{sub}</span></span>
                                         </button>
                                     );
                                 })}
@@ -421,11 +431,11 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                     )}
 
                     {allowPromo && (
-                        <div className="rounded-2xl border border-black/[0.08] bg-white p-5">
+                        <div className="rounded-[var(--r,16px)] border border-[color:var(--ln,rgba(0,0,0,0.08))] bg-[color:var(--bg,#FFFFFF)] p-5">
                             {promo ? (
                                 <div className="flex items-center justify-between gap-3">
                                     <span className="flex min-w-0 items-center gap-2 text-sm text-[#15803D]"><Tag className="h-4 w-4 shrink-0" /> Code <strong className="font-mono">{promo.code}</strong> appliqué : −{formatFcfa(promo.discount)}</span>
-                                    <button type="button" onClick={() => setPromo(null)} aria-label="Retirer le code promo" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[#5F5E58] hover:bg-[#F6F5F1]"><X className="h-4 w-4" /></button>
+                                    <button type="button" onClick={() => setPromo(null)} aria-label="Retirer le code promo" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[color:var(--mu,#5F5E58)] hover:bg-[color:var(--sf,#F6F5F1)]"><X className="h-4 w-4" /></button>
                                 </div>
                             ) : promoOpen ? (
                                 <div>
@@ -436,14 +446,14 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                                             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyPromo(); } }}
                                             className={`${fieldClass} font-mono uppercase`} />
                                         <button type="button" onClick={() => applyPromo()} disabled={promoLoading || !promoInput}
-                                            className="h-10 shrink-0 rounded-full border border-black/[0.12] px-5 text-sm font-medium text-[#141412] disabled:opacity-50">
+                                            className="h-10 shrink-0 rounded-[var(--rb,9999px)] border border-[color:var(--ln,rgba(0,0,0,0.12))] px-5 text-sm font-medium text-[color:var(--ink,#141412)] disabled:opacity-50">
                                             {promoLoading ? '…' : 'Appliquer'}
                                         </button>
                                     </div>
                                     {promoError && <p className="mt-2 text-[14px] text-[#B91C1C]">{promoError}</p>}
                                 </div>
                             ) : (
-                                <button type="button" onClick={() => setPromoOpen(true)} className="flex items-center gap-2 text-sm font-medium text-[#141412] underline underline-offset-4">
+                                <button type="button" onClick={() => setPromoOpen(true)} className="flex items-center gap-2 text-sm font-medium text-[color:var(--ink,#141412)] underline underline-offset-4">
                                     <Tag className="h-4 w-4" /> J’ai un code promo
                                 </button>
                             )}
@@ -453,30 +463,41 @@ export default function CheckoutForm({ store, subtotal = 0, payload, endpoint = 
                     <AnimatePresence>
                         {error && (
                             <motion.p initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} role="alert"
-                                className="flex items-start gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-[#B91C1C]">
+                                className="flex items-start gap-2 rounded-[min(var(--r,12px),12px)] bg-red-50 px-4 py-3 text-sm text-[#B91C1C]">
                                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {error}
                             </motion.p>
                         )}
                     </AnimatePresence>
 
                     {/* Paiement : barre collée en bas sur mobile, bouton dans le flux sur ordinateur */}
-                    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-black/[0.08] bg-white/95 p-4 backdrop-blur lg:static lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+                    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--ln,rgba(0,0,0,0.08))] bg-[color:color-mix(in_srgb,var(--bg,#FFFFFF)_95%,transparent)] p-4 backdrop-blur lg:static lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
                         {notDelivered && (
-                            <p className="mb-3 rounded-2xl bg-red-50 p-3 text-center text-[14px] text-[#B91C1C]">
+                            <p className="mb-3 rounded-[var(--r,16px)] bg-red-50 p-3 text-center text-[14px] text-[#B91C1C]">
                                 {store.name} ne livre pas à {form.delivery_city}. Choisissez une des villes proposées.
                             </p>
                         )}
                         {belowMin && (
-                            <p className="mb-3 rounded-2xl bg-[#FFFBEA] p-3 text-center text-[14px] text-[#7A5B00]">
-                                Commande minimum : {formatFcfa(minOrder)}. Ajoutez encore {formatFcfa(minOrder - vendorAmount)} d’articles pour payer.
+                            <p className="mb-3 rounded-[var(--r,16px)] bg-[#FFFBEA] p-3 text-center text-[14px] text-[#7A5B00]">
+                                {belowStoreMin
+                                    ? <>Commande minimum chez {store.name} : {formatFcfa(storeMin)}. Ajoutez encore {formatFcfa(storeMin - subtotal)} d’articles.</>
+                                    : <>Commande minimum : {formatFcfa(minOrder)}. Ajoutez encore {formatFcfa(minOrder - vendorAmount)} d’articles pour payer.</>}
                             </p>
                         )}
+                        {canRecur && (
+                            <label className="mb-3 flex cursor-pointer items-start gap-3 rounded-[var(--r,16px)] border border-[color:var(--ln,rgba(0,0,0,0.08))] bg-[color:var(--bg,#FFFFFF)] p-3 text-[14px] text-[color:var(--ink,#141412)]">
+                                <input type="checkbox" checked={recurring} onChange={(e) => setRecurring(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-black/20 focus:ring-0" style={{ color: primaryColor }} />
+                                <span>
+                                    <span className="font-medium">Recevoir ce panier chaque semaine</span>
+                                    <span className="block text-[13px] text-[color:var(--mu,#5F5E58)]">Chaque semaine, vous recevez sur WhatsApp un lien pour payer le même panier. Arrêtez quand vous voulez, depuis votre suivi de commande.</span>
+                                </span>
+                            </label>
+                        )}
                         <motion.button type="submit" disabled={submitting || disabled || belowMin || notDelivered} whileTap={{ scale: 0.98 }}
-                            className="flex h-11 w-full items-center justify-center gap-2 rounded-full text-[15px] font-semibold shadow-[0_12px_24px_-14px_rgba(43,38,32,0.5)] disabled:opacity-60"
+                            className="flex h-11 w-full items-center justify-center gap-2 rounded-[var(--rb,9999px)] text-[15px] font-semibold shadow-[0_12px_24px_-14px_rgba(43,38,32,0.5)] disabled:opacity-60"
                             style={{ backgroundColor: primaryColor, color: primaryTextColor }}>
                             {submitting ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Lock className="h-5 w-5" />} {payLabel}
                         </motion.button>
-                        <div className="mt-3 flex gap-2.5 rounded-2xl bg-[#F0FDF4] p-3 text-[13px] text-[#15803D]">
+                        <div className="mt-3 flex gap-2.5 rounded-[var(--r,16px)] bg-[#F0FDF4] p-3 text-[13px] text-[#15803D]">
                             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
                             <p><span className="font-medium">Paiement protégé par Biolinko.</span> La boutique n’est payée qu’une fois votre commande reçue. Un problème ? Signalez-le depuis votre suivi de commande.</p>
                         </div>

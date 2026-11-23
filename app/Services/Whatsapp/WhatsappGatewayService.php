@@ -85,6 +85,30 @@ class WhatsappGatewayService
         }
     }
 
+    /** Rappel la veille d'une commande ou d'un rendez-vous à date fixe (pâtisserie, prestation…). */
+    public function notifyAppointmentReminder(Order $order, string $when): void
+    {
+        $cloud = $this->cloud();
+        if (! $cloud || ! $order->customer_phone) {
+            return;
+        }
+        $order->loadMissing('store');
+        $cloud->sendTemplate($this->formatPhone($order->customer_whatsapp ?: $order->customer_phone), 'biolinko_rappel_veille',
+            [$order->customer_name, $order->tracking_code, $order->store->name, $when], $order->tracking_code);
+    }
+
+    /** Panier de la semaine recréé : le client le paie depuis sa page de commande. */
+    public function notifyRecurringBasket(Order $order): void
+    {
+        $cloud = $this->cloud();
+        if (! $cloud || ! $order->customer_phone) {
+            return;
+        }
+        $order->loadMissing('store');
+        $cloud->sendTemplate($this->formatPhone($order->customer_whatsapp ?: $order->customer_phone), 'biolinko_panier_semaine',
+            [$order->customer_name, $order->store->name, $this->money($order->total_client)], $order->tracking_code);
+    }
+
     public function notifyOrderShippingUpdate(Order $order, string $status): void
     {
         $cloud = $this->cloud();

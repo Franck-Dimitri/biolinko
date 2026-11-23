@@ -13,3 +13,5 @@ Artisan::command('inspire', function () {
 \Illuminate\Support\Facades\Schedule::command('funds:release')->everyFifteenMinutes()->withoutOverlapping();
 \Illuminate\Support\Facades\Schedule::command('payments:sync')->everyFiveMinutes()->withoutOverlapping();
 \Illuminate\Support\Facades\Schedule::command('subscriptions:renew')->hourly()->withoutOverlapping();
+\Illuminate\Support\Facades\Schedule::command('orders:remind-tomorrow')->timezone('Africa/Douala')->dailyAt('18:00')->withoutOverlapping();
+\Illuminate\Support\Facades\Schedule::command('baskets:renew')->hourly()->withoutOverlapping();

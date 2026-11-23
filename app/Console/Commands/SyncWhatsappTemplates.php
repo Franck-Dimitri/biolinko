@@ -86,6 +86,16 @@ class SyncWhatsappTemplates extends Command
                     ['Paul', 'BLK-CMD-AB12CD34EF', '10 350', 'Chez Awa']),
                 $track('Payer ma commande'),
             ]),
+            $tpl('biolinko_rappel_veille', 'UTILITY', [
+                $body('Bonjour {{1}}, petit rappel : votre commande {{2}} chez {{3}} est prévue demain, {{4}}.',
+                    ['Paul', 'BLK-CMD-AB12CD34EF', 'Chez Awa', 'samedi 30 novembre, le matin']),
+                $track('Voir ma commande'),
+            ]),
+            $tpl('biolinko_panier_semaine', 'UTILITY', [
+                $body('Bonjour {{1}}, votre panier de la semaine chez {{2}} est prêt : {{3}} FCFA. Payez-le en Mobile Money depuis votre page de commande pour le recevoir.',
+                    ['Paul', 'Le Marché de Mama', '12 500']),
+                $track('Payer mon panier'),
+            ]),
             $tpl('biolinko_vente_payee_v2', 'UTILITY', [
                 $body('Nouvelle vente sur {{1}} : la commande {{2}} de {{3}} est payée. {{4}} FCFA, commission déduite, seront disponibles le {{5}} sur votre portefeuille Biolinko.',
                     ['Chez Awa', 'BLK-CMD-AB12CD34EF', 'Paul', '9 300', '06/11/2026']),
@@ -97,7 +107,7 @@ class SyncWhatsappTemplates extends Command
                 ['type' => 'BUTTONS', 'buttons' => [['type' => 'URL', 'text' => 'Répondre', 'url' => $base.'/seller/orders']]],
             ]),
             $tpl('biolinko_moderation_v2', 'UTILITY', [
-                $body('Information sur votre compte Biolinko : {{1}}. Motif : {{2}}. Pour toute question, écrivez à support@biolinko.link.',
+                $body('Information sur votre compte Biolinko : {{1}}. Motif : {{2}}. Pour toute question, écrivez à support@biolinko.app.',
                     ['votre produit Robe wax a été retiré', 'photo non conforme']),
             ]),
             $tpl('biolinko_campagne', 'MARKETING', [
