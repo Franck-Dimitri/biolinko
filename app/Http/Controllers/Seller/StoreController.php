@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\ImageUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -35,12 +36,12 @@ class StoreController extends Controller
         ], ['slug.regex' => 'L’adresse doit faire 3 à 40 caractères : lettres minuscules, chiffres et tirets, sans tiret au début ni à la fin.', 'slug.not_in' => 'Cette adresse est réservée, choisissez-en une autre.']);
 
         if ($request->hasFile('logo_file')) {
-            $logoPath = $request->file('logo_file')->store('stores/logos', 'public');
+            $logoPath = ImageUpload::store($request->file('logo_file'), 'stores/logos');
             $validated['logo_url'] = '/storage/'.$logoPath;
         }
 
         if ($request->hasFile('banner_file')) {
-            $bannerPath = $request->file('banner_file')->store('stores/banners', 'public');
+            $bannerPath = ImageUpload::store($request->file('banner_file'), 'stores/banners');
             $validated['banner_url'] = '/storage/'.$bannerPath;
         }
 
