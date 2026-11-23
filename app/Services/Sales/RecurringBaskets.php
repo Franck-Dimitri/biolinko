@@ -110,6 +110,7 @@ class RecurringBaskets
         $fee = Order::clientFee($vendor);
         $order = Order::create([
             'store_id' => $store->id, 'customer_id' => $basket->customer_id, 'recurring_basket_id' => $basket->id,
+            'design_template' => \App\Support\TemplateStats::templateOf($store),
             'customer_name' => $basket->customer_name, 'customer_phone' => $basket->customer_phone, 'customer_whatsapp' => $basket->customer_whatsapp,
             'customer_email' => $basket->customer_email, 'city' => $basket->city, 'address_details' => $basket->address_details,
             'desired_date' => $delivery->toDateString(), 'desired_slot' => $basket->desired_slot,

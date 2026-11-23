@@ -29,6 +29,7 @@ class Order extends Model
         'smart_link_id',
         'parent_order_id',
         'recurring_basket_id',
+        'design_template',
         'reminder_sent_at',
         'payment_reminded_at',
         'funds_release_at',

@@ -77,6 +77,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
 
     // 2. Boutiques Réseau
     Route::get('/stores', [AdminStoreController::class, 'index'])->name('admin.stores.index');
+    Route::get('/templates', [\App\Http\Controllers\Admin\AdminTemplateController::class, 'index'])->name('admin.templates.index');
     Route::post('/stores/{store}/toggle-status', [AdminStoreController::class, 'toggleStatus'])->name('admin.stores.toggleStatus');
     Route::post('/stores/{store}/plan', [AdminStoreController::class, 'updatePlan'])->name('admin.stores.plan');
     Route::post('/stores/{store}/design-engine', [AdminStoreController::class, 'toggleDesignEngine'])->name('admin.stores.designEngine');
@@ -229,6 +230,15 @@ Route::post('/api/webhooks/pawapay/refunds', [PawapayWebhookController::class, '
 Route::post('/api/webhooks/hrskills-pay', [HrSkillsPayWebhookController::class, 'handle'])->name('webhooks.hrskills-pay');
 Route::get('/api/webhooks/whatsapp-cloud', [WhatsappCloudWebhookController::class, 'verify'])->name('webhooks.whatsapp-cloud.verify');
 Route::post('/api/webhooks/whatsapp-cloud', [WhatsappCloudWebhookController::class, 'handle'])->name('webhooks.whatsapp-cloud');
+
+// Mesures de lancement : un ajout au panier sur une vitrine (compteur par template, sans donnée personnelle)
+Route::post('/t/panier/{store}', function (\App\Models\Store $store) {
+    if ($store->is_published && ! \App\Support\TemplateStats::isBot(request()->userAgent())) {
+        \App\Support\TemplateStats::hit($store, 'carts');
+    }
+
+    return response()->noContent();
+})->whereNumber('store')->middleware('throttle:30,1')->name('stats.cart');
 
 // Landing : l'adresse biolinko.app/<boutique> est-elle libre ?
 Route::get('/boutique-disponible', function (Request $request) {

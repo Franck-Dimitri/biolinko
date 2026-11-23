@@ -9,6 +9,7 @@ use App\Models\Store;
 use App\Models\StoreReport;
 use App\Support\Seo;
 use App\Support\StoreUrl;
+use App\Support\TemplateStats;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -97,6 +98,11 @@ class StorefrontController extends Controller
 
         if (empty($store->sections_json)) {
             $store->sections_json = Store::getDefaultSections();
+        }
+
+        // Mesures de lancement : une visite pour le template affiché (ni vendeur, ni aperçu, ni robot)
+        if ($store->is_published && ! $isOwnerOrAdmin && ! request()->has('apercu') && ! TemplateStats::isBot(request()->userAgent())) {
+            TemplateStats::hit($store, 'views');
         }
 
         // Aperçu d'une boutique non publiée : jamais indexé

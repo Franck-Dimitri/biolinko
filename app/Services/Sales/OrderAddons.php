@@ -113,6 +113,7 @@ class OrderAddons
         $fee = Order::clientFee($goods);
         $addon = Order::create([
             'parent_order_id' => $order->id,
+            'design_template' => $order->design_template,
             'store_id' => $order->store_id,
             'customer_id' => $order->customer_id,
             'customer_name' => $order->customer_name,

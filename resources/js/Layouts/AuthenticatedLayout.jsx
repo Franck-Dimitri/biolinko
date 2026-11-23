@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import AppToaster from '@/Components/UI/AppToaster';
 import {
-    ArrowUpRight, BadgeCheck, BarChart3, ChevronDown, Copy, CreditCard, Crown, FileText, Flag, LayoutDashboard, Link2, LogOut, Megaphone, Menu, Package, PackageCheck, Palette, Rocket, Settings, ShieldCheck, Store, Truck, Users, Wallet, Wrench, X,
+    ArrowUpRight, BadgeCheck, BarChart3, ChevronDown, Copy, CreditCard, Crown, FileText, Flag, LayoutDashboard, Link2, LogOut, Megaphone, Menu, Package, PackageCheck, Palette, Rocket, Settings, ShieldCheck, Store, Truck, Users, Wallet, Wrench, X, LayoutTemplate,
 } from 'lucide-react';
 import { absoluteStoreUrl, storeAddress, storeUrl } from '@/Components/Storefront/storeUrl';
 
@@ -35,6 +35,7 @@ const ADMIN_NAV = [
     ['Supervision', [
         ['Vue d’ensemble', 'admin.dashboard', LayoutDashboard, ['admin.dashboard']],
         ['Boutiques', 'admin.stores.index', Store, ['admin.stores.*']],
+        ['Templates', 'admin.templates.index', LayoutTemplate, ['admin.templates.*']],
         ['Vendeurs', 'admin.users.index', Users, ['admin.users.*']],
         ['Produits', 'admin.products.index', Package, ['admin.products.*']],
         ['Programme pilote', 'admin.pilot.index', Rocket, ['admin.pilot.*']],

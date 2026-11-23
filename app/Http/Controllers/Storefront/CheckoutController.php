@@ -19,6 +19,7 @@ use App\Services\Sales\RecurringBaskets;
 use App\Services\Whatsapp\WhatsappGatewayService;
 use App\Support\BusinessTypes;
 use App\Support\StoreUrl;
+use App\Support\TemplateStats;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -438,6 +439,8 @@ class CheckoutController extends Controller
             'payment_phone' => $formattedPhone,
             'currency' => $store->currency ?: 'XAF',
             'payment_country' => $store->country ?: 'CM',
+            // Mesures de lancement : template affiché au moment de la commande
+            'design_template' => TemplateStats::templateOf($store),
         ]);
 
         foreach ($preparedOrderItems as $itemData) {

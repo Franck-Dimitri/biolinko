@@ -34,6 +34,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             'api/webhooks/*',
+            // Compteur d'ajouts au panier (envoyé par la vitrine avec navigator.sendBeacon)
+            't/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

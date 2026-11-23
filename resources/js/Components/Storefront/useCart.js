@@ -108,6 +108,8 @@ export default function useCart(storeId) {
         // Suppléments des choix du configurateur (recalculés par le serveur au paiement)
         const price = unitPrice(product, v) + (customizations || []).reduce((a, c) => a + (Number(c.price) || 0), 0);
         track('AddToCart', { value: price * qty, id: product.id, name: product.title });
+        // Mesures de lancement : ajouts au panier par template (compteur anonyme)
+        try { navigator.sendBeacon?.(`/t/panier/${storeId}`); } catch (e) { /* mesure facultative */ }
         const current = readCart(storeId);
         // Même produit avec des précisions différentes (message sur le gâteau…) = deux lignes du panier
         const custom = (customizations || []).filter((c) => c.value);
