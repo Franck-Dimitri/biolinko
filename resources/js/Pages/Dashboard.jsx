@@ -128,7 +128,7 @@ function Onboarding({ store, checklist, percent, productsCount }) {
     );
 }
 
-export default function Dashboard({ pilot = null, upgradeHint = null, totalNet = 0, store, wallet, productsCount, ordersCount, totalRevenue, recentOrders = [], setupChecklist, completionPercentage, analytics }) {
+export default function Dashboard({ templateInvite = null, pilot = null, upgradeHint = null, totalNet = 0, store, wallet, productsCount, ordersCount, totalRevenue, recentOrders = [], setupChecklist, completionPercentage, analytics }) {
     const user = usePage().props.auth.user;
     const products = usePage().props.products || [];
     const dailySales = analytics?.dailySales || [];
@@ -162,6 +162,17 @@ export default function Dashboard({ pilot = null, upgradeHint = null, totalNet =
                         )}
                     </div>
                 </motion.div>
+
+                {/* Boutique encore sur l'apparence d'origine : invitation à essayer les templates de son activité */}
+                {templateInvite && (
+                    <div className="flex flex-col gap-3 rounded-2xl border border-black/[0.08] bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                            <p className="text-[15px] font-medium text-[#141412]">Nouveau : {templateInvite.count} templates pensés pour « {templateInvite.activity} »</p>
+                            <p className="text-[14px] text-[#5F5E58]">Essayez-les dans Ma boutique avec un aperçu en direct : rien ne change pour vos clients tant que vous ne publiez pas.</p>
+                        </div>
+                        <Link href={route('appearance.index', { onglet: 'templates' })} className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-[#141412] px-4 text-[14px] font-medium text-white">Essayer les templates</Link>
+                    </div>
+                )}
 
                 {pilot && (
                     <div className="flex flex-col gap-3 rounded-2xl border border-[#FFCC00]/60 bg-[#FFFBEA] p-4 sm:flex-row sm:items-center sm:justify-between">

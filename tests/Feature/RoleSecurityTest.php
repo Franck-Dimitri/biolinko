@@ -36,6 +36,7 @@ test('authenticated seller can access seller dashboard and products', function (
         'user_id' => $seller->id,
         'name' => 'Boutique Test Role',
         'slug' => 'boutique-test-role',
+        'is_configured' => true, // boutique déjà créée (sinon : parcours de création)
     ]);
     Wallet::create(['store_id' => $store->id]);
 

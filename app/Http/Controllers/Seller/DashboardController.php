@@ -3,10 +3,15 @@
 namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
-
+use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\SmartLink;
+use App\Support\BusinessTypes;
+use App\Support\PilotOffer;
+use App\Support\StoreTemplates;
+use App\Support\TemplatesRollout;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -15,12 +20,12 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request): Response|\Illuminate\Http\RedirectResponse
+    public function index(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
         $store = $user->store;
         // Boutique pas encore créée (nouveau vendeur) : le parcours de création d'abord
-        if ($store && ! $store->is_configured && ! $store->design_engine && ! $store->products()->exists()) {
+        if ($store && ! $store->is_configured && ! $store->design_engine && ! $store->products()->exists() && TemplatesRollout::openTo($user)) {
             return redirect()->route('seller.creation');
         }
 
@@ -29,7 +34,8 @@ class DashboardController extends Controller
             ->get()
             ->map(function ($product) {
                 $pv = (float) $product->price_vendor;
-                $product->price_display = $pv + \App\Models\Order::clientFee($pv);
+                $product->price_display = $pv + Order::clientFee($pv);
+
                 return $product;
             });
 
@@ -88,7 +94,7 @@ class DashboardController extends Controller
         // Onboarding Completion Score (4 key activation steps)
         $checklist = [
             'store_created' => true,
-            'appearance_configured' => !empty($store->logo_url) || !empty($store->banner_url) || (bool) $store->is_configured,
+            'appearance_configured' => ! empty($store->logo_url) || ! empty($store->banner_url) || (bool) $store->is_configured,
             'first_product' => $productsCount > 0,
             'is_published' => (bool) $store->is_published,
         ];
@@ -98,7 +104,11 @@ class DashboardController extends Controller
 
         return Inertia::render('Dashboard', [
             'upgradeHint' => $request->user()->upgradeSavings(),
-            'pilot' => \App\Support\PilotOffer::progress($request->user()),
+            'pilot' => PilotOffer::progress($request->user()),
+            'templateInvite' => ! $store->design_engine && TemplatesRollout::openTo($request->user())
+                && TemplatesRollout::activityOpen($store->business_type)
+                ? ['activity' => BusinessTypes::get($store->business_type)['label'], 'count' => count(StoreTemplates::forBusinessType($store->business_type ?: 'autre')) - 1]
+                : null,
             'store' => $store,
             'wallet' => $wallet,
             'products' => $products,

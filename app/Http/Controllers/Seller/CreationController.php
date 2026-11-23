@@ -9,6 +9,7 @@ use App\Support\BusinessTypes;
 use App\Support\StoreDesign;
 use App\Support\StoreTemplates;
 use App\Support\TemplateIntent;
+use App\Support\TemplatesRollout;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,14 +26,17 @@ class CreationController extends Controller
 {
     public const EXAMPLE_PRODUCTS = 3;
 
-    public function show(Request $request): Response
+    public function show(Request $request): Response|RedirectResponse
     {
+        if (! TemplatesRollout::openTo($request->user())) {
+            return redirect()->route('appearance.index');
+        }
         $store = $request->user()->ensureStore();
         $intent = TemplateIntent::get($request);
         $current = $store->design_engine ? ($store->design['template'] ?? null) : null;
 
         return Inertia::render('Seller/Creation', [
-            'activities' => collect(StoreTemplates::byBusinessType())->map(fn ($templates, $type) => [
+            'activities' => collect(StoreTemplates::byBusinessType())->filter(fn ($t, $type) => TemplatesRollout::activityOpen($type))->map(fn ($templates, $type) => [
                 'key' => $type,
                 'label' => BusinessTypes::get($type)['label'],
                 'templates' => array_map(fn ($t) => ['id' => $t['id'], 'name' => $t['name'], 'pitch' => $t['pitch'], 'primary' => $t['design']['style']['primary']], $templates),
@@ -47,9 +51,10 @@ class CreationController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        abort_unless(TemplatesRollout::openTo($request->user()), 403);
         $store = $request->user()->ensureStore();
         $validated = $request->validate([
-            'business_type' => ['required', Rule::in(BusinessTypes::keys())],
+            'business_type' => ['required', Rule::in(array_values(array_filter(BusinessTypes::keys(), [TemplatesRollout::class, 'activityOpen'])))],
             'template' => ['required', 'string'],
             'name' => ['required', 'string', 'max:60'],
             'slug' => ['required', 'string', 'regex:/^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/', Rule::unique('stores', 'slug')->ignore($store->id), Rule::notIn(User::RESERVED_SLUGS)],

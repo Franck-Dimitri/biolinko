@@ -8,6 +8,7 @@ use App\Support\BusinessTypes;
 use App\Support\ImageUpload;
 use App\Support\StoreDesign;
 use App\Support\StoreTemplates;
+use App\Support\TemplatesRollout;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,8 +23,11 @@ use Inertia\Response;
  */
 class EditorController extends Controller
 {
-    public function show(Request $request): Response
+    public function show(Request $request): Response|RedirectResponse
     {
+        if (! TemplatesRollout::openTo($request->user())) {
+            return redirect()->route('appearance.index');
+        }
         $store = $request->user()->ensureStore();
         $type = $store->business_type ?: 'autre';
 
@@ -59,6 +63,7 @@ class EditorController extends Controller
     /** Publie le brouillon : la version en ligne passe dans l'historique. */
     public function publish(Request $request): RedirectResponse
     {
+        abort_unless(TemplatesRollout::openTo($request->user()), 403);
         $store = $request->user()->ensureStore();
         $design = $this->validated($request);
         if ($store->design_engine && $store->design) {

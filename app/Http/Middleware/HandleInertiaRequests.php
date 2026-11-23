@@ -65,6 +65,8 @@ class HandleInertiaRequests extends Middleware
             'planPrices' => User::PLAN_PRICES,
             'planLimits' => User::PLAN_LIMITS,
             'whatsappAutomatic' => WhatsappGatewayService::automatic(),
+            // Templates de vitrine ouverts à ce vendeur (lancement progressif)
+            'templatesOpen' => fn () => \App\Support\TemplatesRollout::openTo($request->user()),
             // Frais et commissions (config/payments.php) affichés sur la landing, la caisse et le tableau de bord
             // Contact et réseaux sociaux publics (config/biolinko.php)
             'site' => [

@@ -34,6 +34,7 @@
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="INERTIA_SSR_ENABLED" value="false"/>
         <env name="INVOICE_REMOTE_FONTS" value="false"/>
+        <env name="BIOLINKO_TEMPLATES" value="all"/>
         <env name="PAYMENT_DRIVER" value="pawapay"/>
         <env name="PAWAPAY_ENV" value="sandbox"/>
         <env name="PAWAPAY_API_TOKEN" value="test-token"/>

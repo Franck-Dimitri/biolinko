@@ -12,6 +12,15 @@ return [
     */
     'store_domain' => env('BIOLINKO_STORE_DOMAIN'),
 
+    /*
+    | Lancement des templates de vitrine (voir App\Support\TemplatesRollout) :
+    | off = personne, pilot = vendeurs de l'offre pilote, all = tout le monde. Activités : liste séparée par des virgules.
+    */
+    'templates' => [
+        'rollout' => env('BIOLINKO_TEMPLATES', 'pilot'),
+        'activities' => env('BIOLINKO_TEMPLATES_ACTIVITIES', ''),
+    ],
+
     'contact' => [
         'email' => env('BIOLINKO_CONTACT_EMAIL', 'contact@biolinko.app'),
         // Numéro WhatsApp Business du support, au format international sans + (ex. 2376XXXXXXXX)

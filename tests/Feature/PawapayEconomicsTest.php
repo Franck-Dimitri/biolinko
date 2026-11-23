@@ -114,6 +114,7 @@ test('le chiffre d’affaires du tableau de bord compte aussi les commandes livr
     $this->order->markAsPaid();
     $this->order->update(['status' => 'delivered']);
 
+    $this->store->forceFill(['is_configured' => true])->save(); // boutique déjà créée
     $props = $this->actingAs($this->seller)->get('/seller/dashboard')->viewData('page')['props'];
     expect((float) $props['totalRevenue'])->toBe(10000.0);
     expect((float) $props['totalNet'])->toBe(9000.0);
