@@ -12,6 +12,7 @@ use App\Support\TemplateIntent;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -87,12 +88,41 @@ class CreationController extends Controller
                 'is_configured' => true,
                 'is_published' => true,
             ])->save();
+            $store->forceFill($this->freshTexts($store, $activity))->save();
             StoreDesign::publish($store, $template['design']);
             $this->createExamples($store, $validated['business_type']);
         });
         TemplateIntent::forget($request);
 
         return redirect()->route('seller.creation', ['fini' => 1]);
+    }
+
+    /**
+     * Valeurs génériques jamais choisies par le vendeur (défauts historiques) : textes d'accueil de l'activité
+     * s'il y en a, sinon rien (la vitrine affiche alors le nom, la ville et des textes neutres). Jamais d'horaires inventés.
+     */
+    private function freshTexts($store, array $activity): array
+    {
+        $defaults = [
+            'hero_badge_text' => 'PROMOTIONS & TENDANCES',
+            'hero_title' => 'Découvrez nos Produits d\'Exception',
+            'hero_cta_text' => 'Acheter Maintenant',
+            'announcement_header' => '⚡ Bienvenue sur la boutique officielle !',
+            'opening_hours' => 'Lun - Sam: 08h00 - 18h00',
+        ];
+        $hero = $activity['hero'] ?? [];
+        $suggested = ['hero_badge_text' => $hero['badge'] ?? null, 'hero_title' => $hero['title'] ?? null, 'hero_subtitle' => $hero['subtitle'] ?? null, 'hero_cta_text' => $hero['cta'] ?? null];
+        $out = [];
+        foreach ($defaults as $field => $generic) {
+            if (blank($store->{$field}) || $store->{$field} === $generic) {
+                $out[$field] = $suggested[$field] ?? null;
+            }
+        }
+        if (blank($store->hero_subtitle) && ! empty($suggested['hero_subtitle'])) {
+            $out['hero_subtitle'] = $suggested['hero_subtitle'];
+        }
+
+        return $out;
     }
 
     /** Produits d'exemple de l'activité, en brouillon : jamais visibles des clients tant qu'ils ne sont pas modifiés et activés. */
@@ -105,7 +135,7 @@ class CreationController extends Controller
         foreach (array_slice($demo['products'] ?? [], 0, self::EXAMPLE_PRODUCTS) as $p) {
             $store->products()->create([
                 'title' => $p['title'],
-                'slug' => \Illuminate\Support\Str::slug($p['title']).'-'.\Illuminate\Support\Str::random(4),
+                'slug' => Str::slug($p['title']).'-'.Str::random(4),
                 'description' => $p['description'] ?: null,
                 'category' => $p['category'],
                 'price_vendor' => $p['price_vendor'],

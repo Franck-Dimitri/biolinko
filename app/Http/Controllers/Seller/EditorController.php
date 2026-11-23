@@ -11,6 +11,7 @@ use App\Support\StoreTemplates;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -44,7 +45,12 @@ class EditorController extends Controller
     public function saveDraft(Request $request): JsonResponse
     {
         $store = $request->user()->ensureStore();
-        $design = $this->validated($request);
+        try {
+            $design = $this->validated($request);
+        } catch (ValidationException $e) {
+            // Appel en arrière-plan : une vraie erreur, pas une redirection
+            return response()->json(['message' => StoreDesign::errorsOf($e), 'errors' => $e->errors()], 422);
+        }
         $store->forceFill(['design_draft' => $design])->save();
 
         return response()->json(['saved' => true]);
@@ -90,7 +96,10 @@ class EditorController extends Controller
     /** Photo d'une section (accueil, histoire…) : optimisée comme les photos de produits. */
     public function image(Request $request): JsonResponse
     {
-        $request->validate(['image' => ['required', 'image', 'max:6144']]);
+        $v = Validator::make($request->all(), ['image' => ['required', 'image', 'max:6144']], ['image.*' => 'Choisissez une photo de 6 Mo au plus.']);
+        if ($v->fails()) {
+            return response()->json(['message' => $v->errors()->first(), 'errors' => $v->errors()], 422);
+        }
 
         return response()->json(['path' => '/storage/'.ImageUpload::store($request->file('image'), 'designs')]);
     }

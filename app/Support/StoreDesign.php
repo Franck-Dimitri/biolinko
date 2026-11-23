@@ -124,6 +124,8 @@ class StoreDesign
      */
     public static function validate(array $design): array
     {
+        // Une vitrine déjà normalisée (réglages en objets) se valide comme une vitrine brute
+        $design = json_decode(json_encode($design), true);
         $rules = [
             'template' => ['required', 'string', 'max:40', 'regex:/^[a-z0-9-]+$/'],
             'style' => ['required', 'array'],

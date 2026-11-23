@@ -19,6 +19,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -102,11 +103,15 @@ class OrderTrackingController extends Controller
      */
     public function addon(Request $request, string $tracking_code, OrderAddons $addons): JsonResponse
     {
-        $validated = $request->validate([
+        $v = Validator::make($request->all(), [
             'product_id' => ['required', 'integer'],
             'variant_id' => ['nullable', 'integer'],
             'quantity' => ['required', 'integer', 'min:1', 'max:'.OrderAddons::MAX_QUANTITY],
         ]);
+        if ($v->fails()) {
+            return response()->json(['error' => 'Choisissez une quantité entre 1 et '.OrderAddons::MAX_QUANTITY.'.'], 422);
+        }
+        $validated = $v->validated();
 
         $order = Order::where('tracking_code', $tracking_code)->with(['items', 'report'])->firstOrFail();
         $product = Product::where('store_id', $order->store_id)->find($validated['product_id']);
