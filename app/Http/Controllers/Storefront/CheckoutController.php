@@ -15,6 +15,7 @@ use App\Payments\Countries;
 use App\Payments\Orders\OrderPayments;
 use App\Payments\PaymentException;
 use App\Services\Sales\OrderInvoiceService;
+use App\Services\Sales\RecurringBaskets;
 use App\Services\Whatsapp\WhatsappGatewayService;
 use App\Support\BusinessTypes;
 use App\Support\StoreUrl;
@@ -111,7 +112,8 @@ class CheckoutController extends Controller
                 'status' => 'SUCCESS',
                 'paid' => true,
                 'tracking_code' => $order->tracking_code,
-                'redirect_url' => StoreUrl::track($order),
+                // Un ajout après paiement ramène sur le suivi de la commande d'origine
+                'redirect_url' => StoreUrl::track($order->parent ?? $order),
             ]);
         }
 
@@ -143,6 +145,8 @@ class CheckoutController extends Controller
             'payment_mode' => ['nullable', 'in:full,deposit'],
             // La commande est créée, puis le client paie sur la page de paiement Biolinko
             'defer_payment' => ['nullable', 'boolean'],
+            // Panier de la semaine (alimentation) : la commande revient chaque semaine
+            'recurring' => ['nullable', 'boolean'],
 
             // Single-item checkout
             'product_id' => ['nullable', 'exists:products,id'],
@@ -286,6 +290,8 @@ class CheckoutController extends Controller
             if ($variant && (float) $variant->price > 0) {
                 $currentPv = (float) $variant->price;
             }
+            // Suppléments des choix du configurateur (ex. 12 parts +6 000 FCFA), recalculés ici
+            $currentPv += (float) collect($customizations)->sum(fn ($c) => $c['price'] ?? 0);
 
             // Frais de service payés par le client (config payments.client_fee_percent)
             $saasMarginUnit = Order::clientFee($currentPv);
@@ -345,6 +351,13 @@ class CheckoutController extends Controller
         }
 
         $city = trim($validated['delivery_city'] ?? '') ?: $validated['delivery_address'];
+
+        // Minimum de commande du vendeur (restaurants : souvent quelques milliers de FCFA)
+        if ($store->min_order_amount && $goods < (float) $store->min_order_amount) {
+            $msg = 'La commande minimum chez '.$store->name.' est de '.number_format((float) $store->min_order_amount, 0, ',', ' ').' FCFA. Ajoutez un article.';
+
+            return response()->json(['error' => $msg], 422);
+        }
 
         $deliveryFee = $store->deliveryFeeFor($city, $goods - $discount);
         if ($deliveryFee === null) {
@@ -431,6 +444,10 @@ class CheckoutController extends Controller
             $order->items()->create($itemData);
         }
 
+        if ($request->boolean('recurring') && ! $smartLink && RecurringBaskets::eligible($store)) {
+            app(RecurringBaskets::class)->prepare($order, $checkoutItems);
+        }
+
         // Notify Customer & Vendor via WhatsApp that order has been initiated
         try {
             $this->whatsappService->notifyOrderPlaced($order);
@@ -483,10 +500,15 @@ class CheckoutController extends Controller
 
                 continue;
             }
-            if (($field['type'] ?? 'text') === 'select' && ! in_array($value, $field['options'] ?? [], true)) {
-                return [[], "Choix invalide pour « {$field['label']} » (« {$product->title} »)."];
+            $price = 0;
+            if (($field['type'] ?? 'text') === 'select') {
+                $index = array_search($value, $field['options'] ?? [], true);
+                if ($index === false) {
+                    return [[], "Choix invalide pour « {$field['label']} » (« {$product->title} »)."];
+                }
+                $price = (int) ($field['prices'][$index] ?? 0);
             }
-            $out[] = ['label' => $field['label'], 'value' => $value];
+            $out[] = ['label' => $field['label'], 'value' => $value] + ($price > 0 ? ['price' => $price] : []);
         }
 
         return [$out, null];

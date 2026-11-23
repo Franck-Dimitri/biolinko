@@ -33,6 +33,23 @@ export function unitPrice(product, variant = null) {
     return Number(isPromo ? product.promo_price : product.price_vendor);
 }
 
+/** Supplément d'un choix de liste (« 12 parts » → 6000), d'après les prix du champ. */
+export function optionPrice(field, value) {
+    const i = (field?.options || []).indexOf(value);
+    return i > -1 ? Number(field.prices?.[i]) || 0 : 0;
+}
+
+/** « 1 h 30 », « 45 min » : durée d'une prestation. */
+export function durationLabel(minutes) {
+    const m = Number(minutes) || 0;
+    if (!m) return '';
+    if (m < 60) return `${m} min`;
+    return `${Math.floor(m / 60)} h${m % 60 ? ` ${String(m % 60).padStart(2, '0')}` : ''}`;
+}
+
+/** Date et moment choisis sur la vitrine (accueil « Créneaux »), repris au paiement. */
+export const scheduleKey = (storeId) => `biolinko_schedule_${storeId}`;
+
 /** « 48 heures », « 3 jours », « 1 semaine » : délai de préparation d'un produit sur commande. */
 export function leadTimeLabel(hours) {
     const h = Number(hours) || 0;
@@ -88,7 +105,8 @@ export default function useCart(storeId) {
         const minQ = product.min_order_quantity || 1;
         const qty = Math.max(quantity || minQ, minQ);
         const v = variant || product.variants?.[0] || null;
-        const price = unitPrice(product, v);
+        // Suppléments des choix du configurateur (recalculés par le serveur au paiement)
+        const price = unitPrice(product, v) + (customizations || []).reduce((a, c) => a + (Number(c.price) || 0), 0);
         track('AddToCart', { value: price * qty, id: product.id, name: product.title });
         const current = readCart(storeId);
         // Même produit avec des précisions différentes (message sur le gâteau…) = deux lignes du panier

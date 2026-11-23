@@ -32,11 +32,16 @@ class Product extends Model
         'lead_time_hours',
         'daily_capacity',
         'custom_fields',
+        'duration_minutes',
+        'specs',
         'is_active',
+        'example_of',
     ];
 
     protected $casts = [
         'custom_fields' => 'array',
+        'specs' => 'array',
+        'duration_minutes' => 'integer',
         'price_vendor' => 'decimal:2',
         'promo_price' => 'decimal:2',
         'is_promo' => 'boolean',

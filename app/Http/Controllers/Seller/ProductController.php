@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Seller;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Support\BusinessTypes;
+use App\Support\ImageUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -118,12 +119,12 @@ class ProductController extends Controller
         if ($request->hasFile('images_files')) {
             foreach ($request->file('images_files') as $file) {
                 if ($file && count($imagePaths) < $maxImages) {
-                    $path = $file->store('products', 'public');
+                    $path = ImageUpload::store($file, 'products');
                     $imagePaths[] = '/storage/'.$path;
                 }
             }
         } elseif ($request->hasFile('image_file')) {
-            $path = $request->file('image_file')->store('products', 'public');
+            $path = ImageUpload::store($request->file('image_file'), 'products');
             $imagePaths[] = '/storage/'.$path;
         }
 
@@ -239,7 +240,7 @@ class ProductController extends Controller
         if ($request->hasFile('images_files')) {
             foreach ($request->file('images_files') as $file) {
                 if ($file && count($imagePaths) < $maxImages) {
-                    $imagePaths[] = '/storage/'.$file->store('products', 'public');
+                    $imagePaths[] = '/storage/'.ImageUpload::store($file, 'products');
                 }
             }
         }
@@ -393,25 +394,47 @@ class ProductController extends Controller
             'custom_fields.*.required' => ['nullable', 'boolean'],
             'custom_fields.*.options' => ['nullable', 'array', 'max:12'],
             'custom_fields.*.options.*' => ['nullable', 'string', 'max:40'],
-        ], ['custom_fields.max' => '5 champs personnalisés au maximum.', 'custom_fields.*.label.required' => 'Donnez un nom à chaque champ.']);
+            // Supplément de prix de chaque choix (configurateur : « 12 parts +6000 »)
+            'custom_fields.*.prices' => ['nullable', 'array', 'max:12'],
+            'custom_fields.*.prices.*' => ['nullable', 'integer', 'min:0', 'max:10000000'],
+            'duration_minutes' => ['nullable', 'integer', 'min:5', 'max:1440'],
+            'specs' => ['nullable', 'array', 'max:12'],
+            'specs.*.label' => ['nullable', 'string', 'max:40'],
+            'specs.*.value' => ['nullable', 'string', 'max:120'],
+        ], ['custom_fields.max' => '5 champs personnalisés au maximum.', 'custom_fields.*.label.required' => 'Donnez un nom à chaque champ.', 'specs.max' => '12 caractéristiques au maximum.']);
+
+        // Caractéristiques (électronique) ou composition (santé, beauté) : lignes « libellé : valeur »
+        $specs = [];
+        if ($request->has('specs')) {
+            $rows = collect($v['specs'] ?? [])->map(fn ($r) => ['label' => trim((string) ($r['label'] ?? '')), 'value' => trim((string) ($r['value'] ?? ''))])
+                ->filter(fn ($r) => $r['label'] !== '' && $r['value'] !== '')->values()->all();
+            $specs = ['specs' => $rows ?: null];
+        }
 
         if (! $request->has('fulfillment')) {
-            return [];
+            return $specs;
         }
 
         $madeToOrder = ($v['fulfillment'] ?? 'stock') === 'made_to_order';
-        $fields = collect($v['custom_fields'] ?? [])->map(fn ($f) => [
-            'label' => trim($f['label']),
-            'type' => $f['type'],
-            'required' => (bool) ($f['required'] ?? false),
-            'options' => $f['type'] === 'select' ? array_values(array_filter(array_map('trim', $f['options'] ?? []), 'strlen')) : [],
-        ])->filter(fn ($f) => $f['type'] !== 'select' || count($f['options']) >= 2)->values()->all();
+        $fields = collect($v['custom_fields'] ?? [])->map(function ($f) {
+            // Choix et suppléments restent alignés : on filtre les choix vides ensemble
+            $pairs = $f['type'] === 'select'
+                ? collect($f['options'] ?? [])->map(fn ($o, $i) => [trim((string) $o), (int) ($f['prices'][$i] ?? 0)])->filter(fn ($p) => $p[0] !== '')->values()
+                : collect();
+            $field = ['label' => trim($f['label']), 'type' => $f['type'], 'required' => (bool) ($f['required'] ?? false), 'options' => $pairs->pluck(0)->all()];
+            if ($pairs->contains(fn ($p) => $p[1] > 0)) {
+                $field['prices'] = $pairs->pluck(1)->all();
+            }
+
+            return $field;
+        })->filter(fn ($f) => $f['type'] !== 'select' || count($f['options']) >= 2)->values()->all();
 
         return [
             'fulfillment' => $madeToOrder ? 'made_to_order' : 'stock',
             'lead_time_hours' => $madeToOrder ? (int) ($v['lead_time_hours'] ?? 0) : null,
             'daily_capacity' => $madeToOrder ? ($v['daily_capacity'] ?? null) : null,
             'custom_fields' => $fields ?: null,
-        ];
+            'duration_minutes' => $madeToOrder ? ($v['duration_minutes'] ?? null) : null,
+        ] + $specs;
     }
 }

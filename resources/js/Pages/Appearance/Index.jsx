@@ -12,6 +12,7 @@ import { storeAddressParts, storeUrl } from '@/Components/Storefront/storeUrl';
 import { PatternLayer, patternLabel } from '@/Components/Storefront/patterns';
 import { ActivityPicker, ActivitySummary, PatternPicker } from '@/Components/Seller/ActivityPicker';
 import { PREVIEW_READY, sendPreview } from '@/Components/Storefront/livePreview';
+import OpeningScheduleEditor from '@/Components/Seller/OpeningScheduleEditor';
 
 const TABS = [['identity', 'Identité'], ['style', 'Style'], ['home', 'Accueil'], ['sections', 'Sections'], ['contact', 'Contact'], ['reviews', 'Avis']];
 
@@ -146,6 +147,7 @@ export default function Index({ store, reviews = [], stats = {}, businessTypes =
         announcement_header: store.announcement_header || '', hero_badge_text: store.hero_badge_text || '', hero_title: store.hero_title || '',
         hero_subtitle: store.hero_subtitle || '', hero_cta_text: store.hero_cta_text || '',
         phone_whatsapp: store.phone_whatsapp || '', city_location: store.city_location || '', opening_hours: store.opening_hours || '',
+        opening_schedule: store.opening_schedule || null, min_order_amount: store.min_order_amount ?? '',
         instagram_link: store.instagram_link || '', tiktok_link: store.tiktok_link || '', facebook_link: store.facebook_link || '',
         sections: normalizeSections(store.sections_json),
         benefits: Array.isArray(store.benefits_json) && store.benefits_json.length ? store.benefits_json : DEFAULT_BENEFITS,
@@ -205,8 +207,8 @@ export default function Index({ store, reviews = [], stats = {}, businessTypes =
 
     const save = () => {
         form.transform((d) => {
-            const { sections, benefits, ...rest } = d;
-            return { ...rest, sections_json: JSON.stringify(sections), benefits_json: JSON.stringify(benefits) };
+            const { sections, benefits, opening_schedule, ...rest } = d;
+            return { ...rest, sections_json: JSON.stringify(sections), benefits_json: JSON.stringify(benefits), opening_schedule: JSON.stringify(opening_schedule || {}) };
         });
         form.post(route('appearance.update'), {
             forceFormData: true,
@@ -252,12 +254,22 @@ export default function Index({ store, reviews = [], stats = {}, businessTypes =
                     </div>
 
                     <div className="sticky top-16 z-10 -mx-1 mb-4 flex gap-1 overflow-x-auto bg-[#FAFAF8] px-1 py-2 [scrollbar-width:none]">
-                        {TABS.map(([id, label]) => (
+                        {TABS.filter(([id]) => !(store.design_engine && ['style', 'sections'].includes(id))).map(([id, label]) => (
                             <button key={id} type="button" onClick={() => setTab(id)} aria-pressed={tab === id}
                                 className={`h-9 shrink-0 rounded-full px-3 text-[14px] transition-colors ${tab === id ? 'bg-[#141412] text-white' : 'text-[#5F5E58] hover:bg-black/5 hover:text-[#141412]'}`}>
                                 {label}
                             </button>
                         ))}
+                    </div>
+
+                    {/* Nouveau moteur : couleurs, polices, motif et sections se règlent dans l'éditeur de vitrine */}
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-black/[0.06] bg-[#FFFBEA] p-4">
+                        <p className="text-[14px] text-[#141412]">
+                            {store.design_engine
+                                ? <>Le style et les sections de votre vitrine se règlent dans <strong className="font-medium">Ma vitrine</strong>, avec un aperçu en direct.</>
+                                : <>Essayez les 3 templates pensés pour votre activité : <strong className="font-medium">votre boutique change de style sans perdre vos produits</strong>.</>}
+                        </p>
+                        <Button size="sm" variant="dark" href={route('seller.editor')}>Ouvrir Ma vitrine</Button>
                     </div>
 
                     <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 rounded-3xl border border-black/[0.06] bg-white p-6">
@@ -423,11 +435,17 @@ export default function Index({ store, reviews = [], stats = {}, businessTypes =
                                     <textarea rows={5} value={data.about_text} onChange={set('about_text')} placeholder="Qui êtes-vous, que vendez-vous, pourquoi vous faire confiance ?" className={`${fieldClass} h-auto py-3`} />
                                 </Group>
                                 <Group title="Coordonnées">
-                                    <Field label="WhatsApp de la boutique" hint="Bouton « Commander sur WhatsApp » et bulle de contact." error={errors.phone_whatsapp}><input type="tel" value={data.phone_whatsapp} onChange={set('phone_whatsapp')} placeholder="+237 6XX XX XX XX" className={fieldClass} /></Field>
+                                    <Field label="WhatsApp de la boutique" hint="Affiché en pied de page pour vous contacter. Les commandes, elles, se paient sur la boutique." error={errors.phone_whatsapp}><input type="tel" value={data.phone_whatsapp} onChange={set('phone_whatsapp')} placeholder="+237 6XX XX XX XX" className={fieldClass} /></Field>
                                     <div className="grid gap-3 sm:grid-cols-2">
                                         <Field label="Ville ou quartier"><input value={data.city_location} onChange={set('city_location')} placeholder="Akwa, Douala" className={fieldClass} /></Field>
-                                        <Field label="Horaires"><input value={data.opening_hours} onChange={set('opening_hours')} placeholder="Lun – Sam, 9h – 19h" className={fieldClass} /></Field>
+                                        <Field label="Commande minimum (facultatif)" hint="En FCFA, hors livraison. Vide = pas de minimum." error={errors.min_order_amount}>
+                                            <input type="number" min="0" step="500" value={data.min_order_amount} onChange={set('min_order_amount')} placeholder="Ex. 3000" className={fieldClass} />
+                                        </Field>
                                     </div>
+                                </Group>
+                                <Group title="Horaires d’ouverture" sub="La vitrine indique si vous êtes ouvert en ce moment, à l’heure du Cameroun.">
+                                    <OpeningScheduleEditor value={data.opening_schedule} onChange={(v) => setData('opening_schedule', v)} />
+                                    {!data.opening_schedule && <Field label="Ou en texte libre"><input value={data.opening_hours} onChange={set('opening_hours')} placeholder="Lun – Sam, 9h – 19h" className={fieldClass} /></Field>}
                                 </Group>
                                 <Group title="Réseaux sociaux">
                                     {[['instagram_link', 'Instagram', 'https://instagram.com/…'], ['tiktok_link', 'TikTok', 'https://tiktok.com/@…'], ['facebook_link', 'Facebook', 'https://facebook.com/…']].map(([k, label, ph]) => (

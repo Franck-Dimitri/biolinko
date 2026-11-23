@@ -28,7 +28,7 @@ function SeoSection({ data, setData, errors, store }) {
                 <span className="text-[13px] text-[#5F5E58] underline underline-offset-4">{open ? 'Masquer' : 'Personnaliser'}</span>
             </button>
             <div className="mt-4 rounded-xl bg-[#F6F5F1] p-3" aria-label="Aperçu Google">
-                <p className="truncate text-[12px] text-[#5F5E58]">biolinko.link › {store?.slug || 'boutique'} › p</p>
+                <p className="truncate text-[12px] text-[#5F5E58]">biolinko.app › {store?.slug || 'boutique'} › p</p>
                 <p className="truncate text-[17px] leading-snug text-[#1a0dab]">{title.slice(0, 65)}{title.length > 65 ? '…' : ''}</p>
                 <p className="line-clamp-2 text-[13px] text-[#4d5156]">{desc.slice(0, 160)}</p>
             </div>
@@ -46,7 +46,47 @@ function SeoSection({ data, setData, errors, store }) {
     );
 }
 
-const toFieldRows = (fields = []) => fields.map((f) => ({ label: f.label || '', type: f.type || 'text', required: !!f.required, options_text: (f.options || []).join(', ') }));
+// Choix d'une liste avec leur supplément : « 6 parts, 8 parts +3000, 12 parts +6000 »
+const toFieldRows = (fields = []) => fields.map((f) => ({
+    label: f.label || '', type: f.type || 'text', required: !!f.required,
+    options_text: (f.options || []).map((o, i) => (Number(f.prices?.[i]) > 0 ? `${o} +${f.prices[i]}` : o)).join(', '),
+}));
+const parseOptions = (text) => text.split(',').map((o) => o.trim()).filter(Boolean).map((o) => {
+    const m = o.match(/^(.*?)\s*\+\s*([\d\s\u202f\u00a0.]+)\s*(?:f|fcfa)?$/i);
+    return m && m[1] ? [m[1].trim(), parseInt(m[2].replace(/\D/g, ''), 10) || 0] : [o, 0];
+});
+
+const DURATIONS = [[15, '15 min'], [30, '30 min'], [45, '45 min'], [60, '1 h'], [90, '1 h 30'], [120, '2 h'], [180, '3 h'], [240, '4 h'], [360, '6 h'], [480, 'Journée (8 h)']];
+
+/** Caractéristiques (électronique) ou composition (santé, beauté, alimentation) : lignes « libellé : valeur ». */
+function SpecsSection({ data, setData, errors, businessType }) {
+    const composition = ['sante', 'beaute', 'alimentation', 'patisserie', 'restauration'].includes(businessType);
+    const rows = data.specs;
+    const setRow = (i, k, v) => setData('specs', rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
+    return (
+        <section className="rounded-2xl border border-black/[0.08] p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+                <span>
+                    <span className="block text-[15px] font-medium text-[#141412]">{composition ? 'Composition (facultatif)' : 'Caractéristiques (facultatif)'}</span>
+                    <span className="text-[13px] text-[#8B8A83]">{composition ? 'Ex. Ingrédients : beurre de karité pur ; Contenance : 250 ml.' : 'Ex. Stockage : 128 Go ; Garantie : 6 mois.'} 12 lignes au maximum.</span>
+                </span>
+                {rows.length < 12 && <Button size="sm" onClick={() => setData('specs', [...rows, { label: '', value: '' }])}><Plus className="h-4 w-4" /> Ajouter</Button>}
+            </div>
+            {rows.length > 0 && (
+                <div className="mt-3 space-y-2">
+                    {rows.map((r, i) => (
+                        <div key={i} className="grid gap-2 sm:grid-cols-[180px_1fr_36px]">
+                            <input aria-label="Libellé" value={r.label} maxLength={40} onChange={(e) => setRow(i, 'label', e.target.value)} placeholder={composition ? 'Ingrédients' : 'Stockage'} className={fieldClass} />
+                            <input aria-label="Valeur" value={r.value} maxLength={120} onChange={(e) => setRow(i, 'value', e.target.value)} placeholder={composition ? 'Beurre de karité pur' : '128 Go'} className={fieldClass} />
+                            <button type="button" aria-label="Supprimer la ligne" onClick={() => setData('specs', rows.filter((_, j) => j !== i))} className="flex h-11 w-9 items-center justify-center rounded-full text-[#8B8A83] hover:text-[#B91C1C]"><Trash2 className="h-4 w-4" /></button>
+                        </div>
+                    ))}
+                </div>
+            )}
+            {errors.specs && <p className="mt-2 text-[13px] text-[#B91C1C]">{errors.specs}</p>}
+        </section>
+    );
+}
 
 /** En stock ou sur commande (délai, capacité par jour), et informations demandées au client. */
 function FulfillmentSection({ data, setData, errors, template, leadTimes }) {
@@ -82,6 +122,12 @@ function FulfillmentSection({ data, setData, errors, template, leadTimes }) {
                     <Field label="Commandes max. par jour (facultatif)" hint="Au-delà, la date n’est plus proposée." error={errors.daily_capacity}>
                         <input type="number" min="1" value={data.daily_capacity} onChange={(e) => setData('daily_capacity', e.target.value)} placeholder="Illimité" className={fieldClass} />
                     </Field>
+                    <Field label="Durée de la prestation (facultatif)" hint="Affichée aux clients : coiffure, massage, réparation…" error={errors.duration_minutes}>
+                        <select value={data.duration_minutes} onChange={(e) => setData('duration_minutes', e.target.value)} className={fieldClass}>
+                            <option value="">Pas de durée</option>
+                            {DURATIONS.map(([m, l]) => <option key={m} value={m}>{l}</option>)}
+                        </select>
+                    </Field>
                 </div>
             )}
 
@@ -113,7 +159,10 @@ function FulfillmentSection({ data, setData, errors, template, leadTimes }) {
                                     <button type="button" aria-label="Supprimer le champ" onClick={() => setData('custom_fields', data.custom_fields.filter((_, j) => j !== i))} className="flex h-11 w-9 items-center justify-center rounded-full text-[#8B8A83] hover:text-[#B91C1C]"><Trash2 className="h-4 w-4" /></button>
                                 </div>
                                 {f.type === 'select' && (
-                                    <input aria-label="Choix proposés" value={f.options_text} onChange={(e) => setField(i, 'options_text', e.target.value)} placeholder="Choix séparés par des virgules : 6 parts, 8 parts, 12 parts" className={fieldClass} />
+                                    <input aria-label="Choix proposés" value={f.options_text} onChange={(e) => setField(i, 'options_text', e.target.value)} placeholder="Choix séparés par des virgules : 6 parts, 8 parts +3000, 12 parts +6000" className={fieldClass} />
+                                )}
+                                {f.type === 'select' && (
+                                    <p className="text-[12px] text-[#8B8A83]">Ajoutez « +montant » après un choix pour un supplément : le prix se met à jour pour le client.</p>
                                 )}
                                 <label className="flex items-center gap-2 text-[13px] text-[#5F5E58]">
                                     <input type="checkbox" checked={f.required} onChange={(e) => setField(i, 'required', e.target.checked)} className="h-4 w-4 rounded border-black/20 text-[#141412] focus:ring-0" /> Réponse obligatoire
@@ -141,11 +190,13 @@ function ProductEditor({ product, onClose, limits, categories = [], store, templ
         variants: (product.variants || []).map((v) => ({ id: v.id, name: v.name || '', size: v.size || '', color: v.color || '', price: v.price ? Number(v.price) : '', stock_quantity: v.stock_quantity ?? 10 })),
         fulfillment: product.fulfillment || 'stock', lead_time_hours: product.lead_time_hours ?? (template?.lead_time_hours ?? 24), daily_capacity: product.daily_capacity ?? '',
         custom_fields: toFieldRows(product.custom_fields || []),
+        duration_minutes: product.duration_minutes ?? '', specs: product.specs || [],
     } : {
         ...blank,
         // Nouveau produit : réglages du modèle de l'activité (pâtisserie → sur commande, 48 h, champs suggérés)
         fulfillment: madeDefault ? 'made_to_order' : 'stock', lead_time_hours: template?.lead_time_hours ?? 24, daily_capacity: '',
         custom_fields: toFieldRows(template?.fields || []), stock: madeDefault ? 0 : blank.stock,
+        duration_minutes: '', specs: [],
     });
     const { data, setData, errors, processing } = form;
     const [previews, setPreviews] = useState([]);
@@ -178,10 +229,13 @@ function ProductEditor({ product, onClose, limits, categories = [], store, templ
             variants: d.variants.length ? d.variants : [{ name: '' }],
             stock: d.fulfillment === 'made_to_order' ? 0 : d.stock,
             daily_capacity: d.daily_capacity === '' ? null : d.daily_capacity,
-            custom_fields: d.custom_fields.filter((f) => f.label.trim()).map((f) => ({
-                label: f.label.trim(), type: f.type, required: f.required ? 1 : 0,
-                options: f.type === 'select' ? f.options_text.split(',').map((o) => o.trim()).filter(Boolean) : [],
-            })),
+            custom_fields: d.custom_fields.filter((f) => f.label.trim()).map((f) => {
+                const opts = f.type === 'select' ? parseOptions(f.options_text) : [];
+                return { label: f.label.trim(), type: f.type, required: f.required ? 1 : 0, options: opts.map((o) => o[0]), prices: opts.map((o) => o[1]) };
+            }),
+            // Liste vide : une ligne vide pour que « tout retirer » soit bien transmis
+            specs: d.specs.filter((r) => r.label.trim() && r.value.trim()).length ? d.specs.filter((r) => r.label.trim() && r.value.trim()) : [{ label: '', value: '' }],
+            duration_minutes: d.fulfillment === 'made_to_order' ? d.duration_minutes : '',
         }));
         if (editing) form.post(route('products.update.post', product.id), opts);
         else form.post(route('products.store'), opts);
@@ -253,6 +307,7 @@ function ProductEditor({ product, onClose, limits, categories = [], store, templ
                     </div>
 
                     <FulfillmentSection data={data} setData={setData} errors={errors} template={template} leadTimes={leadTimes} />
+                    <SpecsSection data={data} setData={setData} errors={errors} businessType={store?.business_type} />
 
                     <section className="rounded-2xl border border-black/[0.08] p-4">
                         <label className="flex items-center justify-between gap-3">

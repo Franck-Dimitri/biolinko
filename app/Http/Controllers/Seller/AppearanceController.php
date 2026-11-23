@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\StoreReview;
 use App\Models\User;
 use App\Support\BusinessTypes;
+use App\Support\ImageUpload;
+use App\Support\OpeningHours;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -55,6 +57,8 @@ class AppearanceController extends Controller
             'phone_whatsapp' => ['nullable', 'string', 'max:50'],
             'city_location' => ['nullable', 'string', 'max:255'],
             'opening_hours' => ['nullable', 'string', 'max:255'],
+            'opening_schedule' => ['nullable'], // JSON (formulaire multipart) ou tableau, vérifié par OpeningHours::normalize
+            'min_order_amount' => ['nullable', 'numeric', 'min:0', 'max:10000000'],
             'announcement_header' => ['nullable', 'string', 'max:255'],
             'instagram_link' => ['nullable', 'string', 'max:255'],
             'tiktok_link' => ['nullable', 'string', 'max:255'],
@@ -72,12 +76,12 @@ class AppearanceController extends Controller
         ], ['slug.regex' => 'L’adresse doit faire 3 à 40 caractères : lettres minuscules, chiffres et tirets, sans tiret au début ni à la fin.', 'slug.not_in' => 'Cette adresse est réservée, choisissez-en une autre.']);
 
         if ($request->hasFile('logo_file')) {
-            $path = $request->file('logo_file')->store('logos', 'public');
+            $path = ImageUpload::store($request->file('logo_file'), 'logos');
             $validated['logo_url'] = '/storage/'.$path;
         }
 
         if ($request->hasFile('banner_file')) {
-            $path = $request->file('banner_file')->store('banners', 'public');
+            $path = ImageUpload::store($request->file('banner_file'), 'banners');
             $validated['banner_url'] = '/storage/'.$path;
         }
 
@@ -105,6 +109,19 @@ class AppearanceController extends Controller
             if (is_array($benefits)) {
                 $validated['benefits_json'] = $benefits;
             }
+        }
+
+        // Horaires par jour : le texte affiché (« Lun – Sam · 11 h – 23 h ») est déduit des horaires
+        if ($request->has('opening_schedule')) {
+            $schedule = $request->input('opening_schedule');
+            $schedule = OpeningHours::normalize(is_string($schedule) ? json_decode($schedule, true) : $schedule);
+            $validated['opening_schedule'] = $schedule;
+            if ($schedule) {
+                $validated['opening_hours'] = OpeningHours::summary($schedule);
+            }
+        }
+        if (array_key_exists('min_order_amount', $validated)) {
+            $validated['min_order_amount'] = (float) $validated['min_order_amount'] > 0 ? (float) $validated['min_order_amount'] : null;
         }
 
         // La catégorie affichée (vitrine, Google) suit l'activité choisie
