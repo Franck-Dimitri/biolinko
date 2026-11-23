@@ -32,6 +32,7 @@ use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Storefront\OrderTrackingController;
 use App\Http\Controllers\Storefront\SeoController;
 use App\Http\Controllers\Storefront\SiteController;
+use App\Http\Controllers\Storefront\TemplateGalleryController;
 use App\Http\Controllers\Storefront\StorefrontController;
 use App\Http\Controllers\Webhooks\HrSkillsPayWebhookController;
 use App\Http\Controllers\Webhooks\MercyPayWebhookController;
@@ -78,6 +79,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
     Route::get('/stores', [AdminStoreController::class, 'index'])->name('admin.stores.index');
     Route::post('/stores/{store}/toggle-status', [AdminStoreController::class, 'toggleStatus'])->name('admin.stores.toggleStatus');
     Route::post('/stores/{store}/plan', [AdminStoreController::class, 'updatePlan'])->name('admin.stores.plan');
+    Route::post('/stores/{store}/design-engine', [AdminStoreController::class, 'toggleDesignEngine'])->name('admin.stores.designEngine');
     Route::post('/stores/{store}/moderate', [AdminStoreController::class, 'moderateStore'])->name('admin.stores.moderate');
 
     // 3. Vendeurs & Utilisateurs
@@ -130,6 +132,15 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
 // 2. SELLER / VENDOR ROUTES (Prefix: /seller, Middleware: role:seller)
 Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('seller.dashboard');
+    // Création de la boutique : activité, template, nom, adresse, ville et WhatsApp
+    Route::get('/creation', [\App\Http\Controllers\Seller\CreationController::class, 'show'])->name('seller.creation');
+    Route::post('/creation', [\App\Http\Controllers\Seller\CreationController::class, 'store'])->name('seller.creation.store');
+    // Éditeur visuel de la vitrine
+    Route::get('/vitrine', [\App\Http\Controllers\Seller\EditorController::class, 'show'])->name('seller.editor');
+    Route::put('/vitrine/brouillon', [\App\Http\Controllers\Seller\EditorController::class, 'saveDraft'])->middleware('throttle:60,1')->name('seller.editor.draft');
+    Route::post('/vitrine/publier', [\App\Http\Controllers\Seller\EditorController::class, 'publish'])->name('seller.editor.publish');
+    Route::post('/vitrine/versions/{version}/restaurer', [\App\Http\Controllers\Seller\EditorController::class, 'restore'])->name('seller.editor.restore');
+    Route::post('/vitrine/image', [\App\Http\Controllers\Seller\EditorController::class, 'image'])->middleware('throttle:20,1')->name('seller.editor.image');
     Route::post('/store', [StoreController::class, 'update'])->name('store.update');
     Route::post('/store/publish', [StoreController::class, 'togglePublish'])->name('store.togglePublish');
 
@@ -219,7 +230,7 @@ Route::post('/api/webhooks/hrskills-pay', [HrSkillsPayWebhookController::class, 
 Route::get('/api/webhooks/whatsapp-cloud', [WhatsappCloudWebhookController::class, 'verify'])->name('webhooks.whatsapp-cloud.verify');
 Route::post('/api/webhooks/whatsapp-cloud', [WhatsappCloudWebhookController::class, 'handle'])->name('webhooks.whatsapp-cloud');
 
-// Landing : l'adresse biolinko.link/<boutique> est-elle libre ?
+// Landing : l'adresse biolinko.app/<boutique> est-elle libre ?
 Route::get('/boutique-disponible', function (Request $request) {
     $slug = ShopIntent::normalize($request->query('slug'));
 
@@ -234,6 +245,8 @@ Route::get('/checkout/status/{reference}', [CheckoutController::class, 'checkSta
 Route::get('/track/{tracking_code}', [OrderTrackingController::class, 'show'])->name('order.track');
 Route::get('/track/{tracking_code}/facture', [OrderTrackingController::class, 'invoice'])->middleware('throttle:20,1')->name('order.invoice');
 Route::post('/track/{tracking_code}/report', [OrderTrackingController::class, 'report'])->middleware('throttle:3,1')->name('order.report');
+Route::post('/panier-semaine/{token}/arreter', [OrderTrackingController::class, 'stopBasket'])->middleware('throttle:10,1')->name('basket.stop');
+Route::post('/track/{tracking_code}/ajout', [OrderTrackingController::class, 'addon'])->middleware('throttle:10,1')->name('order.addon');
 Route::post('/track/{tracking_code}/received', [OrderTrackingController::class, 'confirmReceipt'])->middleware('throttle:5,1')->name('order.received');
 Route::post('/track/{tracking_code}/report/resolve', [OrderTrackingController::class, 'resolve'])->middleware('throttle:5,1')->name('order.report.resolve');
 Route::get('/track/{tracking_code}/paiement', [OrderTrackingController::class, 'payment'])->name('order.payment');
@@ -261,6 +274,10 @@ Route::controller(SiteController::class)->group(function () {
     Route::post('/programme-pilote', 'storePilot')->middleware('throttle:5,1')->name('site.pilot.store');
     Route::get('/mentions-legales', 'legalNotice')->name('legal.notice');
 });
+
+// Galerie publique des templates de boutique
+Route::get('/templates', [TemplateGalleryController::class, 'index'])->name('site.templates');
+Route::get('/templates/{template}', [TemplateGalleryController::class, 'show'])->where('template', '[a-z0-9-]+')->name('site.templates.show');
 
 // Public Legal Pages (Terms, Privacy, Cookies)
 Route::get('/conditions-generales', function () {

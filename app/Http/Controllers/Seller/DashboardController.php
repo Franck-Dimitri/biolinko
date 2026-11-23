@@ -15,10 +15,14 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
         $user = $request->user();
         $store = $user->store;
+        // Boutique pas encore créée (nouveau vendeur) : le parcours de création d'abord
+        if ($store && ! $store->is_configured && ! $store->design_engine && ! $store->products()->exists()) {
+            return redirect()->route('seller.creation');
+        }
 
         $products = Product::where('store_id', $store->id)
             ->latest()
