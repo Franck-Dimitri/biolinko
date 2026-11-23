@@ -35,7 +35,9 @@ class OrderController extends Controller
         $statusFilter = $request->query('status', 'all');
         $search = trim((string) $request->query('search', ''));
 
-        $ordersQuery = Order::with(['items', 'report', 'refunds'])->where('store_id', $store->id);
+        $ordersQuery = Order::with(['items', 'report', 'refunds', 'parent:id,tracking_code'])
+            ->withCount(['addons as paid_addons_count' => fn ($q) => $q->where('payment_status', 'paid')])
+            ->where('store_id', $store->id);
 
         // Onglets de la vue : groupes de statuts
         $groups = [
@@ -56,7 +58,7 @@ class OrderController extends Controller
             });
         }
 
-        $orders = $ordersQuery->latest()->paginate(10)->withQueryString();
+        $orders = $ordersQuery->latest()->latest('id')->paginate(10)->withQueryString();
 
         // Metrics Counts
         $totalOrdersCount = Order::where('store_id', $store->id)->count();
@@ -133,6 +135,9 @@ class OrderController extends Controller
         } elseif ($previous === 'delivered') {
             $order->unmarkDelivered();
         }
+
+        // Les ajouts payés après coup suivent la commande (livrés avec elle)
+        $order->syncAddons();
 
         // Send real-time WhatsApp shipping / delivery notification to customer
         try {

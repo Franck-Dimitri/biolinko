@@ -5,9 +5,13 @@ namespace App\Http\Controllers\Storefront;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderReport;
+use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\RecurringBasket;
 use App\Payments\Countries;
 use App\Payments\Orders\OrderPayments;
 use App\Payments\PaymentException;
+use App\Services\Sales\OrderAddons;
 use App\Services\Sales\OrderInvoiceService;
 use App\Services\Whatsapp\WhatsappGatewayService;
 use App\Support\StoreUrl;
@@ -20,14 +24,29 @@ use Inertia\Response;
 
 class OrderTrackingController extends Controller
 {
-    public function show(string $tracking_code): Response
+    public function show(string $tracking_code, OrderAddons $addons): Response
     {
         $order = Order::where('tracking_code', $tracking_code)
-            ->with(['store', 'items.product', 'items.variant', 'report'])
+            ->with(['store', 'items.product', 'items.variant', 'report', 'parent:id,tracking_code', 'recurringBasket'])
             ->firstOrFail();
 
         return Inertia::render('OrderTracking/Show', [
             'order' => $order,
+            // Ajouts après paiement : ceux déjà faits (payés ou en attente) et les articles proposés
+            'addons' => $order->addons()->with('items.product')
+                ->where(fn ($q) => $q->where('payment_status', 'paid')->orWhere(fn ($q) => $q->where('payment_status', 'pending')->where('created_at', '>', now()->subDay())))
+                ->latest()->get()
+                ->map(fn (Order $a) => [
+                    'tracking_code' => $a->tracking_code, 'paid' => $a->payment_status === 'paid', 'total' => (float) $a->total_client,
+                    'items' => $a->items->map(fn ($i) => ['title' => $i->product_title, 'variant' => $i->variant_label, 'quantity' => $i->quantity, 'image' => $i->product?->image_url]),
+                    'payment_url' => $a->payment_status === 'paid' ? null : StoreUrl::payment($a),
+                ]),
+            'addonOffers' => $addons->offers($order),
+            // Panier de la semaine : le client peut l'arrêter depuis n'importe laquelle de ses commandes
+            'basket' => $order->recurringBasket ? [
+                'active' => $order->recurringBasket->active || ! $order->recurringBasket->stopped_reason,
+                'token' => $order->recurringBasket->token,
+            ] : null,
             'canReport' => $order->canBeReported() && ! $order->report,
             'canPay' => $order->isRecoverable(),
             'canConfirmReceipt' => $order->canConfirmReceipt(),
@@ -43,10 +62,12 @@ class OrderTrackingController extends Controller
      */
     public function payment(string $tracking_code)
     {
-        $order = Order::where('tracking_code', $tracking_code)->with(['store.user', 'items.product'])->firstOrFail();
+        $order = Order::where('tracking_code', $tracking_code)->with(['store.user', 'items.product', 'parent.report'])->firstOrFail();
 
-        if ($order->payment_status === 'paid' || ! $order->isRecoverable()) {
-            return redirect()->to(StoreUrl::track($order));
+        // Un ajout se paie tant que la commande d'origine n'est pas partie ; on revient ensuite sur son suivi
+        $trackOrder = $order->parent ?? $order;
+        if ($order->payment_status === 'paid' || ! $order->isRecoverable() || ($order->parent && ! $order->parent->canTakeAddons())) {
+            return redirect()->to(StoreUrl::track($trackOrder));
         }
 
         $country = $order->payment_country ?: 'CM';
@@ -61,9 +82,53 @@ class OrderTrackingController extends Controller
             ]),
             'store' => $order->store->forPublic(),
             'country' => ['code' => $country, 'dial' => $c['dial'], 'operators' => array_keys($c['operators']), 'prefixes' => $c['prefixes'] ?? []],
-            'trackUrl' => StoreUrl::track($order),
+            'trackUrl' => StoreUrl::track($trackOrder),
+            'addonOf' => $order->parent?->tracking_code,
             'storeHome' => StoreUrl::home($order->store),
         ]);
+    }
+
+    /** Le client arrête son panier de la semaine. */
+    public function stopBasket(string $token): RedirectResponse
+    {
+        $basket = RecurringBasket::where('token', $token)->firstOrFail();
+        $basket->update(['active' => false, 'stopped_reason' => 'customer']);
+
+        return back()->with('success', 'C’est noté : vous ne recevrez plus ce panier chaque semaine.');
+    }
+
+    /**
+     * Ajout après paiement : crée la petite commande liée puis envoie le client sur la page de paiement.
+     */
+    public function addon(Request $request, string $tracking_code, OrderAddons $addons): JsonResponse
+    {
+        $validated = $request->validate([
+            'product_id' => ['required', 'integer'],
+            'variant_id' => ['nullable', 'integer'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:'.OrderAddons::MAX_QUANTITY],
+        ]);
+
+        $order = Order::where('tracking_code', $tracking_code)->with(['items', 'report'])->firstOrFail();
+        $product = Product::where('store_id', $order->store_id)->find($validated['product_id']);
+        if (! $product) {
+            return response()->json(['error' => 'Cet article n’est plus disponible.'], 422);
+        }
+        $variant = null;
+        if (! empty($validated['variant_id'])) {
+            $variant = ProductVariant::where('product_id', $product->id)->find($validated['variant_id']);
+            if (! $variant) {
+                return response()->json(['error' => 'Cette option n’est plus disponible.'], 422);
+            }
+        } elseif ($product->variants()->exists()) {
+            return response()->json(['error' => 'Choisissez une option.'], 422);
+        }
+
+        [$addon, $error] = $addons->create($order, $product, $variant, (int) $validated['quantity']);
+        if ($error) {
+            return response()->json(['error' => $error], 422);
+        }
+
+        return response()->json(['success' => true, 'payment_url' => StoreUrl::payment($addon)]);
     }
 
     /**
@@ -84,6 +149,9 @@ class OrderTrackingController extends Controller
 
         if (! $order->isRecoverable()) {
             return response()->json(['error' => 'Cette commande ne peut plus être payée. Refaites-la depuis la boutique.'], 422);
+        }
+        if ($order->parent_order_id && ! $order->parent?->canTakeAddons()) {
+            return response()->json(['error' => 'Votre commande est déjà en route : cet ajout ne peut plus partir avec elle.'], 422);
         }
         // Paiement précédent échoué ou expiré : la commande redevient payable (relance du vendeur)
         if ($order->payment_status === 'failed') {

@@ -32,6 +32,8 @@ class ReleaseHeldFunds extends Command
             ->whereNull('funds_released_at')
             ->where('funds_release_at', '<=', now())
             ->whereDoesntHave('report', fn ($q) => $q->whereIn('status', ['open', 'answered']))
+            // Un ajout après paiement reste bloqué tant que la commande d'origine fait l'objet d'un signalement
+            ->whereDoesntHave('parent.report', fn ($q) => $q->whereIn('status', ['open', 'answered']))
             ->chunkById(200, function ($orders) use (&$released) {
                 foreach ($orders as $order) {
                     $released += (int) $order->releaseFunds();

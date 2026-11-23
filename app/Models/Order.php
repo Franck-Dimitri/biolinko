@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\Sales\OrderInvoiceService;
+use App\Services\Sales\RecurringBaskets;
 use App\Services\Whatsapp\WhatsappGatewayService;
 use App\Support\PilotOffer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -26,6 +27,9 @@ class Order extends Model
         'currency',
         'payment_country',
         'smart_link_id',
+        'parent_order_id',
+        'recurring_basket_id',
+        'reminder_sent_at',
         'payment_reminded_at',
         'funds_release_at',
         'funds_released_at',
@@ -73,6 +77,7 @@ class Order extends Model
         'commission_rate' => 'decimal:2',
         'commission_amount' => 'decimal:2',
         'payment_reminded_at' => 'datetime',
+        'reminder_sent_at' => 'datetime',
         'funds_release_at' => 'datetime',
         'funds_released_at' => 'datetime',
         'delivered_at' => 'datetime',
@@ -227,6 +232,12 @@ class Order extends Model
             } catch (\Throwable $e) {
                 report($e);
             }
+            // Panier de la semaine : le premier paiement le met en route
+            try {
+                app(RecurringBaskets::class)->activate($this);
+            } catch (\Throwable $e) {
+                report($e);
+            }
             try {
                 app(OrderInvoiceService::class)->sendOrderInvoiceEmails($this);
             } catch (\Throwable $e) {
@@ -332,6 +343,7 @@ class Order extends Model
             'delivered_at' => $this->delivered_at ?? now(),
         ]);
         $this->releaseFunds();
+        $this->syncAddons();
 
         return true;
     }
@@ -388,6 +400,69 @@ class Order extends Model
     {
         return $this->payment_status === 'paid' && ! $this->funds_released_at && ! $this->is_manual
             && $this->funds_release_at && $this->funds_release_at->isFuture();
+    }
+
+    public function recurringBasket(): BelongsTo
+    {
+        return $this->belongsTo(RecurringBasket::class);
+    }
+
+    /** Commande d'origine d'un ajout après paiement. */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Order::class, 'parent_order_id');
+    }
+
+    /** Ajouts après paiement, livrés avec cette commande. */
+    public function addons(): HasMany
+    {
+        return $this->hasMany(Order::class, 'parent_order_id');
+    }
+
+    public function isAddon(): bool
+    {
+        return (bool) $this->parent_order_id;
+    }
+
+    /**
+     * Le client peut encore ajouter un article livré avec la commande : payée en ligne,
+     * pas encore partie en livraison, sans signalement, et au plus MAX_ADDONS ajouts payés.
+     */
+    public const MAX_ADDONS = 3;
+
+    public function canTakeAddons(): bool
+    {
+        return ! $this->parent_order_id && ! $this->is_manual
+            && $this->payment_status === 'paid' && $this->status === 'paid'
+            && ! $this->delivered_at && ! $this->received_confirmed_at
+            && ! ($this->report && $this->report->isOpen())
+            && $this->addons()->where('payment_status', 'paid')->count() < self::MAX_ADDONS;
+    }
+
+    /**
+     * Les ajouts payés suivent la commande d'origine : même statut de livraison, même délai avant
+     * que le vendeur soit payé, et confirmés en même temps qu'elle.
+     */
+    public function syncAddons(): void
+    {
+        if ($this->parent_order_id) {
+            return;
+        }
+        $this->addons()->where('payment_status', 'paid')->whereNotIn('status', ['cancelled', 'failed'])->get()
+            ->each(function (Order $addon) {
+                $wasDelivered = $addon->status === 'delivered';
+                if (in_array($this->status, ['paid', 'in_delivery', 'delivered'], true) && $addon->status !== $this->status) {
+                    $addon->update(['status' => $this->status]);
+                }
+                if ($this->status === 'delivered' && ! $addon->delivered_at) {
+                    $addon->markDelivered();
+                } elseif ($wasDelivered && $this->status !== 'delivered') {
+                    $addon->unmarkDelivered();
+                }
+                if ($this->received_confirmed_at && ! $addon->received_confirmed_at) {
+                    $addon->confirmReceipt();
+                }
+            });
     }
 
     public function refunds(): HasMany

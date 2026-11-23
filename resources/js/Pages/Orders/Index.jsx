@@ -288,6 +288,9 @@ export default function Index({ store, orders, metrics, filters, canExportSales 
                                 <tr key={o.id} onClick={() => setSelectedId(o.id)} className="cursor-pointer transition-colors hover:bg-[#FAFAF8]">
                                     <td className="px-4 py-3.5">
                                         <span className="block font-mono text-[13px] text-[#141412]">{o.tracking_code}</span>
+                                        {o.parent && <span className="block text-[12px] text-[#B45309]">Ajout à livrer avec {o.parent.tracking_code}</span>}
+                                        {o.recurring_basket_id && <span className="block text-[12px] text-[#15803D]">Panier de la semaine</span>}
+                                        {o.paid_addons_count > 0 && <span className="block text-[12px] text-[#B45309]">+ {o.paid_addons_count} ajout{o.paid_addons_count > 1 ? 's' : ''} à livrer avec</span>}
                                         <span className="block max-w-[220px] truncate text-[13px] text-[#8B8A83]">{(o.items || []).map((i) => i.product_title).join(', ')}</span>
                                     </td>
                                     <td className="px-4 py-3.5">
