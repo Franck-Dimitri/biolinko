@@ -1,0 +1,112 @@
+{
+    "id": "ele-deal",
+    "name": "Deal",
+    "business_types": [
+        "electronique"
+    ],
+    "pitch": "Orange vif, vente flash en ouverture, prix barrés : pensé pour les promos.",
+    "who": "Revendeur qui fait des arrivages et des promotions.",
+    "preview": {
+        "hero": {
+            "badge": "",
+            "title": "Arrivage de la semaine",
+            "subtitle": "",
+            "button": "Voir les offres"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "ele-deal",
+        "style": {
+            "background": "#FFFFFF",
+            "surface": "#FFF5F0",
+            "ink": "#1B1B1B",
+            "muted": "#666666",
+            "line": "#F0E4DC",
+            "primary": "#FF5A1F",
+            "on_primary": null,
+            "accent": "#1B1B1B",
+            "tint": "#FFE3D6",
+            "tint_strong": "#FFC9B0",
+            "tint_ink": "#C2410C",
+            "font_display": "Archivo Black",
+            "font_body": "Archivo",
+            "heading_weight": 400,
+            "heading_tracking": "-0.01em",
+            "heading_case": "uppercase",
+            "radius": 8,
+            "radius_button": 6,
+            "announce_bg": "#1B1B1B",
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "electronique-audio",
+            "intensity": "bold"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "bold",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "promo",
+                "type": "promo",
+                "variant": "flash",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "circles",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "trust",
+                "type": "trust",
+                "variant": "icons",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "messages",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "band",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

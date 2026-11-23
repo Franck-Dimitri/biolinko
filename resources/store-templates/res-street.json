@@ -1,0 +1,112 @@
+{
+    "id": "res-street",
+    "name": "Street",
+    "business_types": [
+        "restauration"
+    ],
+    "pitch": "Noir et jaune, typographie géante, combos en avant : l’énergie du street food.",
+    "who": "Fast-food, grillades, burgers, shawarma.",
+    "preview": {
+        "hero": {
+            "badge": "",
+            "title": "Chaud. Rapide. Généreux.",
+            "subtitle": "Commandez, on grille, on livre.",
+            "button": "Commander"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "res-street",
+        "style": {
+            "background": "#121212",
+            "surface": "#1D1D1D",
+            "ink": "#FFFFFF",
+            "muted": "#A7A7A7",
+            "line": "#2C2C2C",
+            "primary": "#FFD400",
+            "on_primary": "#121212",
+            "accent": "#FF3B30",
+            "tint": "#2B2B2B",
+            "tint_strong": "#3D3D3D",
+            "tint_ink": "#FFD400",
+            "font_display": "Unbounded",
+            "font_body": "Space Grotesk",
+            "heading_weight": 800,
+            "heading_tracking": "-0.02em",
+            "heading_case": "uppercase",
+            "radius": 12,
+            "radius_button": 8,
+            "announce_bg": "#FF3B30",
+            "announce_fg": "#FFFFFF"
+        },
+        "pattern": {
+            "key": "restauration-cuisine",
+            "intensity": "bold"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "bold",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "type",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "promo",
+                "type": "promo",
+                "variant": "combo",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "info",
+                "type": "info",
+                "variant": "strip",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "messages",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "band",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

@@ -1,0 +1,112 @@
+{
+    "id": "acc-bijoux",
+    "name": "Bijoux",
+    "business_types": [
+        "accessoires"
+    ],
+    "pitch": "Ivoire et doré, serif fin, grand titre centré : délicat et précieux.",
+    "who": "Bijoux, montres, parfums.",
+    "preview": {
+        "hero": {
+            "badge": "",
+            "title": "Pas de Côté",
+            "subtitle": "Montres, parfums et pièces choisies, livrés à Yaoundé.",
+            "button": "Découvrir"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "acc-bijoux",
+        "style": {
+            "background": "#FFFDF8",
+            "surface": "#FAF5EA",
+            "ink": "#2B2416",
+            "muted": "#7D7158",
+            "line": "#EADFC8",
+            "primary": "#8F6E1F",
+            "on_primary": null,
+            "accent": "#8F6E1F",
+            "tint": "#F3EAD6",
+            "tint_strong": "#E4D2AC",
+            "tint_ink": "#8F6E1F",
+            "font_display": "Cormorant Garamond",
+            "font_body": "Manrope",
+            "heading_weight": 500,
+            "heading_tracking": "0",
+            "heading_case": "none",
+            "radius": 2,
+            "radius_button": 0,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "accessoires-bijoux",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "center",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "editorial",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "trust",
+                "type": "trust",
+                "variant": "icons",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "big",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "faq",
+                "type": "faq",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

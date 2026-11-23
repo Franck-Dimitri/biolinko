@@ -1,0 +1,112 @@
+{
+    "id": "ali-marche",
+    "name": "Marché",
+    "business_types": [
+        "alimentation"
+    ],
+    "pitch": "Vert frais, bannière promo, catégories rondes et panier de la semaine.",
+    "who": "Vente de produits frais avec livraison régulière.",
+    "preview": {
+        "hero": {
+            "badge": "Livré demain matin",
+            "title": "Le marché livré chez vous",
+            "subtitle": "Commandez avant 20 h.",
+            "button": "Faire mes courses"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "ali-marche",
+        "style": {
+            "background": "#FFFFFF",
+            "surface": "#F2F8EE",
+            "ink": "#17301C",
+            "muted": "#5B6E5E",
+            "line": "#DCEBD4",
+            "primary": "#2E9E44",
+            "on_primary": null,
+            "accent": "#E08A00",
+            "tint": "#DDF1D5",
+            "tint_strong": "#B9E3AB",
+            "tint_ink": "#1F7A33",
+            "font_display": "Baloo 2",
+            "font_body": "DM Sans",
+            "heading_weight": 800,
+            "heading_tracking": "-0.02em",
+            "heading_case": "none",
+            "radius": 16,
+            "radius_button": 12,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "alimentation-potager",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "app",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "banner",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "circles",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "promo",
+                "type": "promo",
+                "variant": "basket",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "info",
+                "type": "info",
+                "variant": "strip",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

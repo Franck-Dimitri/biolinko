@@ -1,0 +1,126 @@
+{
+    "id": "cou-mesure",
+    "name": "Sur mesure",
+    "business_types": [
+        "couture"
+    ],
+    "pitch": "Bleu nuit et doré, étapes de confection, formulaire de mensurations.",
+    "who": "Couturière ou tailleur qui fait des tenues de cérémonie.",
+    "preview": {
+        "hero": {
+            "badge": "Atelier à Deido",
+            "title": "Une tenue cousue pour vous, pas pour tout le monde",
+            "subtitle": "Choisissez un modèle, donnez vos mesures, on s’occupe du reste.",
+            "button": "Commander ma tenue"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "cou-mesure",
+        "style": {
+            "background": "#F7F4EF",
+            "surface": "#FFFFFF",
+            "ink": "#1B2340",
+            "muted": "#5E6584",
+            "line": "#E2DCCF",
+            "primary": "#1B2340",
+            "on_primary": "#F7F4EF",
+            "accent": "#A88449",
+            "tint": "#E4DDCF",
+            "tint_strong": "#CFC4AE",
+            "tint_ink": "#1B2340",
+            "font_display": "Cormorant Garamond",
+            "font_body": "Manrope",
+            "heading_weight": 600,
+            "heading_tracking": "-0.01em",
+            "heading_case": "none",
+            "radius": 6,
+            "radius_button": 6,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "couture-mesure",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "center",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "steps",
+                "type": "steps",
+                "variant": "line",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "builder",
+                "type": "builder",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "gallery",
+                "type": "gallery",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "big",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "info",
+                "type": "info",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "card",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

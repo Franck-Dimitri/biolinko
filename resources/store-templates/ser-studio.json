@@ -1,0 +1,112 @@
+{
+    "id": "ser-studio",
+    "name": "Studio",
+    "business_types": [
+        "services"
+    ],
+    "pitch": "Sombre et chic, photos plein écran, prestations en cartes et réalisations.",
+    "who": "Salon haut de gamme, maquilleuse, photographe.",
+    "preview": {
+        "hero": {
+            "badge": "Bonapriso",
+            "title": "Vos cheveux, entre de bonnes mains",
+            "subtitle": "Salon spécialisé dans les cheveux naturels.",
+            "button": "Prendre rendez-vous"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "ser-studio",
+        "style": {
+            "background": "#1A1414",
+            "surface": "#251D1D",
+            "ink": "#F7EDE6",
+            "muted": "#BBA89C",
+            "line": "#3A2E2E",
+            "primary": "#E8B4A0",
+            "on_primary": "#1A1414",
+            "accent": "#E8B4A0",
+            "tint": "#3A2A28",
+            "tint_strong": "#5A403B",
+            "tint_ink": "#E8B4A0",
+            "font_display": "Instrument Serif",
+            "font_body": "Inter",
+            "heading_weight": 400,
+            "heading_tracking": "-0.01em",
+            "heading_case": "none",
+            "radius": 4,
+            "radius_button": 999,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "services-contact",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "center",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "full",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "services",
+                "type": "services",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "gallery",
+                "type": "gallery",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "big",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "info",
+                "type": "info",
+                "variant": "strip",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "card",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

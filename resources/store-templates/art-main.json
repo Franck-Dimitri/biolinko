@@ -1,0 +1,119 @@
+{
+    "id": "art-main",
+    "name": "Fait main",
+    "business_types": [
+        "artisanat"
+    ],
+    "pitch": "Sable et vert profond, histoire de l’artisan avant les produits.",
+    "who": "Artisan qui vend ses propres créations.",
+    "preview": {
+        "hero": {
+            "badge": "Atelier de Bafoussam",
+            "title": "Des perles enfilées à la main, une à une",
+            "subtitle": "Bijoux, masques et paniers faits dans notre atelier.",
+            "button": "Voir les créations"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "art-main",
+        "style": {
+            "background": "#EDE6DA",
+            "surface": "#F6F1E9",
+            "ink": "#2A2118",
+            "muted": "#6F6252",
+            "line": "#DACFBE",
+            "primary": "#2F5D50",
+            "on_primary": null,
+            "accent": "#B45F27",
+            "tint": "#DED1BC",
+            "tint_strong": "#C6B293",
+            "tint_ink": "#2F5D50",
+            "font_display": "Fraunces",
+            "font_body": "DM Sans",
+            "heading_weight": 500,
+            "heading_tracking": "-0.02em",
+            "heading_case": "none",
+            "radius": 10,
+            "radius_button": 8,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "artisanat-outils",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "center",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "gallery",
+                "type": "gallery",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "steps",
+                "type": "steps",
+                "variant": "line",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "big",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "card",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

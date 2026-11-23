@@ -1,0 +1,46 @@
+{
+    "id": "classique",
+    "name": "Classique",
+    "business_types": ["*"],
+    "pitch": "L’apparence Biolinko d’origine : accueil avec photo, catalogue, promotions, garanties et avis.",
+    "design": {
+        "version": 1,
+        "template": "classique",
+        "style": {
+            "background": "#FFFFFF",
+            "surface": "#F6F5F1",
+            "ink": "#141412",
+            "muted": "#5F5E58",
+            "line": "#EAE8E2",
+            "primary": "#FFCC00",
+            "on_primary": null,
+            "accent": "#F97316",
+            "tint": "#FFF3C2",
+            "tint_strong": "#FFE07A",
+            "tint_ink": "#7A6100",
+            "font_display": "Poppins",
+            "font_body": "Poppins",
+            "heading_weight": 500,
+            "heading_tracking": "-0.03em",
+            "heading_case": "none",
+            "radius": 24,
+            "radius_button": 999,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": { "key": null, "intensity": "soft" },
+        "sections": [
+            { "id": "announce", "type": "announce", "variant": "simple", "enabled": true, "settings": {} },
+            { "id": "header", "type": "header", "variant": "classic", "enabled": true, "settings": {} },
+            { "id": "hero", "type": "hero", "variant": "classic", "enabled": true, "settings": {} },
+            { "id": "products", "type": "products", "variant": "classic", "enabled": true, "settings": {} },
+            { "id": "promo", "type": "promo", "variant": "classic", "enabled": true, "settings": {} },
+            { "id": "packs", "type": "packs", "variant": "classic", "enabled": true, "settings": {} },
+            { "id": "trust", "type": "trust", "variant": "classic", "enabled": true, "settings": {} },
+            { "id": "reviews", "type": "reviews", "variant": "classic", "enabled": true, "settings": {} },
+            { "id": "story", "type": "story", "variant": "classic", "enabled": true, "settings": {} },
+            { "id": "cta", "type": "cta", "variant": "classic", "enabled": true, "settings": {} },
+            { "id": "footer", "type": "footer", "variant": "classic", "enabled": true, "settings": {} }
+        ]
+    }
+}

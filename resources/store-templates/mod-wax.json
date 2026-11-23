@@ -1,0 +1,119 @@
+{
+    "id": "mod-wax",
+    "name": "Wax",
+    "business_types": [
+        "mode"
+    ],
+    "pitch": "Couleurs chaudes, collage de photos, catégories rondes et ventes flash.",
+    "who": "Boutique de mode africaine colorée, très active sur Instagram et TikTok.",
+    "preview": {
+        "hero": {
+            "badge": "Nouvelle collection",
+            "title": "Le wax qui te ressemble",
+            "subtitle": "Robes, jupes et hauts en wax et Kente, livrés partout en Côte d’Ivoire.",
+            "button": "Voir les nouveautés"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "mod-wax",
+        "style": {
+            "background": "#FFF4E0",
+            "surface": "#FFFFFF",
+            "ink": "#23170F",
+            "muted": "#6F5A48",
+            "line": "#F0DDBD",
+            "primary": "#E85D04",
+            "on_primary": null,
+            "accent": "#0B6E4F",
+            "tint": "#FFD8A8",
+            "tint_strong": "#F7B267",
+            "tint_ink": "#7A2E00",
+            "font_display": "Bricolage Grotesque",
+            "font_body": "DM Sans",
+            "heading_weight": 800,
+            "heading_tracking": "-0.03em",
+            "heading_case": "none",
+            "radius": 20,
+            "radius_button": 999,
+            "announce_bg": "#0B6E4F",
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "mode-wax",
+            "intensity": "bold"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "collage",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "circles",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "promo",
+                "type": "promo",
+                "variant": "flash",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "messages",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "band",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

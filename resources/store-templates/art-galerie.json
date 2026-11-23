@@ -1,0 +1,98 @@
+{
+    "id": "art-galerie",
+    "name": "Galerie d’art",
+    "business_types": [
+        "artisanat"
+    ],
+    "pitch": "Blanc galerie, typographie affirmée, œuvres en lookbook.",
+    "who": "Peintre, sculpteur, photographe.",
+    "preview": {
+        "hero": {
+            "badge": "",
+            "title": "Terre & Perles",
+            "subtitle": "Œuvres et pièces uniques de l’Ouest Cameroun.",
+            "button": "Voir les œuvres"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "art-galerie",
+        "style": {
+            "background": "#FFFFFF",
+            "surface": "#F4F4F2",
+            "ink": "#151515",
+            "muted": "#707070",
+            "line": "#E5E5E5",
+            "primary": "#151515",
+            "on_primary": null,
+            "accent": "#B4410C",
+            "tint": "#EDEDEA",
+            "tint_strong": "#D8D8D2",
+            "tint_ink": "#333333",
+            "font_display": "Syne",
+            "font_body": "Inter",
+            "heading_weight": 700,
+            "heading_tracking": "-0.02em",
+            "heading_case": "none",
+            "radius": 0,
+            "radius_button": 0,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "artisanat-peinture",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "editorial",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "gallery",
+                "type": "gallery",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "lookbook",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "quote",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

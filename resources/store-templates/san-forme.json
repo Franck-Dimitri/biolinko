@@ -1,0 +1,112 @@
+{
+    "id": "san-forme",
+    "name": "Forme",
+    "business_types": [
+        "sante"
+    ],
+    "pitch": "Bleu et orange énergiques, typographie sportive, programmes en étapes.",
+    "who": "Sport, nutrition, programmes minceur.",
+    "preview": {
+        "hero": {
+            "badge": "",
+            "title": "Plus d’énergie en 7 jours",
+            "subtitle": "Des programmes simples avec des produits naturels.",
+            "button": "Commencer"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "san-forme",
+        "style": {
+            "background": "#FFFFFF",
+            "surface": "#EEF4FF",
+            "ink": "#0A1F44",
+            "muted": "#52607A",
+            "line": "#DCE6F5",
+            "primary": "#FF5C35",
+            "on_primary": null,
+            "accent": "#0A66FF",
+            "tint": "#DCE8FF",
+            "tint_strong": "#BCD3FF",
+            "tint_ink": "#0A66FF",
+            "font_display": "Archivo Black",
+            "font_body": "Archivo",
+            "heading_weight": 400,
+            "heading_tracking": "-0.01em",
+            "heading_case": "uppercase",
+            "radius": 14,
+            "radius_button": 999,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "sante-forme",
+            "intensity": "bold"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "bold",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "type",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "steps",
+                "type": "steps",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "promo",
+                "type": "promo",
+                "variant": "flash",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "messages",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "band",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

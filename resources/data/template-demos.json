@@ -1,0 +1,3101 @@
+{
+ "patisserie": {
+  "shop": "Les Douceurs d'Awa",
+  "city": "Douala",
+  "banner": "/images/landing/prod-cake.jpg",
+  "announcement": "Commandez 48 h à l’avance · Livraison à Douala tous les jours",
+  "opening_hours": "Mar – Dim · 8 h – 19 h",
+  "address": "Retrait à Bonamoussadi",
+  "delivery_text": "Livraison dans tout Douala",
+  "about": "Je fais des gâteaux depuis ma cuisine de Bonamoussadi depuis 2019. Chaque gâteau est préparé la veille, avec du beurre et des fruits frais. Dites-moi l’occasion, je m’occupe du reste.",
+  "products": [
+   {
+    "id": 1,
+    "title": "Layer cake fraise et chocolat",
+    "slug": "exemple-patisserie-1",
+    "description": "Génoise chocolat, crème légère et fraises fraîches.",
+    "category": "Anniversaire",
+    "price_vendor": 18000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/prod-cake.jpg",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 48,
+    "stock": null,
+    "variants": [
+     {
+      "id": 9070,
+      "name": "8 parts",
+      "price": 18000
+     },
+     {
+      "id": 9071,
+      "name": "12 parts",
+      "price": 24000
+     },
+     {
+      "id": 9072,
+      "name": "20 parts",
+      "price": 30000
+     },
+     {
+      "id": 9073,
+      "name": "30 parts",
+      "price": 36000
+     }
+    ],
+    "custom_fields": [
+     {
+      "label": "Parfum",
+      "type": "select",
+      "required": true,
+      "options": [
+       "Chocolat",
+       "Vanille",
+       "Red velvet",
+       "Coco"
+      ]
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "title": "Gâteau d’anniversaire 2 étages",
+    "slug": "exemple-patisserie-2",
+    "description": "Décor et couleurs au choix, 20 à 30 parts.",
+    "category": "Mariage",
+    "price_vendor": 35000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-etages.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 48,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 3,
+    "title": "Boîte de 12 cupcakes",
+    "slug": "exemple-patisserie-3",
+    "description": "Vanille, chocolat ou red velvet.",
+    "category": "Cupcakes",
+    "price_vendor": 9000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-cupcakes.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 48,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 4,
+    "title": "Number cake",
+    "slug": "exemple-patisserie-4",
+    "description": "Le chiffre ou la lettre de votre choix.",
+    "category": "Viennoiseries",
+    "price_vendor": 25000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-anniv.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 48,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 5,
+    "title": "Tarte aux fruits de saison",
+    "slug": "exemple-patisserie-5",
+    "description": "Mangue, ananas ou fruits rouges.",
+    "category": "Box cadeau",
+    "price_vendor": 12000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-tarte.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 48,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 6,
+    "title": "Box de 6 croissants",
+    "slug": "exemple-patisserie-6",
+    "description": "Pur beurre, livrés le matin.",
+    "category": "Anniversaire",
+    "price_vendor": 4500,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-croissants.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 48,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   }
+  ],
+  "categories": [
+   {
+    "label": "Anniversaire",
+    "image": null
+   },
+   {
+    "label": "Mariage",
+    "image": null
+   },
+   {
+    "label": "Cupcakes",
+    "image": null
+   },
+   {
+    "label": "Viennoiseries",
+    "image": null
+   },
+   {
+    "label": "Box cadeau",
+    "image": null
+   }
+  ],
+  "reviews": [
+   {
+    "id": 1,
+    "customer_name": "Brenda",
+    "customer_city": "Douala",
+    "comment": "Le gâteau est arrivé à l’heure et tout le monde a demandé le contact. Merci Awa !",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 2,
+    "customer_name": "Paul",
+    "customer_city": "Akwa",
+    "comment": "Number cake parfait pour les 5 ans de ma fille. Le message était bien écrit.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 3,
+    "customer_name": "Sandrine",
+    "customer_city": "Bonapriso",
+    "comment": "Commandé un mardi pour un samedi, aucun souci. Je recommande.",
+    "rating": 5,
+    "is_verified": true
+   }
+  ],
+  "packs": [],
+  "settings": {
+   "story": {
+    "heading": "Je fais des gâteaux depuis ma cuisine de Bonamoussadi depuis 2019.",
+    "text": "Chaque gâteau est préparé la veille, avec du beurre et des fruits frais. Dites-moi l’occasion, je m’occupe du reste.",
+    "signature": "Awa"
+   },
+   "steps": {
+    "items": [
+     {
+      "title": "Choisissez votre gâteau",
+      "text": "Modèle, nombre de parts, parfum et message."
+     },
+     {
+      "title": "Payez en Mobile Money",
+      "text": "MTN MoMo ou Orange Money, confirmé sur votre téléphone."
+     },
+     {
+      "title": "Recevez-le le jour J",
+      "text": "Livré chez vous ou à retirer au créneau choisi."
+     }
+    ]
+   },
+   "faq": {
+    "items": [
+     {
+      "question": "Combien de temps à l’avance dois-je commander ?",
+      "answer": "48 heures pour un gâteau classique, une semaine pour un gâteau à étages."
+     },
+     {
+      "question": "Livrez-vous partout ?",
+      "answer": "Oui, dans tout Douala. Les frais s’affichent avant le paiement."
+     },
+     {
+      "question": "Puis-je ajouter une photo comestible ?",
+      "answer": "Oui, ajoutez-la directement dans votre commande."
+     }
+    ]
+   },
+   "cta": {
+    "title": "Une occasion en vue ?",
+    "text": "Composez votre gâteau en 2 minutes, choisissez la date et payez en Mobile Money.",
+    "button": "Composer mon gâteau"
+   }
+  }
+ },
+ "restauration": {
+  "shop": "Chez Tantine Mado",
+  "city": "Yaoundé",
+  "banner": "/images/templates/o-alloco.webp",
+  "announcement": "Livraison offerte dès 10 000 FCFA à Bastos et Omnisport",
+  "opening_hours": "Tous les jours · 11 h – 23 h",
+  "address": "Sur place à Bastos",
+  "delivery_text": "Bastos, Omnisport, Nlongkak, Essos",
+  "about": "La cuisine de Tantine Mado, comme à la maison depuis 2012. Tout est préparé le matin avec les produits du marché Mfoundi. Le ndolé du vendredi a ses habitués.",
+  "products": [
+   {
+    "id": 7,
+    "title": "Ndolé crevettes et plantain",
+    "slug": "exemple-restauration-1",
+    "description": "Feuilles de ndolé, crevettes, plantain mûr.",
+    "category": "Plats",
+    "price_vendor": 3500,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-ndole.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 2,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 8,
+    "title": "Poulet DG",
+    "slug": "exemple-restauration-2",
+    "description": "Poulet, plantain frit, légumes sautés.",
+    "category": "Plats",
+    "price_vendor": 5000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-pouletdg.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 2,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 9,
+    "title": "Eru et water fufu",
+    "slug": "exemple-restauration-3",
+    "description": "Eru, waterleaf, peau de bœuf.",
+    "category": "Plats",
+    "price_vendor": 3000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-plat.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 2,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 10,
+    "title": "Poisson braisé",
+    "slug": "exemple-restauration-4",
+    "description": "Bar entier, sauce piment, bâtons de manioc.",
+    "category": "Grillades",
+    "price_vendor": 4500,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 2,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 11,
+    "title": "Brochettes de bœuf (5)",
+    "slug": "exemple-restauration-5",
+    "description": "Marinées au soya.",
+    "category": "Grillades",
+    "price_vendor": 2000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 2,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 12,
+    "title": "Jus de foléré 50 cl",
+    "slug": "exemple-restauration-6",
+    "description": "Fait maison, bien frais.",
+    "category": "Boissons",
+    "price_vendor": 500,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-folere.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 2,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   }
+  ],
+  "categories": [
+   {
+    "label": "Plats",
+    "image": null
+   },
+   {
+    "label": "Grillades",
+    "image": null
+   },
+   {
+    "label": "Accompagnements",
+    "image": null
+   },
+   {
+    "label": "Boissons",
+    "image": null
+   }
+  ],
+  "reviews": [
+   {
+    "id": 1,
+    "customer_name": "Junior",
+    "customer_city": "Bastos",
+    "comment": "Livré en 35 minutes, encore chaud. Le poulet DG est le meilleur du quartier.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 2,
+    "customer_name": "Mireille",
+    "customer_city": "Omnisport",
+    "comment": "Je commande tous les vendredis pour le bureau. Toujours à l’heure.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 3,
+    "customer_name": "Hervé",
+    "customer_city": "Nlongkak",
+    "comment": "Le poisson braisé est énorme pour le prix.",
+    "rating": 5,
+    "is_verified": true
+   }
+  ],
+  "packs": [
+   {
+    "id": 1,
+    "code": "exemple",
+    "title": "Ndolé crevettes et plantain + Poulet DG",
+    "total_amount": 5500,
+    "subtotal_amount": 6500,
+    "items": [
+     {
+      "product_name": "Ndolé crevettes et plantain",
+      "quantity": 1,
+      "image_url": "/images/templates/o-ndole.webp"
+     },
+     {
+      "product_name": "Poulet DG",
+      "quantity": 1,
+      "image_url": "/images/templates/o-pouletdg.webp"
+     }
+    ]
+   }
+  ],
+  "settings": {
+   "story": {
+    "heading": "La cuisine de Tantine Mado, comme à la maison depuis 2012.",
+    "text": "Tout est préparé le matin avec les produits du marché Mfoundi. Le ndolé du vendredi a ses habitués.",
+    "signature": "Tantine Mado"
+   },
+   "steps": {
+    "items": [
+     {
+      "title": "Choisissez vos plats",
+      "text": "Ajoutez-les au panier depuis la carte."
+     },
+     {
+      "title": "Payez en Mobile Money",
+      "text": "Ou à la livraison selon le quartier."
+     },
+     {
+      "title": "On cuisine et on livre",
+      "text": "30 à 45 minutes en moyenne."
+     }
+    ]
+   },
+   "faq": {
+    "items": [
+     {
+      "question": "Quel est le délai de livraison ?",
+      "answer": "Entre 30 et 45 minutes selon votre quartier."
+     },
+     {
+      "question": "Puis-je payer à la livraison ?",
+      "answer": "Oui à Bastos et Omnisport, sinon en Mobile Money."
+     },
+     {
+      "question": "Faites-vous des plateaux ?",
+      "answer": "Oui, à partir de 10 personnes, 24 h à l’avance."
+     }
+    ]
+   },
+   "cta": {
+    "title": "Un repas pour un groupe ?",
+    "text": "Plateaux à partir de 10 personnes, commandés et payés en ligne 24 h à l’avance.",
+    "button": "Commander un plateau"
+   }
+  }
+ },
+ "mode": {
+  "shop": "Maison Kente",
+  "city": "Abidjan",
+  "banner": "/images/landing/robe-pagne.webp",
+  "announcement": "Nouvelle collection Kente · Livraison partout en Côte d’Ivoire",
+  "opening_hours": "Lun – Sam · 9 h – 19 h",
+  "address": "Showroom à Cocody",
+  "delivery_text": "Toute la Côte d’Ivoire",
+  "about": "Des pièces en Kente et en wax, cousues à Abidjan. Nous travaillons avec trois ateliers de Treichville. Chaque collection est produite en petite quantité.",
+  "products": [
+   {
+    "id": 13,
+    "title": "Robe pagne smockée",
+    "slug": "exemple-mode-1",
+    "description": "Coton wax, taille élastique, du S au XXL.",
+    "category": "Robes",
+    "price_vendor": 25000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/robe-pagne.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 14,
+    "title": "Robe sirène dentelle",
+    "slug": "exemple-mode-2",
+    "description": "Dentelle et volants wax, pour les cérémonies.",
+    "category": "Hauts",
+    "price_vendor": 32000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/robe-sirene.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 15,
+    "title": "Haut Kente",
+    "slug": "exemple-mode-3",
+    "description": "Tissé main, col en V.",
+    "category": "Jupes",
+    "price_vendor": 15000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/haut-kente.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 16,
+    "title": "Jupe Kente",
+    "slug": "exemple-mode-4",
+    "description": "Taille haute, longueur midi.",
+    "category": "Accessoires",
+    "price_vendor": 18000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/jupe-kente.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 17,
+    "title": "Tunique orange brodée",
+    "slug": "exemple-mode-5",
+    "description": "Coupe ample, broderie dorée.",
+    "category": "Robes",
+    "price_vendor": 20000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/tunique-orange.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 18,
+    "title": "Jupe soleil",
+    "slug": "exemple-mode-6",
+    "description": "Wax jaune, ample et légère.",
+    "category": "Hauts",
+    "price_vendor": 16000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/jupe-soleil.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   }
+  ],
+  "categories": [
+   {
+    "label": "Robes",
+    "image": "/images/landing/robe-sirene.webp"
+   },
+   {
+    "label": "Hauts",
+    "image": "/images/landing/haut-kente.webp"
+   },
+   {
+    "label": "Jupes",
+    "image": "/images/landing/jupe-soleil.webp"
+   },
+   {
+    "label": "Accessoires",
+    "image": "/images/landing/foulard.webp"
+   }
+  ],
+  "reviews": [
+   {
+    "id": 1,
+    "customer_name": "Kadi",
+    "customer_city": "Cocody",
+    "comment": "La robe pagne tombe parfaitement, la taille correspond au guide.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 2,
+    "customer_name": "Estelle",
+    "customer_city": "Yopougon",
+    "comment": "Reçue en 48 h, tissu de très bonne qualité.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 3,
+    "customer_name": "Fatou",
+    "customer_city": "Marcory",
+    "comment": "J’ai porté la robe sirène à un mariage, on m’a demandé l’adresse toute la soirée.",
+    "rating": 5,
+    "is_verified": true
+   }
+  ],
+  "packs": [
+   {
+    "id": 1,
+    "code": "exemple",
+    "title": "Robe pagne smockée + Robe sirène dentelle",
+    "total_amount": 14400,
+    "subtotal_amount": 18000,
+    "items": [
+     {
+      "product_name": "Robe pagne smockée",
+      "quantity": 1,
+      "image_url": "/images/landing/robe-pagne.webp"
+     },
+     {
+      "product_name": "Robe sirène dentelle",
+      "quantity": 1,
+      "image_url": "/images/landing/robe-sirene.webp"
+     }
+    ]
+   }
+  ],
+  "settings": {
+   "story": {
+    "heading": "Des pièces en Kente et en wax, cousues à Abidjan.",
+    "text": "Nous travaillons avec trois ateliers de Treichville. Chaque collection est produite en petite quantité.",
+    "signature": "Ama, fondatrice"
+   },
+   "steps": {
+    "items": [
+     {
+      "title": "Choisissez votre taille",
+      "text": "Le guide des tailles est sur chaque article."
+     },
+     {
+      "title": "Payez en Mobile Money",
+      "text": "Orange Money, MTN, Moov ou Wave."
+     },
+     {
+      "title": "Livraison en 24 à 72 h",
+      "text": "Partout en Côte d’Ivoire."
+     }
+    ]
+   },
+   "faq": {
+    "items": [
+     {
+      "question": "Comment choisir ma taille ?",
+      "answer": "Chaque article a un guide des tailles avec les mesures en centimètres."
+     },
+     {
+      "question": "Puis-je échanger ?",
+      "answer": "Oui, sous 7 jours si l’article n’a pas été porté."
+     },
+     {
+      "question": "Livrez-vous hors d’Abidjan ?",
+      "answer": "Oui, partout en Côte d’Ivoire en 72 h."
+     }
+    ]
+   },
+   "cta": {
+    "title": "Une tenue pour une cérémonie ?",
+    "text": "Les nouveautés partent vite : réservez la vôtre maintenant, livrée en 24 à 72 h.",
+    "button": "Voir les nouveautés"
+   }
+  }
+ },
+ "couture": {
+  "shop": "Atelier Mariam",
+  "city": "Douala",
+  "banner": "/images/landing/robe-sirene.webp",
+  "announcement": "Prise de mesures gratuite à l’atelier · Délai moyen 7 jours",
+  "opening_hours": "Lun – Sam · 8 h – 18 h",
+  "address": "Atelier à Deido",
+  "delivery_text": "Envoi dans tout le Cameroun",
+  "about": "Mariam coud pour les mariages et cérémonies de Douala depuis 15 ans. L’atelier est à Deido. On prend le temps de comprendre ce que vous voulez avant de couper le tissu.",
+  "products": [
+   {
+    "id": 19,
+    "title": "Robe sirène sur mesure",
+    "slug": "exemple-couture-1",
+    "description": "Dentelle et wax, ajustée à vos mesures.",
+    "category": "Robes de soirée",
+    "price_vendor": 45000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/robe-sirene.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 168,
+    "stock": null,
+    "variants": [
+     {
+      "id": 9230,
+      "name": "Robe sirène",
+      "price": 30000
+     },
+     {
+      "id": 9231,
+      "name": "Robe pagne",
+      "price": 36000
+     },
+     {
+      "id": 9232,
+      "name": "Ensemble",
+      "price": 42000
+     },
+     {
+      "id": 9233,
+      "name": "Tunique",
+      "price": 48000
+     }
+    ],
+    "custom_fields": [
+     {
+      "label": "Tissu",
+      "type": "select",
+      "required": true,
+      "options": [
+       "J’apporte mon tissu",
+       "Wax de l’atelier",
+       "Dentelle"
+      ]
+     }
+    ]
+   },
+   {
+    "id": 20,
+    "title": "Robe pagne smockée",
+    "slug": "exemple-couture-2",
+    "description": "Votre tissu ou le nôtre.",
+    "category": "Tenues de mariage",
+    "price_vendor": 30000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/robe-pagne.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 168,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 21,
+    "title": "Ensemble Kente",
+    "slug": "exemple-couture-3",
+    "description": "Haut et jupe assortis.",
+    "category": "Ensembles pagne",
+    "price_vendor": 40000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/jupe-kente.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 168,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 22,
+    "title": "Tunique brodée",
+    "slug": "exemple-couture-4",
+    "description": "Broderie main au col et aux manches.",
+    "category": "Hommes",
+    "price_vendor": 25000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/tunique-orange.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 168,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   }
+  ],
+  "categories": [
+   {
+    "label": "Robes de soirée",
+    "image": null
+   },
+   {
+    "label": "Tenues de mariage",
+    "image": null
+   },
+   {
+    "label": "Ensembles pagne",
+    "image": null
+   },
+   {
+    "label": "Hommes",
+    "image": null
+   }
+  ],
+  "reviews": [
+   {
+    "id": 1,
+    "customer_name": "Clarisse",
+    "customer_city": "Deido",
+    "comment": "Ma robe de dot était prête deux jours avant la date. Ajustée au millimètre.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 2,
+    "customer_name": "Yolande",
+    "customer_city": "Logbessou",
+    "comment": "J’ai envoyé mes mesures depuis Yaoundé, aucune retouche à faire.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 3,
+    "customer_name": "Grâce",
+    "customer_city": "Bonabéri",
+    "comment": "Mariam a de très bons conseils pour le choix du tissu.",
+    "rating": 5,
+    "is_verified": true
+   }
+  ],
+  "packs": [],
+  "settings": {
+   "story": {
+    "heading": "Mariam coud pour les mariages et cérémonies de Douala depuis 15 ans.",
+    "text": "L’atelier est à Deido. On prend le temps de comprendre ce que vous voulez avant de couper le tissu.",
+    "signature": "Mariam"
+   },
+   "steps": {
+    "items": [
+     {
+      "title": "Choisissez un modèle",
+      "text": "Dans le catalogue ou envoyez une photo."
+     },
+     {
+      "title": "Donnez vos mesures",
+      "text": "À l’atelier ou depuis chez vous avec notre guide."
+     },
+     {
+      "title": "Essayage et livraison",
+      "text": "Un essayage, des retouches, puis la livraison."
+     }
+    ]
+   },
+   "faq": {
+    "items": [
+     {
+      "question": "Comment prendre mes mesures ?",
+      "answer": "Notre guide en photos vous montre les 6 mesures à prendre."
+     },
+     {
+      "question": "Puis-je apporter mon tissu ?",
+      "answer": "Oui, le prix est alors réduit."
+     },
+     {
+      "question": "Quel est le délai ?",
+      "answer": "7 jours en moyenne, 3 semaines pour une robe de mariée."
+     }
+    ]
+   },
+   "cta": {
+    "title": "Un modèle en tête ?",
+    "text": "Choisissez-le, ajoutez une photo et vos mesures dans la commande. Prix et délai affichés tout de suite.",
+    "button": "Commander ma tenue"
+   }
+  }
+ },
+ "beaute": {
+  "shop": "Éclat de Karité",
+  "city": "Abidjan",
+  "banner": "/images/landing/prod-cosmetics.jpg",
+  "announcement": "Livraison offerte dès 20 000 FCFA à Abidjan",
+  "opening_hours": "Lun – Sam · 9 h – 20 h",
+  "address": "Point de retrait à la Riviera",
+  "delivery_text": "Abidjan en 24 h, intérieur en 72 h",
+  "about": "Des soins au karité que nous fabriquons à Abidjan. Le karité vient d’une coopérative de femmes de Korhogo. Nos recettes sont courtes et lisibles.",
+  "products": [
+   {
+    "id": 23,
+    "title": "Sérum éclat au karité",
+    "slug": "exemple-beaute-1",
+    "description": "Peaux sèches et mixtes. 30 ml.",
+    "category": "Visage",
+    "price_vendor": 8500,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/prod-cosmetics.jpg",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 24,
+    "title": "Eau de parfum Ambre",
+    "slug": "exemple-beaute-2",
+    "description": "Notes d’ambre et de fleur d’oranger. 50 ml.",
+    "category": "Corps",
+    "price_vendor": 22000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/prod-perfume.jpg",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 25,
+    "title": "Beurre de karité pur",
+    "slug": "exemple-beaute-3",
+    "description": "Non raffiné, du nord ivoirien. 200 g.",
+    "category": "Cheveux",
+    "price_vendor": 4000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-karite.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 26,
+    "title": "Savon noir à l’avocat",
+    "slug": "exemple-beaute-4",
+    "description": "Nettoie sans dessécher.",
+    "category": "Parfums",
+    "price_vendor": 2500,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 27,
+    "title": "Gommage au café",
+    "slug": "exemple-beaute-5",
+    "description": "Café de Man, sucre de canne.",
+    "category": "Coffrets",
+    "price_vendor": 5000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-cafe.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 28,
+    "title": "Coffret routine complète",
+    "slug": "exemple-beaute-6",
+    "description": "Savon, sérum, beurre et gommage.",
+    "category": "Visage",
+    "price_vendor": 18000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   }
+  ],
+  "categories": [
+   {
+    "label": "Visage",
+    "image": null
+   },
+   {
+    "label": "Corps",
+    "image": null
+   },
+   {
+    "label": "Cheveux",
+    "image": null
+   },
+   {
+    "label": "Parfums",
+    "image": "/images/landing/prod-perfume.jpg"
+   },
+   {
+    "label": "Coffrets",
+    "image": null
+   }
+  ],
+  "reviews": [
+   {
+    "id": 1,
+    "customer_name": "Nadège",
+    "customer_city": "Riviera",
+    "comment": "Mes taches ont nettement diminué en un mois avec le sérum.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 2,
+    "customer_name": "Mariam",
+    "customer_city": "Plateau",
+    "comment": "Le beurre de karité sent vraiment le karité, pas le parfum.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 3,
+    "customer_name": "Josiane",
+    "customer_city": "Bingerville",
+    "comment": "Le coffret est parfait pour offrir.",
+    "rating": 5,
+    "is_verified": true
+   }
+  ],
+  "packs": [
+   {
+    "id": 1,
+    "code": "exemple",
+    "title": "Sérum éclat au karité + Eau de parfum Ambre",
+    "total_amount": 12750,
+    "subtotal_amount": 15000,
+    "items": [
+     {
+      "product_name": "Sérum éclat au karité",
+      "quantity": 1,
+      "image_url": "/images/landing/prod-cosmetics.jpg"
+     },
+     {
+      "product_name": "Eau de parfum Ambre",
+      "quantity": 1,
+      "image_url": "/images/landing/prod-perfume.jpg"
+     }
+    ]
+   }
+  ],
+  "settings": {
+   "story": {
+    "heading": "Des soins au karité que nous fabriquons à Abidjan.",
+    "text": "Le karité vient d’une coopérative de femmes de Korhogo. Nos recettes sont courtes et lisibles.",
+    "signature": "Aïcha"
+   },
+   "steps": {
+    "items": [
+     {
+      "title": "Nettoyer",
+      "text": "Savon noir à l’avocat, matin et soir."
+     },
+     {
+      "title": "Soigner",
+      "text": "Trois gouttes de sérum éclat."
+     },
+     {
+      "title": "Hydrater",
+      "text": "Beurre de karité sur peau humide."
+     }
+    ]
+   },
+   "faq": {
+    "items": [
+     {
+      "question": "Vos produits conviennent-ils aux peaux sensibles ?",
+      "answer": "Oui, sauf le gommage. Faites un test au poignet."
+     },
+     {
+      "question": "Combien de temps se conservent-ils ?",
+      "answer": "12 mois après ouverture."
+     },
+     {
+      "question": "Livrez-vous à l’intérieur du pays ?",
+      "answer": "Oui, en 72 h par transporteur."
+     }
+    ]
+   },
+   "cta": {
+    "title": "Vous ne savez pas quoi choisir ?",
+    "text": "Nos routines réunissent les bons produits, à prix réduit.",
+    "button": "Voir les routines"
+   }
+  }
+ },
+ "services": {
+  "shop": "Nappy Studio",
+  "city": "Douala",
+  "banner": "/images/templates/o-tresses.webp",
+  "announcement": "Réservez en ligne · Acompte de 2 000 FCFA, le reste sur place",
+  "opening_hours": "Mar – Sam · 8 h – 20 h",
+  "address": "Bonapriso, rue Njo-Njo",
+  "delivery_text": "Au salon ou à domicile (+3 000 FCFA)",
+  "about": "Un salon spécialisé dans les cheveux naturels, à Bonapriso. Quatre coiffeuses formées aux cheveux crépus. On prend soin de vos cheveux, pas seulement de la coiffure.",
+  "products": [
+   {
+    "id": 29,
+    "title": "Box braids longues",
+    "slug": "exemple-services-1",
+    "description": "4 h · Mèches comprises.",
+    "category": "Tresses",
+    "price_vendor": 15000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-tresses.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 24,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 30,
+    "title": "Nattes collées",
+    "slug": "exemple-services-2",
+    "description": "1 h 30 · Motif au choix.",
+    "category": "Perruques",
+    "price_vendor": 6000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 24,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 31,
+    "title": "Pose de perruque",
+    "slug": "exemple-services-3",
+    "description": "1 h · Lace frontale, coiffage inclus.",
+    "category": "Soins",
+    "price_vendor": 10000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 24,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 32,
+    "title": "Soin hydratant profond",
+    "slug": "exemple-services-4",
+    "description": "45 min · Pour cheveux crépus secs.",
+    "category": "Enfants",
+    "price_vendor": 5000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 24,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 33,
+    "title": "Coiffure enfant",
+    "slug": "exemple-services-5",
+    "description": "1 h · Jusqu’à 10 ans.",
+    "category": "Tresses",
+    "price_vendor": 4000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 24,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   }
+  ],
+  "categories": [
+   {
+    "label": "Tresses",
+    "image": null
+   },
+   {
+    "label": "Perruques",
+    "image": null
+   },
+   {
+    "label": "Soins",
+    "image": null
+   },
+   {
+    "label": "Enfants",
+    "image": null
+   }
+  ],
+  "reviews": [
+   {
+    "id": 1,
+    "customer_name": "Carine",
+    "customer_city": "Bonapriso",
+    "comment": "Réservé à 21 h pour le lendemain matin, pris à l’heure. Mes box braids ont tenu 6 semaines.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 2,
+    "customer_name": "Ruth",
+    "customer_city": "Makepe",
+    "comment": "Enfin un salon qui ne casse pas mes cheveux.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 3,
+    "customer_name": "Diane",
+    "customer_city": "Akwa",
+    "comment": "La réservation en ligne est très pratique.",
+    "rating": 5,
+    "is_verified": true
+   }
+  ],
+  "packs": [],
+  "settings": {
+   "story": {
+    "heading": "Un salon spécialisé dans les cheveux naturels, à Bonapriso.",
+    "text": "Quatre coiffeuses formées aux cheveux crépus. On prend soin de vos cheveux, pas seulement de la coiffure.",
+    "signature": "Linda, gérante"
+   },
+   "steps": {
+    "items": [
+     {
+      "title": "Choisissez la prestation",
+      "text": "Durée et prix affichés."
+     },
+     {
+      "title": "Réservez votre créneau",
+      "text": "Acompte de 2 000 FCFA en Mobile Money."
+     },
+     {
+      "title": "Venez au salon",
+      "text": "Vous recevez la confirmation et le suivi de votre réservation."
+     }
+    ]
+   },
+   "faq": {
+    "items": [
+     {
+      "question": "L’acompte est-il remboursé si j’annule ?",
+      "answer": "Oui, si vous annulez 24 h avant."
+     },
+     {
+      "question": "Les mèches sont-elles fournies ?",
+      "answer": "Oui pour les box braids, sinon apportez les vôtres."
+     },
+     {
+      "question": "Venez-vous à domicile ?",
+      "answer": "Oui, avec un supplément de 3 000 FCFA."
+     }
+    ]
+   },
+   "cta": {
+    "title": "Un mariage ou une cérémonie ?",
+    "text": "Réservez plusieurs prestations en une fois et payez l’acompte en ligne.",
+    "button": "Réserver pour un groupe"
+   }
+  }
+ },
+ "electronique": {
+  "shop": "Tech Mboa",
+  "city": "Douala",
+  "banner": "/images/landing/prod-iphone.jpg",
+  "announcement": "Garantie 6 mois sur tous les téléphones · Livraison en 24 h",
+  "opening_hours": "Lun – Sam · 9 h – 20 h",
+  "address": "Boutique à Akwa",
+  "delivery_text": "Douala en 24 h, autres villes en 72 h",
+  "about": "Une boutique d’Akwa qui vend des appareils testés et garantis. Chaque téléphone est vérifié avant l’envoi. En cas de panne sous garantie, on le répare ou on l’échange.",
+  "products": [
+   {
+    "id": 34,
+    "title": "iPhone 15 Pro 256 Go",
+    "slug": "exemple-electronique-1",
+    "description": "Neuf, scellé.",
+    "category": "Téléphones",
+    "price_vendor": 650000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/prod-iphone.jpg",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 35,
+    "title": "Montre connectée Sport",
+    "slug": "exemple-electronique-2",
+    "description": "Appels, cardio, 7 jours d’autonomie.",
+    "category": "Montres",
+    "price_vendor": 41000,
+    "promo_price": 35000,
+    "promo_active": true,
+    "image_url": "/images/landing/prod-smartwatch.jpg",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 36,
+    "title": "Écouteurs sans fil",
+    "slug": "exemple-electronique-3",
+    "description": "Réduction de bruit.",
+    "category": "Audio",
+    "price_vendor": 15000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-ecouteurs.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 37,
+    "title": "Chargeur rapide 25 W",
+    "slug": "exemple-electronique-4",
+    "description": "USB-C, compatible Samsung et iPhone.",
+    "category": "Accessoires",
+    "price_vendor": 6000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 38,
+    "title": "Batterie externe 20 000 mAh",
+    "slug": "exemple-electronique-5",
+    "description": "Deux téléphones en même temps.",
+    "category": "Ordinateurs",
+    "price_vendor": 12000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-batterie.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 39,
+    "title": "Laptop reconditionné i5",
+    "slug": "exemple-electronique-6",
+    "description": "8 Go de RAM, SSD 256 Go.",
+    "category": "Téléphones",
+    "price_vendor": 220000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-laptop.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   }
+  ],
+  "categories": [
+   {
+    "label": "Téléphones",
+    "image": "/images/landing/prod-iphone.jpg"
+   },
+   {
+    "label": "Montres",
+    "image": "/images/landing/prod-smartwatch.jpg"
+   },
+   {
+    "label": "Audio",
+    "image": "/images/templates/o-ecouteurs.webp"
+   },
+   {
+    "label": "Accessoires",
+    "image": null
+   },
+   {
+    "label": "Ordinateurs",
+    "image": "/images/templates/o-laptop.webp"
+   }
+  ],
+  "reviews": [
+   {
+    "id": 1,
+    "customer_name": "Arnaud",
+    "customer_city": "Akwa",
+    "comment": "iPhone scellé, livré le lendemain. Le livreur a attendu que je vérifie.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 2,
+    "customer_name": "Michèle",
+    "customer_city": "Bonamoussadi",
+    "comment": "La montre a eu un souci, échangée en deux jours.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 3,
+    "customer_name": "Cédric",
+    "customer_city": "Kotto",
+    "comment": "Le meilleur prix que j’ai trouvé pour le laptop.",
+    "rating": 5,
+    "is_verified": true
+   }
+  ],
+  "packs": [
+   {
+    "id": 1,
+    "code": "exemple",
+    "title": "iPhone 15 Pro 256 Go + Montre connectée Sport",
+    "total_amount": 35000,
+    "subtotal_amount": 41000,
+    "items": [
+     {
+      "product_name": "iPhone 15 Pro 256 Go",
+      "quantity": 1,
+      "image_url": "/images/landing/prod-iphone.jpg"
+     },
+     {
+      "product_name": "Montre connectée Sport",
+      "quantity": 1,
+      "image_url": "/images/landing/prod-smartwatch.jpg"
+     }
+    ]
+   }
+  ],
+  "settings": {
+   "story": {
+    "heading": "Une boutique d’Akwa qui vend des appareils testés et garantis.",
+    "text": "Chaque téléphone est vérifié avant l’envoi. En cas de panne sous garantie, on le répare ou on l’échange.",
+    "signature": "Steve"
+   },
+   "steps": {
+    "items": [
+     {
+      "title": "Choisissez votre appareil",
+      "text": "État et garantie indiqués sur chaque fiche."
+     },
+     {
+      "title": "Payez en Mobile Money",
+      "text": "Ou à la livraison à Douala."
+     },
+     {
+      "title": "Livraison en 24 h",
+      "text": "Testez l’appareil devant le livreur."
+     }
+    ]
+   },
+   "faq": {
+    "items": [
+     {
+      "question": "Les téléphones sont-ils neufs ?",
+      "answer": "Neufs scellés ou reconditionnés, c’est indiqué sur chaque fiche."
+     },
+     {
+      "question": "Que couvre la garantie ?",
+      "answer": "Les pannes, pas la casse ni l’oxydation."
+     },
+     {
+      "question": "Puis-je payer à la livraison ?",
+      "answer": "Oui à Douala."
+     }
+    ]
+   },
+   "cta": {
+    "title": "Les arrivages de la semaine",
+    "text": "Stock limité, garantie 6 mois, livraison en 24 h à Douala.",
+    "button": "Voir les arrivages"
+   }
+  }
+ },
+ "accessoires": {
+  "shop": "Pas de Côté",
+  "city": "Yaoundé",
+  "banner": "/images/landing/prod-sneakers.jpg",
+  "announcement": "Livraison en 24 h à Yaoundé · Échange de pointure gratuit",
+  "opening_hours": "Lun – Sam · 10 h – 20 h",
+  "address": "Retrait à Bastos",
+  "delivery_text": "Yaoundé en 24 h",
+  "about": "Des pièces choisies une par une, pour sortir du lot. On sélectionne peu de modèles, en petites quantités. Quand c’est parti, c’est parti.",
+  "products": [
+   {
+    "id": 40,
+    "title": "Sneakers Runner beige",
+    "slug": "exemple-accessoires-1",
+    "description": "Du 38 au 45.",
+    "category": "Sneakers",
+    "price_vendor": 28000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/prod-sneakers.jpg",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 41,
+    "title": "Sac matelassé imprimé",
+    "slug": "exemple-accessoires-2",
+    "description": "Chaîne amovible.",
+    "category": "Sacs",
+    "price_vendor": 22000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/sac-cuir.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 42,
+    "title": "Montre connectée noire",
+    "slug": "exemple-accessoires-3",
+    "description": "Bracelet silicone.",
+    "category": "Montres",
+    "price_vendor": 35000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/prod-smartwatch.jpg",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 43,
+    "title": "Eau de parfum Ambre",
+    "slug": "exemple-accessoires-4",
+    "description": "50 ml.",
+    "category": "Parfums",
+    "price_vendor": 22000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/prod-perfume.jpg",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 44,
+    "title": "Foulard wax",
+    "slug": "exemple-accessoires-5",
+    "description": "100 % coton.",
+    "category": "Sneakers",
+    "price_vendor": 6000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/foulard.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 45,
+    "title": "Lunettes de soleil",
+    "slug": "exemple-accessoires-6",
+    "description": "Protection UV400.",
+    "category": "Sacs",
+    "price_vendor": 9000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   }
+  ],
+  "categories": [
+   {
+    "label": "Sneakers",
+    "image": "/images/landing/prod-sneakers.jpg"
+   },
+   {
+    "label": "Sacs",
+    "image": "/images/landing/sac-cuir.webp"
+   },
+   {
+    "label": "Montres",
+    "image": "/images/landing/prod-smartwatch.jpg"
+   },
+   {
+    "label": "Parfums",
+    "image": "/images/landing/prod-perfume.jpg"
+   }
+  ],
+  "reviews": [
+   {
+    "id": 1,
+    "customer_name": "Loïc",
+    "customer_city": "Bastos",
+    "comment": "Pointure trop petite, échangée le lendemain sans discuter.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 2,
+    "customer_name": "Stella",
+    "customer_city": "Biyem-Assi",
+    "comment": "Le sac est encore plus beau en vrai.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 3,
+    "customer_name": "Ivan",
+    "customer_city": "Mvan",
+    "comment": "Livré en 24 h, bien emballé.",
+    "rating": 5,
+    "is_verified": true
+   }
+  ],
+  "packs": [
+   {
+    "id": 1,
+    "code": "exemple",
+    "title": "Sneakers Runner beige + Sac matelassé imprimé",
+    "total_amount": 24000,
+    "subtotal_amount": 28000,
+    "items": [
+     {
+      "product_name": "Sneakers Runner beige",
+      "quantity": 1,
+      "image_url": "/images/landing/prod-sneakers.jpg"
+     },
+     {
+      "product_name": "Sac matelassé imprimé",
+      "quantity": 1,
+      "image_url": "/images/landing/sac-cuir.webp"
+     }
+    ]
+   }
+  ],
+  "settings": {
+   "story": {
+    "heading": "Des pièces choisies une par une, pour sortir du lot.",
+    "text": "On sélectionne peu de modèles, en petites quantités. Quand c’est parti, c’est parti.",
+    "signature": "Boris et Inès"
+   },
+   "steps": {
+    "items": [
+     {
+      "title": "Choisissez votre pointure",
+      "text": "Guide des pointures sur chaque fiche."
+     },
+     {
+      "title": "Payez en Mobile Money",
+      "text": "MTN MoMo ou Orange Money."
+     },
+     {
+      "title": "Échange gratuit",
+      "text": "Pas la bonne pointure ? On échange."
+     }
+    ]
+   },
+   "faq": {
+    "items": [
+     {
+      "question": "Comment échanger une pointure ?",
+      "answer": "Écrivez-nous sous 7 jours, on passe récupérer la paire."
+     },
+     {
+      "question": "Les produits sont-ils authentiques ?",
+      "answer": "Oui, nous indiquons la provenance sur chaque fiche."
+     },
+     {
+      "question": "Livrez-vous hors de Yaoundé ?",
+      "answer": "Oui, en 72 h par agence de voyage."
+     }
+    ]
+   },
+   "cta": {
+    "title": "Les nouveautés partent vite",
+    "text": "Les pièces partent en quelques jours : réservez la vôtre en ligne.",
+    "button": "Voir les nouveautés"
+   }
+  }
+ },
+ "alimentation": {
+  "shop": "Marché Frais",
+  "city": "Yaoundé",
+  "banner": "/images/templates/o-marche.webp",
+  "announcement": "Commandez avant 20 h, livré demain matin",
+  "opening_hours": "Commandes jusqu’à 20 h",
+  "address": "Retrait au marché Mfoundi",
+  "delivery_text": "Yaoundé, livraison dès 5 000 FCFA",
+  "about": "Nous achetons chaque matin au marché et chez des producteurs de l’Ouest. Vous gagnez le trajet au marché, on choisit les produits comme pour nous.",
+  "products": [
+   {
+    "id": 46,
+    "title": "Panier légumes de la semaine",
+    "slug": "exemple-alimentation-1",
+    "description": "Environ 5 kg de légumes de saison.",
+    "category": "Légumes",
+    "price_vendor": 7500,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-panier-leg.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 47,
+    "title": "Régime de plantain mûr",
+    "slug": "exemple-alimentation-2",
+    "description": "Environ 12 doigts.",
+    "category": "Fruits",
+    "price_vendor": 3000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-plantain.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 48,
+    "title": "Avocats (6)",
+    "slug": "exemple-alimentation-3",
+    "description": "Prêts à manger sous 2 jours.",
+    "category": "Féculents",
+    "price_vendor": 1500,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-avocat.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 49,
+    "title": "Huile de palme rouge 1 L",
+    "slug": "exemple-alimentation-4",
+    "description": "Pressée à Edéa.",
+    "category": "Épices",
+    "price_vendor": 1800,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 50,
+    "title": "Poivre de Penja 100 g",
+    "slug": "exemple-alimentation-5",
+    "description": "Poivre blanc en grains.",
+    "category": "Huiles",
+    "price_vendor": 2500,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 51,
+    "title": "Ananas pain de sucre",
+    "slug": "exemple-alimentation-6",
+    "description": "Pièce d’environ 1,5 kg.",
+    "category": "Légumes",
+    "price_vendor": 1000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-ananas.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   }
+  ],
+  "categories": [
+   {
+    "label": "Légumes",
+    "image": "/images/templates/o-panier-leg.webp"
+   },
+   {
+    "label": "Fruits",
+    "image": "/images/templates/o-fruits.webp"
+   },
+   {
+    "label": "Féculents",
+    "image": null
+   },
+   {
+    "label": "Épices",
+    "image": null
+   },
+   {
+    "label": "Huiles",
+    "image": null
+   }
+  ],
+  "reviews": [
+   {
+    "id": 1,
+    "customer_name": "Madeleine",
+    "customer_city": "Bastos",
+    "comment": "Je reçois le panier tous les samedis, toujours frais.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 2,
+    "customer_name": "Thierry",
+    "customer_city": "Essos",
+    "comment": "Les prix sont proches du marché et je gagne une matinée.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 3,
+    "customer_name": "Alice",
+    "customer_city": "Odza",
+    "comment": "Le poivre de Penja est le vrai.",
+    "rating": 5,
+    "is_verified": true
+   }
+  ],
+  "packs": [
+   {
+    "id": 1,
+    "code": "exemple",
+    "title": "Panier légumes de la semaine + Régime de plantain mûr",
+    "total_amount": 7500,
+    "subtotal_amount": 9200,
+    "items": [
+     {
+      "product_name": "Panier légumes de la semaine",
+      "quantity": 1,
+      "image_url": "/images/templates/o-panier-leg.webp"
+     },
+     {
+      "product_name": "Régime de plantain mûr",
+      "quantity": 1,
+      "image_url": "/images/templates/o-plantain.webp"
+     }
+    ]
+   }
+  ],
+  "settings": {
+   "story": {
+    "heading": "Nous achetons chaque matin au marché et chez des producteurs de l’Ouest.",
+    "text": "Vous gagnez le trajet au marché, on choisit les produits comme pour nous.",
+    "signature": "Edith"
+   },
+   "steps": {
+    "items": [
+     {
+      "title": "Remplissez votre panier",
+      "text": "Avant 20 h pour le lendemain."
+     },
+     {
+      "title": "Choisissez le créneau",
+      "text": "Matin ou soir, le jour qui vous va."
+     },
+     {
+      "title": "Livré frais",
+      "text": "Sorti du marché le matin même."
+     }
+    ]
+   },
+   "faq": {
+    "items": [
+     {
+      "question": "Puis-je changer le contenu du panier ?",
+      "answer": "Oui, écrivez-nous avant jeudi soir."
+     },
+     {
+      "question": "Et si un produit n’est pas frais ?",
+      "answer": "On le remplace ou on vous rembourse."
+     },
+     {
+      "question": "Livrez-vous le dimanche ?",
+      "answer": "Non, du lundi au samedi."
+     }
+    ]
+   },
+   "cta": {
+    "title": "Le panier de la semaine",
+    "text": "Les produits frais du marché, réunis et livrés chez vous.",
+    "button": "Voir le panier de la semaine"
+   }
+  }
+ },
+ "maison": {
+  "shop": "Kaya Déco",
+  "city": "Abidjan",
+  "banner": "/images/templates/o-salon3.webp",
+  "announcement": "Livraison et installation à Abidjan",
+  "opening_hours": "Lun – Sam · 9 h – 19 h",
+  "address": "Showroom à Cocody",
+  "delivery_text": "Abidjan, installation incluse",
+  "about": "Des objets faits par des artisans ivoiriens pour des intérieurs chaleureux. Nous travaillons avec des vanniers de Bouaké et des menuisiers d’Abobo.",
+  "products": [
+   {
+    "id": 52,
+    "title": "Lampe en rotin",
+    "slug": "exemple-maison-1",
+    "description": "Diamètre 40 cm.",
+    "category": "Salon",
+    "price_vendor": 18000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 53,
+    "title": "Fauteuil en bois et wax",
+    "slug": "exemple-maison-2",
+    "description": "Bois d’iroko, assise wax.",
+    "category": "Chambre",
+    "price_vendor": 85000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 54,
+    "title": "Vase en terre cuite",
+    "slug": "exemple-maison-3",
+    "description": "Hauteur 35 cm.",
+    "category": "Luminaires",
+    "price_vendor": 9000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 55,
+    "title": "Tableau tissé",
+    "slug": "exemple-maison-4",
+    "description": "60 × 80 cm.",
+    "category": "Déco murale",
+    "price_vendor": 25000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 56,
+    "title": "Coussins wax (2)",
+    "slug": "exemple-maison-5",
+    "description": "45 × 45 cm, déhoussables.",
+    "category": "Salon",
+    "price_vendor": 12000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-salon.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 57,
+    "title": "Panier de rangement",
+    "slug": "exemple-maison-6",
+    "description": "Fibre naturelle.",
+    "category": "Chambre",
+    "price_vendor": 7000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   }
+  ],
+  "categories": [
+   {
+    "label": "Salon",
+    "image": "/images/templates/o-salon2.webp"
+   },
+   {
+    "label": "Chambre",
+    "image": null
+   },
+   {
+    "label": "Luminaires",
+    "image": null
+   },
+   {
+    "label": "Déco murale",
+    "image": null
+   }
+  ],
+  "reviews": [
+   {
+    "id": 1,
+    "customer_name": "Sonia",
+    "customer_city": "Cocody",
+    "comment": "Le fauteuil est solide et magnifique. Livré et monté.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 2,
+    "customer_name": "Yann",
+    "customer_city": "Marcory",
+    "comment": "La lampe donne une lumière très douce.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 3,
+    "customer_name": "Awa",
+    "customer_city": "Riviera",
+    "comment": "Bon conseil pour choisir les tailles.",
+    "rating": 5,
+    "is_verified": true
+   }
+  ],
+  "packs": [
+   {
+    "id": 1,
+    "code": "exemple",
+    "title": "Lampe en rotin + Fauteuil en bois et wax",
+    "total_amount": 34000,
+    "subtotal_amount": 39000,
+    "items": [
+     {
+      "product_name": "Lampe en rotin",
+      "quantity": 1,
+      "image_url": null
+     },
+     {
+      "product_name": "Fauteuil en bois et wax",
+      "quantity": 1,
+      "image_url": null
+     }
+    ]
+   }
+  ],
+  "settings": {
+   "story": {
+    "heading": "Des objets faits par des artisans ivoiriens pour des intérieurs chaleureux.",
+    "text": "Nous travaillons avec des vanniers de Bouaké et des menuisiers d’Abobo.",
+    "signature": "Kaya"
+   },
+   "steps": {
+    "items": [
+     {
+      "title": "Choisissez vos pièces",
+      "text": "Dimensions et matières indiquées."
+     },
+     {
+      "title": "Payez en Mobile Money",
+      "text": "Ou en 2 fois pour les meubles."
+     },
+     {
+      "title": "Livraison et installation",
+      "text": "À Abidjan, sous 72 h."
+     }
+    ]
+   },
+   "faq": {
+    "items": [
+     {
+      "question": "Faites-vous du sur mesure ?",
+      "answer": "Oui pour les meubles, délai de 3 semaines."
+     },
+     {
+      "question": "Le montage est-il inclus ?",
+      "answer": "Oui à Abidjan."
+     },
+     {
+      "question": "Peut-on payer en plusieurs fois ?",
+      "answer": "En 2 fois pour les meubles."
+     }
+    ]
+   },
+   "cta": {
+    "title": "Composez votre salon",
+    "text": "Nos packs réunissent les pièces qui vont ensemble, à prix réduit.",
+    "button": "Voir les packs"
+   }
+  }
+ },
+ "sante": {
+  "shop": "Vita Nature",
+  "city": "Douala",
+  "banner": "/images/templates/o-miel2.webp",
+  "announcement": "Livraison partout au Cameroun · Paiement protégé jusqu’à la livraison",
+  "opening_hours": "Lun – Sam · 8 h – 19 h",
+  "address": "Point de retrait à Akwa",
+  "delivery_text": "Tout le Cameroun",
+  "about": "Des produits naturels du Cameroun, avec des conseils honnêtes. Nous ne promettons pas de miracle. Nous expliquons ce que fait chaque plante et pour qui elle convient.",
+  "products": [
+   {
+    "id": 58,
+    "title": "Poudre de moringa 200 g",
+    "slug": "exemple-sante-1",
+    "description": "Cultivé à Bafia.",
+    "category": "Tisanes",
+    "price_vendor": 4500,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-moringa.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 59,
+    "title": "Miel pur de l’Adamaoua",
+    "slug": "exemple-sante-2",
+    "description": "Pot de 500 g.",
+    "category": "Huiles",
+    "price_vendor": 5000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-miel.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 60,
+    "title": "Huile de nigelle",
+    "slug": "exemple-sante-3",
+    "description": "Pressée à froid. 100 ml.",
+    "category": "Compléments",
+    "price_vendor": 6000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 61,
+    "title": "Tisane sommeil",
+    "slug": "exemple-sante-4",
+    "description": "Citronnelle, kinkéliba.",
+    "category": "Sport",
+    "price_vendor": 3000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-tisane.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 62,
+    "title": "Kit détox 7 jours",
+    "slug": "exemple-sante-5",
+    "description": "Tisanes, moringa et guide.",
+    "category": "Tisanes",
+    "price_vendor": 15000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-the.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 63,
+    "title": "Tapis de yoga",
+    "slug": "exemple-sante-6",
+    "description": "Antidérapant, 6 mm.",
+    "category": "Huiles",
+    "price_vendor": 12000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   }
+  ],
+  "categories": [
+   {
+    "label": "Tisanes",
+    "image": "/images/templates/o-tisane.webp"
+   },
+   {
+    "label": "Huiles",
+    "image": null
+   },
+   {
+    "label": "Compléments",
+    "image": null
+   },
+   {
+    "label": "Sport",
+    "image": null
+   }
+  ],
+  "reviews": [
+   {
+    "id": 1,
+    "customer_name": "Rose",
+    "customer_city": "Logpom",
+    "comment": "Les conseils avant l’achat m’ont rassurée.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 2,
+    "customer_name": "Martin",
+    "customer_city": "Bonabéri",
+    "comment": "Le miel est excellent, on sent qu’il n’est pas coupé.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 3,
+    "customer_name": "Esther",
+    "customer_city": "Akwa",
+    "comment": "La tisane sommeil fonctionne vraiment pour moi.",
+    "rating": 5,
+    "is_verified": true
+   }
+  ],
+  "packs": [
+   {
+    "id": 1,
+    "code": "exemple",
+    "title": "Poudre de moringa 200 g + Miel pur de l’Adamaoua",
+    "total_amount": 11000,
+    "subtotal_amount": 12500,
+    "items": [
+     {
+      "product_name": "Poudre de moringa 200 g",
+      "quantity": 1,
+      "image_url": "/images/templates/o-moringa.webp"
+     },
+     {
+      "product_name": "Miel pur de l’Adamaoua",
+      "quantity": 1,
+      "image_url": "/images/templates/o-miel.webp"
+     }
+    ]
+   }
+  ],
+  "settings": {
+   "story": {
+    "heading": "Des produits naturels du Cameroun, avec des conseils honnêtes.",
+    "text": "Nous ne promettons pas de miracle. Nous expliquons ce que fait chaque plante et pour qui elle convient.",
+    "signature": "Dr Ngo, conseillère"
+   },
+   "steps": {
+    "items": [
+     {
+      "title": "Dites-nous votre objectif",
+      "text": "Énergie, sommeil, digestion…"
+     },
+     {
+      "title": "Recevez votre sélection",
+      "text": "Avec le mode d’emploi."
+     },
+     {
+      "title": "Suivez votre commande",
+      "text": "Un lien pour suivre la livraison."
+     }
+    ]
+   },
+   "faq": {
+    "items": [
+     {
+      "question": "Puis-je en prendre si je suis enceinte ?",
+      "answer": "Demandez d’abord l’avis de votre médecin."
+     },
+     {
+      "question": "Les produits sont-ils certifiés ?",
+      "answer": "Les certificats sont disponibles sur demande."
+     },
+     {
+      "question": "Combien de temps avant de voir un effet ?",
+      "answer": "Cela dépend du produit, comptez 2 à 4 semaines."
+     }
+    ]
+   },
+   "cta": {
+    "title": "Commencez votre programme",
+    "text": "Des sélections par objectif, avec le mode d’emploi.",
+    "button": "Voir les programmes"
+   }
+  }
+ },
+ "enfants": {
+  "shop": "P’tit Baobab",
+  "city": "Yaoundé",
+  "banner": "/images/templates/o-cubes.webp",
+  "announcement": "Coffrets naissance personnalisés · Livraison en 48 h",
+  "opening_hours": "Lun – Sam · 9 h – 19 h",
+  "address": "Retrait à Mvog-Mbi",
+  "delivery_text": "Yaoundé en 48 h",
+  "about": "Des vêtements doux et des jouets sûrs, choisis par deux mamans. On teste tout sur nos enfants avant de le vendre.",
+  "products": [
+   {
+    "id": 64,
+    "title": "Coffret naissance brodé",
+    "slug": "exemple-enfants-1",
+    "description": "Body, bonnet, lange et doudou.",
+    "category": "0 – 6 mois",
+    "price_vendor": 25000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-coffret.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 65,
+    "title": "Body en coton bio (3)",
+    "slug": "exemple-enfants-2",
+    "description": "Du 0 au 12 mois.",
+    "category": "6 – 12 mois",
+    "price_vendor": 9000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 66,
+    "title": "Doudou lapin",
+    "slug": "exemple-enfants-3",
+    "description": "Lavable en machine.",
+    "category": "1 – 3 ans",
+    "price_vendor": 6000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-doudou.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 67,
+    "title": "Jouet d’éveil en bois",
+    "slug": "exemple-enfants-4",
+    "description": "Peinture sans danger.",
+    "category": "Cadeaux",
+    "price_vendor": 8000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-cubes-bois.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 68,
+    "title": "Robe enfant wax",
+    "slug": "exemple-enfants-5",
+    "description": "De 2 à 8 ans.",
+    "category": "0 – 6 mois",
+    "price_vendor": 7500,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 69,
+    "title": "Sac à langer",
+    "slug": "exemple-enfants-6",
+    "description": "Matelas à langer inclus.",
+    "category": "6 – 12 mois",
+    "price_vendor": 18000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-sac.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   }
+  ],
+  "categories": [
+   {
+    "label": "0 – 6 mois",
+    "image": null
+   },
+   {
+    "label": "6 – 12 mois",
+    "image": null
+   },
+   {
+    "label": "1 – 3 ans",
+    "image": "/images/templates/o-cubes-bois.webp"
+   },
+   {
+    "label": "Cadeaux",
+    "image": "/images/templates/o-coffret.webp"
+   }
+  ],
+  "reviews": [
+   {
+    "id": 1,
+    "customer_name": "Nathalie",
+    "customer_city": "Mvog-Mbi",
+    "comment": "Le coffret brodé a fait pleurer la jeune maman.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 2,
+    "customer_name": "Joël",
+    "customer_city": "Bastos",
+    "comment": "Livré emballé, parfait pour offrir.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 3,
+    "customer_name": "Sylvie",
+    "customer_city": "Ekounou",
+    "comment": "Les bodies sont vraiment doux.",
+    "rating": 5,
+    "is_verified": true
+   }
+  ],
+  "packs": [
+   {
+    "id": 1,
+    "code": "exemple",
+    "title": "Coffret naissance brodé + Body en coton bio (3)",
+    "total_amount": 25000,
+    "subtotal_amount": 31000,
+    "items": [
+     {
+      "product_name": "Coffret naissance brodé",
+      "quantity": 1,
+      "image_url": "/images/templates/o-coffret.webp"
+     },
+     {
+      "product_name": "Body en coton bio (3)",
+      "quantity": 1,
+      "image_url": null
+     }
+    ]
+   }
+  ],
+  "settings": {
+   "story": {
+    "heading": "Des vêtements doux et des jouets sûrs, choisis par deux mamans.",
+    "text": "On teste tout sur nos enfants avant de le vendre.",
+    "signature": "Line et Prisca"
+   },
+   "steps": {
+    "items": [
+     {
+      "title": "Choisissez par âge",
+      "text": "Tailles et âges indiqués."
+     },
+     {
+      "title": "Ajoutez le prénom",
+      "text": "Broderie offerte sur les coffrets."
+     },
+     {
+      "title": "Livré emballé cadeau",
+      "text": "Avec un petit mot."
+     }
+    ]
+   },
+   "faq": {
+    "items": [
+     {
+      "question": "Quel délai pour la broderie ?",
+      "answer": "48 h."
+     },
+     {
+      "question": "Les jouets sont-ils sûrs ?",
+      "answer": "Peintures à l’eau, sans petites pièces avant 3 ans."
+     },
+     {
+      "question": "Peut-on échanger une taille ?",
+      "answer": "Oui, sous 7 jours."
+     }
+    ]
+   },
+   "cta": {
+    "title": "Une naissance à fêter ?",
+    "text": "On brode le prénom du bébé et on livre emballé cadeau.",
+    "button": "Créer un coffret"
+   }
+  }
+ },
+ "artisanat": {
+  "shop": "Terre & Perles",
+  "city": "Bafoussam",
+  "banner": "/images/templates/o-tissage.webp",
+  "announcement": "Pièces uniques · Personnalisation offerte",
+  "opening_hours": "Lun – Sam · 8 h – 18 h",
+  "address": "Atelier à Bafoussam",
+  "delivery_text": "Envoi au Cameroun et à l’étranger",
+  "about": "Chaque perle est enfilée à la main dans notre atelier de Bafoussam. Nous perpétuons les motifs de l’Ouest avec des couleurs d’aujourd’hui.",
+  "products": [
+   {
+    "id": 70,
+    "title": "Bracelet perles au prénom",
+    "slug": "exemple-artisanat-1",
+    "description": "Perles de verre, fermoir doré.",
+    "category": "Bijoux",
+    "price_vendor": 4000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-bracelet.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 72,
+    "stock": null,
+    "variants": [
+     {
+      "id": 9760,
+      "name": "Bracelet",
+      "price": 4000
+     },
+     {
+      "id": 9761,
+      "name": "Collier",
+      "price": 10000
+     },
+     {
+      "id": 9762,
+      "name": "Porte-clés",
+      "price": 16000
+     }
+    ],
+    "custom_fields": [
+     {
+      "label": "Couleurs",
+      "type": "select",
+      "required": true,
+      "options": [
+       "Or et noir",
+       "Rouge et blanc",
+       "Multicolore"
+      ]
+     }
+    ]
+   },
+   {
+    "id": 71,
+    "title": "Masque décoratif Bamiléké",
+    "slug": "exemple-artisanat-2",
+    "description": "Bois sculpté, 40 cm.",
+    "category": "Déco",
+    "price_vendor": 35000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-masque.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 72,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 72,
+    "title": "Toile peinte « Marché »",
+    "slug": "exemple-artisanat-3",
+    "description": "Acrylique, 60 × 80 cm.",
+    "category": "Vannerie",
+    "price_vendor": 45000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-toile.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 72,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 73,
+    "title": "Panier tressé",
+    "slug": "exemple-artisanat-4",
+    "description": "Raphia, fait main.",
+    "category": "Personnalisé",
+    "price_vendor": 8000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/templates/o-panier.webp",
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 72,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 74,
+    "title": "Collier perlé Ndop",
+    "slug": "exemple-artisanat-5",
+    "description": "Motifs traditionnels.",
+    "category": "Bijoux",
+    "price_vendor": 12000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 72,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 75,
+    "title": "Porte-clés prénom",
+    "slug": "exemple-artisanat-6",
+    "description": "Idéal en cadeau.",
+    "category": "Déco",
+    "price_vendor": 2500,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": null,
+    "images": [],
+    "fulfillment": "made_to_order",
+    "lead_time_hours": 72,
+    "stock": null,
+    "variants": [],
+    "custom_fields": []
+   }
+  ],
+  "categories": [
+   {
+    "label": "Bijoux",
+    "image": "/images/templates/o-bracelet.webp"
+   },
+   {
+    "label": "Déco",
+    "image": "/images/templates/o-masque2.webp"
+   },
+   {
+    "label": "Vannerie",
+    "image": "/images/templates/o-panier.webp"
+   },
+   {
+    "label": "Personnalisé",
+    "image": null
+   }
+  ],
+  "reviews": [
+   {
+    "id": 1,
+    "customer_name": "Hélène",
+    "customer_city": "Paris",
+    "comment": "Commandé depuis la France, reçu en 10 jours. Magnifique.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 2,
+    "customer_name": "Kevin",
+    "customer_city": "Douala",
+    "comment": "Les bracelets au prénom ont plu à toute la famille.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 3,
+    "customer_name": "Rita",
+    "customer_city": "Bafoussam",
+    "comment": "Le masque est encore plus beau en vrai.",
+    "rating": 5,
+    "is_verified": true
+   }
+  ],
+  "packs": [],
+  "settings": {
+   "story": {
+    "heading": "Chaque perle est enfilée à la main dans notre atelier de Bafoussam.",
+    "text": "Nous perpétuons les motifs de l’Ouest avec des couleurs d’aujourd’hui.",
+    "signature": "Mama Clotilde"
+   },
+   "steps": {
+    "items": [
+     {
+      "title": "Choisissez la pièce",
+      "text": "Ou décrivez votre idée."
+     },
+     {
+      "title": "Personnalisez",
+      "text": "Prénom, couleurs, taille."
+     },
+     {
+      "title": "Fabriqué pour vous",
+      "text": "Prêt en 72 h, envoyé partout."
+     }
+    ]
+   },
+   "faq": {
+    "items": [
+     {
+      "question": "Envoyez-vous à l’étranger ?",
+      "answer": "Oui, par DHL, délai de 7 à 10 jours."
+     },
+     {
+      "question": "Puis-je choisir mes couleurs ?",
+      "answer": "Oui, sur toutes les pièces en perles."
+     },
+     {
+      "question": "Les pièces sont-elles uniques ?",
+      "answer": "Les masques et toiles oui, c’est indiqué."
+     }
+    ]
+   },
+   "cta": {
+    "title": "Une idée de cadeau unique ?",
+    "text": "Personnalisez une pièce en ligne, prête en 72 h.",
+    "button": "Personnaliser une pièce"
+   }
+  }
+ },
+ "autre": {
+  "shop": "Kofi Store",
+  "city": "Douala",
+  "banner": "/images/landing/prod-perfume.jpg",
+  "announcement": "Livraison en 24 h à Douala · Paiement Mobile Money",
+  "opening_hours": "Lun – Sam · 9 h – 20 h",
+  "address": "Retrait à Akwa",
+  "delivery_text": "Douala en 24 h",
+  "about": "Une boutique en ligne simple, avec des produits qu’on utilise nous-mêmes. On répond vite et on livre partout à Douala.",
+  "products": [
+   {
+    "id": 76,
+    "title": "Eau de parfum Ambre",
+    "slug": "exemple-autre-1",
+    "description": "50 ml.",
+    "category": "Nouveautés",
+    "price_vendor": 22000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/prod-perfume.jpg",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 77,
+    "title": "Sneakers Runner beige",
+    "slug": "exemple-autre-2",
+    "description": "Du 38 au 45.",
+    "category": "Mode",
+    "price_vendor": 28000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/prod-sneakers.jpg",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 78,
+    "title": "Montre connectée",
+    "slug": "exemple-autre-3",
+    "description": "7 jours d’autonomie.",
+    "category": "Beauté",
+    "price_vendor": 35000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/prod-smartwatch.jpg",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 79,
+    "title": "Sac matelassé",
+    "slug": "exemple-autre-4",
+    "description": "Chaîne amovible.",
+    "category": "Tech",
+    "price_vendor": 22000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/sac-cuir.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 80,
+    "title": "Sérum éclat",
+    "slug": "exemple-autre-5",
+    "description": "30 ml.",
+    "category": "Nouveautés",
+    "price_vendor": 8500,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/prod-cosmetics.jpg",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   },
+   {
+    "id": 81,
+    "title": "Foulard wax",
+    "slug": "exemple-autre-6",
+    "description": "100 % coton.",
+    "category": "Mode",
+    "price_vendor": 6000,
+    "promo_price": null,
+    "promo_active": false,
+    "image_url": "/images/landing/foulard.webp",
+    "images": [],
+    "fulfillment": "stock",
+    "lead_time_hours": null,
+    "stock": 12,
+    "variants": [],
+    "custom_fields": []
+   }
+  ],
+  "categories": [
+   {
+    "label": "Nouveautés",
+    "image": null
+   },
+   {
+    "label": "Mode",
+    "image": "/images/landing/foulard.webp"
+   },
+   {
+    "label": "Beauté",
+    "image": "/images/landing/prod-perfume.jpg"
+   },
+   {
+    "label": "Tech",
+    "image": "/images/landing/prod-smartwatch.jpg"
+   }
+  ],
+  "reviews": [
+   {
+    "id": 1,
+    "customer_name": "Ange",
+    "customer_city": "Douala",
+    "comment": "Réponse rapide et livraison le lendemain.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 2,
+    "customer_name": "Marc",
+    "customer_city": "Yaoundé",
+    "comment": "Envoyé par agence, bien reçu.",
+    "rating": 5,
+    "is_verified": true
+   },
+   {
+    "id": 3,
+    "customer_name": "Laure",
+    "customer_city": "Douala",
+    "comment": "Le parfum tient toute la journée.",
+    "rating": 5,
+    "is_verified": true
+   }
+  ],
+  "packs": [
+   {
+    "id": 1,
+    "code": "exemple",
+    "title": "Eau de parfum Ambre + Sneakers Runner beige",
+    "total_amount": 29000,
+    "subtotal_amount": 35000,
+    "items": [
+     {
+      "product_name": "Eau de parfum Ambre",
+      "quantity": 1,
+      "image_url": "/images/landing/prod-perfume.jpg"
+     },
+     {
+      "product_name": "Sneakers Runner beige",
+      "quantity": 1,
+      "image_url": "/images/landing/prod-sneakers.jpg"
+     }
+    ]
+   }
+  ],
+  "settings": {
+   "story": {
+    "heading": "Une boutique en ligne simple, avec des produits qu’on utilise nous-mêmes.",
+    "text": "On répond vite et on livre partout à Douala.",
+    "signature": "Kofi"
+   },
+   "steps": {
+    "items": [
+     {
+      "title": "Choisissez",
+      "text": "Ajoutez au panier."
+     },
+     {
+      "title": "Payez en Mobile Money",
+      "text": "MTN MoMo ou Orange Money."
+     },
+     {
+      "title": "Recevez",
+      "text": "En 24 h à Douala."
+     }
+    ]
+   },
+   "faq": {
+    "items": [
+     {
+      "question": "Comment payer ?",
+      "answer": "MTN MoMo ou Orange Money, confirmé sur votre téléphone."
+     },
+     {
+      "question": "Quel délai de livraison ?",
+      "answer": "24 h à Douala, 72 h ailleurs."
+     },
+     {
+      "question": "Comment suivre ma commande ?",
+      "answer": "Vous recevez un lien de suivi après le paiement."
+     }
+    ]
+   },
+   "cta": {
+    "title": "Prêt à commander ?",
+    "text": "Paiement Mobile Money, suivi de commande et livraison en 24 h.",
+    "button": "Voir les produits"
+   }
+  }
+ }
+}

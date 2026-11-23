@@ -1,0 +1,128 @@
+{
+    "id": "pat-atelier",
+    "name": "Atelier",
+    "business_types": [
+        "patisserie"
+    ],
+    "pitch": "Chocolat et or, mise en page de pâtisserie fine, carte avec points de conduite.",
+    "who": "Pâtisserie haut de gamme, mariages et événements.",
+    "preview": {
+        "hero": {
+            "badge": "Sur commande uniquement",
+            "title": "Pâtisserie fine pour vos grands jours",
+            "subtitle": "Mariages, dots, baptêmes : des créations pensées avec vous.",
+            "button": "Prendre rendez-vous"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "pat-atelier",
+        "style": {
+            "background": "#2A1A14",
+            "surface": "#35231A",
+            "ink": "#F6E9DA",
+            "muted": "#C7AE95",
+            "line": "#4A3226",
+            "primary": "#E7C08A",
+            "on_primary": "#2A1A14",
+            "accent": "#E7C08A",
+            "tint": "#4A2E22",
+            "tint_strong": "#6E4733",
+            "tint_ink": "#E7C08A",
+            "font_display": "Cormorant Garamond",
+            "font_body": "Jost",
+            "heading_weight": 500,
+            "heading_tracking": "0",
+            "heading_case": "none",
+            "radius": 2,
+            "radius_button": 2,
+            "announce_bg": "#E7C08A",
+            "announce_fg": "#2A1A14"
+        },
+        "pattern": {
+            "key": "patisserie-croissants",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "center",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "full",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "list",
+                "enabled": true,
+                "settings": {
+                    "leaders": true
+                }
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "quote",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "gallery",
+                "type": "gallery",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "big",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "info",
+                "type": "info",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "faq",
+                "type": "faq",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "card",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

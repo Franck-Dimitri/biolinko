@@ -1,0 +1,112 @@
+{
+    "id": "ser-rdv",
+    "name": "Rendez-vous",
+    "business_types": [
+        "services"
+    ],
+    "pitch": "Créneaux visibles dès l’accueil, prestations avec durée et prix, acompte Mobile Money.",
+    "who": "Salon, institut, coach : tout ce qui se réserve.",
+    "preview": {
+        "hero": {
+            "badge": "Réservation en ligne",
+            "title": "Réservez votre coiffure en 1 minute",
+            "subtitle": "Choisissez la prestation et le créneau, payez l’acompte en Mobile Money.",
+            "button": "Réserver"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "ser-rdv",
+        "style": {
+            "background": "#FFFFFF",
+            "surface": "#F4F6FA",
+            "ink": "#14213D",
+            "muted": "#5B6478",
+            "line": "#E3E7EF",
+            "primary": "#2F5BEA",
+            "on_primary": null,
+            "accent": "#2F5BEA",
+            "tint": "#E1E8FD",
+            "tint_strong": "#C3D1FA",
+            "tint_ink": "#2F5BEA",
+            "font_display": "Manrope",
+            "font_body": "Manrope",
+            "heading_weight": 800,
+            "heading_tracking": "-0.03em",
+            "heading_case": "none",
+            "radius": 16,
+            "radius_button": 12,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "services-rendezvous",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "booking",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "services",
+                "type": "services",
+                "variant": "list",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "info",
+                "type": "info",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "faq",
+                "type": "faq",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "band",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

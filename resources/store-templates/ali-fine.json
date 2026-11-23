@@ -1,0 +1,112 @@
+{
+    "id": "ali-fine",
+    "name": "Épicerie fine",
+    "business_types": [
+        "alimentation"
+    ],
+    "pitch": "Kraft et bordeaux, serif classique, mise en avant de l’origine des produits.",
+    "who": "Épices, miel, café, produits du terroir.",
+    "preview": {
+        "hero": {
+            "badge": "Poivre de Penja IGP",
+            "title": "Les meilleurs produits du Cameroun",
+            "subtitle": "Achetés directement aux producteurs.",
+            "button": "Découvrir l’épicerie"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "ali-fine",
+        "style": {
+            "background": "#F6F0E6",
+            "surface": "#FFFAF1",
+            "ink": "#2E2414",
+            "muted": "#776A55",
+            "line": "#E5D9C3",
+            "primary": "#6B4F1D",
+            "on_primary": null,
+            "accent": "#A83A2A",
+            "tint": "#EADCC2",
+            "tint_strong": "#D9C29B",
+            "tint_ink": "#6B4F1D",
+            "font_display": "Libre Baskerville",
+            "font_body": "Manrope",
+            "heading_weight": 700,
+            "heading_tracking": "-0.01em",
+            "heading_case": "none",
+            "radius": 4,
+            "radius_button": 4,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "alimentation-epicerie",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "center",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "gallery",
+                "type": "gallery",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "big",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "card",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

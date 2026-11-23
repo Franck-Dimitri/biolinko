@@ -302,7 +302,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /** Adresses déjà prises par l'application : une boutique ne peut pas s'appeler ainsi. */
     public const RESERVED_SLUGS = ['admin', 'seller', 'login', 'register', 'logout', 'dashboard', 'profile', 'track', 'pay', 'store', 'api',
         'checkout', 'verify-email', 'forgot-password', 'reset-password', 'confirm-password', 'password', 'email', 'storage', 'build', 'images',
-        'conditions-generales', 'politique-de-confidentialite', 'politique-des-cookies', 'privacy', 'terms', 'cookies', 'up', 'biolinko', 'sitemap', 'robots', 'boutique-disponible', 'a-propos', 'contact', 'paiement-et-securite', 'aide', 'programme-pilote', 'mentions-legales',
+        'conditions-generales', 'politique-de-confidentialite', 'politique-des-cookies', 'privacy', 'terms', 'cookies', 'up', 'biolinko', 'sitemap', 'robots', 'boutique-disponible', 'a-propos', 'contact', 'paiement-et-securite', 'aide', 'programme-pilote', 'mentions-legales', 'templates',
         // Sous-domaines techniques de <nom>.biolinko.store
         'www', 'mail', 'smtp', 'imap', 'pop', 'ftp', 'cdn', 'static', 'assets', 'app', 'shop', 'ns1', 'ns2', 'blog', 'help', 'support', 'status', 'docs', 'dev', 'staging', 'test', 'webmail', 'autodiscover'];
 

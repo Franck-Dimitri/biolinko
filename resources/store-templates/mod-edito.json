@@ -1,0 +1,112 @@
+{
+    "id": "mod-edito",
+    "name": "Éditorial",
+    "business_types": [
+        "mode"
+    ],
+    "pitch": "Noir et blanc, photos pleine page, lookbook : l’allure d’un magazine de mode.",
+    "who": "Marque de vêtements avec de belles photos portées.",
+    "preview": {
+        "hero": {
+            "badge": "Collection Kente",
+            "title": "Tissé ici. Porté partout.",
+            "subtitle": "Des pièces en Kente et en wax, produites en petite série à Abidjan.",
+            "button": "Découvrir la collection"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "mod-edito",
+        "style": {
+            "background": "#FFFFFF",
+            "surface": "#F4F2EE",
+            "ink": "#111111",
+            "muted": "#6B6B6B",
+            "line": "#E6E3DD",
+            "primary": "#111111",
+            "on_primary": null,
+            "accent": "#B4410C",
+            "tint": "#EDEAE4",
+            "tint_strong": "#DAD5CC",
+            "tint_ink": "#111111",
+            "font_display": "Syne",
+            "font_body": "Inter",
+            "heading_weight": 700,
+            "heading_tracking": "0",
+            "heading_case": "uppercase",
+            "radius": 0,
+            "radius_button": 0,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "mode-etiquettes",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "center",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "full",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "tiles",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "lookbook",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "quote",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "big",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "card",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

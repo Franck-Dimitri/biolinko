@@ -1,0 +1,119 @@
+{
+    "id": "ser-expert",
+    "name": "Expert",
+    "business_types": [
+        "services"
+    ],
+    "pitch": "Sobre et rassurant : chiffres clés, étapes, questions fréquentes.",
+    "who": "Réparateur, artisan du bâtiment, consultant, transport.",
+    "preview": {
+        "hero": {
+            "badge": "Depuis 2017",
+            "title": "Un service sérieux, réservé en ligne",
+            "subtitle": "Prix affichés, acompte en Mobile Money, rappel la veille.",
+            "button": "Voir les prestations"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "ser-expert",
+        "style": {
+            "background": "#F5F7F6",
+            "surface": "#FFFFFF",
+            "ink": "#0F2A24",
+            "muted": "#4E6660",
+            "line": "#DCE5E1",
+            "primary": "#0F766E",
+            "on_primary": null,
+            "accent": "#D97706",
+            "tint": "#D6EAE5",
+            "tint_strong": "#B3D8CF",
+            "tint_ink": "#0F766E",
+            "font_display": "Space Grotesk",
+            "font_body": "Inter",
+            "heading_weight": 700,
+            "heading_tracking": "-0.03em",
+            "heading_case": "none",
+            "radius": 8,
+            "radius_button": 8,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "services-reparation",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "trust",
+                "type": "trust",
+                "variant": "stats",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "services",
+                "type": "services",
+                "variant": "list",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "steps",
+                "type": "steps",
+                "variant": "line",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "faq",
+                "type": "faq",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "band",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

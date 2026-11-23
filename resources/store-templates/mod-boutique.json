@@ -1,0 +1,112 @@
+{
+    "id": "mod-boutique",
+    "name": "Boutique",
+    "business_types": [
+        "mode"
+    ],
+    "pitch": "Catalogue clair et dense, filtres en pastilles, garanties : pensé pour beaucoup d’articles.",
+    "who": "Boutique avec beaucoup de références et de tailles.",
+    "preview": {
+        "hero": {
+            "badge": "-20 % ce week-end",
+            "title": "Les jupes à -20 %",
+            "subtitle": "Jusqu’à dimanche minuit.",
+            "button": "J’en profite"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "mod-boutique",
+        "style": {
+            "background": "#F7F7F5",
+            "surface": "#FFFFFF",
+            "ink": "#18181B",
+            "muted": "#71717A",
+            "line": "#E4E4E7",
+            "primary": "#0F766E",
+            "on_primary": null,
+            "accent": "#DC2626",
+            "tint": "#E6F2F0",
+            "tint_strong": "#C9E3DE",
+            "tint_ink": "#0F766E",
+            "font_display": "Manrope",
+            "font_body": "Manrope",
+            "heading_weight": 800,
+            "heading_tracking": "-0.03em",
+            "heading_case": "none",
+            "radius": 12,
+            "radius_button": 10,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "mode-vetements",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "app",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "banner",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "chips",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "promo",
+                "type": "promo",
+                "variant": "flash",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "trust",
+                "type": "trust",
+                "variant": "icons",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

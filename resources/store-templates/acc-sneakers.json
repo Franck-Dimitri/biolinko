@@ -1,0 +1,112 @@
+{
+    "id": "acc-sneakers",
+    "name": "Sneakers",
+    "business_types": [
+        "accessoires"
+    ],
+    "pitch": "Typographie énorme, orange électrique, drops et pastilles : culture street.",
+    "who": "Revendeur de sneakers et streetwear.",
+    "preview": {
+        "hero": {
+            "badge": "",
+            "title": "Drop du vendredi",
+            "subtitle": "Petites quantités. Quand c’est parti, c’est parti.",
+            "button": "Voir le drop"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "acc-sneakers",
+        "style": {
+            "background": "#EFEFEF",
+            "surface": "#FFFFFF",
+            "ink": "#111111",
+            "muted": "#555555",
+            "line": "#D9D9D9",
+            "primary": "#FF3D00",
+            "on_primary": null,
+            "accent": "#111111",
+            "tint": "#E2E2E2",
+            "tint_strong": "#CFCFCF",
+            "tint_ink": "#111111",
+            "font_display": "Unbounded",
+            "font_body": "Space Grotesk",
+            "heading_weight": 800,
+            "heading_tracking": "-0.03em",
+            "heading_case": "uppercase",
+            "radius": 20,
+            "radius_button": 999,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "accessoires-montres",
+            "intensity": "bold"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "bold",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "type",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "promo",
+                "type": "promo",
+                "variant": "flash",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "chips",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "messages",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "band",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

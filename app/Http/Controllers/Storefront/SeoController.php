@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Store;
 use App\Support\HelpCenter;
 use App\Support\Seo;
+use App\Support\StoreTemplates;
 use App\Support\StoreUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -38,6 +39,13 @@ class SeoController extends Controller
             ];
             foreach (array_keys(HelpCenter::ARTICLES) as $slug) {
                 $urls[] = [Seo::url('/aide/'.$slug), null, '0.6'];
+            }
+            // Galerie des templates de boutique
+            $urls[] = [Seo::url('/templates'), null, '0.8'];
+            foreach (StoreTemplates::all() as $id => $template) {
+                if (! in_array('*', $template['business_types'], true)) {
+                    $urls[] = [Seo::url('/templates/'.$id), null, '0.6'];
+                }
             }
 
             // Les boutiques sur leur propre domaine ont leur propre plan du site

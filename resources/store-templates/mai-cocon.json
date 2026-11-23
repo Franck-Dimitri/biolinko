@@ -1,0 +1,105 @@
+{
+    "id": "mai-cocon",
+    "name": "Cocon",
+    "business_types": [
+        "maison"
+    ],
+    "pitch": "Lin et olive, photo d’intérieur pleine page, tuiles par pièce.",
+    "who": "Déco, linge de maison, objets artisanaux.",
+    "preview": {
+        "hero": {
+            "badge": "Fait par des artisans ivoiriens",
+            "title": "Un intérieur qui vous ressemble",
+            "subtitle": "Luminaires, meubles et déco, livrés et installés à Abidjan.",
+            "button": "Explorer"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "mai-cocon",
+        "style": {
+            "background": "#F2EEE8",
+            "surface": "#FAF7F3",
+            "ink": "#2F2A25",
+            "muted": "#7C736A",
+            "line": "#E1D8CD",
+            "primary": "#5C6B4E",
+            "on_primary": null,
+            "accent": "#5C6B4E",
+            "tint": "#E3DBCD",
+            "tint_strong": "#C9BCA6",
+            "tint_ink": "#5C6B4E",
+            "font_display": "Fraunces",
+            "font_body": "DM Sans",
+            "heading_weight": 400,
+            "heading_tracking": "-0.02em",
+            "heading_case": "none",
+            "radius": 18,
+            "radius_button": 999,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "maison-foyer",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "center",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "full",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "tiles",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "big",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

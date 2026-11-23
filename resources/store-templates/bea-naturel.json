@@ -1,0 +1,119 @@
+{
+    "id": "bea-naturel",
+    "name": "Naturel",
+    "business_types": [
+        "beaute"
+    ],
+    "pitch": "Vert sauge et serif doux, grande photo, accent sur l’origine des produits.",
+    "who": "Cosmétiques naturels, savons, huiles, karité.",
+    "preview": {
+        "hero": {
+            "badge": "100 % naturel",
+            "title": "Des soins qui viennent de la terre",
+            "subtitle": "Karité, savon noir, huiles : des recettes simples, fabriquées à Abidjan.",
+            "button": "Voir les produits"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "bea-naturel",
+        "style": {
+            "background": "#F1F3EA",
+            "surface": "#FAFBF6",
+            "ink": "#233024",
+            "muted": "#5E6B5C",
+            "line": "#D9DFCC",
+            "primary": "#3F6B3A",
+            "on_primary": null,
+            "accent": "#B8901E",
+            "tint": "#DCE5CC",
+            "tint_strong": "#BFD0A6",
+            "tint_ink": "#2F5229",
+            "font_display": "Fraunces",
+            "font_body": "DM Sans",
+            "heading_weight": 500,
+            "heading_tracking": "-0.02em",
+            "heading_case": "none",
+            "radius": 14,
+            "radius_button": 999,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "beaute-fleurs",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "center",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "full",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "trust",
+                "type": "trust",
+                "variant": "icons",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "faq",
+                "type": "faq",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "big",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "band",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

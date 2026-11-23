@@ -1,0 +1,112 @@
+{
+    "id": "ali-panier",
+    "name": "Panier",
+    "business_types": [
+        "alimentation"
+    ],
+    "pitch": "Jaune soleil, collage, panier de la semaine en tête.",
+    "who": "Paniers de légumes et livraison récurrente.",
+    "preview": {
+        "hero": {
+            "badge": "Chaque samedi",
+            "title": "Votre panier de légumes, sans aller au marché",
+            "subtitle": "5 kg de légumes de saison, livrés le samedi matin.",
+            "button": "Voir le panier"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "ali-panier",
+        "style": {
+            "background": "#FFF9EC",
+            "surface": "#FFFFFF",
+            "ink": "#1F2A1D",
+            "muted": "#5D6A58",
+            "line": "#F0E5C8",
+            "primary": "#F2A900",
+            "on_primary": "#1F2A1D",
+            "accent": "#2E9E44",
+            "tint": "#FFE9A8",
+            "tint_strong": "#CDE8B5",
+            "tint_ink": "#3D5A1E",
+            "font_display": "Bricolage Grotesque",
+            "font_body": "Bricolage Grotesque",
+            "heading_weight": 800,
+            "heading_tracking": "-0.035em",
+            "heading_case": "none",
+            "radius": 22,
+            "radius_button": 999,
+            "announce_bg": "#2E9E44",
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "alimentation-fruits",
+            "intensity": "bold"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "collage",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "promo",
+                "type": "promo",
+                "variant": "basket",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "steps",
+                "type": "steps",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "carousel",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "faq",
+                "type": "faq",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "band",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

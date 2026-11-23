@@ -5,7 +5,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { storeAddress } from '@/Components/Storefront/storeUrl';
 
-export default function Register({ intendedPlan = null, intendedShop = null }) {
+export default function Register({ intendedPlan = null, intendedShop = null, intendedTemplate = null }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
@@ -31,6 +31,11 @@ export default function Register({ intendedPlan = null, intendedShop = null }) {
                 footer={<>Votre boutique sera accessible à l’adresse <span className="font-medium text-[#141412]">{storeAddress(intendedShop?.slug || 'votre-boutique')}</span>.</>}
             >
                 <PlanIntentBanner plan={intendedPlan} action="Créez votre compte et validez votre e-mail :" />
+                {intendedTemplate && (
+                    <div className="mb-6 rounded-2xl border border-black/[0.08] bg-[#FFFBEA] p-4 text-sm text-[#141412]">
+                        Template choisi : <strong className="font-semibold">{intendedTemplate.name}</strong>. Il sera présélectionné à la création de votre boutique.
+                    </div>
+                )}
                 {intendedShop && (
                     <div className={`mb-6 rounded-2xl border p-4 text-sm ${intendedShop.available ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-200 bg-amber-50 text-amber-900'}`}>
                         {intendedShop.available

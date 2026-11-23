@@ -1,0 +1,112 @@
+{
+    "id": "res-maquis",
+    "name": "Maquis",
+    "business_types": [
+        "restauration"
+    ],
+    "pitch": "Comme une appli de livraison : statut ouvert, délai, carte en liste et ajout rapide.",
+    "who": "Restaurant ou maquis qui livre beaucoup.",
+    "preview": {
+        "hero": {
+            "badge": "",
+            "title": "Cuisine camerounaise maison",
+            "subtitle": "Plats du jour, grillades et jus frais, livrés chauds à Yaoundé.",
+            "button": "Voir la carte"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "res-maquis",
+        "style": {
+            "background": "#FFFFFF",
+            "surface": "#F6F4F1",
+            "ink": "#1D1B18",
+            "muted": "#6E6A63",
+            "line": "#ECE8E1",
+            "primary": "#D9411C",
+            "on_primary": null,
+            "accent": "#1F8A4C",
+            "tint": "#FFE2D6",
+            "tint_strong": "#FFC2A8",
+            "tint_ink": "#B8360F",
+            "font_display": "Outfit",
+            "font_body": "Outfit",
+            "heading_weight": 700,
+            "heading_tracking": "-0.02em",
+            "heading_case": "none",
+            "radius": 14,
+            "radius_button": 12,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "restauration-plats",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "app",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "menu",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "chips",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "list",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "promo",
+                "type": "promo",
+                "variant": "combo",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "info",
+                "type": "info",
+                "variant": "strip",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

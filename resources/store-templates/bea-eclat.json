@@ -1,0 +1,112 @@
+{
+    "id": "bea-eclat",
+    "name": "Éclat",
+    "business_types": [
+        "beaute"
+    ],
+    "pitch": "Rose pâle et prune, serif délicat, carrousel de soins et garanties.",
+    "who": "Marque de soins qui veut un rendu haut de gamme.",
+    "preview": {
+        "hero": {
+            "badge": "Karité de Korhogo",
+            "title": "Une peau nourrie, sans détour",
+            "subtitle": "Des soins courts et lisibles, fabriqués à Abidjan.",
+            "button": "Découvrir les soins"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "bea-eclat",
+        "style": {
+            "background": "#F7F1F4",
+            "surface": "#FFFFFF",
+            "ink": "#2D1E2F",
+            "muted": "#806E80",
+            "line": "#EADDE4",
+            "primary": "#2D1E2F",
+            "on_primary": "#F7F1F4",
+            "accent": "#A8687A",
+            "tint": "#EFDDE5",
+            "tint_strong": "#DCC0CC",
+            "tint_ink": "#5E3A55",
+            "font_display": "DM Serif Display",
+            "font_body": "Jost",
+            "heading_weight": 400,
+            "heading_tracking": "-0.01em",
+            "heading_case": "none",
+            "radius": 28,
+            "radius_button": 999,
+            "announce_bg": "#2D1E2F",
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "beaute-soins",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "center",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "carousel",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "trust",
+                "type": "trust",
+                "variant": "icons",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "faq",
+                "type": "faq",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

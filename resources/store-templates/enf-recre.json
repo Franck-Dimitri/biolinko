@@ -1,0 +1,112 @@
+{
+    "id": "enf-recre",
+    "name": "Récré",
+    "business_types": [
+        "enfants"
+    ],
+    "pitch": "Violet et jaune, collage, tuiles et ventes flash : joyeux et rythmé.",
+    "who": "Jouets, fêtes d’enfants, fournitures.",
+    "preview": {
+        "hero": {
+            "badge": "Nouveaux jouets",
+            "title": "Ici, on joue !",
+            "subtitle": "Jouets en bois, déguisements et cadeaux pour les 0-8 ans.",
+            "button": "Voir les jouets"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "enf-recre",
+        "style": {
+            "background": "#FFFFFF",
+            "surface": "#FFF6D6",
+            "ink": "#1F1D4D",
+            "muted": "#5E5B8C",
+            "line": "#EEE9FF",
+            "primary": "#5B4CF0",
+            "on_primary": null,
+            "accent": "#FFB800",
+            "tint": "#FFE38A",
+            "tint_strong": "#D8D2FF",
+            "tint_ink": "#3A2EC4",
+            "font_display": "Bricolage Grotesque",
+            "font_body": "Bricolage Grotesque",
+            "heading_weight": 800,
+            "heading_tracking": "-0.035em",
+            "heading_case": "none",
+            "radius": 22,
+            "radius_button": 16,
+            "announce_bg": "#FFB800",
+            "announce_fg": "#1F1D4D"
+        },
+        "pattern": {
+            "key": "enfants-fete",
+            "intensity": "bold"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "bold",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "collage",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "tiles",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "carousel",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "promo",
+                "type": "promo",
+                "variant": "flash",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "messages",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "band",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

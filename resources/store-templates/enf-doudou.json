@@ -1,0 +1,112 @@
+{
+    "id": "enf-doudou",
+    "name": "Doudou",
+    "business_types": [
+        "enfants"
+    ],
+    "pitch": "Pastels doux, typographie ronde, navigation par âge.",
+    "who": "Vêtements bébé, coffrets naissance.",
+    "preview": {
+        "hero": {
+            "badge": "Prénom brodé offert",
+            "title": "Tout doux pour les tout-petits",
+            "subtitle": "Vêtements en coton bio, jouets sûrs et coffrets naissance.",
+            "button": "Voir la boutique"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "enf-doudou",
+        "style": {
+            "background": "#FFF8F3",
+            "surface": "#FFFFFF",
+            "ink": "#3D3047",
+            "muted": "#8A7D93",
+            "line": "#F3E4DA",
+            "primary": "#E48775",
+            "on_primary": null,
+            "accent": "#5E9E88",
+            "tint": "#FDE2DA",
+            "tint_strong": "#D7ECE4",
+            "tint_ink": "#B85C4A",
+            "font_display": "Baloo 2",
+            "font_body": "DM Sans",
+            "heading_weight": 700,
+            "heading_tracking": "-0.01em",
+            "heading_case": "none",
+            "radius": 26,
+            "radius_button": 999,
+            "announce_bg": "#5E9E88",
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "enfants-bebe",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "center",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "circles",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "steps",
+                "type": "steps",
+                "variant": "line",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "faq",
+                "type": "faq",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

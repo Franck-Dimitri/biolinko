@@ -1,0 +1,105 @@
+{
+    "id": "aut-simple",
+    "name": "Essentiel",
+    "business_types": [
+        "autre"
+    ],
+    "pitch": "Le style Biolinko actuel, en mieux : la base de migration des boutiques existantes.",
+    "who": "Tout vendeur qui veut démarrer vite.",
+    "preview": {
+        "hero": {
+            "badge": "Livraison en 24 h",
+            "title": "Bienvenue chez Kofi Store",
+            "subtitle": "Parfums, accessoires et petits plaisirs, livrés à Douala.",
+            "button": "Voir les produits"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "aut-simple",
+        "style": {
+            "background": "#FFFFFF",
+            "surface": "#F6F5F1",
+            "ink": "#141412",
+            "muted": "#5F5E58",
+            "line": "#EAE8E2",
+            "primary": "#FFCC00",
+            "on_primary": "#141412",
+            "accent": "#B38F00",
+            "tint": "#FFF3C2",
+            "tint_strong": "#FFE07A",
+            "tint_ink": "#7A6100",
+            "font_display": "Inter",
+            "font_body": "Inter",
+            "heading_weight": 600,
+            "heading_tracking": "-0.03em",
+            "heading_case": "none",
+            "radius": 16,
+            "radius_button": 999,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "autre-points",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "trust",
+                "type": "trust",
+                "variant": "icons",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

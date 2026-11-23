@@ -1,0 +1,105 @@
+{
+    "id": "acc-vitrine",
+    "name": "Vitrine",
+    "business_types": [
+        "accessoires"
+    ],
+    "pitch": "Pierre et noir, majuscules espacées, produits en grand comme en boutique.",
+    "who": "Boutique d’accessoires qui soigne son image.",
+    "preview": {
+        "hero": {
+            "badge": "Nouveautés",
+            "title": "Le détail qui change tout",
+            "subtitle": "Sneakers, sacs et montres choisis un par un.",
+            "button": "Voir la sélection"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "acc-vitrine",
+        "style": {
+            "background": "#F3F1EC",
+            "surface": "#FFFFFF",
+            "ink": "#1C1917",
+            "muted": "#78716C",
+            "line": "#E2DFD8",
+            "primary": "#1C1917",
+            "on_primary": null,
+            "accent": "#B45309",
+            "tint": "#E7E3DB",
+            "tint_strong": "#D3CCC0",
+            "tint_ink": "#44403C",
+            "font_display": "Jost",
+            "font_body": "Jost",
+            "heading_weight": 500,
+            "heading_tracking": "0.06em",
+            "heading_case": "uppercase",
+            "radius": 0,
+            "radius_button": 0,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "accessoires-sacs",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "center",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "full",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "carousel",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "tiles",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "quote",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

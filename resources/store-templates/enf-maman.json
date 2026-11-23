@@ -1,0 +1,112 @@
+{
+    "id": "enf-maman",
+    "name": "Maman",
+    "business_types": [
+        "enfants"
+    ],
+    "pitch": "Bleu canard et corail, ton rassurant, filtres par âge et garanties.",
+    "who": "Puériculture et équipement bébé.",
+    "preview": {
+        "hero": {
+            "badge": "Choisi par deux mamans",
+            "title": "Le bon équipement pour chaque âge",
+            "subtitle": "Testé sur nos enfants avant d’être vendu.",
+            "button": "Choisir par âge"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "enf-maman",
+        "style": {
+            "background": "#F7F6F2",
+            "surface": "#FFFFFF",
+            "ink": "#22313F",
+            "muted": "#64707D",
+            "line": "#E4E1D8",
+            "primary": "#3D7A8C",
+            "on_primary": null,
+            "accent": "#D9694F",
+            "tint": "#DCEBEF",
+            "tint_strong": "#F6D9CF",
+            "tint_ink": "#3D7A8C",
+            "font_display": "Lora",
+            "font_body": "Manrope",
+            "heading_weight": 600,
+            "heading_tracking": "-0.01em",
+            "heading_case": "none",
+            "radius": 14,
+            "radius_button": 10,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "enfants-jouets",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "chips",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "trust",
+                "type": "trust",
+                "variant": "icons",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "faq",
+                "type": "faq",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

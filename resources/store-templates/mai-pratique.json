@@ -1,0 +1,112 @@
+{
+    "id": "mai-pratique",
+    "name": "Pratique",
+    "business_types": [
+        "maison"
+    ],
+    "pitch": "Catalogue clair, recherche, filtres par pièce et garanties.",
+    "who": "Boutique d’équipement de la maison avec beaucoup d’articles.",
+    "preview": {
+        "hero": {
+            "badge": "Pack salon",
+            "title": "Lampe, coussins et vase à -13 %",
+            "subtitle": "Cette semaine seulement.",
+            "button": "Voir le pack"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "mai-pratique",
+        "style": {
+            "background": "#F7F8FA",
+            "surface": "#FFFFFF",
+            "ink": "#1E293B",
+            "muted": "#64748B",
+            "line": "#E2E8F0",
+            "primary": "#EA580C",
+            "on_primary": null,
+            "accent": "#0284C7",
+            "tint": "#FFE8D9",
+            "tint_strong": "#FFD0B0",
+            "tint_ink": "#C2410C",
+            "font_display": "Poppins",
+            "font_body": "Poppins",
+            "heading_weight": 700,
+            "heading_tracking": "-0.03em",
+            "heading_case": "none",
+            "radius": 12,
+            "radius_button": 10,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "maison-mobilier",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "app",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "banner",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "chips",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "trust",
+                "type": "trust",
+                "variant": "icons",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "faq",
+                "type": "faq",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

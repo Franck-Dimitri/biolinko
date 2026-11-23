@@ -1,0 +1,105 @@
+{
+    "id": "mai-galerie",
+    "name": "Galerie",
+    "business_types": [
+        "maison"
+    ],
+    "pitch": "Blanc galerie, grand titre fin, mosaïque de photos et lookbook.",
+    "who": "Pièces de design, objets d’art, mobilier.",
+    "preview": {
+        "hero": {
+            "badge": "",
+            "title": "Objets choisis pour durer",
+            "subtitle": "Une sélection de pièces faites main.",
+            "button": "Voir la sélection"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "mai-galerie",
+        "style": {
+            "background": "#FFFFFF",
+            "surface": "#F5F5F5",
+            "ink": "#111111",
+            "muted": "#777777",
+            "line": "#E5E5E5",
+            "primary": "#111111",
+            "on_primary": null,
+            "accent": "#B45309",
+            "tint": "#EFEFEF",
+            "tint_strong": "#DCDCDC",
+            "tint_ink": "#333333",
+            "font_display": "Instrument Serif",
+            "font_body": "Inter",
+            "heading_weight": 400,
+            "heading_tracking": "-0.02em",
+            "heading_case": "none",
+            "radius": 0,
+            "radius_button": 0,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "maison-deco",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "editorial",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "gallery",
+                "type": "gallery",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "lookbook",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "quote",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "card",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

@@ -23,10 +23,12 @@ class RegisteredUserController extends Controller
     public function create(Request $request): Response
     {
         $shop = \App\Support\ShopIntent::remember($request);
+        $template = \App\Support\TemplateIntent::remember($request);
 
         return Inertia::render('Auth/Register', [
             'intendedPlan' => PlanIntent::remember($request),
             'intendedShop' => $shop ? ['slug' => $shop, 'available' => \App\Support\ShopIntent::isAvailable($shop)] : null,
+            'intendedTemplate' => $template ? ['id' => $template['id'], 'name' => $template['name']] : null,
         ]);
     }
 

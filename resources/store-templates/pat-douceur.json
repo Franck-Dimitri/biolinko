@@ -1,0 +1,133 @@
+{
+    "id": "pat-douceur",
+    "name": "Douceur",
+    "business_types": [
+        "patisserie"
+    ],
+    "pitch": "Rose poudré, titres à empattements, configurateur de gâteau et avis en messages.",
+    "who": "Pâtissière à domicile qui vend surtout des gâteaux personnalisés.",
+    "preview": {
+        "hero": {
+            "badge": "Fait maison à Douala",
+            "title": "Le gâteau dont on parlera encore demain",
+            "subtitle": "Choisissez le modèle, la date et votre message. On s’occupe du reste.",
+            "button": "Commander mon gâteau"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "pat-douceur",
+        "style": {
+            "background": "#FFF7F5",
+            "surface": "#FFFFFF",
+            "ink": "#3A1F2B",
+            "muted": "#8A6B76",
+            "line": "#F1DCE1",
+            "primary": "#C93A6B",
+            "on_primary": null,
+            "accent": "#C93A6B",
+            "tint": "#FBD9E2",
+            "tint_strong": "#F4B9C9",
+            "tint_ink": "#9E2E55",
+            "font_display": "Fraunces",
+            "font_body": "DM Sans",
+            "heading_weight": 600,
+            "heading_tracking": "-0.02em",
+            "heading_case": "none",
+            "radius": 22,
+            "radius_button": 999,
+            "announce_bg": "#3A1F2B",
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "patisserie-gateaux",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "center",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "circles",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "builder",
+                "type": "builder",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "steps",
+                "type": "steps",
+                "variant": "line",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "messages",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "info",
+                "type": "info",
+                "variant": "strip",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "band",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

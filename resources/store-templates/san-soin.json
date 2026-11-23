@@ -1,0 +1,112 @@
+{
+    "id": "san-soin",
+    "name": "Soin",
+    "business_types": [
+        "sante"
+    ],
+    "pitch": "Bleu pétrole, ton de pharmacie : composition, chiffres et questions d’abord.",
+    "who": "Parapharmacie, matériel médical, compléments.",
+    "preview": {
+        "hero": {
+            "badge": "Conseil gratuit",
+            "title": "Des produits de santé expliqués avant l’achat",
+            "subtitle": "Composition, mode d’emploi et précautions sur chaque fiche.",
+            "button": "Voir les produits"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "san-soin",
+        "style": {
+            "background": "#F6FAFB",
+            "surface": "#FFFFFF",
+            "ink": "#0F2D3A",
+            "muted": "#567180",
+            "line": "#DCEAEF",
+            "primary": "#0E7490",
+            "on_primary": null,
+            "accent": "#0E7490",
+            "tint": "#D8EEF3",
+            "tint_strong": "#B4DDE7",
+            "tint_ink": "#0E7490",
+            "font_display": "Manrope",
+            "font_body": "Manrope",
+            "heading_weight": 800,
+            "heading_tracking": "-0.03em",
+            "heading_case": "none",
+            "radius": 12,
+            "radius_button": 10,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "sante-soin",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "trust",
+                "type": "trust",
+                "variant": "stats",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "specs",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "faq",
+                "type": "faq",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "card",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

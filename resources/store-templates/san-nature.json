@@ -1,0 +1,112 @@
+{
+    "id": "san-nature",
+    "name": "Nature",
+    "business_types": [
+        "sante"
+    ],
+    "pitch": "Vert forêt et serif doux, garanties et conseils en avant.",
+    "who": "Produits naturels, tisanes, miel, huiles.",
+    "preview": {
+        "hero": {
+            "badge": "Origine Cameroun",
+            "title": "Les plantes d’ici, expliquées simplement",
+            "subtitle": "Moringa, miel, nigelle : des produits naturels et des conseils honnêtes.",
+            "button": "Voir les produits"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "san-nature",
+        "style": {
+            "background": "#F3F6EF",
+            "surface": "#FFFFFF",
+            "ink": "#1E2F23",
+            "muted": "#5A6B5E",
+            "line": "#D9E3D3",
+            "primary": "#3C7A4A",
+            "on_primary": null,
+            "accent": "#B8901E",
+            "tint": "#DCEBD6",
+            "tint_strong": "#BBD7B1",
+            "tint_ink": "#2C5E37",
+            "font_display": "Lora",
+            "font_body": "DM Sans",
+            "heading_weight": 600,
+            "heading_tracking": "-0.01em",
+            "heading_case": "none",
+            "radius": 20,
+            "radius_button": 999,
+            "announce_bg": "#1E2F23",
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "sante-nature",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "center",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "trust",
+                "type": "trust",
+                "variant": "icons",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "faq",
+                "type": "faq",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

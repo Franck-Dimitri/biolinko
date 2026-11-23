@@ -1,0 +1,112 @@
+{
+    "id": "cou-tailleur",
+    "name": "Tailleur",
+    "business_types": [
+        "couture"
+    ],
+    "pitch": "Simple et direct : profil en tête, modèles, commande et paiement en 3 étapes.",
+    "who": "Tailleur de quartier qui recevait ses commandes par messages et veut tout centraliser.",
+    "preview": {
+        "hero": {
+            "badge": "",
+            "title": "Atelier Mariam",
+            "subtitle": "Couture sur mesure à Douala · Tenues de cérémonie · Délai 7 jours",
+            "button": "Voir les modèles"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "cou-tailleur",
+        "style": {
+            "background": "#F0FAF4",
+            "surface": "#FFFFFF",
+            "ink": "#10261A",
+            "muted": "#4D6B5A",
+            "line": "#D2EADB",
+            "primary": "#128C4A",
+            "on_primary": null,
+            "accent": "#128C4A",
+            "tint": "#D4F0E0",
+            "tint_strong": "#A9DFC1",
+            "tint_ink": "#0C5E31",
+            "font_display": "Poppins",
+            "font_body": "Poppins",
+            "heading_weight": 700,
+            "heading_tracking": "-0.02em",
+            "heading_case": "none",
+            "radius": 16,
+            "radius_button": 12,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "couture-ciseaux",
+            "intensity": "bold"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "profile",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "steps",
+                "type": "steps",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "messages",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "faq",
+                "type": "faq",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "band",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

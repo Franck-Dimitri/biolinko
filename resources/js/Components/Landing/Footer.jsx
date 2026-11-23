@@ -17,7 +17,7 @@ export const PHOTO_CREDITS = [
     ['Haut kente', 'Nationaal Museum van Wereldculturen', 'CC BY-SA 3.0', 'Shirt_van_Afrikaanse_kente_stof-_Stichting_Nationaal_Museum_van_Wereldculturen_-_R-3633c.jpg'],
 ];
 
-const DEFAULT_EMAIL = 'contact@biolinko.link';
+const DEFAULT_EMAIL = 'contact@biolinko.app';
 
 // Réseaux sociaux : les liens se règlent dans .env (BIOLINKO_SOCIAL_*, voir config/biolinko.php).
 // Tant qu'un lien est vide, l'icône s'affiche sans être cliquable.
@@ -43,6 +43,7 @@ export default function Footer() {
         ['Produit', [
             ['Fonctionnalités', '/#fonctionnalites'],
             ['Boutique en ligne', '/#produit'],
+            ['Templates de boutique', '/templates'],
             ['Tarifs', '/#tarifs'],
         ]],
         ['Ressources', [

@@ -1,0 +1,105 @@
+{
+    "id": "cou-lookbook",
+    "name": "Lookbook",
+    "business_types": [
+        "couture"
+    ],
+    "pitch": "Grande typographie fine, photos en lookbook, bordeaux en accent.",
+    "who": "Créatrice qui veut montrer ses réalisations comme une marque.",
+    "preview": {
+        "hero": {
+            "badge": "",
+            "title": "Mariam Couture",
+            "subtitle": "Robes de soirée, tenues de dot et de mariage, cousues à Douala.",
+            "button": "Voir les réalisations"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "cou-lookbook",
+        "style": {
+            "background": "#FFFFFF",
+            "surface": "#F6F2F3",
+            "ink": "#141012",
+            "muted": "#6E6468",
+            "line": "#ECE4E6",
+            "primary": "#7A1E48",
+            "on_primary": null,
+            "accent": "#7A1E48",
+            "tint": "#F1E3E8",
+            "tint_strong": "#DFC4CF",
+            "tint_ink": "#7A1E48",
+            "font_display": "Instrument Serif",
+            "font_body": "Inter",
+            "heading_weight": 400,
+            "heading_tracking": "-0.01em",
+            "heading_case": "none",
+            "radius": 0,
+            "radius_button": 0,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "couture-boutons",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": false,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "center",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "editorial",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "lookbook",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "gallery",
+                "type": "gallery",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "story",
+                "type": "story",
+                "variant": "quote",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cta",
+                "type": "cta",
+                "variant": "card",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

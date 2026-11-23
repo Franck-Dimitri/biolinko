@@ -1,0 +1,98 @@
+{
+    "id": "aut-catalogue",
+    "name": "Catalogue",
+    "business_types": [
+        "autre"
+    ],
+    "pitch": "Recherche, filtres et grille dense : pour vendre beaucoup de références.",
+    "who": "Grossiste, boutique multi-produits.",
+    "preview": {
+        "hero": {
+            "badge": "",
+            "title": "",
+            "subtitle": "",
+            "button": ""
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "aut-catalogue",
+        "style": {
+            "background": "#F7F7F5",
+            "surface": "#FFFFFF",
+            "ink": "#18181B",
+            "muted": "#71717A",
+            "line": "#E4E4E7",
+            "primary": "#2563EB",
+            "on_primary": null,
+            "accent": "#DC2626",
+            "tint": "#E5ECFD",
+            "tint_strong": "#CCDAFB",
+            "tint_ink": "#2563EB",
+            "font_display": "Poppins",
+            "font_body": "Poppins",
+            "heading_weight": 700,
+            "heading_tracking": "-0.03em",
+            "heading_case": "none",
+            "radius": 10,
+            "radius_button": 8,
+            "announce_bg": null,
+            "announce_fg": null
+        },
+        "pattern": {
+            "key": "autre-grille",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "app",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "chips",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "grid",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "trust",
+                "type": "trust",
+                "variant": "icons",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "faq",
+                "type": "faq",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}

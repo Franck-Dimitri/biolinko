@@ -1,0 +1,112 @@
+{
+    "id": "ele-tech",
+    "name": "Tech",
+    "business_types": [
+        "electronique"
+    ],
+    "pitch": "Mode sombre, fiches avec caractéristiques, garantie bien visible.",
+    "who": "Vendeur de téléphones et d’accessoires haut de gamme.",
+    "preview": {
+        "hero": {
+            "badge": "Garantie 6 mois",
+            "title": "iPhone 15 Pro, neuf et garanti",
+            "subtitle": "Testé avant l’envoi, livré en 24 h à Douala.",
+            "button": "Voir les téléphones"
+        }
+    },
+    "design": {
+        "version": 1,
+        "template": "ele-tech",
+        "style": {
+            "background": "#0B0F17",
+            "surface": "#141A26",
+            "ink": "#E8EEF8",
+            "muted": "#93A0B5",
+            "line": "#232C3D",
+            "primary": "#3B82F6",
+            "on_primary": null,
+            "accent": "#22D3EE",
+            "tint": "#16213A",
+            "tint_strong": "#1F3358",
+            "tint_ink": "#7DB2FF",
+            "font_display": "Space Grotesk",
+            "font_body": "Inter",
+            "heading_weight": 700,
+            "heading_tracking": "-0.03em",
+            "heading_case": "none",
+            "radius": 14,
+            "radius_button": 10,
+            "announce_bg": "#3B82F6",
+            "announce_fg": "#FFFFFF"
+        },
+        "pattern": {
+            "key": "electronique-tech",
+            "intensity": "soft"
+        },
+        "sections": [
+            {
+                "id": "announce",
+                "type": "announce",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "header",
+                "type": "header",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "hero",
+                "type": "hero",
+                "variant": "split",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "cats",
+                "type": "cats",
+                "variant": "chips",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "products",
+                "type": "products",
+                "variant": "specs",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "trust",
+                "type": "trust",
+                "variant": "icons",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "reviews",
+                "type": "reviews",
+                "variant": "cards",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "faq",
+                "type": "faq",
+                "variant": "simple",
+                "enabled": true,
+                "settings": {}
+            },
+            {
+                "id": "footer",
+                "type": "footer",
+                "variant": "rich",
+                "enabled": true,
+                "settings": {}
+            }
+        ]
+    }
+}
