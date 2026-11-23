@@ -39,7 +39,7 @@ class AdminStoreController extends Controller
         };
 
         return Inertia::render('Admin/Stores/Index', [
-            'stores' => $query->latest()->paginate(15)->withQueryString(),
+            'stores' => $query->latest()->paginate(15)->withQueryString()->through(fn ($s) => $s->makeHidden(['design', 'design_draft'])),
             'metrics' => [
                 'total' => Store::count(),
                 'published' => Store::where('is_published', true)->count(),
@@ -58,6 +58,16 @@ class AdminStoreController extends Controller
 
         $statusText = $store->is_published ? 'publiée' : 'masquée';
         return redirect()->back()->with('message', "La boutique {$store->name} est désormais {$statusText}.");
+    }
+
+    /** Interrupteur du moteur de vitrine (templates par activité), boutique par boutique. */
+    public function toggleDesignEngine(Store $store): RedirectResponse
+    {
+        $store->forceFill(['design_engine' => ! $store->design_engine])->save();
+
+        return redirect()->back()->with('message', $store->design_engine
+            ? "Moteur de vitrine activé pour {$store->name}."
+            : "{$store->name} revient au template Classique.");
     }
 
     public function updatePlan(Request $request, Store $store): RedirectResponse

@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { AlertTriangle, ChevronRight, ExternalLink, Eye, EyeOff, FileEdit, Globe, Store } from 'lucide-react';
+import { AlertTriangle, ChevronRight, ExternalLink, Eye, EyeOff, FileEdit, Globe, LayoutTemplate, Store } from 'lucide-react';
 import ModerationModal from '@/Components/Admin/ModerationModal';
 import { Badge, Button, Card, Empty, PageHeader, Pagination, SearchInput, Stat, Table, Tabs, fcfa, shortDate } from '@/Components/Dashboard/UI';
 import { storeAddress, storeUrl } from '@/Components/Storefront/storeUrl';
@@ -25,6 +25,11 @@ export default function Index({ stores, metrics = {}, filters = {} }) {
     const setStatus = (status) => router.get(route('admin.stores.index'), { search, status }, { preserveState: true, replace: true });
 
     const republish = (s) => router.post(route('admin.stores.toggleStatus', s.id), {}, { preserveScroll: true, onSuccess: () => toast.success(`${s.name} est de nouveau en ligne.`) });
+
+    const toggleEngine = (s) => router.post(route('admin.stores.designEngine', s.id), {}, {
+        preserveScroll: true,
+        onSuccess: () => toast.success(s.design_engine ? `${s.name} revient au template Classique.` : `Moteur de vitrine activé pour ${s.name}.`),
+    });
 
     const suspend = ({ reason }) => {
         setBusy(true);
@@ -80,12 +85,16 @@ export default function Index({ stores, metrics = {}, filters = {} }) {
                                     <td className="px-4 py-3.5">
                                         <span className="flex flex-wrap gap-1.5">
                                             <Badge tone={s.is_published ? 'success' : 'neutral'}>{s.is_published ? 'En ligne' : 'Brouillon'}</Badge>
+                                            {s.design_engine && <Badge tone="neutral">Nouvelle vitrine</Badge>}
                                             {s.reports_count > 0 && <Badge tone={s.reports_count >= 3 ? 'danger' : 'warning'}>{s.reports_count} signalement{s.reports_count > 1 ? 's' : ''}</Badge>}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3.5">
                                         <div className="flex items-center justify-end gap-1">
                                             <a href={storeUrl(s.slug)} target="_blank" rel="noreferrer" aria-label="Voir la boutique" className="flex h-8 w-8 items-center justify-center rounded-full text-[#5F5E58] hover:bg-[#F2F1EC]"><ExternalLink className="h-4 w-4" /></a>
+                                            <button type="button" onClick={() => toggleEngine(s)} aria-pressed={!!s.design_engine}
+                                                aria-label={s.design_engine ? 'Revenir au template Classique' : 'Activer le moteur de vitrine'} title={s.design_engine ? 'Revenir au template Classique' : 'Activer le moteur de vitrine'}
+                                                className={`flex h-8 w-8 items-center justify-center rounded-full hover:bg-[#F2F1EC] ${s.design_engine ? 'text-[#141412]' : 'text-[#8B8A83]'}`}><LayoutTemplate className="h-4 w-4" /></button>
                                             {s.is_published
                                                 ? <Button size="sm" variant="ghost" onClick={() => setTarget(s)}><EyeOff className="h-4 w-4" /> Suspendre</Button>
                                                 : <Button size="sm" onClick={() => republish(s)}><Eye className="h-4 w-4" /> Publier</Button>}

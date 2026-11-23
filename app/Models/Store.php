@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Support\BusinessTypes;
+use App\Support\OpeningHours;
+use App\Support\StoreDesign;
 use App\Support\StoreUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -55,6 +57,8 @@ class Store extends Model
         'phone_whatsapp',
         'city_location',
         'opening_hours',
+        'opening_schedule',
+        'min_order_amount',
         'announcement_header',
         'instagram_link',
         'tiktok_link',
@@ -84,6 +88,11 @@ class Store extends Model
         'is_published' => 'boolean',
         'benefits_json' => 'array',
         'sections_json' => 'array',
+        'design' => 'array',
+        'opening_schedule' => 'array',
+        'min_order_amount' => 'float',
+        'design_draft' => 'array',
+        'design_engine' => 'boolean',
     ];
 
     public static function getDefaultSections(): array
@@ -146,14 +155,18 @@ class Store extends Model
         // Repères de confiance affichés au client avant qu'il paie
         // Modèle de l'activité : vocabulaire de la vitrine (Commander, Réserver…)
         $template = BusinessTypes::get($this->business_type);
-        $this->setAttribute('template', ['cta' => $template['cta'], 'date_label' => $template['date_label']]);
+        $this->setAttribute('template', ['cta' => $template['cta'], 'date_label' => $template['date_label'], 'fulfillment' => $template['fulfillment'], 'lead_time_hours' => $template['lead_time_hours'] ?? null]);
         $this->setAttribute('trust', [
             'verified' => (bool) $this->user?->isVerified(),
             'since' => $this->created_at?->toIso8601String(),
             'delivered' => Order::where('store_id', $this->id)->where('status', 'delivered')->count(),
         ]);
+        // Vitrine publiée (moteur de vitrine) ; null = template « Classique » calculé côté client depuis les réglages
+        $this->setAttribute('storefront_design', StoreDesign::forStore($this));
+        // Ouvert ou fermé maintenant, d'après les horaires par jour
+        $this->setAttribute('opening_status', OpeningHours::status($this->opening_schedule));
         $this->unsetRelation('user');
-        $this->makeHidden(['user']);
+        $this->makeHidden(['user', 'design', 'design_draft', 'design_engine']);
         if (! $pixels) {
             $this->makeHidden(['facebook_pixel_id', 'tiktok_pixel_id', 'google_analytics_id']);
         }
