@@ -5,6 +5,7 @@ namespace App\Services\Sales;
 use App\Mail\OrderConfirmationToCustomerMail;
 use App\Mail\OrderNotificationToVendorMail;
 use App\Models\Order;
+use App\Support\InvoiceTheme;
 use App\Support\StoreUrl;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
@@ -33,6 +34,8 @@ class OrderInvoiceService
         $pdf = Pdf::loadView('invoices.order_pdf', [
             'order' => $order,
             'qrCodeBase64' => $qrCodeBase64,
+            // Couleur, polices et motif du template de la boutique
+            'theme' => InvoiceTheme::for($order->store),
         ]);
 
         return $pdf->output();

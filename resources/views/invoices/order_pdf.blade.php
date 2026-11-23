@@ -1,7 +1,12 @@
 @php
     $store = $order->store;
     $seller = $store?->user;
-    $accent = preg_match('/^#[0-9A-Fa-f]{6}$/', (string) ($store->theme_color ?? '')) ? $store->theme_color : '#141412';
+    // Couleur, polices et motif du template (InvoiceTheme) ; la facture reste sur papier blanc
+    $theme = $theme ?? \App\Support\InvoiceTheme::for($store);
+    $accent = $theme['accent'];
+    $accentInk = $theme['accent_ink'];
+    $displayFont = $theme['display'] ? "'{$theme['display']}', 'DejaVu Sans', sans-serif" : "'DejaVu Sans', sans-serif";
+    $bodyFont = $theme['body'] ? "'{$theme['body']}', 'DejaVu Sans', sans-serif" : "'DejaVu Sans', sans-serif";
     $number = $order->invoice_number ?: $order->tracking_code;
     $issued = $order->invoice_issued_at ?? $order->paid_at ?? $order->created_at;
     $isPaid = $order->payment_status === 'paid' || in_array($order->status, ['paid', 'in_delivery', 'delivered'], true);
@@ -27,36 +32,44 @@
     <meta charset="UTF-8">
     <title>Facture {{ $number }}</title>
     <style>
+        @foreach ($theme['fonts'] as $font)
+        @font-face { font-family: '{{ $font['alias'] }}'; font-weight: normal; font-style: normal; src: url('{{ $font['regular'] }}') format('truetype'); }
+        @font-face { font-family: '{{ $font['alias'] }}'; font-weight: bold; font-style: normal; src: url('{{ $font['bold'] }}') format('truetype'); }
+        @endforeach
         @page { margin: 42px 46px 60px 46px; }
         * { box-sizing: border-box; }
-        body { font-family: 'DejaVu Sans', sans-serif; font-size: 10.5px; color: #141412; line-height: 1.5; margin: 0; }
+        body { font-family: {!! $bodyFont !!}; font-size: 10.5px; color: #141412; line-height: 1.5; margin: 0; }
         table { width: 100%; border-collapse: collapse; }
         td, th { vertical-align: top; padding: 0; }
         .muted { color: #6B6A64; }
         .small { font-size: 9px; }
         .accent-bar { height: 4px; background: {{ $accent }}; margin-bottom: 26px; }
-        .brand-name { font-size: 17px; font-weight: bold; }
+        .pattern { width: 100%; margin-bottom: 4px; }
+        .brand-name { font-family: {!! $displayFont !!}; font-size: 17px; font-weight: bold; color: {{ $accentInk }}; }
         .logo { width: 54px; height: 54px; object-fit: cover; }
-        .logo-fallback { width: 54px; height: 54px; background: {{ $accent }}; color: #fff; font-size: 22px; font-weight: bold; text-align: center; vertical-align: middle; }
-        .doc-title { font-size: 26px; font-weight: bold; letter-spacing: 1px; text-align: right; }
+        .logo-fallback { width: 54px; height: 54px; background: {{ $accent }}; color: {{ $theme['on_accent'] }}; font-size: 22px; font-weight: bold; text-align: center; vertical-align: middle; }
+        .doc-title { font-family: {!! $displayFont !!}; font-size: 26px; font-weight: bold; letter-spacing: 1px; text-align: right; color: {{ $accentInk }}; }
         .meta td { padding: 2px 0; }
         .meta td.label { color: #6B6A64; padding-right: 14px; }
         .box-title { font-size: 9px; color: #6B6A64; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
         .party { padding: 14px 16px; border: 1px solid #E7E5DF; }
-        .items th { font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: #6B6A64; text-align: left; padding: 9px 10px; border-bottom: 1.5px solid #141412; }
+        .items th { font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: #6B6A64; text-align: left; padding: 9px 10px; border-bottom: 1.5px solid {{ $accentInk }}; }
         .items td { padding: 10px; border-bottom: 1px solid #ECEAE4; }
         .num { text-align: right; white-space: nowrap; }
         .totals td { padding: 5px 10px; }
-        .totals .grand td { font-size: 13px; font-weight: bold; border-top: 1.5px solid #141412; padding-top: 9px; }
+        .totals .grand td { font-size: 13px; font-weight: bold; border-top: 1.5px solid {{ $accentInk }}; padding-top: 9px; color: {{ $accentInk }}; }
         .status { display: inline-block; padding: 4px 10px; font-size: 9.5px; font-weight: bold; letter-spacing: 0.6px; text-transform: uppercase; }
         .status.paid { background: #DCFCE7; color: #15803D; }
         .status.pending { background: #FFF3C4; color: #7A5B00; }
         .status.cancelled { background: #FEE2E2; color: #B91C1C; }
-        .signature { font-family: 'DejaVu Serif', serif; font-style: italic; font-size: 15px; }
+        .signature { font-family: {!! $theme['display'] ? $displayFont : "'DejaVu Serif', serif" !!}; font-style: italic; font-size: 15px; }
         .footer { position: fixed; bottom: -36px; left: 0; right: 0; text-align: center; font-size: 8.5px; color: #8B8A83; }
     </style>
 </head>
 <body>
+    @if ($theme['pattern'])
+        <img src="{{ $theme['pattern'] }}" class="pattern" alt="">
+    @endif
     <div class="accent-bar"></div>
 
     {{-- En-tête : vendeur à gauche, document à droite --}}
@@ -211,7 +224,7 @@
 
     <div class="footer">
         {{ $store->name ?? '' }} · Facture {{ $number }}
-        @if ($showBiolinko) · Facture émise avec Biolinko — biolinko.link @endif
+        @if ($showBiolinko) · Facture émise avec Biolinko — biolinko.app @endif
     </div>
 </body>
 </html>
