@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useForm } from '@inertiajs/react';
 import OpeningScheduleEditor from '@/Components/Seller/OpeningScheduleEditor';
-import { storeAddressParts } from '@/Components/Storefront/storeUrl';
+import SlugField, { useSlugCheck } from '@/Components/Store/SlugField';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Badge, Button } from '@/Components/Dashboard/UI';
 import { PatternLayer, patternLabel } from '@/Components/Storefront/patterns';
@@ -143,8 +143,7 @@ function Row({ label, hint, error, children }) {
 }
 
 /** Nom, adresse, activité, logo, coordonnées, horaires : enregistrés tout de suite (pas de brouillon). */
-function InfoPanel({ info, activities, onSaved }) {
-    const parts = storeAddressParts();
+function InfoPanel({ info, activities, onSaved, bind, onDirty }) {
     const form = useForm({
         name: info.name || '', slug: info.slug || '', business_type: info.business_type || '', description: info.description || '', about_text: info.about_text || '',
         phone_whatsapp: info.phone_whatsapp || '', city_location: info.city_location || '', location_address: info.location_address || '',
@@ -153,17 +152,22 @@ function InfoPanel({ info, activities, onSaved }) {
         theme_color: info.theme_color || '#FFCC00', logo_file: null, banner_file: null,
     });
     const { data, setData, errors, processing } = form;
+    const slugCheck = useSlugCheck(data.slug, info.slug);
     const set = (k) => (e) => setData(k, e.target.value);
-    const save = (e) => {
-        e.preventDefault();
+    // Enregistrées par la barre unique « Publier » de la page (promesse : true si tout s'est bien passé)
+    const save = (e) => new Promise((resolve) => {
+        e?.preventDefault?.();
         // L'activité se choisit à l'étape 1 : on renvoie toujours la valeur à jour
         form.transform((d) => ({ ...d, business_type: info.business_type || '', opening_schedule: JSON.stringify(d.opening_schedule || {}) }));
         form.post(route('appearance.update'), {
             forceFormData: true, preserveScroll: true, preserveState: true,
-            onSuccess: () => { toast.success('Informations enregistrées'); setData((d) => ({ ...d, logo_file: null, banner_file: null })); onSaved(); },
-            onError: () => toast.error('Vérifiez les champs signalés.'),
+            onSuccess: () => { setData((d) => ({ ...d, logo_file: null, banner_file: null })); form.setDefaults(); onSaved(); resolve(true); },
+            onError: () => { toast.error('Vérifiez les champs signalés dans l’onglet Infos.'); resolve(false); },
         });
-    };
+    });
+    const dirtyInfo = form.isDirty || !!data.logo_file || !!data.banner_file;
+    useEffect(() => { onDirty?.(dirtyInfo); }, [dirtyInfo]);
+    if (bind) bind.current = save;
     const file = (k, current, label) => (
         <div className="flex items-center gap-3">
             <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#F6F5F1]">
@@ -177,14 +181,10 @@ function InfoPanel({ info, activities, onSaved }) {
     );
     return (
         <form onSubmit={save} className="space-y-5">
-            <p className="text-[13px] text-[#5F5E58]">Ces informations s’affichent sur toute la boutique. Elles sont enregistrées dès que vous cliquez sur « Enregistrer ».</p>
+            <p className="text-[13px] text-[#5F5E58]">Ces informations s’affichent sur toute la boutique. Elles sont enregistrées avec le bouton « Publier » en haut de la page.</p>
             <Row label="Nom de la boutique" error={errors.name}><input value={data.name} onChange={set('name')} maxLength={60} className={inputCls} /></Row>
             <Row label="Adresse de la boutique" error={errors.slug}>
-                <div className="flex items-center rounded-xl border border-black/10 bg-white focus-within:border-black/30">
-                    {parts.prefix && <span className="pl-3 text-[14px] text-[#8B8A83]">{parts.prefix}</span>}
-                    <input value={data.slug} onChange={(e) => setData('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} aria-label="Adresse" className="min-w-0 flex-1 border-0 bg-transparent px-1 py-2.5 text-[14px] focus:ring-0" />
-                    {parts.suffix && <span className="pr-3 text-[14px] text-[#8B8A83]">{parts.suffix}</span>}
-                </div>
+                <SlugField value={data.slug} current={info.slug} check={slugCheck} size="sm" id="info_slug" onChange={(v) => setData('slug', v)} />
             </Row>
             <div className="grid gap-3">
                 <span className="text-[13px] font-medium">Logo</span>{file('logo_file', info.logo_url, 'Ajouter un logo')}
@@ -205,7 +205,6 @@ function InfoPanel({ info, activities, onSaved }) {
             {[['instagram_link', 'Instagram'], ['tiktok_link', 'TikTok'], ['facebook_link', 'Facebook']].map(([k, l]) => (
                 <Row key={k} label={l} error={errors[k]}><input value={data[k]} onChange={set(k)} placeholder="https://…" className={inputCls} /></Row>
             ))}
-            <button type="submit" disabled={processing} className="sticky bottom-0 w-full rounded-full bg-[#141412] py-3 text-[14px] font-medium text-white disabled:opacity-60">{processing ? 'Enregistrement…' : 'Enregistrer les informations'}</button>
         </form>
     );
 }
@@ -343,6 +342,18 @@ export default function Editor({ store, info = {}, activities = {}, reviews = []
         toast.success(`Template « ${t.name} » choisi`, { description: 'Personnalisez-le, puis publiez pour le mettre en ligne. Vos produits et vos textes sont gardés.' });
     });
 
+    // Une seule action pour tout : informations enregistrées, puis vitrine publiée si elle a changé
+    const infoSave = useRef(null);
+    const [infoDirty, setInfoDirty] = useState(false);
+    const pending = infoDirty || dirty || !published;
+    const publishAll = async () => {
+        if (infoDirty) {
+            const ok = await infoSave.current?.();
+            if (!ok) { setTab('infos'); return; }
+            if (!dirty && published) { toast.success('Informations enregistrées'); return; }
+        }
+        publish();
+    };
     const publish = () => router.post(route('seller.editor.publish'), { design: draft }, {
         preserveScroll: true, preserveState: true,
         onSuccess: () => toast.success('Votre vitrine est publiée'),
@@ -365,7 +376,8 @@ export default function Editor({ store, info = {}, activities = {}, reviews = []
 
     const status = save === 'saving' ? 'Enregistrement du brouillon…' : save === 'error' ? saveError
         : !published ? (draft.template === 'classique' ? 'Suivez les étapes : activité, template, puis personnalisez.' : 'Votre template est prêt : publiez-le pour le mettre en ligne.')
-            : dirty ? 'Modifications enregistrées, pas encore publiées' : 'Votre boutique en ligne est à jour';
+            : infoDirty ? 'Informations modifiées, pas encore enregistrées'
+                : dirty ? 'Modifications enregistrées, pas encore publiées' : 'Votre boutique en ligne est à jour';
 
     return (
         <AuthenticatedLayout>
@@ -385,18 +397,25 @@ export default function Editor({ store, info = {}, activities = {}, reviews = []
                     </div>
 
                     {/* Publication : rien ne change pour les clients avant « Publier » */}
-                    <div className={`mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3 ${dirty ? 'border-[#FFCC00]/70 bg-[#FFFBEA]' : 'border-black/[0.06] bg-white'}`}>
-                        <p className={`text-[14px] ${save === 'error' ? 'text-[#B91C1C]' : 'text-[#141412]'}`} aria-live="polite">{status}</p>
-                        <div className="flex items-center gap-2">
-                            {published && dirty && <button type="button" onClick={reset} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] text-[#5F5E58] hover:bg-black/5"><RotateCcw className="h-4 w-4" /> Annuler</button>}
-                            <button type="button" onClick={publish} disabled={(!dirty && !!published) || save === 'error'}
-                                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#FFCC00] px-4 text-[14px] font-medium hover:bg-[#E6B800] disabled:opacity-50">
-                                <Check className="h-4 w-4" /> Publier
-                            </button>
-                        </div>
+                    {/* Barre de publication et étapes : toujours visibles en défilant */}
+                    <div className="sticky top-16 z-20 -mx-1 mb-2 bg-[#FAFAF8] px-1 pt-2">
+                    <div className={`mb-2 flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3 ${pending ? 'border-[#FFCC00]/70 bg-[#FFFBEA]' : 'border-black/[0.06] bg-white'}`}>
+                        <p className={`flex items-center gap-2 text-[14px] ${save === 'error' ? 'text-[#B91C1C]' : pending ? 'text-[#141412]' : 'text-[#15803D]'}`} aria-live="polite">
+                            {!pending && save !== 'error' && <Check className="h-4 w-4 shrink-0" />}{status}
+                        </p>
+                        {/* Le bouton n'apparaît que s'il y a quelque chose à publier */}
+                        {pending && (
+                            <div className="flex items-center gap-2">
+                                {published && dirty && <button type="button" onClick={reset} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] text-[#5F5E58] hover:bg-black/5"><RotateCcw className="h-4 w-4" /> Annuler</button>}
+                                <button type="button" onClick={publishAll} disabled={save === 'error' || save === 'saving'}
+                                    className="inline-flex h-9 items-center gap-1.5 rounded-full bg-[#FFCC00] px-4 text-[14px] font-medium hover:bg-[#E6B800] disabled:opacity-50">
+                                    <Check className="h-4 w-4" /> {infoDirty && !dirty && published ? 'Enregistrer' : 'Publier'}
+                                </button>
+                            </div>
+                        )}
                     </div>
 
-                    <nav className="sticky top-16 z-10 -mx-1 mb-4 flex gap-0.5 overflow-x-auto bg-[#FAFAF8] px-1 py-2 [scrollbar-width:none]" aria-label="Étapes">
+                    <nav className="-mx-1 mb-2 flex gap-0.5 overflow-x-auto bg-[#FAFAF8] px-1 py-2 [scrollbar-width:none]" aria-label="Étapes">
                         {STEPS.map(([k, l], i) => (
                             <button key={k} type="button" onClick={() => { setTab(k); setAdding(false); }} aria-pressed={tab === k}
                                 className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[13px] transition-colors ${tab === k ? 'bg-[#141412] text-white' : 'text-[#5F5E58] hover:bg-black/5 hover:text-[#141412]'}`}>
@@ -407,6 +426,7 @@ export default function Editor({ store, info = {}, activities = {}, reviews = []
                             aria-label="Versions publiées" title="Versions publiées"
                             className={`ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tab === 'versions' ? 'bg-[#141412] text-white' : 'text-[#8B8A83] hover:bg-black/5'}`}><History className="h-4 w-4" /></button>
                     </nav>
+                    </div>
 
                     <div className="rounded-3xl border border-black/[0.06] bg-white p-5 sm:p-6">
                         {tab === 'activite' && (
@@ -591,7 +611,7 @@ export default function Editor({ store, info = {}, activities = {}, reviews = []
                             </div>
                         )}
 
-                        {tab === 'infos' && <InfoPanel info={info} activities={activities} onSaved={() => setFrameKey((k) => k + 1)} />}
+                        <div hidden={tab !== 'infos'}><InfoPanel info={info} activities={activities} bind={infoSave} onDirty={setInfoDirty} onSaved={() => setFrameKey((k) => k + 1)} /></div>
 
                         {tab === 'avis' && <ReviewsPanel reviews={reviews} />}
 

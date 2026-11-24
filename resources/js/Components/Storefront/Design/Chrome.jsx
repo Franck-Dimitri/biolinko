@@ -134,6 +134,8 @@ export function DesignFooter({ store, design, variant, demo = false }) {
         </div>
     );
     const phone = store.phone_whatsapp?.replace(/[^0-9+]/g, '');
+    // +237690112233 → +237 6 90 11 22 33
+    const phoneLabel = phone ? phone.replace(/^\+?237(\d)(\d{2})(\d{2})(\d{2})(\d{2})$/, '+237 $1 $2 $3 $4 $5') : null;
 
     return (
         <div className="sfd sfd-foot" style={designVars(design.style)}>
@@ -150,7 +152,7 @@ export function DesignFooter({ store, design, variant, demo = false }) {
                             </div>
                             <div>
                                 <b>Contact</b>
-                                {phone && <a href={`tel:${phone}`}><Phone /> {store.phone_whatsapp}</a>}
+                                {phone && <a href={`tel:${phone}`}><Phone /> {phoneLabel}</a>}
                                 {(store.location_address || store.city_location) && <span><MapPin /> {store.location_address || store.city_location}</span>}
                                 {store.opening_hours && <span><Clock /> {store.opening_hours}</span>}
                             </div>
@@ -170,7 +172,7 @@ export function DesignFooter({ store, design, variant, demo = false }) {
                         <a href={base} className="hd-t">{store.name}</a>
                         <TrustBadges store={store} className="justify-center" />
                         <Socials store={store} />
-                        {phone && <a href={`tel:${phone}`} className="mu"><Phone /> {store.phone_whatsapp}</a>}
+                        {phone && <a href={`tel:${phone}`} className="mu"><Phone /> {phoneLabel}</a>}
                         {pay}
                         {legal}
                     </div>

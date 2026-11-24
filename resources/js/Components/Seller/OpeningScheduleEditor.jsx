@@ -14,6 +14,7 @@ export default function OpeningScheduleEditor({ value, onChange }) {
 
     return (
         <div className="space-y-2">
+            {!first && <p className="text-[12px] text-[#8B8A83]">Facultatif : cochez vos jours d’ouverture pour afficher « Ouvert » ou « Fermé » sur la boutique.</p>}
             {DAYS.map(([day, label]) => {
                 const slot = schedule[day];
                 return (
@@ -28,7 +29,7 @@ export default function OpeningScheduleEditor({ value, onChange }) {
                                 <span className="text-[13px] text-[#8B8A83]">à</span>
                                 <input type="time" aria-label={`Fermeture le ${label.toLowerCase()}`} value={slot.close} onChange={(e) => set(day, { ...slot, close: e.target.value })} className={`${fieldClass} w-auto`} />
                             </div>
-                        ) : <span className="text-[13px] text-[#8B8A83]">Fermé</span>}
+                        ) : <span className="text-[13px] text-[#8B8A83]">{first ? 'Fermé' : 'Non renseigné'}</span>}
                     </div>
                 );
             })}

@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { PatternLayer, patternLabel } from '@/Components/Storefront/patterns';
 
-const ICONS = {
+export const ICONS = {
     mode: Shirt, accessoires: Watch, beaute: Sparkles, electronique: Smartphone, alimentation: ShoppingBasket, maison: Sofa, sante: HeartPulse,
     enfants: ToyBrick, patisserie: CakeSlice, restauration: UtensilsCrossed, couture: Scissors, artisanat: Palette, services: Wrench, autre: Store,
 };
