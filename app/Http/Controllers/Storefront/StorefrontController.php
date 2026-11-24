@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\SmartLink;
 use App\Models\Store;
 use App\Models\StoreReport;
+use App\Models\StoreSlugRedirect;
 use App\Support\Seo;
 use App\Support\StoreUrl;
 use App\Support\TemplateStats;
@@ -15,6 +16,18 @@ use Inertia\Inertia;
 
 class StorefrontController extends Controller
 {
+    /** Le vendeur a changé d'adresse : les liens déjà partagés mènent à la nouvelle (301, la recherche suit). */
+    private function movedStore(string $slug, string $path = '')
+    {
+        $store = StoreSlugRedirect::where('old_slug', $slug)->first()?->store;
+        if (! $store) {
+            return null;
+        }
+        $query = request()->getQueryString();
+
+        return redirect()->away(StoreUrl::home($store, $path).($query ? '?'.$query : ''), 301);
+    }
+
     public function show(string $slug)
     {
         $store = Store::where('slug', $slug)
@@ -23,9 +36,9 @@ class StorefrontController extends Controller
             }])
             ->first();
 
-        // 1. Boutique inexistante
+        // 1. Boutique inexistante (ou ancienne adresse d'une boutique qui en a changé)
         if (! $store) {
-            return Inertia::render('Errors/StoreUnavailable', [
+            return $this->movedStore($slug) ?? Inertia::render('Errors/StoreUnavailable', [
                 'reason' => 'not_found',
                 'slug' => $slug,
             ])->toResponse(request())->setStatusCode(404);
@@ -208,9 +221,9 @@ class StorefrontController extends Controller
     {
         $store = Store::where('slug', $slug)->with(['user', 'reviews'])->first();
 
-        // 1. Boutique inexistante
+        // 1. Boutique inexistante (ou ancienne adresse d'une boutique qui en a changé)
         if (! $store) {
-            return Inertia::render('Errors/StoreUnavailable', [
+            return $this->movedStore($slug, '/p/'.$product_slug) ?? Inertia::render('Errors/StoreUnavailable', [
                 'reason' => 'not_found',
                 'slug' => $slug,
             ])->toResponse(request())->setStatusCode(404);

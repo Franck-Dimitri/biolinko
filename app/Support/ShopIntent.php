@@ -2,8 +2,6 @@
 
 namespace App\Support;
 
-use App\Models\Store;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -18,15 +16,12 @@ class ShopIntent
     /** Normalise une saisie libre en adresse valide (minuscules, tirets, 3 à 40 caractères). */
     public static function normalize(?string $value): ?string
     {
-        $slug = Str::slug(Str::limit((string) $value, 60, ''));
-        $slug = trim(substr($slug, 0, 40), '-');
-
-        return strlen($slug) >= 3 ? $slug : null;
+        return StoreSlug::normalize($value);
     }
 
     public static function isAvailable(string $slug): bool
     {
-        return ! in_array($slug, User::RESERVED_SLUGS, true) && ! Store::where('slug', $slug)->exists();
+        return StoreSlug::available($slug);
     }
 
     public static function remember(Request $request): ?string

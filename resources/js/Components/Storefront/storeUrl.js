@@ -4,10 +4,12 @@
  * Configuré une fois au démarrage depuis la prop partagée `site` (app.jsx / ssr.jsx).
  */
 let storeDomain = null;
+let displayDomain = 'biolinko.store';
 let appUrl = '';
 
 export function configureStoreUrls(site) {
     storeDomain = site?.store_domain || null;
+    displayDomain = site?.store_domain_display || storeDomain || 'biolinko.store';
     appUrl = site?.app_url || '';
 }
 
@@ -30,17 +32,13 @@ export function absoluteStoreUrl(slug, path = '') {
 
 export const productUrl = (slug, productSlug) => storeUrl(slug, `/p/${productSlug}`);
 
-/** Adresse affichée au vendeur, sans https:// : awa.biolinko.store ou biolinko.app/awa */
+/** Adresse affichée au vendeur, sans https:// : toujours awa.biolinko.store (même en local, où le lien reste /awa). */
 export function storeAddress(slug) {
-    if (storeDomain) return `${slug}.${storeDomain}`;
-    const host = (appUrl || (typeof window !== 'undefined' ? window.location.origin : '')).replace(/^https?:\/\//, '');
-    return `${host}/${slug}`;
+    return `${slug}.${displayDomain}`;
 }
 
-/** Suffixe affiché dans les champs d'adresse : « .biolinko.store » ou préfixe « biolinko.app/ ». */
-export const storeAddressParts = () => (storeDomain
-    ? { prefix: '', suffix: `.${storeDomain}` }
-    : { prefix: `${(appUrl || '').replace(/^https?:\/\//, '') || 'biolinko.app'}/`, suffix: '' });
+/** Suffixe affiché dans les champs d'adresse : « .biolinko.store ». */
+export const storeAddressParts = () => ({ prefix: '', suffix: `.${displayDomain}` });
 
 /** Boutiques sur leur propre domaine (production) ? */
 export const storeDomainEnabled = () => !!storeDomain;

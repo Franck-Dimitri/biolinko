@@ -17,10 +17,11 @@ test('l’adresse réservée sur la landing devient celle de la boutique à l’
         ->assertInertia(fn ($page) => $page->where('intendedShop.slug', 'chez-awa')->where('intendedShop.available', true));
 
     $this->post(route('register'), [
-        'name' => 'Awa Mbarga', 'email' => 'awa@example.com', 'phone_whatsapp' => '677000000',
+        'name' => 'Awa Mbarga', 'store_name' => 'Chez Awa', 'store_slug' => 'chez-awa', 'email' => 'awa@example.com', 'phone_whatsapp' => '677000000',
         'password' => 'password-solide-123', 'password_confirmation' => 'password-solide-123', 'terms' => true,
     ])->assertRedirect();
 
     $store = User::where('email', 'awa@example.com')->first()->store;
-    expect($store->slug)->toBe('chez-awa')->and($store->name)->toBe('Chez Awa');
+    expect($store->slug)->toBe('chez-awa')->and($store->name)->toBe('Chez Awa')
+        ->and($store->user->name)->toBe('Awa Mbarga');
 });

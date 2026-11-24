@@ -4,14 +4,13 @@ namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
 use App\Models\StoreReview;
-use App\Models\User;
 use App\Support\BusinessTypes;
 use App\Support\ImageUpload;
 use App\Support\OpeningHours;
+use App\Support\StoreSlug;
 use App\Support\TemplatesRollout;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -49,7 +48,7 @@ class AppearanceController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'regex:/^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/', Rule::unique('stores', 'slug')->ignore($store->id), Rule::notIn(User::RESERVED_SLUGS)],
+            'slug' => StoreSlug::rules($store),
             'category' => ['nullable', 'string', 'max:255'],
             'business_type' => ['nullable', 'in:'.implode(',', BusinessTypes::keys())],
             'description' => ['nullable', 'string'],
@@ -79,7 +78,7 @@ class AppearanceController extends Controller
             'support_email' => ['nullable', 'email', 'max:255'],
             'logo_file' => ['nullable', 'image', 'max:5120'],
             'banner_file' => ['nullable', 'image', 'max:5120'],
-        ], ['slug.regex' => 'L’adresse doit faire 3 à 40 caractères : lettres minuscules, chiffres et tirets, sans tiret au début ni à la fin.', 'slug.not_in' => 'Cette adresse est réservée, choisissez-en une autre.']);
+        ], StoreSlug::messages());
 
         if ($request->hasFile('logo_file')) {
             $path = ImageUpload::store($request->file('logo_file'), 'logos');

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Mail\VendorOtpVerificationMail;
 use App\Support\ShopIntent;
+use App\Support\StoreSlug;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -309,23 +309,26 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Chaque vendeur a une boutique (en brouillon au départ) et un portefeuille : sans eux, aucune page vendeur ne fonctionne.
      */
-    /** @param  string|null  $preferredSlug  adresse réservée sur la landing (ShopIntent), sinon dérivée du nom */
-    public function ensureStore(?string $preferredSlug = null): Store
+    /**
+     * @param  string|null  $preferredSlug  adresse choisie à l'inscription (vérifiée), sinon dérivée du nom
+     * @param  string|null  $storeName  nom de la boutique (distinct du nom du vendeur)
+     */
+    public function ensureStore(?string $preferredSlug = null, ?string $storeName = null): Store
     {
         if ($this->store) {
             return $this->store;
         }
 
-        $base = $preferredSlug ?: (Str::slug($this->name) ?: 'boutique');
+        $base = $preferredSlug ?: (StoreSlug::normalize($storeName ?: $this->name) ?: 'boutique');
         $slug = $base;
         $i = 2;
-        while (in_array($slug, self::RESERVED_SLUGS, true) || Store::where('slug', $slug)->exists()) {
-            $slug = $base.'-'.$i++;
+        while (! StoreSlug::available($slug)) {
+            $slug = substr($base, 0, 34).'-'.$i++;
         }
 
         $store = Store::create([
             'user_id' => $this->id,
-            'name' => $preferredSlug ? ShopIntent::displayName($preferredSlug) : $this->name,
+            'name' => $storeName ?: ($preferredSlug ? ShopIntent::displayName($preferredSlug) : $this->name),
             'slug' => $slug,
             'phone_whatsapp' => $this->phone_whatsapp,
             'is_published' => false,

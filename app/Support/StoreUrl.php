@@ -24,6 +24,12 @@ class StoreUrl
         return $domain !== '' ? $domain : null;
     }
 
+    /** Domaine affiché aux vendeurs (<nom>.biolinko.store), même en local où les liens restent APP_URL/<nom>. */
+    public static function displayDomain(): string
+    {
+        return static::domain() ?? 'biolinko.store';
+    }
+
     public static function enabled(): bool
     {
         return static::domain() !== null;

@@ -8,14 +8,17 @@ use App\Http\Controllers\Admin\AdminSettingController;
 use App\Http\Controllers\Admin\AdminStoreController;
 use App\Http\Controllers\Admin\AdminStoreReportController;
 use App\Http\Controllers\Admin\AdminSubscriptionController;
+use App\Http\Controllers\Admin\AdminTemplateController;
 use App\Http\Controllers\Admin\AdminTransactionController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminVerificationController;
 use App\Http\Controllers\Admin\AdminWalletController;
 use App\Http\Controllers\Admin\AdminWithdrawalController;
 use App\Http\Controllers\Seller\AppearanceController;
+use App\Http\Controllers\Seller\CreationController;
 use App\Http\Controllers\Seller\CustomerController;
 use App\Http\Controllers\Seller\DashboardController;
+use App\Http\Controllers\Seller\EditorController;
 use App\Http\Controllers\Seller\MarketingController;
 use App\Http\Controllers\Seller\OrderController;
 use App\Http\Controllers\Seller\ProductController;
@@ -32,15 +35,17 @@ use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Storefront\OrderTrackingController;
 use App\Http\Controllers\Storefront\SeoController;
 use App\Http\Controllers\Storefront\SiteController;
-use App\Http\Controllers\Storefront\TemplateGalleryController;
 use App\Http\Controllers\Storefront\StorefrontController;
+use App\Http\Controllers\Storefront\TemplateGalleryController;
 use App\Http\Controllers\Webhooks\HrSkillsPayWebhookController;
 use App\Http\Controllers\Webhooks\MercyPayWebhookController;
 use App\Http\Controllers\Webhooks\PawapayWebhookController;
 use App\Http\Controllers\Webhooks\WhatsappCloudWebhookController;
+use App\Models\Store;
 use App\Support\PlanIntent;
 use App\Support\Seo;
-use App\Support\ShopIntent;
+use App\Support\StoreSlug;
+use App\Support\TemplateStats;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -77,7 +82,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
 
     // 2. Boutiques Réseau
     Route::get('/stores', [AdminStoreController::class, 'index'])->name('admin.stores.index');
-    Route::get('/templates', [\App\Http\Controllers\Admin\AdminTemplateController::class, 'index'])->name('admin.templates.index');
+    Route::get('/templates', [AdminTemplateController::class, 'index'])->name('admin.templates.index');
     Route::post('/stores/{store}/toggle-status', [AdminStoreController::class, 'toggleStatus'])->name('admin.stores.toggleStatus');
     Route::post('/stores/{store}/plan', [AdminStoreController::class, 'updatePlan'])->name('admin.stores.plan');
     Route::post('/stores/{store}/design-engine', [AdminStoreController::class, 'toggleDesignEngine'])->name('admin.stores.designEngine');
@@ -134,16 +139,16 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
 Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('seller.dashboard');
     // Création de la boutique : activité, template, nom, adresse, ville et WhatsApp
-    Route::get('/creation', [\App\Http\Controllers\Seller\CreationController::class, 'show'])->name('seller.creation');
-    Route::post('/creation', [\App\Http\Controllers\Seller\CreationController::class, 'store'])->name('seller.creation.store');
+    Route::get('/creation', [CreationController::class, 'show'])->name('seller.creation');
+    Route::post('/creation', [CreationController::class, 'store'])->name('seller.creation.store');
     // Éditeur visuel de la vitrine
     // L'éditeur fait partie de « Ma boutique » (ancienne adresse gardée)
     Route::redirect('/vitrine', '/seller/appearance')->name('seller.editor');
-    Route::put('/vitrine/brouillon', [\App\Http\Controllers\Seller\EditorController::class, 'saveDraft'])->middleware('throttle:60,1')->name('seller.editor.draft');
-    Route::post('/vitrine/publier', [\App\Http\Controllers\Seller\EditorController::class, 'publish'])->name('seller.editor.publish');
-    Route::post('/vitrine/activite', [\App\Http\Controllers\Seller\EditorController::class, 'activity'])->name('seller.editor.activity');
-    Route::post('/vitrine/versions/{version}/restaurer', [\App\Http\Controllers\Seller\EditorController::class, 'restore'])->name('seller.editor.restore');
-    Route::post('/vitrine/image', [\App\Http\Controllers\Seller\EditorController::class, 'image'])->middleware('throttle:20,1')->name('seller.editor.image');
+    Route::put('/vitrine/brouillon', [EditorController::class, 'saveDraft'])->middleware('throttle:60,1')->name('seller.editor.draft');
+    Route::post('/vitrine/publier', [EditorController::class, 'publish'])->name('seller.editor.publish');
+    Route::post('/vitrine/activite', [EditorController::class, 'activity'])->name('seller.editor.activity');
+    Route::post('/vitrine/versions/{version}/restaurer', [EditorController::class, 'restore'])->name('seller.editor.restore');
+    Route::post('/vitrine/image', [EditorController::class, 'image'])->middleware('throttle:20,1')->name('seller.editor.image');
     Route::post('/store', [StoreController::class, 'update'])->name('store.update');
     Route::post('/store/publish', [StoreController::class, 'togglePublish'])->name('store.togglePublish');
 
@@ -234,19 +239,25 @@ Route::get('/api/webhooks/whatsapp-cloud', [WhatsappCloudWebhookController::clas
 Route::post('/api/webhooks/whatsapp-cloud', [WhatsappCloudWebhookController::class, 'handle'])->name('webhooks.whatsapp-cloud');
 
 // Mesures de lancement : un ajout au panier sur une vitrine (compteur par template, sans donnée personnelle)
-Route::post('/t/panier/{store}', function (\App\Models\Store $store) {
-    if ($store->is_published && ! \App\Support\TemplateStats::isBot(request()->userAgent())) {
-        \App\Support\TemplateStats::hit($store, 'carts');
+Route::post('/t/panier/{store}', function (Store $store) {
+    if ($store->is_published && ! TemplateStats::isBot(request()->userAgent())) {
+        TemplateStats::hit($store, 'carts');
     }
 
     return response()->noContent();
 })->whereNumber('store')->middleware('throttle:30,1')->name('stats.cart');
 
-// Landing : l'adresse biolinko.app/<boutique> est-elle libre ?
+// Landing, inscription, Ma boutique : l'adresse <boutique>.biolinko.store est-elle libre ? Sinon, 3 adresses proches et libres.
 Route::get('/boutique-disponible', function (Request $request) {
-    $slug = ShopIntent::normalize($request->query('slug'));
+    $slug = StoreSlug::normalize($request->query('slug'));
+    $own = $request->user()?->store;
+    $available = $slug !== null && StoreSlug::available($slug, $own);
 
-    return response()->json(['slug' => $slug, 'available' => $slug !== null && ShopIntent::isAvailable($slug)]);
+    return response()->json([
+        'slug' => $slug,
+        'available' => $available,
+        'suggestions' => $slug !== null && ! $available ? StoreSlug::suggestions($slug, 3, $own) : [],
+    ]);
 })->middleware('throttle:30,1')->name('shop.available');
 
 // Public Client Fast Checkout & Order Tracking & Customer Lookup

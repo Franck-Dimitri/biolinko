@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\User;
 use App\Services\Whatsapp\WhatsappGatewayService;
 use App\Support\StoreUrl;
+use App\Support\TemplatesRollout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Middleware;
@@ -66,12 +67,14 @@ class HandleInertiaRequests extends Middleware
             'planLimits' => User::PLAN_LIMITS,
             'whatsappAutomatic' => WhatsappGatewayService::automatic(),
             // Templates de vitrine ouverts à ce vendeur (lancement progressif)
-            'templatesOpen' => fn () => \App\Support\TemplatesRollout::openTo($request->user()),
+            'templatesOpen' => fn () => TemplatesRollout::openTo($request->user()),
             // Frais et commissions (config/payments.php) affichés sur la landing, la caisse et le tableau de bord
             // Contact et réseaux sociaux publics (config/biolinko.php)
             'site' => [
                 // Boutiques sur <nom>.<domaine> en production ; vide en local (APP_URL/<nom>)
                 'store_domain' => StoreUrl::domain(),
+                // Adresse affichée au vendeur : toujours <nom>.biolinko.store
+                'store_domain_display' => StoreUrl::displayDomain(),
                 'app_url' => rtrim((string) config('app.url'), '/'),
                 'contact' => config('biolinko.contact'),
                 'socials' => array_filter(config('biolinko.socials', [])),

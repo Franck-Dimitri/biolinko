@@ -17,6 +17,26 @@ class Store extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        // Changement d'adresse : l'ancienne redirige vers la nouvelle et reste réservée à la boutique
+        static::updated(function (Store $store) {
+            if (! $store->wasChanged('slug')) {
+                return;
+            }
+            $old = $store->getOriginal('slug');
+            if ($old) {
+                StoreSlugRedirect::updateOrCreate(['old_slug' => $old], ['store_id' => $store->id]);
+            }
+            StoreSlugRedirect::where('old_slug', $store->slug)->delete();
+        });
+    }
+
+    public function slugRedirects(): HasMany
+    {
+        return $this->hasMany(StoreSlugRedirect::class);
+    }
+
     /** Adresse publique de la boutique (domaine des boutiques en production). */
     protected $appends = ['public_url', 'public_address'];
 
