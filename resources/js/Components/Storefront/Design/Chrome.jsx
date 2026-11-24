@@ -128,7 +128,7 @@ export function DesignFooter({ store, design, variant, demo = false }) {
     );
     const legal = (
         <div className="ft-b">
-            <span>© {new Date().getFullYear()} {store.name} · <a href={route('legal.terms')}>Conditions</a> · <a href={route('legal.privacy')}>Confidentialité</a></span>
+            <span>© {new Date().getFullYear()} {store.name} · <a href={route('legal.terms')}>Conditions</a> · <a href={route('legal.privacy')}>Confidentialité</a> · <a href={route('legal.cookies')}>Cookies</a></span>
             {!demo && <button type="button" onClick={() => setReporting(true)}><Flag /> Signaler cette boutique</button>}
             <a href={appLink('/')}>Boutique créée avec <b>Biolinko</b></a>
         </div>

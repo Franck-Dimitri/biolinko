@@ -1,6 +1,20 @@
 // Pixels publicitaires du vendeur (Meta, TikTok, Google). Chargés une fois par page, jamais en aperçu
-// ni pour le vendeur lui-même, pour ne pas fausser ses statistiques.
+// ni pour le vendeur lui-même, pour ne pas fausser ses statistiques. Uniquement si le visiteur a accepté les cookies.
+import { getConsent } from '@/Components/consent';
+
 const ids = { fb: null, tt: null, ga: null };
+let pending = null; // boutique en attente du choix du visiteur
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('biolinko:consent', (e) => {
+        if (e.detail === 'accepted' && pending) {
+            const store = pending;
+            pending = null;
+            initPixels(store);
+            track('PageView');
+        }
+    });
+}
 
 const clean = {
     fb: (v) => (/^\d{6,20}$/.test(v || '') ? v : null),
@@ -17,6 +31,10 @@ function addScript(src) {
 
 export function initPixels(store, { disabled = false } = {}) {
     if (typeof window === 'undefined' || disabled || !store) return;
+    if (getConsent() !== 'accepted') {
+        pending = store;
+        return;
+    }
 
     const fb = clean.fb(store.facebook_pixel_id);
     if (fb && !ids.fb) {
@@ -52,7 +70,7 @@ const TT_NAMES = { ViewContent: 'ViewContent', AddToCart: 'AddToCart', InitiateC
 
 /** Événement standard : PageView, ViewContent, AddToCart, InitiateCheckout, Purchase. value en FCFA. */
 export function track(event, { value, id, name } = {}) {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || getConsent() !== 'accepted') return;
     const data = value != null ? { value: Number(value), currency: 'XAF' } : {};
     try {
         if (ids.fb && window.fbq) window.fbq('track', event, { ...data, ...(id ? { content_ids: [String(id)], content_type: 'product' } : {}) });

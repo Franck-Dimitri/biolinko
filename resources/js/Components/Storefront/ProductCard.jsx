@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Package, Plus } from 'lucide-react';
 import { EASE_OUT } from '@/Components/UI/Motion';
@@ -21,8 +22,20 @@ export function ProductImage({ src, alt, className = '', sizes = '(min-width: 10
             </div>
         );
     }
+    return <LoadingImg src={src} alt={alt} sizes={sizes} className={className} />;
+}
+
+/** Photo avec un bloc de chargement tant qu'elle n'est pas arrivée (réseau lent). */
+function LoadingImg({ src, alt, sizes, className }) {
+    const [loaded, setLoaded] = useState(false);
+    const ref = useRef(null);
+    useEffect(() => { setLoaded(!!ref.current?.complete && ref.current.naturalWidth > 0); }, [src]);
     const srcSet = imageSrcSet(src);
-    return <img src={src} srcSet={srcSet} sizes={srcSet ? sizes : undefined} alt={alt} loading="lazy" className={`object-cover ${className}`} />;
+    return (
+        <img ref={ref} src={src} srcSet={srcSet} sizes={srcSet ? sizes : undefined} alt={alt} loading="lazy"
+            onLoad={() => setLoaded(true)} onError={() => setLoaded(true)}
+            className={`object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'skel-img'} ${className}`} />
+    );
 }
 
 export default function ProductCard({ product, storeSlug, primaryColor, primaryTextColor, onAdd, onWishlist, isWished = false, badge = null }) {

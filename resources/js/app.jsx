@@ -5,6 +5,8 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import { configureStoreUrls } from '@/Components/Storefront/storeUrl';
+import CookieBanner from '@/Components/CookieBanner';
+import { configureConsent } from '@/Components/consent';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -18,12 +20,13 @@ createInertiaApp({
         ),
     setup({ el, App, props }) {
         configureStoreUrls(props.initialPage?.props?.site);
+        configureConsent(props.initialPage?.props?.site);
         if (import.meta.env.SSR) {
             hydrateRoot(el, <App {...props} />);
             return;
         }
 
-        createRoot(el).render(<App {...props} />);
+        createRoot(el).render(<><App {...props} /><CookieBanner initialPage={props.initialPage} /></>);
     },
     progress: {
         color: '#F59E0B',

@@ -47,7 +47,7 @@ class TrackVisit
         }
         $name = (string) $request->route()?->getName();
         $page = self::PAGES[$name] ?? ($name === 'welcome' || str_starts_with($name, 'site.') ? 'site' : null);
-        if (! $page || TemplateStats::isBot($request->userAgent()) || $request->has('apercu')) {
+        if (! $page || TemplateStats::isBot($request->userAgent()) || $request->has('apercu') || $request->cookie('biolinko_consent') === 'refused') {
             return null;
         }
 

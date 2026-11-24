@@ -30,6 +30,9 @@ return Application::configure(basePath: dirname(__DIR__))
             LogoutBannedUser::class,
         ]);
 
+        // Choix cookies du visiteur : écrit par le navigateur, lu tel quel par le serveur
+        $middleware->encryptCookies(except: ['biolinko_consent']);
+
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
             'plan' => EnsureUserHasPlan::class,

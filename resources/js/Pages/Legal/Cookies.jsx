@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import LegalLayout, { Note } from '@/Layouts/LegalLayout';
+import { openConsent } from '@/Components/consent';
 
 const sections = [
     {
@@ -25,10 +26,21 @@ const sections = [
         ),
     },
     {
-        id: 'mesure',
-        title: 'Mesure d’audience et optimisation',
+        id: 'choix',
+        title: 'Votre choix',
         body: (
-            <p>Biolinko peut mesurer l’utilisation de la plateforme (pages vues, parcours, performances) afin de l’optimiser et de l’améliorer, comme décrit dans notre <Link href={route('legal.privacy')} className="underline underline-offset-2">politique de confidentialité</Link>. Ces mesures sont exploitées sous forme agrégée.</p>
+            <>
+                <p>À votre première visite, un bandeau vous propose d’<strong>accepter</strong> ou de <strong>refuser</strong> les outils de mesure et de publicité. Refuser est aussi simple qu’accepter et ne vous empêche ni de naviguer ni de commander.</p>
+                <p>Votre choix est gardé 6 mois dans un cookie <code>biolinko_consent</code>, valable sur le site et sur toutes les boutiques Biolinko. Vous pouvez le changer à tout moment :</p>
+                <p><button type="button" onClick={openConsent} className="rounded-full border border-black/15 px-4 py-2 text-[14px] font-medium hover:border-black/40">Gérer mes cookies</button></p>
+            </>
+        ),
+    },
+    {
+        id: 'mesure',
+        title: 'Mesure d’audience de Biolinko',
+        body: (
+            <p>Biolinko compte les pages vues des boutiques et du site (pays, type d’appareil, site d’où vient la visite) pour donner leurs statistiques aux vendeurs et améliorer la plateforme. Cette mesure ne dépose aucun cookie et n’enregistre pas votre adresse IP : seule une empreinte anonyme, renouvelée chaque jour, permet de ne pas compter deux fois la même visite. Si vous refusez les cookies, vos visites ne sont pas comptées. Voir aussi notre <Link href={route('legal.privacy')} className="underline underline-offset-2">politique de confidentialité</Link>.</p>
         ),
     },
     {
@@ -36,7 +48,7 @@ const sections = [
         title: 'Outils activés par les vendeurs',
         body: (
             <Note>
-                Un vendeur peut choisir d’ajouter sur sa propre boutique des outils publicitaires ou de mesure (par exemple les pixels Facebook, TikTok ou Google). Dans ce cas, ces services tiers peuvent déposer leurs propres cookies lorsque vous visitez cette boutique ; leur usage relève de la politique du vendeur et de ces services. Biolinko n’utilise pas ces cookies pour son propre compte.
+                Un vendeur peut ajouter sur sa boutique des outils publicitaires ou de mesure (pixels Meta, TikTok ou Google). Ils ne sont chargés <strong>que si vous avez accepté les cookies</strong>. Ces services tiers déposent alors leurs propres cookies ; leur usage relève de la politique du vendeur et de ces services. Biolinko n’utilise pas ces cookies pour son propre compte.
             </Note>
         ),
     },
@@ -44,7 +56,7 @@ const sections = [
         id: 'duree',
         title: 'Durée de conservation',
         body: (
-            <p>Les cookies de session expirent à la fermeture du navigateur ou à la déconnexion. Le panier et les coordonnées enregistrés localement restent sur votre appareil jusqu’à ce que vous les effaciez.</p>
+            <p>Les cookies de session expirent à la fermeture du navigateur ou à la déconnexion. Votre choix sur les cookies est gardé 6 mois, puis le bandeau vous est proposé à nouveau. Le panier et les coordonnées enregistrés localement restent sur votre appareil jusqu’à ce que vous les effaciez.</p>
         ),
     },
     {
@@ -69,7 +81,7 @@ export default function Cookies() {
         <LegalLayout
             title="Politique cookies"
             intro="Les cookies et le stockage utilisés sur Biolinko, à quoi ils servent et comment les contrôler."
-            updatedAt="12 novembre 2026"
+            updatedAt="24 novembre 2026"
             sections={sections}
         />
     );

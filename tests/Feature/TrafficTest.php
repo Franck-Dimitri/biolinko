@@ -50,3 +50,13 @@ test('l’admin voit le trafic de la plateforme, le vendeur celui de sa boutique
 
     $this->actingAs($this->seller)->get('/admin/trafic')->assertRedirect();
 });
+
+test('un visiteur qui a refusé les cookies n’est pas compté', function () {
+    $this->withUnencryptedCookie('biolinko_consent', 'refused')->withHeaders(['User-Agent' => PHONE])
+        ->get('https://chez-awa.biolinko.store/')->assertOk();
+    expect(PageVisit::count())->toBe(0);
+
+    $this->withUnencryptedCookie('biolinko_consent', 'accepted')->withHeaders(['User-Agent' => PHONE])
+        ->get('https://chez-awa.biolinko.store/')->assertOk();
+    expect(PageVisit::count())->toBe(1);
+});

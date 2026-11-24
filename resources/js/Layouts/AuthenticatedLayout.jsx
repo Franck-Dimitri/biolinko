@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import { DashboardSkeleton, useSlowNavigation } from '@/Components/UI/Skeleton';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import AppToaster from '@/Components/UI/AppToaster';
@@ -212,6 +213,7 @@ function TopBar({ user, store }) {
 }
 
 export default function AuthenticatedLayout({ header, children }) {
+    const loading = useSlowNavigation();
     const { auth, flash } = usePage().props;
     const user = auth.user;
     const store = usePage().props.store || user.store;
@@ -279,7 +281,7 @@ export default function AuthenticatedLayout({ header, children }) {
                             <span className="shrink-0 font-medium underline underline-offset-4">Ajouter</span>
                         </Link>
                     )}
-                    {children}
+                    {loading ? <DashboardSkeleton /> : children}
                 </main>
             </div>
         </div>

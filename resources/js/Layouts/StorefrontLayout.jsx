@@ -14,6 +14,7 @@ import { fontsHref } from '@/Components/Storefront/Design/tokens';
 import { storeTheme } from '@/Components/Storefront/Design/theme';
 import { PatternBand } from '@/Components/Storefront/Design/ui';
 import '@/Components/Storefront/Design/storefront.css';
+import { StorefrontPageSkeleton, useSlowNavigation } from '@/Components/UI/Skeleton';
 
 export default function StorefrontLayout({ 
     store, 
@@ -29,6 +30,7 @@ export default function StorefrontLayout({
     fullBleed = false,
     patternBand = false,
 }) {
+    const loading = useSlowNavigation();
     // Vitrine : en-tête et pied de page du template, sinon ceux d'origine (template « Classique »)
     // Template : ses variables (couleurs, polices, arrondis) s'appliquent à tout le parcours d'achat
     const theme = storeTheme(store);
@@ -114,8 +116,8 @@ export default function StorefrontLayout({
 
             {/* MAIN CONTENT AREA */}
             {patternBand && <PatternBand design={design} />}
-            <main className={fullBleed ? 'w-full flex-1' : 'mx-auto w-full max-w-[1200px] flex-1 space-y-12 px-5 py-8 lg:px-8'}>
-                {children}
+            <main className={fullBleed && !loading ? 'w-full flex-1' : 'mx-auto w-full max-w-[1200px] flex-1 space-y-12 px-5 py-8 lg:px-8'}>
+                {loading ? <StorefrontPageSkeleton /> : children}
             </main>
 
             {/* PIED DE PAGE : celui du template, sinon celui d'origine */}
