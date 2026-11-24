@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { EASE_OUT } from '@/Components/UI/Motion';
 import { storeUrl } from '@/Components/Storefront/storeUrl';
+import { Breakdown, COUNTRY, SOURCE, VisitsChart } from '@/Components/Dashboard/TrafficParts';
 
 const fcfa = (n) => `${Math.round(Number(n) || 0).toLocaleString('fr-FR')} FCFA`;
 
@@ -128,7 +129,7 @@ function Onboarding({ store, checklist, percent, productsCount }) {
     );
 }
 
-export default function Dashboard({ templateInvite = null, pilot = null, upgradeHint = null, totalNet = 0, store, wallet, productsCount, ordersCount, totalRevenue, recentOrders = [], setupChecklist, completionPercentage, analytics }) {
+export default function Dashboard({ traffic = null, templateInvite = null, pilot = null, upgradeHint = null, totalNet = 0, store, wallet, productsCount, ordersCount, totalRevenue, recentOrders = [], setupChecklist, completionPercentage, analytics }) {
     const user = usePage().props.auth.user;
     const products = usePage().props.products || [];
     const dailySales = analytics?.dailySales || [];
@@ -243,6 +244,22 @@ export default function Dashboard({ templateInvite = null, pilot = null, upgrade
                         </div>
                     </Card>
                 </div>
+
+                {traffic && (
+                    <div className="grid gap-4 lg:grid-cols-3">
+                        <Card className="lg:col-span-2" delay={0.1}>
+                            <CardHeader title="Visites de votre boutique" sub={`${traffic.visitors.toLocaleString('fr-FR')} visiteurs · ${traffic.views.toLocaleString('fr-FR')} pages vues sur 30 jours${traffic.conversion !== null ? ` · ${String(traffic.conversion).replace('.', ',')} % ont acheté` : ''}`} />
+                            <div className="mt-5"><VisitsChart series={traffic.series} /></div>
+                        </Card>
+                        <Card delay={0.14}>
+                            <CardHeader title="D’où viennent vos visiteurs" sub="Sources et pays, 30 jours" />
+                            <div className="mt-5 space-y-6">
+                                <Breakdown rows={traffic.sources.slice(0, 4)} labels={SOURCE} empty="Partagez votre lien sur WhatsApp pour voir vos premières visites." />
+                                {traffic.countries.length > 0 && <Breakdown rows={traffic.countries.slice(0, 3)} labels={COUNTRY} flag />}
+                            </div>
+                        </Card>
+                    </div>
+                )}
 
                 <div className="grid gap-4 lg:grid-cols-3">
                     <Card className="lg:col-span-2" delay={0.12}>

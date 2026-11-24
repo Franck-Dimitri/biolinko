@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\AdminStoreController;
 use App\Http\Controllers\Admin\AdminStoreReportController;
 use App\Http\Controllers\Admin\AdminSubscriptionController;
 use App\Http\Controllers\Admin\AdminTemplateController;
+use App\Http\Controllers\Admin\AdminTrafficController;
 use App\Http\Controllers\Admin\AdminTransactionController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminVerificationController;
@@ -58,7 +59,7 @@ Route::get('/', function () {
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ])->withViewData(['meta' => Seo::landing()]);
-});
+})->name('welcome');
 
 // Smart Dashboard Redirector based on user role
 Route::middleware(['auth', 'verified'])->get('/dashboard', function (Request $request) {
@@ -111,6 +112,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
     Route::post('/withdrawals/{withdrawal}/reject', [AdminWithdrawalController::class, 'reject'])->name('admin.withdrawals.reject');
 
     // 6 bis. Vérification d'identité des vendeurs et signalements de boutiques
+    Route::get('/trafic', [AdminTrafficController::class, 'index'])->name('admin.traffic.index');
     Route::get('/verifications', [AdminVerificationController::class, 'index'])->name('admin.verifications.index');
     Route::get('/verifications/{verification}/file/{kind}', [AdminVerificationController::class, 'file'])->whereIn('kind', ['front', 'back', 'selfie'])->name('admin.verifications.file');
     Route::post('/verifications/{verification}/approve', [AdminVerificationController::class, 'approve'])->name('admin.verifications.approve');

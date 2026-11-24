@@ -11,6 +11,7 @@ use App\Support\BusinessTypes;
 use App\Support\PilotOffer;
 use App\Support\StoreTemplates;
 use App\Support\TemplatesRollout;
+use App\Support\TrafficStats;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -106,6 +107,7 @@ class DashboardController extends Controller
 
         return Inertia::render('Dashboard', [
             'upgradeHint' => $request->user()->upgradeSavings(),
+            'traffic' => TrafficStats::summary($store->id, 30),
             'pilot' => PilotOffer::progress($request->user()),
             'templateInvite' => ! $store->design_engine && TemplatesRollout::openTo($request->user())
                 && TemplatesRollout::activityOpen($store->business_type)

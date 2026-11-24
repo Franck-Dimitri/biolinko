@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\LogoutBannedUser;
 use App\Http\Middleware\ResolveStoreDomain;
+use App\Http\Middleware\TrackVisit;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -23,6 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(ResolveStoreDomain::class);
 
         $middleware->web(append: [
+            // Visites des pages publiques (enregistrées après la réponse)
+            TrackVisit::class,
             HandleInertiaRequests::class,
             LogoutBannedUser::class,
         ]);
