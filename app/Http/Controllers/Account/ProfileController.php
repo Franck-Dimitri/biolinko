@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
-
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Support\AccountDeletion;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -59,9 +59,13 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        Auth::logout();
+        // L'argent des acheteurs et du vendeur passe avant : on ne supprime pas un portefeuille non vide
+        if (($balance = AccountDeletion::blockingBalance($user)) > 0) {
+            return back()->withErrors(['password' => 'Votre portefeuille contient encore '.number_format($balance, 0, ',', ' ').' FCFA. Retirez votre solde et attendez la fin des commandes en cours avant de supprimer votre compte.']);
+        }
 
-        $user->delete();
+        AccountDeletion::delete($user);
+        Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

@@ -11,27 +11,29 @@ class EnsureUserHasRole
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     * @param  string  ...$roles
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login');
         }
 
-        $userRole = !empty($user->role) ? $user->role : 'seller';
+        $userRole = ! empty($user->role) ? $user->role : 'seller';
 
         // Normalize 'vendor' to 'seller'
         if ($userRole === 'vendor') {
             $userRole = 'seller';
         }
 
-        // Allow Admin users to access both admin and seller routes
+        // Chaque rôle reste dans son espace : un admin n'utilise pas les pages vendeur
+        // (sinon une boutique lui serait créée et il éditerait une vitrine qui n'est pas la sienne)
         if ($user->isAdmin()) {
-            return $next($request);
+            return in_array('admin', $roles, true)
+                ? $next($request)
+                : redirect()->route('admin.dashboard')->with('error', 'Cette page est réservée aux vendeurs.');
         }
 
         // Check if user has required role

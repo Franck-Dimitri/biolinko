@@ -40,14 +40,15 @@ class Store extends Model
     /** Adresse publique de la boutique (domaine des boutiques en production). */
     protected $appends = ['public_url', 'public_address'];
 
-    public function getPublicUrlAttribute(): string
+    // Boutique chargée sans son adresse (select partiel) : pas d'URL plutôt qu'une erreur
+    public function getPublicUrlAttribute(): ?string
     {
-        return StoreUrl::home($this);
+        return $this->slug ? StoreUrl::home($this) : null;
     }
 
-    public function getPublicAddressAttribute(): string
+    public function getPublicAddressAttribute(): ?string
     {
-        return StoreUrl::display($this);
+        return $this->slug ? StoreUrl::display($this) : null;
     }
 
     protected $fillable = [
