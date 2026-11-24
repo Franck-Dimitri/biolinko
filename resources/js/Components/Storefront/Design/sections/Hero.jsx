@@ -5,6 +5,7 @@ import { productImage } from '@/Components/Storefront/ProductCard';
 import { leadTimeLabel, scheduleKey } from '@/Components/Storefront/useCart';
 import { productUrl } from '@/Components/Storefront/storeUrl';
 import { Btn, Pic, PatZone, fmt, initials, priceOf, scrollToId } from '../ui';
+import { PatternLayer } from '@/Components/Storefront/patterns';
 import { deliveryText, sellingKind } from '../content';
 
 /* Accueil : 9 dispositions. Textes : réglages de la section, sinon ceux de la boutique (Apparence). */
@@ -90,7 +91,10 @@ function Full({ section, ctx }) {
     const h = useHero(section, ctx);
     return (
         <section className="h-cover">
-            <Pic src={h.image} alt={ctx.store.name} ar="auto" className="bgpic" eager sizes="100vw" />
+            {h.image
+                ? <Pic src={h.image} alt={ctx.store.name} ar="auto" className="bgpic" eager sizes="100vw" />
+                // Sans photo : le motif du template sur sa couleur, jamais une icône d'image vide derrière le titre
+                : <span className="bgpic nopic" aria-hidden>{ctx.design?.pattern?.key && <PatternLayer pattern={ctx.design.pattern.key} color={ctx.design?.style?.primary} opacity={0.28} fade={false} />}</span>}
             <div className="wrap">
                 <div className="h-txt">
                     <Badge>{h.badge}</Badge>

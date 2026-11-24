@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Support\ImageUpload;
+use App\Support\StoreSlug;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class StoreController extends Controller
 {
@@ -17,7 +16,7 @@ class StoreController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'regex:/^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/', Rule::unique('stores', 'slug')->ignore($store->id), Rule::notIn(User::RESERVED_SLUGS)],
+            'slug' => StoreSlug::rules($store),
             'category' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'about_text' => ['nullable', 'string'],
@@ -33,7 +32,7 @@ class StoreController extends Controller
             'instagram_link' => ['nullable', 'url', 'max:255'],
             'tiktok_link' => ['nullable', 'url', 'max:255'],
             'facebook_link' => ['nullable', 'url', 'max:255'],
-        ], ['slug.regex' => 'L’adresse doit faire 3 à 40 caractères : lettres minuscules, chiffres et tirets, sans tiret au début ni à la fin.', 'slug.not_in' => 'Cette adresse est réservée, choisissez-en une autre.']);
+        ], StoreSlug::messages());
 
         if ($request->hasFile('logo_file')) {
             $logoPath = ImageUpload::store($request->file('logo_file'), 'stores/logos');
@@ -55,6 +54,10 @@ class StoreController extends Controller
     public function togglePublish(Request $request): RedirectResponse
     {
         $store = $request->user()->store;
+        // Pas de boutique vide en ligne : au moins un vrai produit actif avant de publier
+        if (! $store->is_published && ! $store->products()->where('is_active', true)->whereNull('example_of')->exists()) {
+            return redirect()->back()->with('error', 'Activez au moins un produit avant de publier : vos clients verraient une boutique vide.');
+        }
         $store->is_published = ! $store->is_published;
         $store->save();
 

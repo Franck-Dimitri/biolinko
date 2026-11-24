@@ -68,6 +68,7 @@
 .sfd .h-meta svg.lucide{width:15px;height:15px}
 .sfd .h-cover{position:relative;min-height:540px;display:flex;align-items:flex-end;color:#fff;overflow:hidden}
 .sfd .h-cover .bgpic{position:absolute;inset:0;border-radius:0;aspect-ratio:auto;height:100%}
+.sfd .h-cover .bgpic.nopic{display:block;overflow:hidden;background:color-mix(in srgb,var(--pri,#8a6a40) 32%,#141210)}
 .sfd .h-cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.66))}
 .sfd .h-cover .wrap{position:relative;z-index:1;padding-block:40px;width:100%}
 .sfd .h-cover h1{font-size:42px;color:#fff}

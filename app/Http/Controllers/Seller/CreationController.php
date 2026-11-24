@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Payments\Countries;
 use App\Support\BusinessTypes;
 use App\Support\StoreDesign;
+use App\Support\StoreSlug;
 use App\Support\StoreTemplates;
 use App\Support\TemplateIntent;
 use App\Support\TemplatesRollout;
@@ -57,13 +57,10 @@ class CreationController extends Controller
             'business_type' => ['required', Rule::in(array_values(array_filter(BusinessTypes::keys(), [TemplatesRollout::class, 'activityOpen'])))],
             'template' => ['required', 'string'],
             'name' => ['required', 'string', 'max:60'],
-            'slug' => ['required', 'string', 'regex:/^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/', Rule::unique('stores', 'slug')->ignore($store->id), Rule::notIn(User::RESERVED_SLUGS)],
+            'slug' => StoreSlug::rules($store),
             'city_location' => ['required', 'string', 'max:120'],
             'phone_whatsapp' => ['required', 'string', 'max:50'],
-        ], [
-            'slug.regex' => 'L’adresse doit faire 3 à 40 caractères : lettres minuscules, chiffres et tirets.',
-            'slug.unique' => 'Cette adresse est déjà prise, choisissez-en une autre.',
-            'slug.not_in' => 'Cette adresse est réservée, choisissez-en une autre.',
+        ], StoreSlug::messages() + [
             'city_location.required' => 'Indiquez votre ville : elle s’affiche sur la vitrine.',
         ]);
 
@@ -91,7 +88,8 @@ class CreationController extends Controller
                 'pattern' => $template['design']['pattern']['key'],
                 'design_engine' => true,
                 'is_configured' => true,
-                'is_published' => true,
+                // Publiée seulement quand un vrai produit est actif (tableau de bord) : jamais de boutique vide en ligne
+                'is_published' => false,
             ])->save();
             $store->forceFill($this->freshTexts($store, $activity))->save();
             StoreDesign::publish($store, $template['design']);

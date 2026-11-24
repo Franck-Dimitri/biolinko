@@ -42,13 +42,13 @@ test('le template choisi dans la galerie est présélectionné après l’inscri
         ->where('initialTemplate', 'res-maquis')->where('initialActivity', 'restauration'));
 });
 
-test('la boutique est en ligne tout de suite, avec son template et 3 produits d’exemple en brouillon', function () {
+test('la boutique est créée en brouillon, avec son template et 3 produits d’exemple en brouillon', function () {
     creation()->assertRedirect(route('seller.creation', ['fini' => 1]));
 
     $store = $this->store->fresh();
     expect($store->only(['business_type', 'slug', 'name', 'city_location', 'phone_whatsapp', 'is_published', 'design_engine', 'is_configured']))->toBe([
         'business_type' => 'patisserie', 'slug' => 'douceurs-awa', 'name' => 'Les Douceurs d’Awa', 'city_location' => 'Douala',
-        'phone_whatsapp' => '+237677123456', 'is_published' => true, 'design_engine' => true, 'is_configured' => true,
+        'phone_whatsapp' => '+237677123456', 'is_published' => false, 'design_engine' => true, 'is_configured' => true,
     ])->and($store->design['template'])->toBe('pat-douceur')
         ->and($store->theme_color)->toBe(StoreTemplates::get('pat-douceur')['design']['style']['primary']);
 
@@ -166,4 +166,18 @@ test('l’étape « Activité » de Ma boutique change les templates proposés',
     $this->actingAs($this->seller)->get(route('appearance.index'))->assertInertia(fn (Assert $page) => $page
         ->where('templates.1.id', 'res-maquis')->where('info.business_type', 'restauration'));
     $this->actingAs($this->seller)->post(route('seller.editor.activity'), ['business_type' => 'inconnue'])->assertSessionHasErrors('business_type');
+});
+
+test('on ne publie pas une boutique vide : un vrai produit actif est exigé', function () {
+    $seller = User::factory()->create(['role' => 'seller']);
+    $store = $seller->ensureStore('boutique-vide');
+    $store->update(['is_published' => false]);
+    Product::create(['store_id' => $store->id, 'title' => 'Exemple', 'slug' => 'ex', 'price_vendor' => 5000, 'stock' => 0, 'is_active' => true, 'example_of' => 'patisserie']);
+
+    $this->actingAs($seller)->post(route('store.togglePublish'))->assertSessionHas('error');
+    expect($store->fresh()->is_published)->toBeFalse();
+
+    Product::create(['store_id' => $store->id, 'title' => 'Vrai gâteau', 'slug' => 'vrai', 'price_vendor' => 5000, 'stock' => 3, 'is_active' => true]);
+    $this->actingAs($seller)->post(route('store.togglePublish'))->assertSessionHas('message');
+    expect($store->fresh()->is_published)->toBeTrue();
 });

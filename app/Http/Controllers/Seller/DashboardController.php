@@ -40,6 +40,8 @@ class DashboardController extends Controller
             });
 
         $productsCount = $products->count();
+        // Produits réellement visibles par les clients (les exemples restent en brouillon)
+        $activeProducts = $products->filter(fn ($p) => $p->is_active && ! $p->example_of)->count();
         $ordersCount = $store->orders()->count();
         $totalRevenue = (float) $store->orders()->paid()->sum('price_vendor');
         $recentOrders = $store->orders()->with('items')->latest()->take(5)->get();
@@ -95,7 +97,7 @@ class DashboardController extends Controller
         $checklist = [
             'store_created' => true,
             'appearance_configured' => ! empty($store->logo_url) || ! empty($store->banner_url) || (bool) $store->is_configured,
-            'first_product' => $productsCount > 0,
+            'first_product' => $activeProducts > 0,
             'is_published' => (bool) $store->is_published,
         ];
 

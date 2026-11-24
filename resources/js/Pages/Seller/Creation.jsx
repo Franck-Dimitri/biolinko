@@ -1,13 +1,13 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
-import axios from 'axios';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { ArrowLeft, ArrowRight, Check, Copy, ExternalLink, ImagePlus, LogOut, Package, Palette, Share2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Copy, ExternalLink, ImagePlus, LogOut, Package, Palette, Rocket } from 'lucide-react';
 import AppToaster from '@/Components/UI/AppToaster';
 import { Field, fieldClass } from '@/Components/Dashboard/UI';
-import { storeAddressParts } from '@/Components/Storefront/storeUrl';
 import { PREVIEW_IDENTITY } from '@/Pages/Site/Templates/Show';
+import SlugField, { slugify, useSlugCheck } from '@/Components/Store/SlugField';
+import { ICONS } from '@/Components/Seller/ActivityPicker';
 
 /*
  * Création de la boutique en 3 étapes : activité, template (aperçu en direct), puis nom, adresse, ville
@@ -16,7 +16,6 @@ import { PREVIEW_IDENTITY } from '@/Pages/Site/Templates/Show';
 
 const STEPS = ['Votre activité', 'Votre style', 'Votre boutique'];
 
-const slugify = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
 
 function Preview({ template, name, city }) {
     const frame = useRef(null);
@@ -45,18 +44,21 @@ function Done({ store, examples }) {
         [Package, examples > 0 ? `Remplacez les ${examples} produits d’exemple` : 'Ajoutez vos produits', 'Ils sont en brouillon : modifiez la photo, le nom et le prix, puis activez-les.', route('products.index')],
         [ImagePlus, 'Ajoutez votre logo et vos coordonnées', 'Ils apparaissent dans l’en-tête et le pied de page.', route('appearance.index', { onglet: 'infos' })],
         [Palette, 'Personnalisez votre boutique', 'Couleurs, polices, sections : tout se modifie sans rien casser.', route('appearance.index')],
+        [Rocket, 'Publiez votre boutique', 'Dès qu’un produit est actif, publiez-la depuis le tableau de bord et partagez votre lien.', route('seller.dashboard')],
     ];
     return (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-xl space-y-8 py-10 text-center">
             <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#DCFCE7] text-[#15803D]"><Check className="h-8 w-8" /></span>
             <div>
-                <h1 className="text-[30px] font-semibold tracking-[-0.03em] text-[#141412]">Votre boutique est en ligne</h1>
-                <p className="mt-2 text-[#5F5E58]">{store.name} est visible à l’adresse <strong className="font-medium text-[#141412]">{store.public_address}</strong>.</p>
+                <h1 className="text-[30px] font-semibold tracking-[-0.03em] text-[#141412]">Votre boutique est prête</h1>
+                <p className="mt-2 text-[#5F5E58]">
+                    Elle sera visible à l’adresse <strong className="font-medium text-[#141412]">{store.public_address}</strong>. Pour l’instant, vous seul la voyez :
+                    activez au moins un produit, puis publiez-la.
+                </p>
             </div>
             <div className="flex flex-wrap justify-center gap-2">
-                <a href={url} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center gap-2 rounded-full bg-[#FFCC00] px-5 font-medium text-[#141412] hover:bg-[#E6B800]"><ExternalLink className="h-4 w-4" /> Voir ma boutique</a>
+                <a href={url} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center gap-2 rounded-full bg-[#FFCC00] px-5 font-medium text-[#141412] hover:bg-[#E6B800]"><ExternalLink className="h-4 w-4" /> Voir l’aperçu</a>
                 <button type="button" onClick={copy} className="inline-flex h-11 items-center gap-2 rounded-full border border-black/15 px-5 font-medium text-[#141412] hover:border-black/40"><Copy className="h-4 w-4" /> Copier le lien</button>
-                <a href={`https://wa.me/?text=${encodeURIComponent(`Découvrez ma boutique ${store.name} : ${url}`)}`} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center gap-2 rounded-full border border-black/15 px-5 font-medium text-[#141412] hover:border-black/40"><Share2 className="h-4 w-4" /> Partager</a>
             </div>
             <div className="rounded-3xl border border-black/[0.08] bg-white p-5 text-left">
                 <h2 className="text-[17px] font-semibold text-[#141412]">Pour finir</h2>
@@ -79,32 +81,22 @@ function Done({ store, examples }) {
 
 export default function Creation({ activities = [], store, initialTemplate = null, initialActivity = null, done = false, examples = 0 }) {
     const { errors } = usePage().props;
-    const parts = storeAddressParts();
     const [step, setStep] = useState(initialTemplate ? 2 : initialActivity ? 1 : 0);
     const [activity, setActivity] = useState(initialActivity || null);
     const [template, setTemplate] = useState(initialTemplate || null);
     const [form, setForm] = useState({ name: store.name || '', slug: store.slug || '', city_location: store.city_location || '', phone_whatsapp: (store.phone_whatsapp || '').replace(/^\+?237/, '') });
     const [slugEdited, setSlugEdited] = useState(false);
-    const [slugState, setSlugState] = useState(null); // null | 'checking' | 'ok' | 'taken'
     const [busy, setBusy] = useState(false);
     const current = activities.find((a) => a.key === activity);
 
     const set = (k) => (e) => {
         const value = e.target.value;
-        setForm((f) => ({ ...f, [k]: value, ...(k === 'name' && !slugEdited ? { slug: slugify(value) } : {}) }));
+        setForm((f) => ({ ...f, [k]: value, ...(k === 'name' && !slugEdited ? { slug: slugify(value).replace(/-+$/g, '') } : {}) }));
     };
 
-    // Adresse libre ? (la sienne l'est toujours)
-    useEffect(() => {
-        if (!form.slug || form.slug === store.slug) { setSlugState(form.slug ? 'ok' : null); return undefined; }
-        setSlugState('checking');
-        const t = setTimeout(() => {
-            axios.get(route('shop.available'), { params: { slug: form.slug } })
-                .then(({ data }) => setSlugState(data.available && data.slug === form.slug ? 'ok' : 'taken'))
-                .catch(() => setSlugState(null));
-        }, 400);
-        return () => clearTimeout(t);
-    }, [form.slug]);
+    // Adresse libre ? (la sienne l'est toujours) ; sinon 3 propositions
+    const slugCheck = useSlugCheck(form.slug, store.slug);
+    const slugState = slugCheck.status === 'free' ? 'ok' : slugCheck.status;
 
     const pickActivity = (key) => {
         setActivity(key);
@@ -164,8 +156,14 @@ export default function Creation({ activities = [], store, initialTemplate = nul
                             <div className="mt-6 grid gap-2 sm:grid-cols-2">
                                 {activities.map((a) => (
                                     <button key={a.key} type="button" onClick={() => pickActivity(a.key)} aria-pressed={activity === a.key}
-                                        className={`flex items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3.5 text-left text-[15px] transition-colors ${activity === a.key ? 'border-[#141412] bg-[#FFFBEA]' : 'border-black/[0.08] bg-white hover:border-black/25'}`}>
-                                        {a.label} <span className="flex gap-1" aria-hidden>{a.templates.map((t) => <span key={t.id} className="h-3 w-3 rounded-full ring-1 ring-black/10" style={{ backgroundColor: t.primary }} />)}</span>
+                                        className={`flex items-center gap-3 rounded-2xl border-2 px-3 py-3 text-left text-[15px] transition-colors ${activity === a.key ? 'border-[#141412] bg-[#FFFBEA]' : 'border-black/[0.08] bg-white hover:border-black/25'}`}>
+                                        {(() => {
+                                            const Icon = ICONS[a.key] || ICONS.autre;
+                                            const color = a.templates[0]?.primary || '#141412';
+                                            return <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${color}1A`, color }} aria-hidden><Icon className="h-5 w-5" /></span>;
+                                        })()}
+                                        <span className="min-w-0 flex-1 font-medium text-[#141412]">{a.label}</span>
+                                        <span className="flex gap-1" aria-hidden title="Couleurs des 3 templates">{a.templates.map((t) => <span key={t.id} className="h-2.5 w-2.5 rounded-full ring-1 ring-black/10" style={{ backgroundColor: t.primary }} />)}</span>
                                     </button>
                                 ))}
                             </div>
@@ -204,14 +202,7 @@ export default function Creation({ activities = [], store, initialTemplate = nul
                                     <input value={form.name} onChange={set('name')} maxLength={60} placeholder="Ex. Les Douceurs d’Awa" className={fieldClass} autoFocus />
                                 </Field>
                                 <Field label="Adresse de la boutique" error={errors.slug}>
-                                    <div className="flex items-center rounded-xl border border-black/10 bg-white focus-within:border-black/30">
-                                        {parts.prefix && <span className="pl-3.5 text-[15px] text-[#8B8A83]">{parts.prefix}</span>}
-                                        <input value={form.slug} onChange={(e) => { setSlugEdited(true); setForm((f) => ({ ...f, slug: slugify(e.target.value) })); }} aria-label="Adresse"
-                                            className="h-11 min-w-0 flex-1 border-0 bg-transparent px-1 text-[15px] focus:ring-0" />
-                                        {parts.suffix && <span className="pr-3.5 text-[15px] text-[#8B8A83]">{parts.suffix}</span>}
-                                    </div>
-                                    {slugState === 'taken' && <p className="mt-1 text-[13px] text-[#B91C1C]">Cette adresse est déjà prise.</p>}
-                                    {slugState === 'ok' && form.slug !== store.slug && <p className="mt-1 text-[13px] text-[#15803D]">Adresse disponible.</p>}
+                                    <SlugField value={form.slug} check={slugCheck} onChange={(v) => { setSlugEdited(true); setForm((f) => ({ ...f, slug: v })); }} />
                                 </Field>
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <Field label="Ville" error={errors.city_location}>
@@ -227,9 +218,9 @@ export default function Creation({ activities = [], store, initialTemplate = nul
                                 </div>
                             </div>
                             <button type="submit" disabled={!canSubmit || busy} className="mt-6 inline-flex h-12 items-center gap-2 rounded-full bg-[#FFCC00] px-6 font-medium hover:bg-[#E6B800] disabled:opacity-50">
-                                {busy ? 'Création…' : 'Mettre ma boutique en ligne'} <ArrowRight className="h-4 w-4" />
+                                {busy ? 'Création…' : 'Créer ma boutique'} <ArrowRight className="h-4 w-4" />
                             </button>
-                            <p className="mt-3 text-[13px] text-[#8B8A83]">3 produits d’exemple sont ajoutés en brouillon : vos clients ne les voient pas tant que vous ne les activez pas.</p>
+                            <p className="mt-3 text-[13px] text-[#8B8A83]">3 produits d’exemple sont ajoutés en brouillon. Votre boutique reste privée jusqu’à ce que vous la publiiez.</p>
                         </form>
                     )}
                 </div>

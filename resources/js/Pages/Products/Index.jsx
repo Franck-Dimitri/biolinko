@@ -378,7 +378,7 @@ function ProductCard({ product, store, onEdit, index }) {
             <button type="button" onClick={onEdit} className="relative aspect-[4/3] overflow-hidden bg-[#F6F5F1]">
                 {image ? <img src={image} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" /> : <Package className="m-auto h-8 w-8 text-[#8B8A83]" />}
                 <span className="absolute left-3 top-3 flex gap-1.5">
-                    {!product.is_active && <Badge>Masqué</Badge>}
+                    {product.example_of ? <Badge tone="warning">Exemple</Badge> : !product.is_active && <Badge>Masqué</Badge>}
                     {promo && <Badge tone="brand">−{Math.round((1 - product.promo_price / product.price_vendor) * 100)} %</Badge>}
                 </span>
             </button>
@@ -404,8 +404,8 @@ function ProductCard({ product, store, onEdit, index }) {
                     {promo && <span className="text-[13px] tabular-nums text-[#8B8A83] line-through">{Number(product.price_vendor).toLocaleString('fr-FR')}</span>}
                 </p>
                 <div className="mt-auto flex items-center justify-between pt-4 text-[13px]">
-                    <span className={low ? 'flex items-center gap-1 text-[#B45309]' : 'text-[#8B8A83]'}>
-                        {low && <AlertTriangle className="h-3.5 w-3.5" />}{made ? 'Sur commande' : Number(product.stock) === 0 ? 'Épuisé' : `${product.stock} en stock`}
+                    <span className={low || product.example_of ? 'flex items-center gap-1 text-[#B45309]' : 'text-[#8B8A83]'}>
+                        {product.example_of ? 'Exemple : modifiez-le puis rendez-le visible' : <>{low && <AlertTriangle className="h-3.5 w-3.5" />}{made ? 'Sur commande' : Number(product.stock) === 0 ? 'Épuisé' : `${product.stock} en stock`}</>}
                         {product.variants?.length ? ` · ${product.variants.length} variante${product.variants.length > 1 ? 's' : ''}` : ''}
                     </span>
                     <Button size="sm" variant="ghost" onClick={onEdit}><Pencil className="h-4 w-4" /> Modifier</Button>

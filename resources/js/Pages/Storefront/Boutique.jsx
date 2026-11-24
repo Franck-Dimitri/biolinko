@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import StorefrontLayout from '@/Layouts/StorefrontLayout';
-import { ArrowLeft, ArrowRight, Eye, ShoppingBag, Star, Trash2, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ShoppingBag, Star, Trash2, X } from 'lucide-react';
 import { EASE_OUT } from '@/Components/UI/Motion';
 import useCart, { formatFcfa } from '@/Components/Storefront/useCart';
 import CheckoutForm from '@/Components/Storefront/Checkout/CheckoutForm';
@@ -159,15 +159,6 @@ export default function Boutique({ store: savedStore, products = [], activeSmart
             fullBleed
         >
             <Head title={activeSectionTab === 'cart' ? `Mon panier | ${store.name}` : (seoTitle || `${store.name} | Biolinko`)} />
-
-            {isPreview && (
-                <Container className="pt-6">
-                    <div className="flex flex-col items-start justify-between gap-3 rounded-[var(--r,16px)] border border-[color:var(--ln,rgba(0,0,0,0.06))] bg-[#FFF8D6] p-4 text-[14px] text-[color:var(--ink,#141412)] sm:flex-row sm:items-center">
-                        <span className="flex items-center gap-3"><Eye className="h-5 w-5 shrink-0" /> Aperçu privé : vous seul voyez cette boutique tant qu’elle n’est pas publiée.</span>
-                        <a href="/dashboard" className="shrink-0 rounded-[var(--rb,9999px)] bg-[color:var(--ink,#141412)] px-4 py-2 font-medium text-white">Publier depuis le tableau de bord</a>
-                    </div>
-                </Container>
-            )}
 
             <AnimatePresence mode="wait">
                 {activeSectionTab === 'cart' ? (

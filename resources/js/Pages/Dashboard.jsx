@@ -297,7 +297,7 @@ export default function Dashboard({ templateInvite = null, pilot = null, upgrade
                                         </span>
                                         <span className="min-w-0 flex-1">
                                             <span className="block truncate text-[14px] text-[#141412]">{p.title}</span>
-                                            <span className="text-[12px] text-[#8B8A83]">Stock : {p.stock}</span>
+                                            <span className={`text-[12px] ${p.example_of ? 'text-[#B45309]' : 'text-[#8B8A83]'}`}>{p.example_of ? 'Exemple · en brouillon' : !p.is_active ? 'Masqué' : p.fulfillment === 'made_to_order' ? 'Sur commande' : `Stock : ${p.stock}`}</span>
                                         </span>
                                         <span className="shrink-0 text-[13px] tabular-nums text-[#141412]">{fcfa(p.promo_active ? p.promo_price : p.price_vendor)}</span>
                                     </li>
