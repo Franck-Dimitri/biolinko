@@ -29,7 +29,7 @@ class ProductController extends Controller
             return (float) $p->price_vendor * (int) $p->stock;
         });
         // Les produits sur commande n'ont pas de stock
-        $lowStockCount = $products->filter(fn ($p) => $p->fulfillment !== 'made_to_order' && (int) $p->stock <= 3)->count();
+        $lowStockCount = $products->filter(fn ($p) => ! $p->example_of && $p->fulfillment !== 'made_to_order' && (int) $p->stock <= 3)->count();
 
         $topProduct = $products->sortByDesc('stock')->first();
 
@@ -296,6 +296,9 @@ class ProductController extends Controller
             $updateData['images'] = $imagePaths;
         }
 
+        // Exemple retouché par le vendeur : il devient un vrai produit (compte pour la publication)
+        $updateData['example_of'] = null;
+
         $product->update($updateData + $this->fulfillmentData($request));
 
         // Sync Variants
@@ -349,6 +352,14 @@ class ProductController extends Controller
         return redirect()->back()->with('message', 'Produit supprimé !');
     }
 
+    /** Retire d'un coup tous les produits d'exemple ajoutés à la création de la boutique. */
+    public function destroyExamples(Request $request): RedirectResponse
+    {
+        $count = $request->user()->store->products()->whereNotNull('example_of')->get()->each->delete()->count();
+
+        return redirect()->back()->with('success', $count > 1 ? "{$count} produits d’exemple supprimés." : 'Produit d’exemple supprimé.');
+    }
+
     /**
      * Check product count and total stock quotas per subscription plan.
      */
@@ -359,7 +370,8 @@ class ProductController extends Controller
         $maxStock = $user->getPlanMaxStock();
 
         // Check product count limit if creating a new product
-        if (! $existingProductId && $store->products()->count() >= $maxProducts) {
+        // Les produits d'exemple ne comptent pas dans la limite du plan
+        if (! $existingProductId && $store->products()->whereNull('example_of')->count() >= $maxProducts) {
             return "Limite de {$maxProducts} produits atteinte pour le plan ".strtoupper($userPlan).'. Passez au plan supérieur pour ajouter plus de produits.';
         }
 

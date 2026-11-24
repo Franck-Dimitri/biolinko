@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { AlertTriangle, Copy, Eye, ImagePlus, MoreHorizontal, Package, Pencil, Percent, Plus, Trash2, X } from 'lucide-react';
@@ -418,21 +418,30 @@ function ProductEditor({ product, onClose, limits, categories = [], store, templ
 
 function ProductCard({ product, store, onEdit, index }) {
     const [menu, setMenu] = useState(false);
+    // Menu « … » : se ferme au toucher ailleurs ou avec Échap (le survol n'existe pas sur téléphone)
+    useEffect(() => {
+        if (!menu) return undefined;
+        const close = () => setMenu(false);
+        const onKey = (e) => e.key === 'Escape' && close();
+        const t = setTimeout(() => document.addEventListener('click', close), 0);
+        document.addEventListener('keydown', onKey);
+        return () => { clearTimeout(t); document.removeEventListener('click', close); document.removeEventListener('keydown', onKey); };
+    }, [menu]);
     const promo = isPromo(product);
     const made = product.fulfillment === 'made_to_order';
-    const low = !made && Number(product.stock) <= LOW_STOCK;
+    const low = !product.example_of && !made && Number(product.stock) <= LOW_STOCK;
     const url = `${window.location.origin}/${store.slug}/p/${product.slug}`;
     const image = product.image_url || product.images?.[0];
 
     const remove = () => {
-        if (!confirm(`Supprimer « ${product.title} » ? Cette action est définitive.`)) return;
+        if (!confirm(product.example_of ? `Supprimer l’exemple « ${product.title} » ?` : `Supprimer « ${product.title} » ? Cette action est définitive.`)) return;
         router.delete(route('products.destroy', product.id), { preserveScroll: true, onSuccess: () => toast.success('Produit supprimé') });
     };
     const copy = async () => { try { await navigator.clipboard.writeText(url); toast.success('Lien du produit copié'); } catch (e) { /* indisponible */ } setMenu(false); };
 
     return (
-        <motion.article {...reveal(Math.min(index, 10) * 0.03)} className={`group flex flex-col overflow-hidden rounded-3xl border border-black/[0.06] bg-white ${product.is_active ? '' : 'opacity-70'}`}>
-            <button type="button" onClick={onEdit} className="relative aspect-[4/3] overflow-hidden bg-[#F6F5F1]">
+        <motion.article {...reveal(Math.min(index, 10) * 0.03)} className={`group relative flex flex-col rounded-3xl border border-black/[0.06] bg-white ${menu ? 'z-20' : ''} ${product.is_active || product.example_of ? '' : 'opacity-70'}`}>
+            <button type="button" onClick={onEdit} className="relative aspect-[4/3] overflow-hidden rounded-t-3xl bg-[#F6F5F1]">
                 {image ? <img src={image} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" /> : <Package className="m-auto h-8 w-8 text-[#8B8A83]" />}
                 <span className="absolute left-3 top-3 flex gap-1.5">
                     {product.example_of ? <Badge tone="warning">Exemple</Badge> : !product.is_active && <Badge>Masqué</Badge>}
@@ -450,7 +459,7 @@ function ProductCard({ product, store, onEdit, index }) {
                                     className="absolute right-0 top-9 z-10 w-48 rounded-2xl border border-black/[0.08] bg-white p-1.5 shadow-lg">
                                     <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded-xl px-3 py-2 text-[14px] text-[#141412] hover:bg-[#F6F5F1]"><Eye className="h-4 w-4" /> Voir sur la boutique</a>
                                     <button type="button" onClick={copy} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-[14px] text-[#141412] hover:bg-[#F6F5F1]"><Copy className="h-4 w-4" /> Copier le lien</button>
-                                    <button type="button" onClick={remove} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-[14px] text-[#B91C1C] hover:bg-red-50"><Trash2 className="h-4 w-4" /> Supprimer</button>
+                                    <button type="button" onClick={() => { setMenu(false); remove(); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-[14px] text-[#B91C1C] hover:bg-red-50"><Trash2 className="h-4 w-4" /> Supprimer</button>
                                 </motion.div>
                             )}
                         </AnimatePresence>
@@ -467,6 +476,11 @@ function ProductCard({ product, store, onEdit, index }) {
                     </span>
                     <Button size="sm" variant="ghost" onClick={onEdit}><Pencil className="h-4 w-4" /> Modifier</Button>
                 </div>
+                {product.example_of && (
+                    <button type="button" onClick={remove} className="mt-3 flex h-10 items-center justify-center gap-2 rounded-full border border-black/10 text-[13.5px] text-[#B91C1C] hover:border-red-200 hover:bg-red-50">
+                        <Trash2 className="h-4 w-4" /> Supprimer cet exemple
+                    </button>
+                )}
             </div>
         </motion.article>
     );
@@ -477,19 +491,26 @@ export default function Index({ store, products = [], metrics, planLimits, templ
     const [tab, setTab] = useState('all');
     const [search, setSearch] = useState('');
     const limits = { max_products: 10, max_stock: 25, max_images: 2, plan: 'starter', ...planLimits };
-    const atLimit = products.length >= limits.max_products;
+    // Les produits d'exemple ne comptent pas dans la limite du plan
+    const examples = products.filter((p) => p.example_of);
+    const ownCount = products.length - examples.length;
+    const atLimit = ownCount >= limits.max_products;
+    const removeExamples = () => {
+        if (!confirm(`Supprimer les ${examples.length} produits d’exemple ? Vos propres produits ne sont pas touchés.`)) return;
+        router.delete(route('products.examples.destroy'), { preserveScroll: true, onSuccess: () => toast.success('Produits d’exemple supprimés') });
+    };
 
     const counts = useMemo(() => ({
         active: products.filter((p) => p.is_active).length,
         promo: products.filter(isPromo).length,
-        low: products.filter((p) => p.fulfillment !== 'made_to_order' && Number(p.stock) <= LOW_STOCK).length,
+        low: products.filter((p) => !p.example_of && p.fulfillment !== 'made_to_order' && Number(p.stock) <= LOW_STOCK).length,
         hidden: products.filter((p) => !p.is_active).length,
     }), [products]);
 
     const shown = products.filter((p) => {
         if (search && !p.title.toLowerCase().includes(search.toLowerCase())) return false;
         if (tab === 'promo') return isPromo(p);
-        if (tab === 'low') return p.fulfillment !== 'made_to_order' && Number(p.stock) <= LOW_STOCK;
+        if (tab === 'low') return !p.example_of && p.fulfillment !== 'made_to_order' && Number(p.stock) <= LOW_STOCK;
         if (tab === 'hidden') return !p.is_active;
         return true;
     });
@@ -502,10 +523,19 @@ export default function Index({ store, products = [], metrics, planLimits, templ
                 <PageHeader title="Produits" sub="Votre catalogue, vos prix, vos stocks et vos promotions."
                     actions={<Button variant="primary" onClick={() => setEditing({})} disabled={atLimit}><Plus className="h-4 w-4" /> Nouveau produit</Button>} />
 
+                {examples.length > 0 && (
+                    <div className="flex flex-col gap-3 rounded-2xl border border-[#FFCC00]/60 bg-[#FFFBEA] p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-[14px] text-[#141412]">
+                            <span className="font-medium">{examples.length > 1 ? `${examples.length} produits d’exemple` : '1 produit d’exemple'}</span> pour vous inspirer. Modifiez-les pour en faire vos produits, ou supprimez-les. Ils ne comptent pas dans votre limite et restent invisibles pour vos clients.
+                        </p>
+                        {examples.length > 1 && <Button onClick={removeExamples} className="shrink-0"><Trash2 className="h-4 w-4" /> Supprimer tous les exemples</Button>}
+                    </div>
+                )}
+
                 {atLimit && <PlanLock plan={limits.plan === 'starter' ? 'Pro' : 'Growth'} text={`Vous avez atteint la limite de ${limits.max_products} produits de votre plan.`} />}
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <Stat label="Produits" value={`${products.length} / ${limits.max_products > 9999 ? '∞' : limits.max_products}`} hint={`${counts.active} visible${counts.active > 1 ? 's' : ''} sur la boutique`} Icon={Package} delay={0.03} />
+                    <Stat label="Produits" value={`${ownCount} / ${limits.max_products > 9999 ? '∞' : limits.max_products}`} hint={`${counts.active} visible${counts.active > 1 ? 's' : ''} sur la boutique`} Icon={Package} delay={0.03} />
                     <Stat label="Valeur du stock" value={fcfa(metrics?.totalStockValue)} hint="Prix × quantités" Icon={Package} delay={0.06} />
                     <Stat label="Stock faible" value={counts.low} hint={`${LOW_STOCK} unités ou moins`} Icon={AlertTriangle} accent={counts.low > 0} delay={0.09} />
                     <Stat label="En promotion" value={counts.promo} Icon={Percent} delay={0.12} />
