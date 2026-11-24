@@ -4,7 +4,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Payments\Countries;
 use App\Support\PlanIntent;
+use App\Support\ShopIntent;
+use App\Support\StoreSlug;
+use App\Support\TemplateIntent;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,12 +26,12 @@ class RegisteredUserController extends Controller
      */
     public function create(Request $request): Response
     {
-        $shop = \App\Support\ShopIntent::remember($request);
-        $template = \App\Support\TemplateIntent::remember($request);
+        $shop = ShopIntent::remember($request);
+        $template = TemplateIntent::remember($request);
 
         return Inertia::render('Auth/Register', [
             'intendedPlan' => PlanIntent::remember($request),
-            'intendedShop' => $shop ? ['slug' => $shop, 'available' => \App\Support\ShopIntent::isAvailable($shop)] : null,
+            'intendedShop' => $shop ? ['slug' => $shop, 'available' => ShopIntent::isAvailable($shop)] : null,
             'intendedTemplate' => $template ? ['id' => $template['id'], 'name' => $template['name']] : null,
         ]);
     }
@@ -40,31 +44,40 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
+            // Le vendeur (nom complet) et sa boutique (nom + adresse <adresse>.biolinko.store) sont distincts
             'name' => 'required|string|max:255',
+            'store_name' => ['required', 'string', 'max:60'],
+            'store_slug' => StoreSlug::rules(),
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             // WhatsApp obligatoire : alertes de ventes, assistance et suivi du compte
             'phone_whatsapp' => ['required', 'string', 'max:50', function ($attr, $value, $fail) {
                 try {
-                    \App\Payments\Countries::formatPhone('CM', (string) $value);
+                    Countries::formatPhone('CM', (string) $value);
                 } catch (\InvalidArgumentException $e) {
                     $fail('Entrez un numéro WhatsApp camerounais valide (9 chiffres, ex. 6XX XX XX XX).');
                 }
             }],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'terms' => ['accepted'],
-        ], ['phone_whatsapp.required' => 'Votre numéro WhatsApp est obligatoire : il sert à vous alerter de vos ventes.', 'terms.accepted' => 'Vous devez accepter les conditions d’utilisation et la politique de confidentialité.']);
+        ], StoreSlug::messages('store_slug') + [
+            'name.required' => 'Indiquez votre nom complet.',
+            'password.confirmed' => 'Les deux mots de passe ne correspondent pas.',
+            'store_name.required' => 'Donnez un nom à votre boutique.',
+            'store_slug.required' => 'Choisissez l’adresse de votre boutique.',
+            'phone_whatsapp.required' => 'Votre numéro WhatsApp est obligatoire : il sert à vous alerter de vos ventes.', 'terms.accepted' => 'Vous devez accepter les conditions d’utilisation et la politique de confidentialité.']);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'phone_whatsapp' => '+'.\App\Payments\Countries::formatPhone('CM', (string) $request->phone_whatsapp),
+            'phone_whatsapp' => '+'.Countries::formatPhone('CM', (string) $request->phone_whatsapp),
             'role' => 'seller',
             'plan' => 'starter',
             'password' => Hash::make($request->password),
         ]);
         $user->forceFill(['terms_accepted_at' => now()])->save();
 
-        $user->ensureStore(\App\Support\ShopIntent::pull($request));
+        $request->session()->forget(ShopIntent::SESSION_KEY);
+        $user->ensureStore($request->store_slug, trim($request->store_name));
 
         // Le listener Registered appelle sendEmailVerificationNotification() → envoi de l'OTP
         event(new Registered($user));

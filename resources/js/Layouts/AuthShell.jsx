@@ -7,12 +7,12 @@ import { BalanceCard, OrderFeed } from '@/Components/Landing/Illustrations';
 /**
  * Habillage des pages d'authentification : formulaire à gauche, aperçu du produit à droite.
  */
-export default function AuthShell({ title, subtitle, children, footer }) {
+export default function AuthShell({ title, subtitle, children, footer, aside = null }) {
     return (
         <>
         <AppToaster />
-        <div className="grid min-h-screen bg-white font-poppins text-[#141412] antialiased lg:grid-cols-[1fr_1.05fr]">
-            <div className="flex flex-col px-5 py-6 sm:px-10">
+        <div className="grid min-h-screen grid-cols-[minmax(0,1fr)] overflow-x-hidden bg-white font-poppins text-[#141412] antialiased lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+            <div className="flex min-w-0 flex-col px-4 py-6 sm:px-10">
                 <Link href="/" className="flex w-fit items-center gap-2">
                     <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-[#FFCC00]">
                         <img src="/images/brand/logo-noir.svg" alt="" className="h-12 w-12 max-w-none" />
@@ -21,10 +21,10 @@ export default function AuthShell({ title, subtitle, children, footer }) {
                 </Link>
 
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE_OUT }}
-                    className="mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center py-12">
-                    {title && <h1 className="text-[32px] font-medium leading-tight tracking-[-0.03em]">{title}</h1>}
+                    className="mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center py-8 sm:py-12">
+                    {title && <h1 className="text-[28px] font-medium sm:text-[32px] leading-tight tracking-[-0.03em]">{title}</h1>}
                     {subtitle && <div className="mt-2 text-[15px] text-[#5F5E58]">{subtitle}</div>}
-                    <div className="mt-8">{children}</div>
+                    <div className="mt-6 sm:mt-8">{children}</div>
                     {footer && <div className="mt-8 border-t border-black/[0.06] pt-6 text-[14px] text-[#5F5E58]">{footer}</div>}
                 </motion.div>
 
@@ -33,6 +33,7 @@ export default function AuthShell({ title, subtitle, children, footer }) {
 
             <div className="relative hidden overflow-hidden bg-[#0F0F0E] lg:block">
                 <div aria-hidden className="absolute left-1/2 top-0 h-[420px] w-[620px] -translate-x-1/2 rounded-full bg-[#FFB800]/25 blur-[120px]" />
+                {aside ? <div className="relative flex h-full flex-col justify-center px-14">{aside}</div> : (
                 <div className="relative flex h-full flex-col justify-center gap-10 px-14">
                     <div>
                         <p className="max-w-[420px] text-[34px] font-medium leading-[1.1] tracking-[-0.03em] text-white">
@@ -45,6 +46,7 @@ export default function AuthShell({ title, subtitle, children, footer }) {
                         <BalanceCard className="mt-4" />
                     </div>
                 </div>
+                )}
             </div>
         </div>
         </>

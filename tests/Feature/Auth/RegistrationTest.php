@@ -8,7 +8,7 @@ test('registration screen can be rendered', function () {
 
 test('new users can register and are redirected to verification notice', function () {
     $response = $this->post('/register', [
-        'name' => 'Test User',
+        'name' => 'Test User', 'store_name' => 'Test Shop', 'store_slug' => 'test-shop',
         'email' => 'test@example.com',
         'password' => 'password',
         'password_confirmation' => 'password', 'phone_whatsapp' => '677445566',

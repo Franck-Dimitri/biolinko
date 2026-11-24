@@ -1,12 +1,13 @@
 <?php
 
-use App\Models\User;
 use App\Models\Store;
+use App\Models\User;
 use App\Models\Wallet;
 
 test('new user registration automatically creates store and wallet and redirects to OTP verification', function () {
     $response = $this->post('/register', [
-        'name' => 'Boutique Glamour',
+        'name' => 'Clarisse Ebongue',
+        'store_name' => 'Boutique Glamour', 'store_slug' => 'boutique-glamour',
         'email' => 'glamour@example.com',
         'password' => 'password123',
         'password_confirmation' => 'password123', 'phone_whatsapp' => '677445566',
@@ -21,7 +22,9 @@ test('new user registration automatically creates store and wallet and redirects
 
     $store = Store::where('user_id', $user->id)->first();
     expect($store)->not->toBeNull();
-    expect($store->slug)->toBe('boutique-glamour');
+    expect($store->slug)->toBe('boutique-glamour')
+        ->and($store->name)->toBe('Boutique Glamour')
+        ->and($user->name)->toBe('Clarisse Ebongue');
     expect(Store::where('user_id', $user->id)->count())->toBe(1);
 
     $wallet = Wallet::where('store_id', $store->id)->first();
