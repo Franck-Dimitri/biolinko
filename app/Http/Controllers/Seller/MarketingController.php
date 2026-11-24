@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\SmartLink;
+use App\Support\SeoCache;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -83,6 +83,10 @@ class MarketingController extends Controller
                     ->where(fn ($q) => $q->whereNull('images')->orWhere('images', '[]'))->count(),
                 'reviews' => $store->reviews()->where('is_featured', true)->count(),
                 'published' => (bool) $store->is_published,
+                // Recherche locale (« pâtisserie à Douala ») et assistants IA : où, quand, quoi
+                'has_place' => filled($store->city_location) && filled($store->location_address),
+                'has_hours' => collect($store->opening_schedule ?: [])->filter()->isNotEmpty(),
+                'has_about' => mb_strlen(trim(strip_tags((string) ($store->description ?: $store->about_text)))) >= 80,
             ],
             'marketing' => [
                 'facebook_pixel_id' => $store->facebook_pixel_id ?? '',
@@ -96,7 +100,7 @@ class MarketingController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasPlan('pro')) {
+        if (! $user->hasPlan('pro')) {
             return redirect()->route('seller.subscriptions.index')->with('warning', 'Le module Marketing & Pixels nécessite au minimum le Plan Pro.');
         }
 
@@ -129,7 +133,7 @@ class MarketingController extends Controller
             'seo_description' => ['nullable', 'string', 'max:170'],
         ]);
         $store->update(array_map(fn ($v) => filled($v) ? trim($v) : null, $data));
-        \Illuminate\Support\Facades\Cache::forget('seo.sitemap');
+        SeoCache::forget($store->slug);
 
         return back()->with('success', 'Référencement de la boutique enregistré.');
     }

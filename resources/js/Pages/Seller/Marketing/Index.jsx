@@ -33,6 +33,9 @@ function SeoCard({ store, seo }) {
         [seo.short_description === 0, 'Descriptions détaillées', `${seo.short_description} produit(s) avec une description de moins de 80 caractères. Décrivez matière, tailles, usage.`],
         [seo.missing_category === 0, 'Produits classés en catégories', `${seo.missing_category} produit(s) sans catégorie.`],
         [seo.reviews > 0, 'Au moins un avis client', 'Les étoiles peuvent s’afficher sous votre produit dans Google.'],
+        [seo.has_about, 'Boutique bien décrite', 'Décrivez votre activité en 2 ou 3 phrases (Ma boutique) : Google et les assistants IA s’en servent pour vous recommander.'],
+        [seo.has_place, 'Ville et adresse renseignées', 'Indiquez votre ville et votre quartier (Ma boutique) pour apparaître dans les recherches « près de chez moi ».'],
+        [seo.has_hours, 'Horaires d’ouverture', 'Ajoutez vos horaires (Ma boutique) : ils s’affichent dans Google et rassurent vos clients.'],
     ];
     const score = checks.filter(([ok]) => ok).length;
     return (

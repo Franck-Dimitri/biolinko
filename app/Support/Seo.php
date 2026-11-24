@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Product;
 use App\Models\SmartLink;
 use App\Models\Store;
+use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -59,22 +60,92 @@ class Seo
             'canonical' => static::url('/'),
             'image' => static::url(static::DEFAULT_IMAGE),
             'type' => 'website',
-            'jsonld' => [
-                [
-                    '@context' => 'https://schema.org', '@type' => 'Organization', 'name' => 'Biolinko',
-                    'url' => static::url('/'), 'logo' => static::url('/images/brand/logo-noir-hd.png'),
-                ],
-                [
-                    '@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => 'Biolinko', 'url' => static::url('/'),
-                    'inLanguage' => 'fr', 'description' => $description,
-                ],
-            ],
+            'jsonld' => static::platformSchemas($description, true),
         ];
     }
 
     public static function page(string $title, string $description, string $path): array
     {
         return ['title' => "{$title} | Biolinko", 'description' => $description, 'canonical' => static::url($path), 'image' => static::url(static::DEFAULT_IMAGE), 'type' => 'website'];
+    }
+
+    public const CONTACT_EMAIL = 'contact@biolinko.app';
+
+    /**
+     * Biolinko pour les moteurs de recherche et les assistants IA : l'organisation, le site, le logiciel et ses
+     * formules (prix et commissions tirés du code), et la FAQ affichée sur la page d'accueil.
+     */
+    public static function platformSchemas(string $description, bool $withFaq = false): array
+    {
+        $org = [
+            '@context' => 'https://schema.org', '@type' => 'Organization', '@id' => static::url('/').'#organisation',
+            'name' => 'Biolinko', 'url' => static::url('/'), 'logo' => static::url('/images/brand/logo-noir-hd.png'),
+            'description' => $description, 'email' => static::CONTACT_EMAIL, 'areaServed' => ['@type' => 'Country', 'name' => 'Cameroun'],
+            'contactPoint' => ['@type' => 'ContactPoint', 'contactType' => 'customer support', 'email' => static::CONTACT_EMAIL, 'availableLanguage' => 'French'],
+        ];
+        $site = [
+            '@context' => 'https://schema.org', '@type' => 'WebSite', '@id' => static::url('/').'#site', 'name' => 'Biolinko',
+            'url' => static::url('/'), 'inLanguage' => 'fr', 'description' => $description, 'publisher' => ['@id' => static::url('/').'#organisation'],
+        ];
+        $rates = (array) config('payments.commission_percent');
+        $app = [
+            '@context' => 'https://schema.org', '@type' => 'SoftwareApplication', 'name' => 'Biolinko',
+            'applicationCategory' => 'BusinessApplication', 'operatingSystem' => 'Web', 'url' => static::url('/'),
+            'description' => 'Boutique en ligne, catalogue, commandes, livraison, factures et paiements MTN MoMo et Orange Money pour les vendeurs du Cameroun.',
+            'publisher' => ['@id' => static::url('/').'#organisation'],
+            'offers' => collect(User::PLAN_PRICES)->map(fn ($price, $plan) => [
+                '@type' => 'Offer', 'name' => ucfirst($plan), 'price' => (string) $price, 'priceCurrency' => 'XAF',
+                'description' => ($price ? 'Abonnement mensuel' : 'Gratuit').(isset($rates[$plan]) ? ", commission de {$rates[$plan]} % par vente" : ''),
+            ])->values()->all(),
+        ];
+        $faq = null;
+        if ($withFaq && is_file($file = resource_path('data/faq.json'))) {
+            $faq = [
+                '@context' => 'https://schema.org', '@type' => 'FAQPage',
+                'mainEntity' => collect(json_decode(file_get_contents($file), true) ?: [])->map(fn ($f) => [
+                    '@type' => 'Question', 'name' => $f['q'], 'acceptedAnswer' => ['@type' => 'Answer', 'text' => $f['a']],
+                ])->all(),
+            ];
+        }
+
+        return array_values(array_filter([$org, $site, $app, $faq]));
+    }
+
+    /** Article du centre d'aide : article et fil d'Ariane. */
+    public static function helpArticle(array $item): array
+    {
+        $url = static::url('/aide/'.$item['slug']);
+
+        return static::page($item['title'], $item['summary'], '/aide/'.$item['slug']) + ['jsonld' => [
+            [
+                '@context' => 'https://schema.org', '@type' => 'Article', 'headline' => $item['title'], 'description' => $item['summary'],
+                'inLanguage' => 'fr', 'url' => $url, 'mainEntityOfPage' => $url, 'image' => static::url(static::DEFAULT_IMAGE),
+                'author' => ['@type' => 'Organization', 'name' => 'Biolinko', 'url' => static::url('/')],
+                'publisher' => ['@type' => 'Organization', 'name' => 'Biolinko', 'logo' => ['@type' => 'ImageObject', 'url' => static::url('/images/brand/logo-noir-hd.png')]],
+            ],
+            static::breadcrumb([['Biolinko', static::url('/')], ['Centre d’aide', static::url('/aide')], [$item['title'], $url]]),
+        ]];
+    }
+
+    /** @param  array<int, array{0: string, 1: string}>  $items  [nom, adresse] */
+    public static function breadcrumb(array $items): array
+    {
+        return [
+            '@context' => 'https://schema.org', '@type' => 'BreadcrumbList',
+            'itemListElement' => collect($items)->values()->map(fn ($c, $i) => ['@type' => 'ListItem', 'position' => $i + 1, 'name' => $c[0], 'item' => $c[1]])->all(),
+        ];
+    }
+
+    private const DAYS = ['mon' => 'Monday', 'tue' => 'Tuesday', 'wed' => 'Wednesday', 'thu' => 'Thursday', 'fri' => 'Friday', 'sat' => 'Saturday', 'sun' => 'Sunday'];
+
+    /** Horaires saisis par le vendeur → openingHoursSpecification (jours fermés omis). */
+    private static function openingHours(?array $schedule): ?array
+    {
+        $specs = collect($schedule ?: [])->filter(fn ($slot, $day) => isset(self::DAYS[$day]) && is_array($slot) && ! empty($slot['open']) && ! empty($slot['close']))
+            ->map(fn ($slot, $day) => ['@type' => 'OpeningHoursSpecification', 'dayOfWeek' => 'https://schema.org/'.self::DAYS[$day], 'opens' => $slot['open'], 'closes' => $slot['close']])
+            ->values()->all();
+
+        return $specs ?: null;
     }
 
     public static function storeImage(Store $store): string
@@ -95,12 +166,24 @@ class Seo
             ?: static::text($store->description ?: $store->about_text
                 ?: "{$store->name} : boutique en ligne{$place}. {$products->count()} article".($products->count() > 1 ? 's' : '').', paiement sécurisé MTN MoMo et Orange Money, livraison.');
 
+        // Boutique avec une adresse ou des horaires : aussi un commerce local (Google Maps, recherches « près de moi »)
+        $local = $store->location_address || $store->opening_schedule;
+        $country = $store->country ?: 'CM';
         $org = array_filter([
-            '@context' => 'https://schema.org', '@type' => 'OnlineStore', '@id' => $url.'#boutique',
+            '@context' => 'https://schema.org', '@type' => $local ? ['OnlineStore', 'LocalBusiness'] : 'OnlineStore', '@id' => $url.'#boutique',
             'name' => $store->name, 'url' => $url, 'description' => static::text($store->description ?: $store->about_text, 300) ?: null,
             'logo' => $store->logo_url ? static::url($store->logo_url) : null,
             'image' => static::storeImage($store),
-            'address' => $store->city_location ? ['@type' => 'PostalAddress', 'addressLocality' => $store->city_location, 'addressCountry' => $store->country ?: 'CM'] : null,
+            'telephone' => $store->phone_whatsapp ?: null,
+            'email' => $store->support_email ?: null,
+            'address' => ($store->city_location || $store->location_address) ? array_filter([
+                '@type' => 'PostalAddress', 'streetAddress' => $store->location_address ?: null,
+                'addressLocality' => $store->city_location ?: null, 'addressCountry' => $country,
+            ]) : null,
+            'areaServed' => $store->city_location ? ['@type' => 'City', 'name' => $store->city_location] : ['@type' => 'Country', 'name' => $country === 'CM' ? 'Cameroun' : $country],
+            'openingHoursSpecification' => static::openingHours($store->opening_schedule),
+            'currenciesAccepted' => $store->currency ?: 'XAF',
+            'paymentAccepted' => 'Mobile Money (MTN MoMo, Orange Money)',
             'sameAs' => array_values(array_filter([$store->instagram_link, $store->tiktok_link, $store->facebook_link], fn ($l) => $l && preg_match('#^https?://#', $l))) ?: null,
             'aggregateRating' => static::rating($reviews),
         ], fn ($v) => $v !== null && $v !== '');
@@ -134,9 +217,20 @@ class Seo
         $description = $product->seo_description
             ?: static::text("{$product->title} à ".static::money($price)." chez {$store->name}".($store->city_location ? " ({$store->city_location})" : '').'. '.($product->description ?: 'Paiement sécurisé MTN MoMo et Orange Money, livraison.'));
 
-        $offer = array_filter([
-            '@type' => 'Offer', 'url' => $url, 'price' => (string) round($price), 'priceCurrency' => $store->currency ?: 'XAF',
-            'availability' => $inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        // Préparé à la demande (gâteau, sur-mesure, prestation) : disponible sur commande, jamais « en rupture »
+        $madeToOrder = $product->fulfillment === 'made_to_order';
+        $availability = $madeToOrder ? 'https://schema.org/MadeToOrder' : ($inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock');
+        $currency = $store->currency ?: 'XAF';
+        // Variantes à des prix différents : fourchette de prix
+        $prices = collect($product->relationLoaded('variants') ? $product->variants : [])->pluck('price')->filter(fn ($p) => (float) $p > 0)
+            ->map(fn ($p) => (float) $p)->push($price)->unique()->values();
+        $offer = $prices->count() > 1 ? [
+            '@type' => 'AggregateOffer', 'url' => $url, 'lowPrice' => (string) round($prices->min()), 'highPrice' => (string) round($prices->max()),
+            'offerCount' => $prices->count(), 'priceCurrency' => $currency, 'availability' => $availability,
+            'seller' => ['@type' => 'Organization', 'name' => $store->name, 'url' => StoreUrl::home($store)],
+        ] : array_filter([
+            '@type' => 'Offer', 'url' => $url, 'price' => (string) round($price), 'priceCurrency' => $currency,
+            'availability' => $availability,
             'itemCondition' => 'https://schema.org/NewCondition',
             'priceValidUntil' => $product->promoActive() && $product->promo_end_at ? $product->promo_end_at->toDateString() : null,
             'seller' => ['@type' => 'Organization', 'name' => $store->name, 'url' => StoreUrl::home($store)],
@@ -175,7 +269,7 @@ class Seo
             'image' => $images->first() ?: static::storeImage($store),
             'type' => 'product',
             'site_name' => $store->name,
-            'price' => ['amount' => (string) round($price), 'currency' => $store->currency ?: 'XAF', 'availability' => $inStock ? 'instock' : 'oos'],
+            'price' => ['amount' => (string) round($price), 'currency' => $currency, 'availability' => ($madeToOrder || $inStock) ? 'instock' : 'oos'],
             'jsonld' => [$schema, $breadcrumb],
         ];
     }

@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Support\BusinessTypes;
+use App\Support\IndexNow;
 use App\Support\OpeningHours;
+use App\Support\SeoCache;
 use App\Support\StoreDesign;
 use App\Support\StoreUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,6 +31,17 @@ class Store extends Model
                 StoreSlugRedirect::updateOrCreate(['old_slug' => $old], ['store_id' => $store->id]);
             }
             StoreSlugRedirect::where('old_slug', $store->slug)->delete();
+        });
+
+        // Boutique publiée ou modifiée : les moteurs sont prévenus (IndexNow) et les plans du site rafraîchis
+        static::saved(function (Store $store) {
+            if (! $store->slug || ! ($store->is_published || $store->wasChanged('is_published'))) {
+                return;
+            }
+            if ($store->wasChanged(['is_published', 'slug', 'name', 'description', 'about_text', 'seo_title', 'seo_description', 'city_location', 'logo_url', 'banner_url'])) {
+                SeoCache::forget($store->slug);
+                IndexNow::queue(StoreUrl::home($store));
+            }
         });
     }
 

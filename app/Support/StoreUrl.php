@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
 class StoreUrl
 {
     /** Pages servies telles quelles sur le domaine d'une boutique (parcours d'achat de l'acheteur). */
-    public const BUYER_PATHS = ['track/', 'checkout', 'pay/', 'sitemap.xml', 'robots.txt', 'build/', 'storage/', 'images/', 'favicon', 'up'];
+    public const BUYER_PATHS = ['track/', 'checkout', 'pay/', 'sitemap.xml', 'robots.txt', 'llms.txt', 'indexnow-', 'build/', 'storage/', 'images/', 'favicon', 'up'];
 
     public static function domain(): ?string
     {

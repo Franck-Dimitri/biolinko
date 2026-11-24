@@ -65,5 +65,9 @@ return [
     // Validation du domaine dans Google Search Console (balise meta)
     'google' => ['site_verification' => env('GOOGLE_SITE_VERIFICATION')],
 
-];
+    // IndexNow : clé (8 à 128 lettres, chiffres ou tirets) pour prévenir Bing des pages modifiées
+    'indexnow' => [
+        'key' => env('INDEXNOW_KEY'),
+    ],
 
+];

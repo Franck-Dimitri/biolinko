@@ -1,17 +1,12 @@
 import { useState } from 'react';
+import faq from '../../../data/faq.json';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Mail, Minus, Plus } from 'lucide-react';
 import { EASE_OUT } from '@/Components/UI/Motion';
 import { Eyebrow, RevealWords, Section, reveal } from '@/Components/Landing/Frame';
 
-export const FAQ = [
-    ['Que puis-je faire avec Biolinko ?', 'Créer votre boutique en ligne, gérer votre catalogue et vos stocks, suivre vos commandes, envoyer des factures, garder un fichier client, lancer des campagnes WhatsApp, partager des liens de paiement et encaisser par Mobile Money.'],
-    ['Quand est-ce que je reçois mon argent ?', 'Chaque vente payée apparaît tout de suite dans votre solde. Pour protéger vos clients, elle devient retirable une fois la commande reçue : dès que le client le confirme, ou 3 jours après que vous l’avez marquée livrée. Vous la retirez gratuitement vers votre numéro MTN MoMo ou Orange Money, après une vérification d’identité unique.'],
-    ['Combien coûte chaque vente ?', 'Une seule commission, rien d’autre : 10 % en Starter, 8 % en Pro, 6 % en Growth et 4 % en Business. Pas de commission sur la livraison, et les retraits sont gratuits. L’acheteur paie 3,5 % de frais de paiement Mobile Money en plus de votre prix.'],
-    ['Mes clients doivent-ils installer une application ?', 'Non. Ils ouvrent votre lien, choisissent leurs articles et valident la demande de paiement sur leur téléphone.'],
-    ['Puis-je utiliser mon logo et mes couleurs ?', 'Oui. Logo, couleurs, catégories et liens vers vos réseaux se règlent en quelques minutes depuis le tableau de bord.'],
-    ['Puis-je changer de formule ou arrêter ?', 'Oui, sans engagement. Vous pouvez monter en gamme ou revenir au Starter gratuit à tout moment.'],
-];
+// Questions fréquentes : même source pour la page et pour les données structurées (FAQPage) côté serveur
+export const FAQ = faq.map(({ q, a }) => [q, a]);
 
 export default function Faq() {
     const [open, setOpen] = useState(0);

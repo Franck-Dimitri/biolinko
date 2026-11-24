@@ -288,6 +288,10 @@ Route::post('/pay/{code}/checkout', [SmartLinkController::class, 'processPublicC
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap');
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('seo.robots');
 
+Route::get('/sitemap-pages.xml', [SeoController::class, 'pagesSitemap'])->name('seo.sitemap.pages');
+Route::get('/sitemap-boutiques.xml', [SeoController::class, 'storesSitemap'])->name('seo.sitemap.stores');
+Route::get('/llms.txt', [SeoController::class, 'llms'])->name('seo.llms');
+Route::get('/indexnow-{key}.txt', [SeoController::class, 'indexNowKey'])->where('key', '[a-zA-Z0-9-]{8,128}')->name('seo.indexnow');
 // Pages d'information du site public
 Route::controller(SiteController::class)->group(function () {
     Route::get('/a-propos', 'about')->name('site.about');

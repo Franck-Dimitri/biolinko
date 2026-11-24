@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Support\IndexNow;
+use App\Support\SeoCache;
+use App\Support\StoreUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +12,26 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
+    protected static function booted(): void
+    {
+        // Produit d'une boutique en ligne ajouté, modifié ou retiré : moteurs prévenus, plans du site rafraîchis
+        $notify = function (Product $product) {
+            $store = $product->store;
+            if (! $store?->is_published || ! $store->slug || ! $product->slug) {
+                return;
+            }
+            SeoCache::forget($store->slug);
+            IndexNow::queue(StoreUrl::product($store, $product->slug), StoreUrl::home($store));
+        };
+        // Pas à chaque vente (le stock change) : seulement quand ce qui est affiché change
+        static::saved(function (Product $product) use ($notify) {
+            if ($product->wasRecentlyCreated || $product->wasChanged(['title', 'slug', 'description', 'price_vendor', 'promo_price', 'is_promo', 'is_active', 'image_url', 'images', 'seo_title', 'seo_description', 'category'])) {
+                $notify($product);
+            }
+        });
+        static::deleted($notify);
+    }
+
     use HasFactory;
 
     protected $fillable = [

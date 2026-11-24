@@ -54,7 +54,7 @@ class SiteController extends Controller
             'article' => $item,
             'category' => HelpCenter::CATEGORIES[$item['category']],
             'related' => $related->isNotEmpty() ? $related : collect(HelpCenter::list())->where('slug', '!=', $article)->take(3)->values(),
-        ])->withViewData(['meta' => Seo::page($item['title'], $item['summary'], '/aide/'.$article)]);
+        ])->withViewData(['meta' => Seo::helpArticle($item)]);
     }
 
     public function pilot(): Response
