@@ -14,6 +14,7 @@ import { Badge, Button } from '@/Components/Dashboard/UI';
 import { PatternLayer, patternLabel } from '@/Components/Storefront/patterns';
 import { contrastColor } from '@/Components/Storefront/theme';
 import { PREVIEW_READY, SECTION_CLICK, selectInPreview, sendPreview } from '@/Components/Storefront/livePreview';
+import { withCommerce } from '@/Components/Storefront/Design/commerce';
 
 /*
  * Éditeur de vitrine : aperçu téléphone ou ordinateur, clic sur une section pour la modifier,
@@ -241,7 +242,8 @@ function ReviewsPanel({ reviews }) {
 /* ------------------------------------------------------------------ Éditeur */
 
 export default function Editor({ store, info = {}, activities = {}, reviews = [], draft: initialDraft, published, catalog, patterns = [], templates = [], products = [], versions = [] }) {
-    const [draft, setDraft] = useState(initialDraft);
+    // Sections Promotions et Packs toujours présentes, même si le template ne les prévoit pas
+    const [draft, setDraft] = useState(() => withCommerce(initialDraft));
     const initialTab = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('onglet') : null;
     const legacyTabs = { sections: 'personnaliser', style: 'personnaliser', templates: 'template', history: 'versions' };
     const wanted = legacyTabs[initialTab] || initialTab;
@@ -259,7 +261,7 @@ export default function Editor({ store, info = {}, activities = {}, reviews = []
     const box = useRef(null);
     const [boxWidth, setBoxWidth] = useState(800);
     const first = useRef(true);
-    const dirty = JSON.stringify(draft) !== JSON.stringify(published);
+    const dirty = JSON.stringify(draft) !== JSON.stringify(withCommerce(published));
 
     const update = (fn) => setDraft((d) => { const next = clone(d); fn(next); return next; });
     const setStyle = (patch) => update((d) => { Object.assign(d.style, patch); });
@@ -313,6 +315,12 @@ export default function Editor({ store, info = {}, activities = {}, reviews = []
         if (catalog[s.type]?.required) { toast.error('L’en-tête et le pied de page sont obligatoires.'); return; }
         const rest = d.sections.filter((_, j) => j !== i);
         if (!sells(rest)) { toast.error('Gardez au moins une section Produits ou Prestations.'); return; }
+        // Promotions et packs reviendraient tout seuls : on les masque au lieu de les retirer
+        if (withCommerce({ ...d, sections: rest }).sections.length > rest.length) {
+            s.enabled = false;
+            toast('Section masquée', { description: 'Réaffichez-la avec l’œil quand vous voulez.' });
+            return;
+        }
         d.sections = rest;
         setSelected(null);
     });
@@ -337,7 +345,7 @@ export default function Editor({ store, info = {}, activities = {}, reviews = []
         const kept = Object.fromEntries(d.sections.filter((s) => Object.keys(s.settings || {}).length).map((s) => [s.type, s.settings]));
         const next = clone(t.design);
         next.sections = next.sections.map((s) => ({ ...s, settings: Object.keys(s.settings || {}).length ? s.settings : (kept[s.type] || {}) }));
-        Object.assign(d, next);
+        Object.assign(d, withCommerce(next));
         setSelected(null);
         toast.success(`Template « ${t.name} » choisi`, { description: 'Personnalisez-le, puis publiez pour le mettre en ligne. Vos produits et vos textes sont gardés.' });
     });

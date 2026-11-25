@@ -2,15 +2,18 @@ import { ANCHORS, CHROME, resolveSection } from './registry';
 import { designVars } from './tokens';
 import { usePreviewSelection } from '@/Components/Storefront/livePreview';
 import { CATALOG_LABELS } from './labels';
+import { listedPacks, withCommerce } from './commerce';
 import './storefront.css';
 
 /**
  * Corps de la vitrine : les sections visibles, dans l'ordre choisi. Les sections du template sont rendues
  * dans .sfd (styles pilotés par les variables du template) ; les sections « classic » gardent leur apparence.
  */
-export default function StoreSections({ design, ctx }) {
+export default function StoreSections({ design: saved, ctx }) {
     const seen = new Set();
-    const fullCtx = { ...ctx, design };
+    // Promotions et packs toujours possibles, même si le template n'a pas prévu leur section
+    const design = withCommerce(saved);
+    const fullCtx = { ...ctx, design, packList: listedPacks(design, ctx.packs || []) };
     // Dans l'éditeur : clic = sélection de la section (pas de navigation), section choisie entourée
     const { inFrame, selected, pick } = usePreviewSelection();
     return (

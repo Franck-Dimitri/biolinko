@@ -351,13 +351,14 @@ function Basket({ section, ctx, anchor }) {
 }
 
 function PacksCards({ section, ctx, anchor }) {
-    if (!ctx.packs.length) return null;
+    const packs = ctx.packList ?? ctx.packs;
+    if (!packs.length) return null;
     return (
         <section className="sec" id={anchor}>
             <div className="wrap">
                 <Head title={section.settings?.title || 'Packs'} />
                 <div className="packs">
-                    {ctx.packs.map((pack) => (
+                    {packs.map((pack) => (
                         <a key={pack.id} href={packUrl(pack)} className="pack">
                             <span className="pack-pics">{(pack.items || []).slice(0, 3).map((it, k) => <Pic key={k} src={it.image_url} alt="" ar="1/1" />)}</span>
                             <span className="pack-t">

@@ -26,7 +26,7 @@ const CLASSIC = {
             cardProps={ctx.cardProps} onSeeAll={ctx.onSeeAll} limit={ctx.fullCatalog ? null : 8} />
     ),
     promo: ({ ctx }) => <PromotionsSection products={ctx.promoProducts} endsAt={ctx.promoEndsAt} theme={ctx.theme} cardProps={ctx.cardProps} />,
-    packs: ({ ctx }) => <PacksSection packs={ctx.packs} theme={ctx.theme} />,
+    packs: ({ ctx }) => <PacksSection packs={ctx.packList ?? ctx.packs} theme={ctx.theme} />,
     trust: ({ ctx }) => <BenefitsSection store={ctx.store} benefits={ctx.benefits} theme={ctx.theme} />,
     reviews: ({ ctx }) => <ReviewsSection reviews={ctx.reviews} onReview={ctx.onReview} />,
     story: ({ ctx }) => <AboutSection store={ctx.store} />,
