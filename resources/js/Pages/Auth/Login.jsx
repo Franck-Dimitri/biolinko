@@ -3,6 +3,7 @@ import PlanIntentBanner from '@/Components/Dashboard/PlanIntentBanner';
 import AuthShell, { fieldClass, labelClass, primaryButtonClass } from '@/Layouts/AuthShell';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowRight, Loader2 } from 'lucide-react';
+import PasswordField from '@/Components/UI/PasswordField';
 
 export default function Login({ status, canResetPassword, intendedPlan = null }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -44,7 +45,7 @@ export default function Login({ status, canResetPassword, intendedPlan = null })
                                 <Link href={route('password.request')} className="text-[13px] text-[#5F5E58] hover:text-[#141412]">Mot de passe oublié ?</Link>
                             )}
                         </div>
-                        <input id="password" type="password" name="password" value={data.password} required autoComplete="current-password"
+                        <PasswordField id="password" name="password" value={data.password} required autoComplete="current-password"
                             placeholder="••••••••" className={fieldClass} onChange={(e) => setData('password', e.target.value)} />
                         <InputError message={errors.password} className="mt-1.5" />
                     </div>

@@ -2,6 +2,7 @@ import InputError from '@/Components/UI/InputError';
 import AuthShell, { fieldClass, labelClass, primaryButtonClass } from '@/Layouts/AuthShell';
 import { Head, useForm } from '@inertiajs/react';
 import { ArrowRight, Loader2 } from 'lucide-react';
+import PasswordField from '@/Components/UI/PasswordField';
 
 export default function ResetPassword({ token, email }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -29,13 +30,13 @@ export default function ResetPassword({ token, email }) {
                     </div>
                     <div>
                         <label htmlFor="password" className={labelClass}>Nouveau mot de passe</label>
-                        <input id="password" type="password" name="password" value={data.password} required autoFocus autoComplete="new-password"
+                        <PasswordField id="password" name="password" value={data.password} required autoFocus autoComplete="new-password"
                             placeholder="••••••••" className={fieldClass} onChange={(e) => setData('password', e.target.value)} />
                         <InputError message={errors.password} className="mt-1.5" />
                     </div>
                     <div>
                         <label htmlFor="password_confirmation" className={labelClass}>Confirmer le mot de passe</label>
-                        <input id="password_confirmation" type="password" name="password_confirmation" value={data.password_confirmation} required autoComplete="new-password"
+                        <PasswordField id="password_confirmation" name="password_confirmation" value={data.password_confirmation} required autoComplete="new-password"
                             placeholder="••••••••" className={fieldClass} onChange={(e) => setData('password_confirmation', e.target.value)} />
                         <InputError message={errors.password_confirmation} className="mt-1.5" />
                     </div>

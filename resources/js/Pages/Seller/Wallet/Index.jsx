@@ -9,6 +9,7 @@ import {
     Badge, Button, Card, CardHeader, SubPage, Empty, Field, PageHeader, Stat, Tabs, dateTime, fcfa, fieldClass, reveal,
 } from '@/Components/Dashboard/UI';
 import { EASE_OUT } from '@/Components/UI/Motion';
+import PasswordField from '@/Components/UI/PasswordField';
 
 const STATUS = { completed: ['Effectué', 'success'], held: ['En attente', 'neutral'], pending: ['En cours', 'warning'], processing: ['Virement en cours', 'info'], rejected: ['Rejeté', 'danger'] };
 
@@ -127,7 +128,7 @@ function PayoutDialog({ open, onClose, account, delayHours, defaultPhone, defaul
                     <input required value={data.name} onChange={set('name')} className={fieldClass} />
                 </Field>
                 <Field label="Mot de passe" hint="Pour confirmer que c’est bien vous." error={errors?.password}>
-                    <input type="password" required autoComplete="current-password" value={data.password} onChange={set('password')} className={fieldClass} />
+                    <PasswordField required autoComplete="current-password" value={data.password} onChange={set('password')} className={fieldClass} />
                 </Field>
                 <div className="flex justify-end gap-2">
                     <Button onClick={onClose}>Annuler</Button>
