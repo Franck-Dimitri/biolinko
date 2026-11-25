@@ -16,14 +16,8 @@
     // Les plans payants émettent des factures 100 % à leur marque
     $showBiolinko = ! ($seller && $seller->hasPlan('pro'));
 
-    // Logo de la boutique : seuls PNG / JPEG sont rendus fiablement par le moteur PDF
-    $logoPath = null;
-    if ($store?->logo_url) {
-        $candidate = public_path(ltrim(parse_url($store->logo_url, PHP_URL_PATH) ?? '', '/'));
-        if (is_file($candidate) && preg_match('/\.(png|jpe?g)$/i', $candidate)) {
-            $logoPath = $candidate;
-        }
-    }
+    // Logo de la boutique, converti pour le PDF (WebP, GIF…) et sans déformation
+    $logo = \App\Support\InvoiceLogo::for($store);
     $operator = ['MTN' => 'MTN Mobile Money', 'ORANGE' => 'Orange Money'][strtoupper((string) $order->payment_operator)] ?? 'Mobile Money';
 @endphp
 <!DOCTYPE html>
@@ -46,7 +40,6 @@
         .accent-bar { height: 4px; background: {{ $accent }}; margin-bottom: 26px; }
         .pattern { width: 100%; margin-bottom: 4px; }
         .brand-name { font-family: {!! $displayFont !!}; font-size: 17px; font-weight: bold; color: {{ $accentInk }}; }
-        .logo { width: 54px; height: 54px; object-fit: cover; }
         .logo-fallback { width: 54px; height: 54px; background: {{ $accent }}; color: {{ $theme['on_accent'] }}; font-size: 22px; font-weight: bold; text-align: center; vertical-align: middle; }
         .doc-title { font-family: {!! $displayFont !!}; font-size: 26px; font-weight: bold; letter-spacing: 1px; text-align: right; color: {{ $accentInk }}; }
         .meta td { padding: 2px 0; }
@@ -78,9 +71,9 @@
             <td style="width: 58%;">
                 <table>
                     <tr>
-                        <td style="width: 66px;">
-                            @if ($logoPath)
-                                <img src="{{ $logoPath }}" class="logo" alt="">
+                        <td style="width: {{ $logo ? $logo['width'] + 12 : 66 }}px;">
+                            @if ($logo)
+                                <img src="{{ $logo['src'] }}" style="width: {{ $logo['width'] }}px; height: {{ $logo['height'] }}px;" alt="">
                             @else
                                 <table><tr><td class="logo-fallback">{{ mb_strtoupper(mb_substr($store->name ?? 'B', 0, 1)) }}</td></tr></table>
                             @endif
