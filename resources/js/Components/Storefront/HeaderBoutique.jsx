@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { BadgeCheck, Menu, Search, ShoppingBag, Store, X } from 'lucide-react';
+import { BadgeCheck, Menu, Search, ShoppingBag, Store, UserRound, X } from 'lucide-react';
 import { contrastColor } from '@/Components/Storefront/theme';
-import { storeUrl } from '@/Components/Storefront/storeUrl';
+import { appLink, storeUrl } from '@/Components/Storefront/storeUrl';
 import { hasSection, storeDesign } from '@/Components/Storefront/Design/classic';
 
 export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, searchQuery = '', setSearchQuery, setActiveTab, hasPromos = false, hasSmartLinks = false }) {
@@ -67,6 +67,10 @@ export default function HeaderBoutique({ store, cartCount = 0, onOpenCart, searc
                                 <Search className="h-[18px] w-[18px]" />
                             </button>
                         )}
+                        <a href={appLink('/login')} aria-label="Connexion" title="Connexion"
+                            className="flex h-10 w-10 items-center justify-center rounded-full text-[#141412]/70 hover:bg-black/[0.04] hover:text-[#141412]">
+                            <UserRound className="h-[18px] w-[18px]" />
+                        </a>
                         <motion.button type="button" onClick={openCart} whileTap={{ scale: 0.95 }}
                             className="relative flex h-10 items-center gap-2 rounded-full px-4 text-[14px] font-medium"
                             style={{ backgroundColor: primaryColor, color: primaryTextColor }}

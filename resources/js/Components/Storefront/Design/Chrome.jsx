@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { ArrowRight, BadgeCheck, CalendarCheck, Clock, Flag, MapPin, Menu, Phone, Search, ShieldCheck, ShoppingBag, X } from 'lucide-react';
+import { ArrowRight, BadgeCheck, CalendarCheck, Clock, Flag, MapPin, Menu, Phone, Search, ShieldCheck, ShoppingBag, UserRound, X } from 'lucide-react';
 import { FacebookIcon, InstagramIcon, TiktokIcon } from '@/Components/UI/BrandIcons';
 import { OperatorLogo } from '@/Components/Landing/Illustrations';
 import { ReportStoreDialog, TrustBadges } from '@/Components/Storefront/FooterBoutique';
@@ -55,6 +55,10 @@ export function DesignHeader({ store, design, variant, cartCount = 0, openCart, 
             <ShoppingBag />{cartCount > 0 && <b className="cnt">{cartCount}</b>}
         </button>
     );
+    // Connexion à l'espace vendeur (biolinko.app/login)
+    const login = (
+        <a className="ib" href={appLink('/login')} aria-label="Connexion" title="Connexion"><UserRound /></a>
+    );
     const searchBtn = setSearchQuery && (
         <button type="button" className="ib" onClick={() => setSearch((v) => !v)} aria-label="Rechercher un produit" aria-expanded={search}><Search /></button>
     );
@@ -78,7 +82,7 @@ export function DesignHeader({ store, design, variant, cartCount = 0, openCart, 
     if (variant === 'center') {
         bar = (
             <>
-                <div className="wrap row hh">{menuBtn}<div className="hd-name">{name}</div><div className="row g4">{searchBtn}{cart}</div></div>
+                <div className="wrap row hh">{menuBtn}<div className="hd-name">{name}</div><div className="row g4">{searchBtn}{login}{cart}</div></div>
                 {nav('wrap hd-nav dsk')}
             </>
         );
@@ -87,19 +91,19 @@ export function DesignHeader({ store, design, variant, cartCount = 0, openCart, 
             <div className="wrap">
                 <div className="row hh">
                     <div className="row g10"><Mark store={store} /><div className="min0"><div className="hd-t">{name}</div><div className={`hd-s ${store.opening_status ? (store.opening_status.open ? 'is-open' : 'is-closed') : ''}`}><span className="dot" />{status}</div></div></div>
-                    <div className="row g4">{menuBtn}{cart}</div>
+                    <div className="row g4">{menuBtn}{login}{cart}</div>
                 </div>
                 {setSearchQuery && searchField}
             </div>
         );
     } else if (variant === 'bold') {
-        bar = <div className="wrap row hh"><div className="hd-big">{name}</div><div className="row g4">{searchBtn}{cart}{menuBtn}</div></div>;
+        bar = <div className="wrap row hh"><div className="hd-big">{name}</div><div className="row g4">{searchBtn}{login}{cart}{menuBtn}</div></div>;
     } else {
         bar = (
             <div className="wrap row hh">
                 <div className="row g10 min0"><Mark store={store} /><span className="hd-t">{name}</span></div>
                 {nav('hd-links dsk')}
-                <div className="row g4">{searchBtn}{cart}{menuBtn}</div>
+                <div className="row g4">{searchBtn}{login}{cart}{menuBtn}</div>
             </div>
         );
     }
