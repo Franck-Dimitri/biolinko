@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
-use App\Listeners\CreateStoreAndWalletForNewVendor;
-use Illuminate\Auth\Events\Registered;
+use App\Models\User;
+use App\Support\ManagedAccount;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +23,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Boutique gérée par l'équipe : un vendeur qui choisit son mot de passe par « Mot de passe oublié » prend la main
+        Event::listen(PasswordReset::class, function ($event) {
+            if ($event->user instanceof User && $event->user->isManaged()) {
+                ManagedAccount::markClaimed($event->user);
+            }
+        });
     }
 }
