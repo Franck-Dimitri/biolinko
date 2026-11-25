@@ -8,6 +8,8 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Models\Withdrawal;
 use App\Services\Whatsapp\WhatsappGatewayService;
+use App\Support\BusinessTypes;
+use App\Support\ManagedAccount;
 use App\Support\PilotOffer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -53,6 +55,8 @@ class AdminUserController extends Controller
 
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
+            // Création d'une boutique gérée : activités proposées
+            'businessTypes' => collect(BusinessTypes::all())->map(fn ($t, $k) => ['key' => $k, 'label' => $t['label']])->values(),
             'metrics' => $metrics,
             'filters' => [
                 'search' => $search,
@@ -114,6 +118,8 @@ class AdminUserController extends Controller
 
         return Inertia::render('Admin/Users/Show', [
             'vendor' => $user,
+            // Boutique créée par l'équipe : en configuration jusqu'à ce que le vendeur prenne la main
+            'managed' => $user->managed_by ? ['pending' => $user->isManaged(), 'claimed_at' => $user->claimed_at?->toIso8601String(), 'link_days' => ManagedAccount::LINK_DAYS] : null,
             'stats' => $stats,
             'reports' => $store ? $store->reports()->with('order:id,tracking_code,total_client')->latest()->take(20)->get() : [],
             'withdrawals' => $store && $store->wallet ? Withdrawal::where('wallet_id', $store->wallet->id)->latest()->take(15)->get() : [],

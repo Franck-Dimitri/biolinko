@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { AlertTriangle, Ban, Crown, ExternalLink, Eye, EyeOff, Mail, Package, Phone, ShieldCheck, ShoppingBag, Store, Trash2, Wallet } from 'lucide-react';
@@ -11,6 +11,42 @@ const PLANS = [['starter', 'Starter'], ['pro', 'Pro'], ['growth', 'Growth'], ['b
 const REPORT_STATUS = { open: ['Ouvert', 'warning'], answered: ['Vendeur a répondu', 'info'], resolved: ['Résolu', 'success'], released: ['Clos', 'neutral'] };
 const WITHDRAWAL_STATUS = { pending: ['En attente', 'warning'], processing: ['Virement en cours', 'info'], completed: ['Payé', 'success'], rejected: ['Rejeté', 'danger'] };
 const SUB_SOURCE = { admin: 'Attribué par l’admin', simulation: 'Paiement simulé', mercypay: 'Mercy Pay', pawapay: 'pawaPay', hrskills: 'HR-Skills' };
+
+/** Boutique créée par l'équipe : configuration à la place du vendeur, puis lien d'accès à lui envoyer. */
+function ManagedBox({ vendor, managed }) {
+    const { flash } = usePage().props;
+    const link = flash?.access_link;
+    const first = (vendor.name || '').split(' ')[0];
+    const message = link ? `Bonjour ${first}, votre boutique Biolinko est prête !\nOuvrez ce lien pour choisir votre mot de passe et y accéder :\n${link}\n\nLe lien est valable ${managed.link_days} jours. Ensuite, connectez-vous sur biolinko.app avec votre e-mail : ${vendor.email}` : '';
+    const copy = async (text, label) => { try { await navigator.clipboard.writeText(text); toast.success(label); } catch (e) { toast.error('Copie impossible : sélectionnez le texte.'); } };
+
+    if (!managed.pending) {
+        return (
+            <Card>
+                <CardHeader title="Boutique remise au vendeur" sub={`Il a pris la main le ${shortDate(managed.claimed_at)}. L’équipe n’a plus accès à son espace.`} />
+            </Card>
+        );
+    }
+    return (
+        <Card className="border-[#FFCC00]/60">
+            <CardHeader title="Boutique gérée par l’équipe" sub="En attente : le vendeur n’a pas encore pris la main." />
+            <div className="mt-4 space-y-2">
+                <Button variant="primary" className="w-full" onClick={() => router.post(route('admin.users.configure', vendor.id))}>Configurer sa boutique</Button>
+                <Button className="w-full" onClick={() => router.post(route('admin.users.accessLink', vendor.id), {}, { preserveScroll: true })}>{link ? 'Générer un nouveau lien' : 'Lien d’accès pour le vendeur'}</Button>
+            </div>
+            {link && (
+                <div className="mt-4 space-y-2">
+                    <p className="whitespace-pre-wrap break-words rounded-xl bg-[#F6F5F1] p-3 text-[13px] text-[#141412]">{message}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                        <Button size="sm" onClick={() => copy(message, 'Message copié')}>Copier le message</Button>
+                        <Button size="sm" onClick={() => copy(link, 'Lien copié')}>Copier le lien</Button>
+                    </div>
+                    <p className="text-[12px] text-[#8B8A83]">Un seul usage, {managed.link_days} jours. Un nouveau lien annule le précédent.</p>
+                </div>
+            )}
+        </Card>
+    );
+}
 
 // Programme pilote : Growth offert 1 mois, +1 mois par palier de 10 ventes payées dans l'app (3 mois max)
 function PilotBox({ vendor, pilot }) {
@@ -74,7 +110,7 @@ function PlanBox({ vendor, daysRemaining }) {
     );
 }
 
-export default function Show({ vendor, stats = {}, reports = [], withdrawals = [], subscriptions = [], daysRemaining = null, pilot = null }) {
+export default function Show({ vendor, stats = {}, reports = [], withdrawals = [], subscriptions = [], daysRemaining = null, pilot = null, managed = null }) {
     const store = vendor.store;
     const [tab, setTab] = useState('products');
     const [moderation, setModeration] = useState(null); // { type, id, name, info }
@@ -223,6 +259,7 @@ export default function Show({ vendor, stats = {}, reports = [], withdrawals = [
                     </Card>
 
                     <div className="space-y-4">
+                        {managed && <ManagedBox vendor={vendor} managed={managed} />}
                         {vendor.role !== 'admin' && <PilotBox vendor={vendor} pilot={pilot} />}
                         {vendor.role !== 'admin' && <PlanBox vendor={vendor} daysRemaining={daysRemaining} />}
 

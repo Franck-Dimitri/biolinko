@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Account\ProfileController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminManagedSellerController;
 use App\Http\Controllers\Admin\AdminPilotController;
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminSettingController;
@@ -15,6 +16,8 @@ use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminVerificationController;
 use App\Http\Controllers\Admin\AdminWalletController;
 use App\Http\Controllers\Admin\AdminWithdrawalController;
+use App\Http\Controllers\Auth\ClaimAccountController;
+use App\Http\Controllers\ManagedSessionController;
 use App\Http\Controllers\Seller\AppearanceController;
 use App\Http\Controllers\Seller\CreationController;
 use App\Http\Controllers\Seller\CustomerController;
@@ -96,6 +99,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->group(fu
     Route::post('/users/{user}/pilot', [AdminUserController::class, 'startPilot'])->name('admin.users.pilot');
     Route::post('/users/{user}/toggle-ban', [AdminUserController::class, 'toggleBan'])->name('admin.users.toggleBan');
     Route::post('/users/{user}/toggle-store', [AdminUserController::class, 'toggleStore'])->name('admin.users.toggleStore');
+    // Boutiques créées et configurées par l'équipe, puis remises au vendeur
+    Route::post('/vendeurs/nouveau', [AdminManagedSellerController::class, 'store'])->name('admin.users.managed.store');
+    Route::post('/users/{user}/configurer', [AdminManagedSellerController::class, 'configure'])->name('admin.users.configure');
+    Route::post('/users/{user}/lien-acces', [AdminManagedSellerController::class, 'accessLink'])->name('admin.users.accessLink');
 
     // 4. Abonnements SaaS
     Route::get('/subscriptions', [AdminSubscriptionController::class, 'index'])->name('admin.subscriptions.index');
@@ -223,6 +230,15 @@ Route::middleware(['auth', 'verified', 'role:seller'])->prefix('seller')->group(
     Route::post('/subscriptions/subscribe', [SubscriptionController::class, 'subscribe'])->name('seller.subscriptions.subscribe');
     Route::post('/subscriptions/auto-renew', [SubscriptionController::class, 'toggleAutoRenew'])->name('seller.subscriptions.autoRenew');
     Route::get('/subscriptions/status/{reference}', [SubscriptionController::class, 'checkStatus'])->middleware('throttle:30,1')->name('seller.subscriptions.status');
+});
+
+// Fin de la configuration d'une boutique gérée par l'équipe (connecté en tant que vendeur)
+Route::post('/configuration/terminer', [ManagedSessionController::class, 'stop'])->middleware('auth')->name('managed.stop');
+
+// Lien d'accès remis au vendeur : il choisit son mot de passe et prend la main sur sa boutique
+Route::middleware(['signed', 'throttle:20,1'])->group(function () {
+    Route::get('/acces/{user}', [ClaimAccountController::class, 'show'])->whereNumber('user')->name('account.claim');
+    Route::post('/acces/{user}', [ClaimAccountController::class, 'store'])->whereNumber('user')->name('account.claim.store');
 });
 
 // Shared User Profile Routes

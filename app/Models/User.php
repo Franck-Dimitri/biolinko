@@ -52,6 +52,8 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     protected $fillable = [
+        'managed_by',
+        'claimed_at',
         'name',
         'email',
         'phone_whatsapp',
@@ -73,12 +75,14 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'password',
         'remember_token',
+        'claim_nonce',
         'email_otp',
     ];
 
     protected function casts(): array
     {
         return [
+            'claimed_at' => 'datetime',
             'email_verified_at' => 'datetime',
             'subscription_expires_at' => 'datetime',
             'auto_renew' => 'boolean',
@@ -158,6 +162,12 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isSeller(): bool
     {
         return in_array($this->role, ['seller', 'vendor'], true) || empty($this->role);
+    }
+
+    /** Compte créé par l'équipe Biolinko et pas encore remis au vendeur (l'équipe peut encore le configurer). */
+    public function isManaged(): bool
+    {
+        return $this->managed_by !== null && $this->claimed_at === null;
     }
 
     public function generateEmailOtp(): string

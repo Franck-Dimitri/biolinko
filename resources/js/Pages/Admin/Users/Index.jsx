@@ -1,15 +1,56 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { Ban, ChevronRight, Crown, ShieldCheck, Store, UserCheck, Users } from 'lucide-react';
+import { Ban, ChevronRight, Crown, Plus, ShieldCheck, Store, UserCheck, Users } from 'lucide-react';
+import SlugField, { slugify, useSlugCheck } from '@/Components/Store/SlugField';
 import ModerationModal from '@/Components/Admin/ModerationModal';
-import { Badge, Button, Card, Empty, PageHeader, Pagination, SearchInput, Stat, Table, Tabs, fcfa, shortDate } from '@/Components/Dashboard/UI';
+import { Badge, Button, Card, Empty, Field, PageHeader, Pagination, SearchInput, Stat, SubPage, Table, Tabs, fcfa, fieldClass, shortDate } from '@/Components/Dashboard/UI';
 import { storeUrl } from '@/Components/Storefront/storeUrl';
 
 const PLAN_TONE = { starter: 'neutral', pro: 'brand', growth: 'brand', business: 'brand' };
 
-export default function Index({ users, metrics = {}, filters = {} }) {
+/** L'équipe crée le compte et la boutique d'un vendeur, avec l'offre Growth, puis la configure pour lui. */
+function CreateSeller({ onClose, businessTypes }) {
+    const { data, setData, post, processing, errors } = useForm({ name: '', email: '', phone_whatsapp: '', store_name: '', store_slug: '', business_type: '', pilot: true });
+    const [slugTouched, setSlugTouched] = useState(false);
+    const check = useSlugCheck(data.store_slug);
+    const setStoreName = (v) => setData((d) => ({ ...d, store_name: v, ...(slugTouched ? {} : { store_slug: slugify(v).replace(/-+$/g, '') }) }));
+    const submit = (e) => { e.preventDefault(); post(route('admin.users.managed.store')); };
+    return (
+        <SubPage onClose={onClose} backLabel="Retour aux vendeurs" title="Créer une boutique pour un vendeur"
+            sub="Vous créez son compte et sa boutique, vous la configurez, puis vous lui envoyez son lien d’accès. Il choisira lui-même son mot de passe.">
+            <form onSubmit={submit} className="space-y-5">
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Nom complet du vendeur" error={errors.name}><input value={data.name} onChange={(e) => setData('name', e.target.value)} required className={fieldClass} /></Field>
+                    <Field label="Son e-mail" hint="Il s’en servira pour se connecter." error={errors.email}><input type="email" value={data.email} onChange={(e) => setData('email', e.target.value.toLowerCase())} required className={fieldClass} /></Field>
+                    <Field label="Son numéro WhatsApp" error={errors.phone_whatsapp}><input inputMode="tel" value={data.phone_whatsapp} onChange={(e) => setData('phone_whatsapp', e.target.value)} placeholder="6XX XX XX XX" required className={fieldClass} /></Field>
+                    <Field label="Activité" error={errors.business_type}>
+                        <select value={data.business_type} onChange={(e) => setData('business_type', e.target.value)} required className={fieldClass}>
+                            <option value="">Choisir…</option>
+                            {businessTypes.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+                        </select>
+                    </Field>
+                    <Field label="Nom de la boutique" error={errors.store_name}><input value={data.store_name} onChange={(e) => setStoreName(e.target.value)} required className={fieldClass} /></Field>
+                    <Field label="Adresse de la boutique" error={errors.store_slug}>
+                        <SlugField id="admin_store_slug" value={data.store_slug} check={check} onChange={(v) => { setSlugTouched(true); setData('store_slug', v); }} />
+                    </Field>
+                </div>
+                <label className="flex items-start justify-between gap-3 rounded-2xl border border-black/[0.08] p-4">
+                    <span><span className="block text-[15px] font-medium text-[#141412]">Offrir la formule Growth</span><span className="text-[13px] text-[#8B8A83]">Offre pilote, activée dès la création.</span></span>
+                    <input type="checkbox" checked={data.pilot} onChange={(e) => setData('pilot', e.target.checked)} className="mt-1 h-5 w-5 rounded border-black/20 text-[#141412] focus:ring-0" />
+                </label>
+                <div className="flex justify-end gap-2 border-t border-black/[0.06] pt-5">
+                    <Button onClick={onClose}>Annuler</Button>
+                    <Button variant="primary" type="submit" disabled={processing || check.status === 'checking'}>Créer le compte et la boutique</Button>
+                </div>
+            </form>
+        </SubPage>
+    );
+}
+
+export default function Index({ users, metrics = {}, filters = {}, businessTypes = [] }) {
+    const [creating, setCreating] = useState(false);
     const [search, setSearch] = useState(filters.search || '');
     const [banTarget, setBanTarget] = useState(null);
     const [busy, setBusy] = useState(false);
@@ -39,8 +80,10 @@ export default function Index({ users, metrics = {}, filters = {} }) {
     return (
         <AuthenticatedLayout>
             <Head title="Vendeurs, Administration Biolinko" />
-            <div hidden={!!banTarget} className="space-y-6 pb-12">
-                <PageHeader title="Vendeurs" sub="Les comptes inscrits, leur boutique, leur formule et leur activité." />
+            {creating && <CreateSeller onClose={() => setCreating(false)} businessTypes={businessTypes} />}
+            <div hidden={!!banTarget || creating} className="space-y-6 pb-12">
+                <PageHeader title="Vendeurs" sub="Les comptes inscrits, leur boutique, leur formule et leur activité."
+                    actions={<Button variant="primary" onClick={() => setCreating(true)}><Plus className="h-4 w-4" /> Créer une boutique</Button>} />
 
                 <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
                     <Stat label="Comptes" value={metrics.total ?? 0} hint={`${metrics.admins ?? 0} administrateur${metrics.admins > 1 ? 's' : ''}`} Icon={Users} />
