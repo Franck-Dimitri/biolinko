@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\User;
+use App\Support\MailTheme;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -14,9 +15,7 @@ class SubscriptionRenewalMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public User $user, public string $type, public float $amount, public float $balance, public ?int $daysLeft = null)
-    {
-    }
+    public function __construct(public User $user, public string $type, public float $amount, public float $balance, public ?int $daysLeft = null) {}
 
     public function envelope(): Envelope
     {
@@ -31,6 +30,6 @@ class SubscriptionRenewalMail extends Mailable
 
     public function content(): Content
     {
-        return new Content(markdown: 'emails.subscription_renewal');
+        return new Content(view: 'emails.subscription_renewal', with: ['theme' => MailTheme::for(null)]);
     }
 }

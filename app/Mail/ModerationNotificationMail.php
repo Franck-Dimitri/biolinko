@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\User;
+use App\Support\MailTheme;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -14,8 +15,11 @@ class ModerationNotificationMail extends Mailable
     use Queueable, SerializesModels;
 
     public User $user;
+
     public string $type;
+
     public string $itemName;
+
     public string $reason;
 
     public function __construct(User $user, string $type, string $itemName, string $reason)
@@ -29,12 +33,12 @@ class ModerationNotificationMail extends Mailable
     public function envelope(): Envelope
     {
         $subject = match ($this->type) {
-            'product_deleted' => 'Notification de Modération : Suppression de produit sur BIOLINKO',
-            'store_deleted' => 'Notification de Modération : Suppression définitive de vitrine sur BIOLINKO',
-            'store_suspended' => 'Notification de Modération : Suspension de vitrine sur BIOLINKO',
-            'account_banned' => 'Avis Important : Suspension de votre compte vendeur BIOLINKO',
-            'account_unbanned' => 'Bonne nouvelle : Votre compte vendeur BIOLINKO a été réactivé',
-            default => 'Notification de supervision BIOLINKO',
+            'product_deleted' => 'Un produit a été retiré de votre boutique',
+            'store_deleted' => 'Votre boutique a été supprimée',
+            'store_suspended' => 'Votre boutique a été mise hors ligne',
+            'account_banned' => 'Votre compte Biolinko est suspendu',
+            'account_unbanned' => 'Votre compte Biolinko est de nouveau actif',
+            default => 'Information sur votre compte Biolinko',
         };
 
         return new Envelope(
@@ -44,8 +48,6 @@ class ModerationNotificationMail extends Mailable
 
     public function content(): Content
     {
-        return new Content(
-            markdown: 'emails.moderation_notification',
-        );
+        return new Content(view: 'emails.moderation_notification', with: ['theme' => MailTheme::for(null)]);
     }
 }

@@ -1,37 +1,40 @@
-<x-mail::message>
-# Notification Officielle de Modération BIOLINKO
+@php
+    $contact = config('biolinko.contact.email', 'contact@biolinko.app');
+    $heading = match ($type) {
+        'product_deleted' => 'Un produit a été retiré de votre boutique',
+        'store_deleted' => 'Votre boutique a été supprimée',
+        'store_suspended' => 'Votre boutique a été mise hors ligne',
+        'account_banned' => 'Votre compte est suspendu',
+        'account_unbanned' => 'Votre compte est de nouveau actif',
+        default => 'Information sur votre compte',
+    };
+@endphp
+@extends('emails.layout')
 
-Bonjour **{{ $user->name }}**,
-
+@section('content')
+<p style="margin: 0 0 12px;">Bonjour {{ $user->name }},</p>
 @if ($type === 'product_deleted')
-Nous vous informons qu'un produit publié sur votre vitrine a été **retiré et supprimé** par l'équipe de supervision de la plateforme :
-
-**Article concerné :** {{ $itemName }}
-
+    <p style="margin: 0 0 12px;">L’équipe Biolinko a retiré le produit <strong>{{ $itemName }}</strong> de votre boutique.</p>
 @elseif ($type === 'store_deleted')
-Nous vous informons que votre vitrine e-commerce **{{ $itemName }}** a été **définitivement supprimée** par l'équipe de modération de la plateforme :
-
+    <p style="margin: 0 0 12px;">L’équipe Biolinko a supprimé votre boutique <strong>{{ $itemName }}</strong>.</p>
 @elseif ($type === 'store_suspended')
-Nous vous informons que votre vitrine e-commerce **{{ $itemName }}** a été **suspendue et repassée en mode brouillon** par l'équipe de modération de la plateforme.
-
+    <p style="margin: 0 0 12px;">L’équipe Biolinko a mis votre boutique <strong>{{ $itemName }}</strong> hors ligne. Elle repasse en brouillon : vos clients ne la voient plus.</p>
 @elseif ($type === 'account_banned')
-Nous vous informons que l'accès à votre compte vendeur **{{ $user->name }}** ({{ $user->email }}) a été **temporairement restreint / suspendu** par l'équipe de sécurité et conformité.
-
+    <p style="margin: 0 0 12px;">L’accès à votre compte vendeur ({{ $user->email }}) est suspendu.</p>
 @elseif ($type === 'account_unbanned')
-Votre compte vendeur a été réexaminé et **réactivé avec succès**. Vous pouvez de nouveau vous connecter et reprendre vos activités commerciales.
+    <p style="margin: 0 0 12px;">Votre compte a été réexaminé : vous pouvez de nouveau vous connecter et vendre.</p>
 @endif
 
-<x-mail::panel>
-### Motif communiqué par l'équipe de supervision :
-_{{ $reason }}_
-</x-mail::panel>
+@if ($reason && $type !== 'account_unbanned')
+    <div style="margin: 0 0 16px; padding: 14px 16px; background: #F6F5F1; border-radius: 10px; font-size: 14px;">
+        <div style="font-size: 13px; color: #6B6A64;">Motif</div>
+        {{ $reason }}
+    </div>
+@endif
 
-### Que faire maintenant ?
-Si vous estimez qu'il s'agit d'une erreur ou si vous avez mis votre vitrine et vos produits en conformité avec nos conditions générales d'utilisation, vous pouvez contacter notre support officiel :
-
-- ✉️ **Email du support :** support@biolinko.app
-- 🌐 **Centre d'assistance :** [https://biolinko.mrdims.dev](https://biolinko.mrdims.dev)
-
-Cordialement,<br>
-**L'Équipe de Conformité &amp; Modération BIOLINKO 🇨🇲**
-</x-mail::message>
+@if ($type === 'account_unbanned')
+    @include('emails.partials.button', ['url' => route('login'), 'label' => 'Me connecter'])
+@else
+    <p style="margin: 0; font-size: 14px; color: #5F5E58;">S’il s’agit d’une erreur, ou si vous avez corrigé le problème, répondez à cet e-mail ou écrivez-nous à <a href="mailto:{{ $contact }}">{{ $contact }}</a>.</p>
+@endif
+@endsection
