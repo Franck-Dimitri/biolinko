@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\User;
 use App\Services\Whatsapp\WhatsappGatewayService;
+use App\Support\ManagedAccount;
 use App\Support\StoreUrl;
 use App\Support\TemplatesRollout;
 use Illuminate\Http\Request;
@@ -62,6 +63,9 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            // L'équipe configure la boutique de ce vendeur : bandeau de retour à l'administration
+            'managing' => fn () => $request->hasSession() && $request->session()->has(ManagedAccount::SESSION_KEY)
+                ? ['name' => $request->user()?->name, 'store' => $request->user()?->store?->name] : null,
             'appUrl' => $request->getSchemeAndHttpHost() ?: config('app.url'),
             'planPrices' => User::PLAN_PRICES,
             'planLimits' => User::PLAN_LIMITS,
@@ -99,6 +103,7 @@ class HandleInertiaRequests extends Middleware
                 'warning' => $request->session()->get('warning'),
                 'error' => $request->session()->get('error'),
                 'pilot_sent' => $request->session()->get('pilot_sent'),
+                'access_link' => $request->session()->get('access_link'),
             ],
             'ziggy' => fn () => [
                 ...(new Ziggy)->toArray(),

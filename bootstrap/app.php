@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureUserHasPlan;
 use App\Http\Middleware\EnsureUserHasRole;
+use App\Http\Middleware\GuardManagedSession;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\LogoutBannedUser;
 use App\Http\Middleware\ResolveStoreDomain;
@@ -26,6 +27,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             // Visites des pages publiques (enregistrées après la réponse)
             TrackVisit::class,
+            // Boutique configurée par l'équipe : actions sensibles réservées au vendeur
+            GuardManagedSession::class,
             HandleInertiaRequests::class,
             LogoutBannedUser::class,
         ]);
